@@ -43,7 +43,7 @@ My latest actions on the GitHub page, somehow related to the project or others:
 
 ## Contact
 
-<a href="https://t.me/Amenoke" target="_brepianomasters-cmd/repianomasters-cmdlank">
+<a href="https://t.me/Amenoke" target="_blank">
 <img src=https://img.shields.io/badge/telegram-%2300acee.svg?color=1DA1F2&style=for-the-badge&logo=twitter&logoColor=white alt=twitter style="margin-bottom: 5px;" />
 
 <a href="https://github.com/inzexg-coder" target="_blank">
