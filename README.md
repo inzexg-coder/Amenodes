@@ -46,7 +46,7 @@ My latest actions on the GitHub page, somehow related to the project or others:
 <a href="https://t.me/Amenoke" target="_brepianomasters-cmd/repianomasters-cmdlank">
 <img src=https://img.shields.io/badge/telegram-%2300acee.svg?color=1DA1F2&style=for-the-badge&logo=twitter&logoColor=white alt=twitter style="margin-bottom: 5px;" />
 
-<a href="https://github.com/repianomasters-cmd" target="_blank">
+<a href="https://github.com/inzexg-coder" target="_blank">
 <img src=https://img.shields.io/badge/github-%2300acee.svg?color=181717&style=for-the-badge&logo=github&logoColor=white alt=github style="margin-bottom: 5px;" />
 
 <a href="mailto:amenokeakira@gmail.com" target="_blank">
