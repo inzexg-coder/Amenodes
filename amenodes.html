@@ -129,7 +129,13 @@ hr{margin:8px 0;border-color:#2e3a5e}
 <div class="fps-meter" id="fpsMeter">FPS: --</div>
 <div id="autosaveStatus" class="autosave-status" style="opacity:0;">Сохранено</div>
 <div id="benchmarkStatus" class="benchmark-status">Тестирование оптимизаций...</div>
-
+  
+<script>
+  window.alert = function() {};
+  window.confirm = function() { return true; };
+  window.prompt = function() { return null; };
+</script>
+  
 <script type="importmap">
 {
   "imports": {
