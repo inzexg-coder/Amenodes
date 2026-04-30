@@ -11,12 +11,21 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Remove old preview folders via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          commands: |
-            cd /html/preview
-            find . -maxdepth 1 -type d -mtime +30 -not -path "." -exec rm -rf {} \;
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
+      
+      - name: List and remove old preview folders
+        run: |
+          lftp -c "
+            set sftp:auto-confirm yes
+            open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+            cls -1 /html/preview/ | while read dir; do
+              dir_date=\$(echo \$dir | grep -oP '\\d{8}' || echo '19700101')
+              today=\$(date +%Y%m%d)
+              days_old=\$(( (today - dir_date) / 100 ))
+              if [ \$days_old -gt 30 ]; then
+                echo \"Removing: /html/preview/\$dir\"
+                rm -rf /html/preview/\$dir
+              fi
+            done
+          "
