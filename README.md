@@ -1,5 +1,10 @@
 <h1 align="center">Amenoke</h1>
 
+<p align="center">
+  <strong>1.1.0-rc1-TYP</strong><br>
+  <sub>Type System Release Candidate | Improved type checking & performance profiling</sub>
+</p>
+
 <h4 align="center">
   <b><a href="https://github.com/inzexg-coder/Amenodes">Github Repository</a></b>
   •
@@ -95,6 +100,59 @@ root/
 | `SymbolMapper` | `utils/SymbolMapper.js` | `$alpha` → `α` conversion | None |
 | `FPSCounter` | `utils/FPSCounter.js` | requestAnimationFrame-based FPS monitoring | None |
 | `OPTIMIZATIONS` | `config/Optimizations.js` | Static optimization descriptors array | None |
+
+### Versioning System for Developers
+
+Amenoke follows a **structured versioning scheme** combining semantic versioning, pre-release labels, and change-type codes.
+
+#### Format
+`MAJOR.MINOR.PATCH[-PRERELEASE][-CODETYPE]`
+
+| Component | Meaning | Example |
+|-----------|---------|---------|
+| **MAJOR** | Breaking changes (incompatible API) | `2.0.0` |
+| **MINOR** | Backward-compatible new features | `1.1.0` |
+| **PATCH** | Backward-compatible bug fixes | `1.0.1` |
+| **PRERELEASE** | Development phase: `-alphaN`, `-betaN`, `-rcN` | `-rc1` |
+| **CODETYPE** | Nature of changes: `API`, `TYP`, `SEC`, `OPT`, `DEP`, `REM`, `SYN` | `-TYP` |
+
+#### Change Type Codes
+
+| Code | Meaning | When to Use |
+|------|---------|--------------|
+| `API` | Public API changes (new/removed methods) | After modifying `Graph.js` public interface |
+| `TYP` | Type system enhancements | After changes to type checking in `Node.js` |
+| `SEC` | Security fixes | After patching vulnerabilities |
+| `OPT` | Performance optimizations | After changes in `Optimizations.js` |
+| `DEP` | Deprecations (still working) | After marking old features as deprecated |
+| `REM` | Removed deprecated features | After deleting old functionality |
+| `SYN` | Syntax/parser changes | After modifying node connection rules |
+
+#### Full Version Examples
+
+| Human Readable | System Version | Meaning |
+|----------------|----------------|---------|
+| Type System RC1 | `1.1.0-rc1-TYP` | New type system, release candidate 1 |
+| Security Hotfix | `1.0.2-SEC` | Critical security patch |
+| API Redesign | `2.0.0-beta1-API` | Breaking API changes in beta |
+| Performance Boost | `1.0.1-OPT` | Optimized evaluation engine |
+
+#### How to Bump Version
+
+1. Determine change type from commit history
+2. Increment component according to rules:
+   - Breaking change → `MAJOR+1`, reset `MINOR`/`PATCH` to 0
+   - New feature → `MINOR+1`, reset `PATCH` to 0  
+   - Bug fix → `PATCH+1`
+3. Append appropriate `CODETYPE` based on primary change
+4. For pre-releases, append `-alpha/beta/rcN`
+
+Example after merging PR #1 (type system):
+```
+Previous: 1.0.0
+Change: New type system with optimizations
+New version: 1.1.0-rc1-TYP
+```
 
 ### Module Loading Strategy
 
@@ -195,4 +253,3 @@ Important: The optimization panel runs benchmarks sequentially. Each optimizatio
 **Repository:** [https://github.com/inzexg-coder/Amenodes](https://github.com/inzexg-coder/Amenodes)  
 **Live Demo:** [https://amenoke.ru/amenodes.html](https://amenoke.ru/amenodes.html)  
 **Wiki:** [https://github.com/inzexg-coder/Amenodes/wiki](https://github.com/inzexg-coder/Amenodes/wiki)
-```
