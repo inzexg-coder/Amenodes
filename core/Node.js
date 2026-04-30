@@ -1,3 +1,5 @@
+import { EditableTitle } from '../ui/EditableTitle.js';
+
 export class Node {
   constructor(id, type, x, y, title) {
     this.id = id;
@@ -46,7 +48,6 @@ export class Node {
     const header = document.createElement('div');
     header.className = headerClass;
 
-    const { EditableTitle } = require('../ui/EditableTitle.js');
     const titleEditor = new EditableTitle(this.title, (newTitle) => {
       this.title = newTitle;
       graph.reevaluateAll();
