@@ -2,137 +2,66 @@ name: Deploy Amenodes
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [main, master]
   pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
   validate:
-    name: Validate Code
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Check JavaScript syntax
+      - name: Validate JS
         run: |
           for file in $(find . -name "*.js" -type f -not -path "./.git/*"); do
             node -c "$file" || exit 1
           done
-      
-      - name: Check HTML structure
+      - name: Validate HTML
         run: |
           [ -f "amenodes.html" ] || exit 1
           grep -q "<!DOCTYPE html>" amenodes.html || exit 1
-      
-      - name: Check directories
-        run: |
-          for dir in core nodes rendering ui utils config; do
-            [ -d "$dir" ] || exit 1
-          done
 
   preview:
-    name: Deploy Preview
     runs-on: ubuntu-latest
     needs: validate
     if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master'
-    
     steps:
       - uses: actions/checkout@v4
-      
       - name: Get branch name
         id: branch
-        run: |
-          BRANCH=$(echo "${{ github.ref_name }}" | sed 's/\//-/g' | sed 's/[^a-zA-Z0-9_-]/-/g')
-          echo "name=$BRANCH" >> $GITHUB_OUTPUT
-      
+        run: echo "name=$(echo '${{ github.ref_name }}' | sed 's/\//-/g')" >> $GITHUB_OUTPUT
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install -y lftp
-      
-      - name: Deploy to preview
+      - name: Deploy preview
         run: |
           lftp -c "
-            set sftp:auto-confirm yes
             open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
             mkdir -p /var/www/html/preview/${{ steps.branch.outputs.name }}
-            mirror -R --reverse --verbose --delete \
-              --exclude=.git \
-              --exclude=.github \
-              --exclude=.gitignore \
-              --exclude=*.md \
-              --exclude=backups \
-              --exclude=preview \
-              ./ /var/www/html/preview/${{ steps.branch.outputs.name }}/
+            mirror -R --delete --exclude=.git --exclude=.github ./ /var/www/html/preview/${{ steps.branch.outputs.name }}/
           "
-      
-      - name: Comment PR
-        uses: actions/github-script@v7
+      - uses: actions/github-script@v7
         if: github.event_name == 'pull_request'
         with:
           script: |
-            const branch = '${{ steps.branch.outputs.name }}';
-            const url = `https://amenoke.ru/preview/${branch}/amenodes.html`;
+            const url = `https://amenoke.ru/preview/${{ steps.branch.outputs.name }}/amenodes.html`;
             github.rest.issues.createComment({
               issue_number: context.payload.pull_request.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `## 🚀 Preview Deployment\n\n**URL:** ${url}\n**Branch:** \`${{ github.ref_name }}\`\n\n**Status:** ✅ Ready for testing`
+              body: `Preview: ${url}`
             });
 
   production:
-    name: Deploy to Production
     runs-on: ubuntu-latest
     needs: validate
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install -y lftp
-      
-      - name: Create backup timestamp
-        id: backup
-        run: echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_OUTPUT
-      
-      - name: Backup current production
+      - name: Deploy production
         run: |
           lftp -c "
-            set sftp:auto-confirm yes
             open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
-            mkdir -p /var/www/html/backups/${{ steps.backup.outputs.timestamp }}
-            cp -r /var/www/html/amenodes.html /var/www/html/backups/${{ steps.backup.outputs.timestamp }}/ 2>/dev/null || true
-            cp -r /var/www/html/core /var/www/html/backups/${{ steps.backup.outputs.timestamp }}/ 2>/dev/null || true
-            cp -r /var/www/html/nodes /var/www/html/backups/${{ steps.backup.outputs.timestamp }}/ 2>/dev/null || true
-            cp -r /var/www/html/rendering /var/www/html/backups/${{ steps.backup.outputs.timestamp }}/ 2>/dev/null || true
-            cp -r /var/www/html/ui /var/www/html/backups/${{ steps.backup.outputs.timestamp }}/ 2>/dev/null || true
-            cp -r /var/www/html/utils /var/www/html/backups/${{ steps.backup.outputs.timestamp }}/ 2>/dev/null || true
-            cp -r /var/www/html/config /var/www/html/backups/${{ steps.backup.outputs.timestamp }}/ 2>/dev/null || true
+            mirror -R --delete --exclude=.git --exclude=.github --exclude=*.md ./ /var/www/html/
           "
-        continue-on-error: true
-      
-      - name: Deploy to production
-        run: |
-          lftp -c "
-            set sftp:auto-confirm yes
-            open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
-            mirror -R --reverse --verbose --delete \
-              --exclude=.git \
-              --exclude=.github \
-              --exclude=.gitignore \
-              --exclude=*.md \
-              --exclude=backups \
-              --exclude=preview \
-              ./ /var/www/html/
-          "
-      
-      - name: Add deployment info
-        run: |
-          echo "## Production Deployment" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Status:** ✅ Success" >> $GITHUB_STEP_SUMMARY
-          echo "**URL:** https://amenoke.ru/amenodes.html" >> $GITHUB_STEP_SUMMARY
-          echo "**Backup:** /var/www/html/backups/${{ steps.backup.outputs.timestamp }}/" >> $GITHUB_STEP_SUMMARY
-          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** ${{ github.event.head_commit.message }}" >> $GITHUB_STEP_SUMMARY
