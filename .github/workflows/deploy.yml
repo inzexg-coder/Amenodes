@@ -44,6 +44,7 @@ jobs:
               --exclude='.git' \
               --exclude='.github' \
               --exclude='index' \
+              --exclude='index.html' \
               --exclude='preview' \
               --exclude='backups' \
               ./ /var/www/html/preview/${{ steps.branch.outputs.name }}/
