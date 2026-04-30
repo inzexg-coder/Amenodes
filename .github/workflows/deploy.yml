@@ -13,43 +13,24 @@ jobs:
     name: Validate Code
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       
       - name: Check JavaScript syntax
         run: |
-          echo "Проверка синтаксиса JavaScript..."
           for file in $(find . -name "*.js" -type f -not -path "./.git/*"); do
-            echo "  Проверяю: $file"
             node -c "$file" || exit 1
           done
-          echo "Все JS файлы валидны"
       
       - name: Check HTML structure
         run: |
-          echo "Проверка структуры HTML..."
-          if [ ! -f "amenodes.html" ]; then
-            echo "Файл amenodes.html не найден!"
-            exit 1
-          fi
-          if ! grep -q "<!DOCTYPE html>" amenodes.html; then
-            echo "amenodes.html не содержит DOCTYPE!"
-            exit 1
-          fi
-          echo "HTML файл валиден"
+          [ -f "amenodes.html" ] || exit 1
+          grep -q "<!DOCTYPE html>" amenodes.html || exit 1
       
-      - name: Check required directories
+      - name: Check directories
         run: |
-          echo "Проверка структуры папок..."
-          REQUIRED_DIRS="core nodes rendering ui utils config"
-          for dir in $REQUIRED_DIRS; do
-            if [ ! -d "$dir" ]; then
-              echo "Папка $dir не найдена!"
-              exit 1
-            fi
-            echo "  $dir/"
+          for dir in core nodes rendering ui utils config; do
+            [ -d "$dir" ] || exit 1
           done
-          echo "Структура проекта корректна"
 
   preview:
     name: Deploy Preview
@@ -58,57 +39,39 @@ jobs:
     if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master'
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       
-      - name: Get safe branch name
+      - name: Get branch name
         id: branch
         run: |
           BRANCH=$(echo "${{ github.ref_name }}" | sed 's/\//-/g' | sed 's/[^a-zA-Z0-9_-]/-/g')
           echo "name=$BRANCH" >> $GITHUB_OUTPUT
-          echo "Папка превью: preview/$BRANCH"
       
-      - name: Deploy to preview folder via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./
-          server-dir: /html/preview/${{ steps.branch.outputs.name }}/
-          dangerous-clean-slate: false
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
       
-      - name: Create comment with preview URL
+      - name: SFTP Deploy to preview
+        run: |
+          lftp -c "
+            set sftp:auto-confirm yes
+            open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+            mirror -R --reverse --delete --verbose ./ /html/preview/${{ steps.branch.outputs.name }}/
+          "
+      
+      - name: Comment PR with preview URL
         uses: actions/github-script@v7
         if: github.event_name == 'pull_request'
         with:
           script: |
             const branch = '${{ steps.branch.outputs.name }}';
             const previewUrl = `https://amenoke.ru/preview/${branch}/amenodes.html`;
-            const branchName = '${{ github.ref_name }}';
-            
-            let comment = `## Preview Deployment\n\n`;
-            comment += `| Параметр | Значение |\n`;
-            comment += `|----------|----------|\n`;
-            comment += `| **URL** | [${previewUrl}](${previewUrl}) |\n`;
-            comment += `| **Branch** | \`${branchName}\` |\n`;
-            comment += `| **Время** | ${new Date().toISOString()} |\n\n`;
-            comment += `---\n`;
-            comment += `> Превью автоматически обновляется при каждом пуше в эту ветку.\n`;
-            comment += `> Превью будет автоматически удалено через 30 дней.\n`;
             
             github.rest.issues.createComment({
               issue_number: context.payload.pull_request.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: comment
+              body: `## 🚀 Preview Deployment\n\n**URL:** [${previewUrl}](${previewUrl})\n**Branch:** \`${{ github.ref_name }}\``
             });
-      
-      - name: Add preview URL to job summary
-        run: |
-          echo "## Preview URL" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "https://amenoke.ru/preview/${{ steps.branch.outputs.name }}/amenodes.html" >> $GITHUB_STEP_SUMMARY
 
   production:
     name: Deploy to Production
@@ -117,41 +80,39 @@ jobs:
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       
       - name: Create backup timestamp
         id: backup
+        run: echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_OUTPUT
+      
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
+      
+      - name: Backup current production
         run: |
-          TIMESTAMP=$(date +'%Y%m%d_%H%M%S')
-          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
-          echo "Создаю бэкап: backup_$TIMESTAMP"
+          lftp -c "
+            set sftp:auto-confirm yes
+            open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+            mkdir -p /html/backups/${{ steps.backup.outputs.timestamp }}
+            mirror --reverse --verbose /html/amenodes.html /html/backups/${{ steps.backup.outputs.timestamp }}/ 2>/dev/null || true
+            for dir in core nodes rendering ui utils config; do
+              mirror --reverse --verbose /html/\$dir /html/backups/${{ steps.backup.outputs.timestamp }}/ 2>/dev/null || true
+            done
+          "
+        continue-on-error: true
       
-      - name: Create backup of current production
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./
-          server-dir: /html/backups/${{ steps.backup.outputs.timestamp }}/
-          dangerous-clean-slate: false
+      - name: SFTP Deploy to production
+        run: |
+          lftp -c "
+            set sftp:auto-confirm yes
+            open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+            mirror -R --reverse --delete --verbose ./ /html/
+          "
       
-      - name: Deploy to production
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./
-          server-dir: /html/
-          dangerous-clean-slate: false
-      
-      - name: Add deployment info to job summary
+      - name: Add deployment info to summary
         run: |
           echo "## Production Deployment" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Статус:** Успешно" >> $GITHUB_STEP_SUMMARY
           echo "**URL:** https://amenoke.ru/amenodes.html" >> $GITHUB_STEP_SUMMARY
-          echo "**Бэкап:** /html/backups/${{ steps.backup.outputs.timestamp }}/" >> $GITHUB_STEP_SUMMARY
-          echo "**Ветка:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Backup:** /html/backups/${{ steps.backup.outputs.timestamp }}/" >> $GITHUB_STEP_SUMMARY
