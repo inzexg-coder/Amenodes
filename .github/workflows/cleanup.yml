@@ -7,25 +7,21 @@ on:
 
 jobs:
   cleanup:
-    name: Clean Previews Older Than 30 Days
     runs-on: ubuntu-latest
-    
     steps:
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install -y lftp
       
-      - name: List and remove old preview folders
+      - name: Remove old previews
         run: |
           lftp -c "
             set sftp:auto-confirm yes
             open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
-            cls -1 /html/preview/ | while read dir; do
-              dir_date=\$(echo \$dir | grep -oP '\\d{8}' || echo '19700101')
-              today=\$(date +%Y%m%d)
-              days_old=\$(( (today - dir_date) / 100 ))
-              if [ \$days_old -gt 30 ]; then
-                echo \"Removing: /html/preview/\$dir\"
-                rm -rf /html/preview/\$dir
+            cd /var/www/html/preview/ 2>/dev/null || exit 0
+            cls -1 | while read dir; do
+              if [ -d \"\$dir\" ] && [ \"\$dir\" != \".\" ] && [ \"\$dir\" != \"..\" ]; then
+                rm -rf \"\$dir\"
+                echo \"Removed: \$dir\"
               fi
             done
           "
