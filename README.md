@@ -49,7 +49,7 @@ My latest actions on the GitHub page, somehow related to the project or others:
 The codebase is modularized into ES6 classes organized by responsibility. Below is the complete directory structure:
 
 ```
-project-root/
+root/
 ├── amenodes.html                 # Main application entry point
 ├── core/
 │   ├── Graph.js                  # Core graph data structure (nodes, edges, evaluation)
@@ -115,38 +115,6 @@ The application uses ES6 modules with an import map defined in `amenodes.html`:
 
 All relative paths resolve from the document root. When deploying, ensure the directory structure matches exactly as shown above.
 
-### Adding a New Node Type
-
-1. Create `nodes/YourNode.js` extending `core/Node.js`
-2. Implement required methods: `getValue()`, `toJSON()`, `createDOM()`, `getMinHeight()`
-3. Add factory method in `Graph.loadFrom()` deserialization switch
-4. Register in `amenodes.html` import map
-5. Add creation button in toolbar if needed
-
-Example skeleton:
-
-```javascript
-import { Node } from '../core/Node.js';
-
-export class YourNode extends Node {
-  constructor(id, x, y, title, customParam) {
-    super(id, 'your_type', x, y, title);
-    this.customParam = customParam;
-  }
-
-  getValue() { return [this.customParam]; }
-
-  toJSON() { return { ...super.toJSON(), customParam: this.customParam }; }
-
-  createDOM(graph, renderer) {
-    const div = this.createBaseDiv(graph, renderer);
-    // Add custom UI
-    renderer.addHandles(div, this.id, null);
-    return div;
-  }
-}
-```
-
 ### Git Workflow for Contributors
 
 #### Repository Setup
@@ -170,13 +138,6 @@ Use semantic commit messages:
 | `docs:` | Documentation updates |
 | `perf:` | Performance optimization |
 | `chore:` | Build/config changes |
-
-Examples:
-```
-feat: add MatrixNode for linear algebra operations
-fix: resolve cycle detection in MapNode unmapped mode
-perf: implement WebGL instancing for 5000+ nodes
-```
 
 #### Before Committing
 
