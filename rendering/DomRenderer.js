@@ -5,7 +5,6 @@ import { CalcNode } from '../nodes/CalcNode.js';
 import { OutputNode } from '../nodes/OutputNode.js';
 import { MapNode } from '../nodes/MapNode.js';
 import { EditableTitle } from '../ui/EditableTitle.js';
-import { typeSystem } from '../core/DataType.js';
 
 export class DomRenderer {
   constructor(graph, layer, viewportElement) {
@@ -487,7 +486,7 @@ export class DomRenderer {
     this.clearTemp();
   }
 
-  showMenu(x, y, sourceId) {
+  async showMenu(x, y, sourceId) {
     if (this.contextMenu) this.contextMenu.remove();
     
     const menu = document.createElement('div');
@@ -523,17 +522,14 @@ export class DomRenderer {
     };
     
     addMenuItem('Число + связь', () => {
-      const NumberNode = (await import('../nodes/NumberNode.js')).NumberNode;
       createAndConnect(NumberNode, "Число", 'main', 0);
     });
     
     addMenuItem('Группа + связь', () => {
-      const GroupNode = (await import('../nodes/GroupNode.js')).GroupNode;
       createAndConnect(GroupNode, "Группа", 'main', [{ name: "Значение", val: 0 }]);
     });
     
     addMenuItem('Вывод + связь', () => {
-      const OutputNode = (await import('../nodes/OutputNode.js')).OutputNode;
       createAndConnect(OutputNode, "Вывод", 'main', []);
     });
     
@@ -552,7 +548,6 @@ export class DomRenderer {
       item.className = 'node-menu-item';
       item.textContent = text;
       item.onclick = () => {
-        const CalcNode = (await import('../nodes/CalcNode.js')).CalcNode;
         const node = new CalcNode(0, baseX + 20, baseY + 160, text, type);
         this.graph.addNode(node);
         this.graph.addEdge(sourceId, node.id, 'main');
@@ -574,7 +569,6 @@ export class DomRenderer {
     menu.appendChild(submenuContainer);
     
     addMenuItem('Карта преобразований', () => {
-      const MapNode = (await import('../nodes/MapNode.js')).MapNode;
       createAndConnect(MapNode, "Карта", 'main', [{ x: 0, y: 0 }]);
     });
     
