@@ -2,117 +2,26 @@ name: Deploy Amenodes
 
 on:
   push:
-    branches:
-      - main
-      - master
-  pull_request:
-    types: [opened, synchronize, reopened]
+    branches: [main]
 
 jobs:
-  validate:
-    name: Validate Code
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Check JavaScript syntax
-        run: |
-          for file in $(find . -name "*.js" -type f -not -path "./.git/*"); do
-            node -c "$file" || exit 1
-          done
-      
-      - name: Check HTML structure
-        run: |
-          [ -f "amenodes.html" ] || exit 1
-          grep -q "<!DOCTYPE html>" amenodes.html || exit 1
-      
-      - name: Check directories
-        run: |
-          for dir in core nodes rendering ui utils config; do
-            [ -d "$dir" ] || exit 1
-          done
-
-  preview:
-    name: Deploy Preview
-    runs-on: ubuntu-latest
-    needs: validate
-    if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master'
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Get branch name
-        id: branch
-        run: |
-          BRANCH=$(echo "${{ github.ref_name }}" | sed 's/\//-/g' | sed 's/[^a-zA-Z0-9_-]/-/g')
-          echo "name=$BRANCH" >> $GITHUB_OUTPUT
       
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install -y lftp
       
-      - name: SFTP Deploy to preview
+      - name: Deploy to /var/www/html
         run: |
           lftp -c "
             set sftp:auto-confirm yes
             open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
-            mirror -R --reverse --delete --verbose ./ /html/preview/${{ steps.branch.outputs.name }}/
+            mirror -R --reverse --verbose --delete \
+              --exclude=.git \
+              --exclude=.github \
+              --exclude=.gitignore \
+              --exclude=*.md \
+              ./ /var/www/html/
           "
-      
-      - name: Comment PR with preview URL
-        uses: actions/github-script@v7
-        if: github.event_name == 'pull_request'
-        with:
-          script: |
-            const branch = '${{ steps.branch.outputs.name }}';
-            const previewUrl = `https://amenoke.ru/preview/${branch}/amenodes.html`;
-            
-            github.rest.issues.createComment({
-              issue_number: context.payload.pull_request.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## 🚀 Preview Deployment\n\n**URL:** [${previewUrl}](${previewUrl})\n**Branch:** \`${{ github.ref_name }}\``
-            });
-
-  production:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: validate
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Create backup timestamp
-        id: backup
-        run: echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_OUTPUT
-      
-      - name: Install lftp
-        run: sudo apt-get update && sudo apt-get install -y lftp
-      
-      - name: Backup current production
-        run: |
-          lftp -c "
-            set sftp:auto-confirm yes
-            open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
-            mkdir -p /html/backups/${{ steps.backup.outputs.timestamp }}
-            mirror --reverse --verbose /html/amenodes.html /html/backups/${{ steps.backup.outputs.timestamp }}/ 2>/dev/null || true
-            for dir in core nodes rendering ui utils config; do
-              mirror --reverse --verbose /html/\$dir /html/backups/${{ steps.backup.outputs.timestamp }}/ 2>/dev/null || true
-            done
-          "
-        continue-on-error: true
-      
-      - name: SFTP Deploy to production
-        run: |
-          lftp -c "
-            set sftp:auto-confirm yes
-            open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
-            mirror -R --reverse --delete --verbose ./ /html/
-          "
-      
-      - name: Add deployment info to summary
-        run: |
-          echo "## Production Deployment" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**URL:** https://amenoke.ru/amenodes.html" >> $GITHUB_STEP_SUMMARY
-          echo "**Backup:** /html/backups/${{ steps.backup.outputs.timestamp }}/" >> $GITHUB_STEP_SUMMARY
