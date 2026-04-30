@@ -31,8 +31,6 @@ jobs:
                     echo \"Removing: \$dir (age: \$days_old days)\"
                     rm -rf \"\$dir\"
                   fi
-                else
-                  echo \"Skipping: \$dir (no date in name)\"
                 fi
               fi
             done
