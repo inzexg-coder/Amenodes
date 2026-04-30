@@ -1,0 +1,22 @@
+name: Cleanup Old Previews
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    name: Clean Previews Older Than 30 Days
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Remove old preview folders via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          commands: |
+            cd /html/preview
+            find . -maxdepth 1 -type d -mtime +30 -not -path "." -exec rm -rf {} \;
