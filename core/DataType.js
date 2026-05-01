@@ -45,8 +45,8 @@ export class TypeSystem {
       name: 'Погрешность',
       canHaveIncomingEdges: true,
       canHaveOutgoingEdges: true,
-      allowedInputTypes: [DataType.NUM, DataType.ARRAY],
-      allowedOutputTypes: [DataType.NUM, DataType.ARRAY],
+      allowedInputTypes: [DataType.NUM, DataType.ARRAY, DataType.UNCERT],
+      allowedOutputTypes: [DataType.NUM, DataType.ARRAY, DataType.AUTO, DataType.UNCERT, DataType.LIST, DataType.WLIST],
       defaultValue: null
     });
 
@@ -54,8 +54,8 @@ export class TypeSystem {
       name: 'Карта (список)',
       canHaveIncomingEdges: true,
       canHaveOutgoingEdges: true,
-      allowedInputTypes: [DataType.NUM, DataType.ARRAY],
-      allowedOutputTypes: [DataType.NUM, DataType.ARRAY],
+      allowedInputTypes: [DataType.NUM, DataType.ARRAY, DataType.UNCERT, DataType.LIST, DataType.WLIST],
+      allowedOutputTypes: [DataType.AUTO, DataType.UNCERT, DataType.LIST, DataType.WLIST],
       defaultValue: []
     });
 
@@ -63,8 +63,8 @@ export class TypeSystem {
       name: 'Карта (весовая)',
       canHaveIncomingEdges: true,
       canHaveOutgoingEdges: true,
-      allowedInputTypes: [DataType.NUM, DataType.ARRAY],
-      allowedOutputTypes: [DataType.NUM, DataType.ARRAY],
+      allowedInputTypes: [DataType.NUM, DataType.ARRAY, DataType.UNCERT, DataType.LIST, DataType.WLIST],
+      allowedOutputTypes: [DataType.AUTO, DataType.UNCERT, DataType.LIST, DataType.WLIST],
       defaultValue: []
     });
   }
