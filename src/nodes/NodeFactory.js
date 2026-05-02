@@ -3,6 +3,7 @@ import { GroupNode } from './GroupNode.js';
 import { CalcNode } from './CalcNode.js';
 import { OutputNode } from './OutputNode.js';
 import { MapNode } from './MapNode.js';
+import { ConstantNode } from './ConstantNode.js';
 
 export class NodeFactory {
   static createNode(type, options = {}) {
@@ -18,6 +19,8 @@ export class NodeFactory {
         return new OutputNode(id || 0, x || 0, y || 0, title || 'Вывод', rest.rows || []);
       case 'map':
         return new MapNode(id || 0, x || 0, y || 0, title || 'Карта', rest.maps || [{ x: 0, y: 0 }]);
+      case 'constant':
+        return new ConstantNode(id || 0, x || 0, y || 0, title || 'Константа', rest.val ?? 0);
       default:
         throw new Error(`Unknown node type: ${type}`);
     }
