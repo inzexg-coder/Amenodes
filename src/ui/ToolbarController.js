@@ -14,7 +14,7 @@ export class ToolbarController {
     document.getElementById('undoBtn').onclick = () => this.undo();
     document.getElementById('redoBtn').onclick = () => this.redo();
     document.getElementById('addEmptyBtn').onclick = () => this.addNumberNode();
-    document.getElementById('addConstantBtn').onclick = () => this.addConstantNode(); // async
+    document.getElementById('addConstantBtn').onclick = () => this.addConstantNode();
     document.getElementById('addGroupBtn').onclick = () => this.addGroupNode();
     document.getElementById('addOutputBtn').onclick = () => this.addOutputNode();
     document.getElementById('exportBtn').onclick = () => this.export();
@@ -53,13 +53,18 @@ export class ToolbarController {
     this.history.save();
   }
   
-  async addConstantNode() { 
+  async addConstantNode() {
     const { x, y } = this.getCenterCoords();
     const input = await modal.prompt('Введите значение константы:', '0');
-    if (input !== null && input !== undefined) {
-      const value = parseFloat(input) || 0;
-      const node = NodeFactory.createConstantAt(x - 100, y - 30, value);
+    
+    if (input !== null && input !== undefined && input !== '') {
+      const value = parseFloat(input);
+      const finalValue = isNaN(value) ? 0 : value;
+      
+      const node = NodeFactory.createConstantAt(x - 100, y - 30, finalValue);
       this.graph.addNode(node);
+      this.graph.reevaluateAll();
+      this.graph.updateAllOutputs();
       this.renderer.render();
       this.history.save();
     }
@@ -101,8 +106,10 @@ export class ToolbarController {
   }
 
   clearStorage() {
-    if (modal.confirm('Очистить все сохраненные данные?')) {
-      localStorage.removeItem('amenodes_autosave');
-    }
+    modal.confirm('Очистить все сохраненные данные?').then((result) => {
+      if (result) {
+        localStorage.removeItem('amenodes_autosave');
+      }
+    });
   }
 }
