@@ -5,6 +5,7 @@ import { GroupNode } from '../nodes/GroupNode.js';
 import { CalcNode } from '../nodes/CalcNode.js';
 import { OutputNode } from '../nodes/OutputNode.js';
 import { MapNode } from '../nodes/MapNode.js';
+import { ConstantNode } from '../nodes/ConstantNode.js';
 
 export class DomRenderer {
   constructor(graph, layer, viewportElement, eventBus) {
