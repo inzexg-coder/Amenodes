@@ -10,7 +10,9 @@ export class Node {
     this.title = title;
     this.important = false;
     this.graph = null;
-    this.originalTitle = title; 
+    this.originalTitle = title;
+    this.titleEditor = null;
+    this.unsubscribeI18n = null;
   }
 
   getValue() {
@@ -40,6 +42,20 @@ export class Node {
     return this.title;
   }
 
+  updateTitleTranslation() {
+    if (this.titleEditor && this.title !== this.originalTitle) {
+      return;
+    }
+    const newTitle = this.getLocalizedTitle();
+    if (this.title !== newTitle) {
+      this.title = newTitle;
+      this.originalTitle = newTitle;
+      if (this.titleEditor) {
+        this.titleEditor.setValue(newTitle);
+      }
+    }
+  }
+
   createDOM(graph, renderer) {
     throw new Error("Implement createDOM in subclass");
   }
@@ -63,7 +79,7 @@ export class Node {
     header.className = headerClass;
 
     const localizedTitle = this.getLocalizedTitle();
-    const titleEditor = new EditableTitle(localizedTitle, (newTitle) => {
+    this.titleEditor = new EditableTitle(localizedTitle, (newTitle) => {
       this.title = newTitle;
       this.originalTitle = newTitle;
       graph.reevaluateAll();
@@ -77,6 +93,7 @@ export class Node {
     deleteBtn.textContent = '✕';
     deleteBtn.onclick = (e) => {
       e.stopPropagation();
+      if (this.unsubscribeI18n) this.unsubscribeI18n();
       graph.removeNode(this.id);
       graph.reevaluateAll();
       renderer.render();
@@ -84,9 +101,21 @@ export class Node {
     };
     actions.appendChild(deleteBtn);
 
-    header.appendChild(titleEditor.getElement());
+    header.appendChild(this.titleEditor.getElement());
     header.appendChild(actions);
     div.appendChild(header);
+
+    if (this.unsubscribeI18n) this.unsubscribeI18n();
+    this.unsubscribeI18n = i18n.subscribe(() => {
+      this.updateTitleTranslation();
+      if (this.titleEditor) {
+        const currentDisplayText = this.titleEditor.displaySpan?.textContent;
+        const newDisplayText = this.getLocalizedTitle();
+        if (currentDisplayText !== newDisplayText) {
+          this.titleEditor.setValue(newDisplayText);
+        }
+      }
+    });
 
     return div;
   }
