@@ -156,7 +156,7 @@ export class CustomModal {
 
   prompt(message, defaultValue = '', title = 'Enter Value') {
     return new Promise((resolve) => {
-      let inputValue = defaultValue;
+      let resolved = false;
       
       const body = document.createElement('div');
       body.textContent = message;
@@ -167,10 +167,18 @@ export class CustomModal {
       input.className = 'custom-modal-input';
       input.placeholder = 'Enter value...';
       
+      const doResolve = (value) => {
+        if (!resolved) {
+          resolved = true;
+          resolve(value);
+          this.close();
+        }
+      };
+      
       input.onkeydown = (e) => {
         if (e.key === 'Enter') {
-          resolve(inputValue);
-          this.close();
+          e.preventDefault();
+          doResolve(input.value);
         }
       };
       
@@ -179,13 +187,21 @@ export class CustomModal {
       this.showModal({
         title,
         bodyElement: body,
-        onShow: () => input.focus(),
+        onShow: () => {
+          input.focus();
+          input.select();
+        },
         buttons: [
-          { text: 'Cancel', type: 'secondary', callback: () => resolve(null) },
-          { text: 'OK', type: 'primary', callback: () => {
-            inputValue = input.value;
-            resolve(inputValue);
-          }}
+          { 
+            text: 'Cancel', 
+            type: 'secondary', 
+            callback: () => doResolve(null)
+          },
+          { 
+            text: 'OK', 
+            type: 'primary', 
+            callback: () => doResolve(input.value)
+          }
         ]
       });
     });
@@ -224,7 +240,6 @@ export class CustomModal {
       button.className = `custom-modal-btn custom-modal-btn-${btn.type}`;
       button.onclick = () => {
         if (btn.callback) btn.callback();
-        this.close();
       };
       buttonsDiv.appendChild(button);
     }
