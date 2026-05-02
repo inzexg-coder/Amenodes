@@ -66,7 +66,6 @@ class LanguageManager {
     return key;
   }
 
-  // Direct translation by exact key path
   translate(key, params = {}) {
     return this.t(key, params);
   }
