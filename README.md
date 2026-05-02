@@ -6,12 +6,64 @@
 </p>
 
 <h4 align="center">
-  <b><a href="https://github.com/inzexg-coder/Amenodes">Github Repository</a></b>
+  <b><a href="https://github.com/inzexg-coder/Amenodes">GitHub Repository</a></b>
   •
-  <b><a href="https://amenoke.ru/amenodes.html">AMENODES</a></b>
+  <b><a href="https://amenoke.ru/amenodes.html">Live Demo</a></b>
   •
   <b><a href="https://github.com/inzexg-coder/Amenodes/wiki">Wiki Docs</a></b>
-</h3>
+</h4>
+
+---
+
+## Pull Request Preview System
+
+Every pull request automatically deploys a live preview to https://amenoke.ru/preview/[branch-name]/amenodes.html
+
+### How it works
+
+The GitHub Actions workflow:
+- Runs on `pull_request` events (opened, synchronize, reopened)
+- Validates JavaScript syntax and HTML structure
+- Deploys the branch to a unique preview subdirectory
+- Posts a comment on the PR with the live preview URL
+- Updates the comment on each push to the branch
+
+### Preview URL format
+
+```
+https://amenoke.ru/preview/feature-branch-name/amenodes.html
+```
+
+Branch names with slashes (`feature/new-feature`) become `feature-new-feature`
+
+### What gets deployed
+
+The workflow mirrors the entire repository except:
+- `.git/` directory
+- `.github/` directory  
+- `preview/` directory (prevents recursive deployment)
+- `backups/` directory
+
+### Production deployment
+
+Merges to `main` or `master` automatically deploy to the production site:
+```
+https://amenoke.ru/amenodes.html
+```
+
+### Testing PRs locally before CI
+
+```bash
+# Clone PR branch locally
+git fetch origin pull/ID/head:pr-branch
+git checkout pr-branch
+
+# Run validation locally
+for file in $(find . -name "*.js" -type f); do node -c "$file" || exit 1; done
+grep -q "<!DOCTYPE html>" amenodes.html
+```
+
+---
 
 ## Introduction
 
@@ -68,75 +120,75 @@ root/
 │   │   ├── Node.js               # Abstract base class for all node types
 │   │   ├── Edge.js               # Edge/connection model
 │   │   ├── History.js            # Undo/redo with localStorage autosave
-│   │   └── DataType.js           # Type system for connection validation (NUM, ARRAY, AUTO, UNCERT, LIST, WLIST)
+│   │   └── DataType.js           # Type system for connection validation
 │   ├── nodes/
 │   │   ├── NumberNode.js         # Single numeric value node
 │   │   ├── ConstantNode.js       # Constant value node with visual display
 │   │   ├── GroupNode.js          # Multi-value container node
 │   │   ├── CalcNode.js           # Calculation node (div3, div_sqrt12, sqrt_sum_sq)
 │   │   ├── OutputNode.js         # Results display node with table view
-│   │   ├── MapNode.js            # Value mapping/transformation node (X→Y with passthrough/separate modes)
+│   │   ├── MapNode.js            # Value mapping/transformation node
 │   │   └── NodeFactory.js        # Factory for creating nodes with localized titles
 │   ├── renderer/
-│   │   ├── Viewport.js           # Pan/zoom viewport controller (right-mouse drag)
+│   │   ├── Viewport.js           # Pan/zoom viewport controller
 │   │   └── DomRenderer.js        # DOM manipulation, edge rendering, drag handling
 │   ├── ui/
-│   │   ├── EditableTitle.js      # Inline editable title component with symbol support
+│   │   ├── EditableTitle.js      # Inline editable title component
 │   │   ├── OptimizationPanel.js  # Performance tuning panel UI with benchmarking
 │   │   ├── ContextMenu.js        # Right-click context menu for nodes
-│   │   ├── CustomModal.js        # Custom modal dialogs (alert, confirm, prompt)
+│   │   ├── CustomModal.js        # Custom modal dialogs
 │   │   └── LanguageSwitcher.js   # Language toggle button with dropdown menu
 │   ├── i18n/
 │   │   ├── LanguageManager.js    # Core i18n manager with subscription system
 │   │   └── locales/
-│   │       ├── ru.js             # Russian translations for all UI strings
-│   │       └── en.js             # English translations for all UI strings
+│   │       ├── ru.js             # Russian translations
+│   │       └── en.js             # English translations
 │   ├── services/
 │   │   ├── BenchmarkService.js   # Performance benchmarking for optimizations
 │   │   ├── PersistenceService.js # Save/load to localStorage and files
-│   │   └── EventBus.js           # Event pub/sub system for component communication
+│   │   └── EventBus.js           # Event pub/sub system
 │   ├── utils/
-│   │   ├── SymbolMapper.js       # Greek letter and math symbol substitution ($alpha → α)
+│   │   ├── SymbolMapper.js       # Greek letter and math symbol substitution
 │   │   └── FPSCounter.js         # Real-time FPS measurement utility
 │   └── config/
-│       └── Optimizations.js      # Performance optimization definitions and metadata
+│       └── Optimizations.js      # Performance optimization definitions
 └── styles/
-    └── main.css                  # All application styles with design quality variants
+    └── main.css                  # All application styles
 ```
 
 ---
 
 ## Class Responsibility Matrix
 
-| Class | File Path | Purpose | Key Methods | Dependencies |
-|-------|-----------|---------|-------------|--------------|
-| `Graph` | `core/Graph.js` | Manages nodes, edges, dependency resolution, value propagation | `addNode()`, `addEdge()`, `removeNode()`, `getSourceValue()`, `reevaluateAll()` | `Node`, `Edge`, `DataType` |
-| `Node` | `core/Node.js` | Abstract base class for all nodes with translation support | `createBaseDiv()`, `getLocalizedTitle()`, `updateTitleTranslation()`, `toJSON()` | `EditableTitle`, `i18n` |
-| `NumberNode` | `nodes/NumberNode.js` | Single numeric input/output | `getValue()`, `createDOM()` | `Node` |
-| `ConstantNode` | `nodes/ConstantNode.js` | Constant value with visual display and inline editing | `getValue()`, `createDOM()` | `Node`, `CustomModal` |
-| `GroupNode` | `nodes/GroupNode.js` | Array of named numeric values | `getValue()`, `createDOM()` | `Node`, `EditableTitle`, `i18n` |
-| `CalcNode` | `nodes/CalcNode.js` | Mathematical operations (div3, div_sqrt12, sqrt_sum_sq) | `getValue()`, `createDOM()` | `Node`, `i18n` |
-| `OutputNode` | `nodes/OutputNode.js` | Displays computed results in table format | `getValue()`, `createDOM()` | `Node`, `EditableTitle`, `i18n` |
-| `MapNode` | `nodes/MapNode.js` | X→Y value mapping with passthrough/separate modes | `getValue()`, `getUnmapped()`, `createDOM()` | `Node`, `EditableTitle`, `i18n` |
-| `NodeFactory` | `nodes/NodeFactory.js` | Factory for creating nodes with localized titles | `createNode()`, `createNumberAt()`, `createConstantAt()`, `createGroupAt()`, `createOutputAt()`, `createCalcAt()`, `createMapAt()` | `i18n` |
-| `Edge` | `core/Edge.js` | Connection between source and target ports | `toJSON()` | None |
-| `DataType` | `core/DataType.js` | Type definitions and connection validation | `canConnect()`, `getNodeType()` | None |
-| `History` | `core/History.js` | Snapshot-based undo/redo with autosave | `save()`, `undo()`, `redo()`, `autoSave()` | `Graph` |
-| `Viewport` | `renderer/Viewport.js` | Camera control (pan with right mouse button, zoom) | `attach()`, `update()`, `getOffset()`, `getRect()` | None |
-| `DomRenderer` | `renderer/DomRenderer.js` | Node DOM creation, edge SVG rendering, drag-drop | `render()`, `addHandles()`, `applyOptStyles()`, `setVirtual()` | `Graph`, `Viewport`, `EdgeRenderer` |
-| `EdgeRenderer` | `renderer/EdgeRenderer.js` | SVG edge rendering with arrows and deletion | `renderEdges()`, `getBorderPoint()` | None |
-| `EditableTitle` | `ui/EditableTitle.js` | Click-to-edit title component with symbol replacement | `startEdit()`, `finish()`, `getElement()` | `SymbolMapper` |
-| `OptimizationPanel` | `ui/OptimizationPanel.js` | Performance settings UI with benchmarking | `buildPanel()`, `apply()`, `updateGains()` | `OPTIMIZATIONS`, `i18n` |
-| `ContextMenu` | `ui/ContextMenu.js` | Right-click context menu for node operations | `show()`, `close()` | `NodeFactory`, `i18n` |
-| `CustomModal` | `ui/CustomModal.js` | Custom modal dialogs (alert, confirm, prompt) | `alert()`, `confirm()`, `prompt()`, `close()` | None |
-| `LanguageSwitcher` | `ui/LanguageSwitcher.js` | Language toggle button with dropdown | `init()`, `toggleMenu()`, `createMenu()` | `i18n` |
-| `LanguageManager` | `i18n/LanguageManager.js` | Core i18n with subscription system | `t()`, `setLanguage()`, `subscribe()`, `getAvailableLanguages()` | `locales/*.js` |
-| `BenchmarkService` | `services/BenchmarkService.js` | Performance benchmarking for optimizations | `runBenchmark()`, `captureState()`, `restoreState()` | `FPSCounter`, `OPTIMIZATIONS` |
-| `PersistenceService` | `services/PersistenceService.js` | Save/load to localStorage and .amnk files | `saveToStorage()`, `loadFromStorage()`, `exportToFile()`, `importFromFile()` | `Graph`, `modal` |
-| `EventBus` | `services/EventBus.js` | Event pub/sub system | `on()`, `off()`, `emit()` | None |
-| `SymbolMapper` | `utils/SymbolMapper.js` | Greek letter and math symbol substitution | `replaceSymbols()` | None |
-| `FPSCounter` | `utils/FPSCounter.js` | requestAnimationFrame-based FPS monitoring | `start()`, `measure()` | None |
-| `OPTIMIZATIONS` | `config/Optimizations.js` | Static optimization descriptors array | None | None |
+| Class | Path | Purpose | Key Methods |
+|-------|------|---------|--------------|
+| `Graph` | `core/Graph.js` | Manages nodes, edges, dependency resolution | `addNode()`, `addEdge()`, `removeNode()`, `reevaluateAll()` |
+| `Node` | `core/Node.js` | Abstract base class with translation support | `createBaseDiv()`, `getLocalizedTitle()`, `toJSON()` |
+| `NumberNode` | `nodes/NumberNode.js` | Single numeric input/output | `getValue()`, `createDOM()` |
+| `ConstantNode` | `nodes/ConstantNode.js` | Constant value with inline editing | `getValue()`, `createDOM()` |
+| `GroupNode` | `nodes/GroupNode.js` | Array of named numeric values | `getValue()`, `createDOM()` |
+| `CalcNode` | `nodes/CalcNode.js` | Mathematical operations | `getValue()`, `createDOM()` |
+| `OutputNode` | `nodes/OutputNode.js` | Results display in table format | `getValue()`, `createDOM()` |
+| `MapNode` | `nodes/MapNode.js` | X→Y value mapping | `getValue()`, `getUnmapped()`, `createDOM()` |
+| `NodeFactory` | `nodes/NodeFactory.js` | Node creation with localization | `createNode()`, `create*At()` methods |
+| `Edge` | `core/Edge.js` | Connection between ports | `toJSON()` |
+| `DataType` | `core/DataType.js` | Type validation for connections | `canConnect()`, `getNodeType()` |
+| `History` | `core/History.js` | Undo/redo with autosave | `save()`, `undo()`, `redo()`, `autoSave()` |
+| `Viewport` | `renderer/Viewport.js` | Camera control (pan with right mouse) | `attach()`, `update()`, `getOffset()` |
+| `DomRenderer` | `renderer/DomRenderer.js` | Node DOM and edge SVG rendering | `render()`, `addHandles()`, `setVirtual()` |
+| `EdgeRenderer` | `renderer/EdgeRenderer.js` | SVG edge rendering with arrows | `renderEdges()`, `getBorderPoint()` |
+| `EditableTitle` | `ui/EditableTitle.js` | Click-to-edit title with symbols | `startEdit()`, `finish()`, `getElement()` |
+| `OptimizationPanel` | `ui/OptimizationPanel.js` | Performance settings with benchmarking | `buildPanel()`, `apply()`, `updateGains()` |
+| `ContextMenu` | `ui/ContextMenu.js` | Right-click context menu | `show()`, `close()` |
+| `CustomModal` | `ui/CustomModal.js` | Custom modal dialogs | `alert()`, `confirm()`, `prompt()` |
+| `LanguageSwitcher` | `ui/LanguageSwitcher.js` | Language toggle dropdown | `init()`, `toggleMenu()` |
+| `LanguageManager` | `i18n/LanguageManager.js` | Core i18n with subscription | `t()`, `setLanguage()`, `subscribe()` |
+| `BenchmarkService` | `services/BenchmarkService.js` | Performance benchmarking | `runBenchmark()`, `captureState()` |
+| `PersistenceService` | `services/PersistenceService.js` | Save/load functionality | `saveToStorage()`, `exportToFile()` |
+| `EventBus` | `services/EventBus.js` | Event pub/sub system | `on()`, `off()`, `emit()` |
+| `SymbolMapper` | `utils/SymbolMapper.js` | Symbol substitution | `replaceSymbols()` |
+| `FPSCounter` | `utils/FPSCounter.js` | FPS monitoring | `start()`, `measure()` |
+| `OPTIMIZATIONS` | `config/Optimizations.js` | Optimization descriptors | None |
 
 ---
 
@@ -151,23 +203,14 @@ import { OutputNode } from './nodes/OutputNode.js';
 
 const graph = new Graph();
 
-// Create nodes manually
 const numNode = new NumberNode(null, 100, 100, "My Number", 42);
 const outNode = new OutputNode(null, 400, 100, "Output", []);
 
 graph.addNode(numNode);
 graph.addNode(outNode);
-
-// Connect nodes
 graph.addEdge(numNode.id, outNode.id);
-
-// Reevaluate all calculations
 graph.reevaluateAll();
 graph.updateAllOutputs();
-
-// Save/load state
-const serialized = graph.toSerial();
-graph.loadFrom(serialized);
 ```
 
 ### Creating Nodes with Factory (Recommended)
@@ -175,7 +218,6 @@ graph.loadFrom(serialized);
 ```javascript
 import { NodeFactory } from './nodes/NodeFactory.js';
 
-// Creates node at center of viewport
 const numberNode = NodeFactory.createNumberAt(200, 150, 100);
 const constantNode = NodeFactory.createConstantAt(200, 250, 3.14159);
 const groupNode = NodeFactory.createGroupAt(200, 350);
@@ -191,7 +233,6 @@ graph.addNode(numberNode);
 ```javascript
 import { typeSystem, DataType } from './core/DataType.js';
 
-// Check if two node types can connect
 const canConnect = typeSystem.canConnect(
   DataType.NUM,   // source type
   'number',       // source node type
@@ -199,7 +240,6 @@ const canConnect = typeSystem.canConnect(
   'output'        // target node type
 );
 
-// Get node's data type
 const nodeType = typeSystem.getNodeType(someNode);
 ```
 
@@ -208,16 +248,10 @@ const nodeType = typeSystem.getNodeType(someNode);
 ```javascript
 import { History } from './core/History.js';
 
-const history = new History(graph, 50); // max 50 steps
-
-// After any modification:
+const history = new History(graph, 50);
 history.save();
-
-// Undo/redo:
 history.undo();
 history.redo();
-
-// Auto-save is automatic, but you can force:
 history.autoSave();
 ```
 
@@ -233,13 +267,7 @@ const renderer = new DomRenderer(graph, nodesLayer, viewportElement, eventBus);
 renderer.setViewport(viewport);
 renderer.setHistory(history);
 renderer.render();
-
-// Enable virtualization for performance
-renderer.setVirtual(true);
-
-// Access viewport controls
-viewport.setOffset(100, 200); // pan
-window.setZoom(1.5); // zoom using global helper
+renderer.setVirtual(true); // Enable virtualization for performance
 ```
 
 ### Internationalization (i18n)
@@ -247,39 +275,25 @@ window.setZoom(1.5); // zoom using global helper
 ```javascript
 import { i18n, t } from './i18n/LanguageManager.js';
 
-// Get current language
 const lang = i18n.getCurrentLanguage(); // 'en' or 'ru'
-
-// Translate a string
 const translated = t('common.ok'); // 'OK' or 'ОК'
 
-// Translate with parameters
-const welcome = t('common.welcome', { name: 'User' });
+i18n.setLanguage('ru');
 
-// Set language dynamically
-i18n.setLanguage('ru'); // All subscribed UI updates automatically
-
-// Subscribe to language changes
 const unsubscribe = i18n.subscribe((lang, translations) => {
   console.log(`Language changed to ${lang}`);
   this.updateUI();
 });
 
-// Unsubscribe when component is destroyed
 unsubscribe();
-
-// Get available languages
-const languages = i18n.getAvailableLanguages();
-// Returns: [{ code: 'en', name: 'English', nativeName: 'English' }, ...]
 ```
 
 ### Adding New Translations
 
 1. Add keys to both `src/i18n/locales/ru.js` and `src/i18n/locales/en.js`
-2. Follow the nested object structure: `category.subcategory.key`
+2. Use nested object structure: `category.subcategory.key`
 3. Use `t('category.subcategory.key')` in components
 
-Example:
 ```javascript
 // locales/en.js
 export const en = {
@@ -290,8 +304,8 @@ export const en = {
 };
 
 // In component
-const text = t('myFeature.buttonText'); // 'Click Me'
-const desc = t('myFeature.description', { color: 'red' }); // 'This is a red button'
+const text = t('myFeature.buttonText');
+const desc = t('myFeature.description', { color: 'red' });
 ```
 
 ### Performance Benchmarking
@@ -301,15 +315,9 @@ import { BenchmarkService } from './services/BenchmarkService.js';
 import { OPTIMIZATIONS } from './config/Optimizations.js';
 
 const benchmarkService = new BenchmarkService(graph, fpsCounter, OPTIMIZATIONS);
-
-// Run automatic benchmark (tests each optimization)
 const result = await benchmarkService.runBenchmark();
 console.log(`Baseline FPS: ${result.baseline}`);
 console.log(`Gains: ${result.gains}`);
-
-// Apply optimizations manually
-benchmarkService.setVirtual(true);
-benchmarkService.setWillChange(true);
 ```
 
 ### Save/Load Functionality
@@ -318,17 +326,9 @@ benchmarkService.setWillChange(true);
 import { PersistenceService } from './services/PersistenceService.js';
 
 const persistence = new PersistenceService(graph);
-
-// Auto-save to localStorage
 persistence.saveToStorage(viewport, currentZoom, qualityValue);
-
-// Load from localStorage
 const saved = persistence.loadFromStorage();
-
-// Export to .amnk file
 persistence.exportToFile();
-
-// Import from .amnk file
 const success = await persistence.importFromFile(file);
 ```
 
@@ -337,37 +337,26 @@ const success = await persistence.importFromFile(file);
 ```javascript
 import { modal } from './ui/CustomModal.js';
 
-// Alert
 await modal.alert('Something happened');
-
-// Confirm
 const confirmed = await modal.confirm('Are you sure?');
-
-// Prompt
 const value = await modal.prompt('Enter value:', 'default');
 ```
 
-### Event Bus for Component Communication
+### Event Bus
 
 ```javascript
 import { EventBus } from './services/EventBus.js';
 
 const bus = new EventBus();
-
-// Subscribe to event
-bus.on('node:created', (data) => {
-  console.log('Node created:', data.nodeId);
-});
-
-// Emit event
+bus.on('node:created', (data) => console.log(data.nodeId));
 bus.emit('node:created', { nodeId: 123 });
 ```
 
 ---
 
-## Versioning System for Developers
+## Versioning System
 
-Amenoke follows a **structured versioning scheme** combining semantic versioning, pre-release labels, and change-type codes.
+Amenoke follows a structured versioning scheme combining semantic versioning, pre-release labels, and change-type codes.
 
 ### Format
 `MAJOR.MINOR.PATCH[-PRERELEASE][-CODETYPE]`
@@ -384,63 +373,14 @@ Amenoke follows a **structured versioning scheme** combining semantic versioning
 
 | Code | Meaning | When to Use |
 |------|---------|--------------|
-| `API` | Public API changes (new/removed methods) | After modifying `Graph.js` public interface |
-| `TYP` | Type system enhancements | After changes to type checking in `DataType.js` or `Node.js` |
+| `API` | Public API changes | After modifying `Graph.js` public interface |
+| `TYP` | Type system enhancements | After changes to `DataType.js` or `Node.js` |
 | `SEC` | Security fixes | After patching vulnerabilities |
 | `OPT` | Performance optimizations | After changes in `Optimizations.js` or renderer |
-| `DEP` | Deprecations (still working) | After marking old features as deprecated |
-| `REM` | Removed deprecated features | After deleting old functionality |
+| `DEP` | Deprecations | After marking old features as deprecated |
+| `REM` | Removed features | After deleting old functionality |
 | `SYN` | Syntax/parser changes | After modifying node connection rules |
 | `I18N` | Internationalization | After adding/updating language support |
-
-### Full Version Examples
-
-| Human Readable | System Version | Meaning |
-|----------------|----------------|---------|
-| Internationalization RC1 | `1.2.0-rc1-I18N` | Multi-language support, release candidate 1 |
-| Type System RC1 | `1.1.0-rc1-TYP` | New type system, release candidate 1 |
-| Security Hotfix | `1.0.2-SEC` | Critical security patch |
-| API Redesign | `2.0.0-beta1-API` | Breaking API changes in beta |
-| Performance Boost | `1.0.1-OPT` | Optimized evaluation engine |
-
-### How to Bump Version
-
-1. Determine change type from commit history
-2. Increment component according to rules:
-   - Breaking change → `MAJOR+1`, reset `MINOR`/`PATCH` to 0
-   - New feature → `MINOR+1`, reset `PATCH` to 0  
-   - Bug fix → `PATCH+1`
-3. Append appropriate `CODETYPE` based on primary change
-4. For pre-releases, append `-alpha/beta/rcN`
-
-Example after merging i18n PR:
-```
-Previous: 1.1.1-CONST
-Change: Added multi-language support
-New version: 1.2.0-rc1-I18N
-```
-
----
-
-## Module Loading Strategy
-
-The application uses ES6 modules with an import map defined in `amenodes.html`:
-
-```html
-<script type="importmap">
-{
-  "imports": {
-    "./src/main.js": "./src/main.js",
-    "./src/i18n/LanguageManager.js": "./src/i18n/LanguageManager.js",
-    "./src/i18n/locales/ru.js": "./src/i18n/locales/ru.js",
-    "./src/i18n/locales/en.js": "./src/i18n/locales/en.js",
-    "./src/ui/LanguageSwitcher.js": "./src/ui/LanguageSwitcher.js"
-  }
-}
-</script>
-```
-
-All relative paths resolve from the document root. When deploying, ensure the directory structure matches exactly as shown above.
 
 ---
 
@@ -456,64 +396,52 @@ git checkout -b feature/your-feature-name
 
 ### Commit Convention
 
-Use semantic commit messages:
-
 | Prefix | Purpose |
 |--------|---------|
 | `feat:` | New feature or node type |
 | `fix:` | Bug fix |
-| `refactor:` | Code restructuring without behavior change |
-| `style:` | CSS/visual changes only |
+| `refactor:` | Code restructuring |
+| `style:` | CSS/visual changes |
 | `docs:` | Documentation updates |
 | `perf:` | Performance optimization |
-| `i18n:` | Translation or language-related changes |
+| `i18n:` | Translation changes |
 | `chore:` | Build/config changes |
 
 ### Before Committing
 
 1. Test all existing node types
-2. Run manual FPS benchmark (open optimization panel → "Recalculate optimization impact")
-3. Ensure no regression in undo/redo functionality
-4. Verify import/export compatibility with previous saves
-5. Test language switching for all UI components
+2. Run manual FPS benchmark
+3. Ensure no regression in undo/redo
+4. Verify import/export compatibility
+5. Test language switching
 
 ### Pull Request Process
 
 1. Push to your feature branch
 2. Open PR against `main` branch
-3. Include description of changes and test results
-4. Request review from project maintainer
-
----
-
-## Performance Optimization Guidelines
-
-The optimization system benchmarks each technique independently. When adding performance-related code:
-
-1. Add entry to `config/Optimizations.js` with `impl: true` if implementable
-2. Implement toggle logic in `applyOptimizations()` function
-3. The benchmarking framework automatically measures FPS impact
-
-Important: The optimization panel runs benchmarks sequentially. Each optimization is measured in isolation for accurate gain calculation.
+3. A preview deployment will automatically appear as a comment
+4. Wait for validation checks (syntax, HTML)
+5. Request review from project maintainer
+6. After approval, squash and merge
 
 ---
 
 ## Contact & Support
 
 <a href="https://t.me/Amenoke" target="_blank">
-<img src=https://img.shields.io/badge/telegram-%2300acee.svg?color=1DA1F2&style=for-the-badge&logo=telegram&logoColor=white alt=telegram style="margin-bottom: 5px;" />
+<img src=https://img.shields.io/badge/telegram-%2300acee.svg?color=1DA1F2&style=for-the-badge&logo=telegram&logoColor=white alt=telegram>
 </a>
 
 <a href="https://github.com/inzexg-coder" target="_blank">
-<img src=https://img.shields.io/badge/github-%2300acee.svg?color=181717&style=for-the-badge&logo=github&logoColor=white alt=github style="margin-bottom: 5px;" />
+<img src=https://img.shields.io/badge/github-%2300acee.svg?color=181717&style=for-the-badge&logo=github&logoColor=white alt=github>
 </a>
 
 <a href="mailto:amenokeakira@gmail.com" target="_blank">
-<img src=https://img.shields.io/badge/gmail-%2300acee.svg?color=EA4335&style=for-the-badge&logo=gmail&logoColor=white alt=gmail style="margin-bottom: 5px;" />
+<img src=https://img.shields.io/badge/gmail-%2300acee.svg?color=EA4335&style=for-the-badge&logo=gmail&logoColor=white alt=gmail>
 </a>
 
 ---
 
-**Repository:** [https://github.com/inzexg-coder/Amenodes](https://github.com/inzexg-coder/Amenodes)  
-**Live Demo:** [https://amenoke.ru/amenodes.html](https://amenoke.ru/amenodes.html)  
-**Wiki:** [https://github.com/inzexg-coder/Amenodes/wiki](https://github.com/inzexg-coder/Amenodes/wiki)
+**Repository:** https://github.com/inzexg-coder/Amenodes  
+**Live Demo:** https://amenoke.ru/amenodes.html  
+**Wiki:** https://github.com/inzexg-coder/Amenodes/wiki
