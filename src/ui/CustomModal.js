@@ -154,41 +154,40 @@ export class CustomModal {
     });
   }
 
-  prompt(message, defaultValue = '', title = 'Enter Value') {
-    return new Promise((resolve) => {
-      let inputValue = defaultValue;
-      
-      const body = document.createElement('div');
-      body.textContent = message;
-      
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.value = defaultValue;
-      input.className = 'custom-modal-input';
-      input.placeholder = 'Enter value...';
-      input.onkeydown = (e) => {
-        if (e.key === 'Enter') {
+ prompt(message, defaultValue = '', title = 'Enter Value') {
+  return new Promise((resolve) => {
+    let inputValue = defaultValue;
+    
+    const body = document.createElement('div');
+    body.textContent = message;
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = defaultValue;
+    input.className = 'custom-modal-input';
+    input.placeholder = 'Enter value...';
+    input.onkeydown = (e) => {
+      if (e.key === 'Enter') {
+        resolve(inputValue);
+        this.close();
+      }
+    };
+    
+    body.appendChild(input);
+    
+    this.showModal({
+      title,
+      bodyElement: body,
+      onShow: () => input.focus(),
+      buttons: [
+        { text: 'Cancel', type: 'secondary', callback: () => resolve(null) },
+        { text: 'OK', type: 'primary', callback: () => {
+          inputValue = input.value;
           resolve(inputValue);
-          this.close();
-        }
-      };
-      
-      body.appendChild(input);
-      
-      this.showModal({
-        title,
-        bodyElement: body,
-        onShow: () => input.focus(),
-        buttons: [
-          { text: 'Cancel', type: 'secondary', callback: () => resolve(null) },
-          { text: 'OK', type: 'primary', callback: () => {
-            inputValue = input.value;
-            resolve(inputValue);
-          }}
-        ]
-      });
+        }}
+      ]
     });
-  }
+  });
 
   showModal(options) {
     this.close();
