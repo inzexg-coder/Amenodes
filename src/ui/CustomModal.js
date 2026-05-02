@@ -131,30 +131,39 @@ export class CustomModal {
     document.head.appendChild(style);
   }
 
-  alert(message, title = 'Notification') {
+  alert(message, title = null) {
     return new Promise((resolve) => {
       this.showModal({
-        title,
+        title: title || 'Notification',
         body: message,
-        buttons: [{ text: 'OK', type: 'primary', callback: resolve }]
+        buttons: [{ text: 'OK', type: 'primary', callback: () => {
+          this.close();
+          resolve();
+        }}]
       });
     });
   }
 
-  confirm(message, title = 'Confirm') {
+  confirm(message, title = null) {
     return new Promise((resolve) => {
       this.showModal({
-        title,
+        title: title || 'Confirm',
         body: message,
         buttons: [
-          { text: 'Cancel', type: 'secondary', callback: () => resolve(false) },
-          { text: 'OK', type: 'danger', callback: () => resolve(true) }
+          { text: 'Cancel', type: 'secondary', callback: () => {
+            this.close();
+            resolve(false);
+          }},
+          { text: 'OK', type: 'danger', callback: () => {
+            this.close();
+            resolve(true);
+          }}
         ]
       });
     });
   }
 
-  prompt(message, defaultValue = '', title = 'Enter Value') {
+  prompt(message, defaultValue = '', title = null) {
     return new Promise((resolve) => {
       let resolved = false;
       
@@ -170,8 +179,8 @@ export class CustomModal {
       const doResolve = (value) => {
         if (!resolved) {
           resolved = true;
-          resolve(value);
           this.close();
+          resolve(value);
         }
       };
       
@@ -185,23 +194,17 @@ export class CustomModal {
       body.appendChild(input);
       
       this.showModal({
-        title,
+        title: title || 'Enter Value',
         bodyElement: body,
         onShow: () => {
-          input.focus();
-          input.select();
+          setTimeout(() => {
+            input.focus();
+            input.select();
+          }, 50);
         },
         buttons: [
-          { 
-            text: 'Cancel', 
-            type: 'secondary', 
-            callback: () => doResolve(null)
-          },
-          { 
-            text: 'OK', 
-            type: 'primary', 
-            callback: () => doResolve(input.value)
-          }
+          { text: 'Cancel', type: 'secondary', callback: () => doResolve(null) },
+          { text: 'OK', type: 'primary', callback: () => doResolve(input.value) }
         ]
       });
     });
@@ -238,7 +241,8 @@ export class CustomModal {
       const button = document.createElement('button');
       button.textContent = btn.text;
       button.className = `custom-modal-btn custom-modal-btn-${btn.type}`;
-      button.onclick = () => {
+      button.onclick = (e) => {
+        e.stopPropagation();
         if (btn.callback) btn.callback();
       };
       buttonsDiv.appendChild(button);
@@ -250,7 +254,12 @@ export class CustomModal {
     overlay.appendChild(modal);
     
     overlay.onclick = (e) => {
-      if (e.target === overlay) this.close();
+      if (e.target === overlay) {
+        this.close();
+        if (buttons[0] && buttons[0].callback) {
+          buttons[0].callback();
+        }
+      }
     };
     
     document.body.appendChild(overlay);
