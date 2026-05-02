@@ -49,4 +49,32 @@ export class PersistenceService {
       const backup = this.graph.toSerial();
       reader.onload = (ev) => {
         try {
-          const data = JSON.parse(ev.target
+          const data = JSON.parse(ev.target.result);
+          this.graph.loadFrom(data);
+          if (data.viewportOffsetX !== undefined && window._viewport) {
+            window._viewport.setOffset(data.viewportOffsetX, data.viewportOffsetY);
+          }
+          if (data.viewportZoom !== undefined && window.setZoom) {
+            window.setZoom(data.viewportZoom);
+          }
+          if (data.designQuality !== undefined && window.applyDesignQuality) {
+            window.applyDesignQuality(data.designQuality);
+          }
+          resolve(true);
+        } catch (err) {
+          this.graph.loadFrom(backup);
+          resolve(false);
+        }
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  showAutosaveStatus() {
+    const statusEl = document.getElementById('autosaveStatus');
+    if (statusEl) {
+      statusEl.style.opacity = '1';
+      setTimeout(() => { if (statusEl) statusEl.style.opacity = '0'; }, 1500);
+    }
+  }
+}
