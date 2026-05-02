@@ -42,6 +42,10 @@ class LanguageManager {
     }));
   }
 
+  normalizeKey(key) {
+    return key.replace(/\s+/g, '').replace(/[^a-zA-Zа-яА-Я0-9]/g, '');
+  }
+
   t(key, params = {}) {
     const keys = key.split('.');
     let value = this.translations;
@@ -62,6 +66,11 @@ class LanguageManager {
     return key;
   }
 
+  // Direct translation by exact key path
+  translate(key, params = {}) {
+    return this.t(key, params);
+  }
+
   subscribe(listener) {
     this.listeners.push(listener);
     return () => {
@@ -76,14 +85,17 @@ class LanguageManager {
     }
   }
 
-  translateNodeTitle(nodeType, defaultTitle) {
-    const nodeKey = this.t(`nodes.${nodeType}`);
-    if (nodeKey !== `nodes.${nodeType}`) return nodeKey;
-    return defaultTitle;
+  translateNodeTitle(nodeType, currentTitle, originalTitle) {
+    const translated = this.t(`nodes.${nodeType}`);
+    if (translated !== `nodes.${nodeType}` && currentTitle === originalTitle) {
+      return translated;
+    }
+    return currentTitle;
   }
 }
 
 export const i18n = new LanguageManager();
+
 export function t(key, params = {}) {
   return i18n.t(key, params);
 }
