@@ -93,6 +93,7 @@ export class TypeSystem {
 
   getNodeType(node) {
     if (node.type === 'number') return DataType.NUM;
+    if (node.type === 'constant') return DataType.NUM;
     if (node.type === 'group') return DataType.ARRAY;
     if (node.type === 'output') return DataType.AUTO;
     if (node.type === 'calc') return DataType.UNCERT;
