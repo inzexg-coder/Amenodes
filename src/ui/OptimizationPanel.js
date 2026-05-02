@@ -1,4 +1,5 @@
 import { OPTIMIZATIONS } from '../config/Optimizations.js';
+import { i18n, t } from '../i18n/LanguageManager.js';
 
 export class OptimizationPanel {
   constructor(panelId, toggleBtnId, closeBtnId, applyBtnId, rebenchBtnId, benchmarkService, renderer, history) {
@@ -28,6 +29,10 @@ export class OptimizationPanel {
       this.buildPanel(window.currentQualityValue || 100);
       this.panel.classList.remove('hidden');
     };
+    
+    i18n.subscribe(() => {
+      this.buildPanel(window.currentQualityValue || 100);
+    });
   }
 
   setDesignQualityCallback(callback) {
@@ -63,16 +68,25 @@ export class OptimizationPanel {
       }
       container.appendChild(item);
     });
+    
+    this.applyBtn.textContent = t('optimizations.fpsGain') + ' / ' + t('common.apply');
+    this.rebenchBtn.textContent = t('optimizations.fpsGain') + ' >';
   }
 
   createSliderInfo(opt, currentValue) {
     const info = document.createElement('div');
     info.className = 'opt-info';
+    
+    const optName = t(`optimizations.${opt.name.replace(/ /g, '')}`) || opt.name;
+    const optDesc = t(`optimizations.${opt.name.replace(/ /g, '')}Desc`) || opt.desc;
+    const optPros = t(`optimizations.${opt.name.replace(/ /g, '')}Pros`) || opt.pros;
+    const optCons = t(`optimizations.${opt.name.replace(/ /g, '')}Cons`) || opt.cons;
+    
     info.innerHTML = `
-      <div class="opt-title">${opt.name}</div>
-      <div class="opt-desc">${opt.desc}</div>
-      <div class="opt-pros">${opt.pros}</div>
-      <div class="opt-cons">${opt.cons}</div>
+      <div class="opt-title">${optName}</div>
+      <div class="opt-desc">${optDesc}</div>
+      <div class="opt-pros">${optPros}</div>
+      <div class="opt-cons">${optCons}</div>
     `;
     
     const sliderDiv = document.createElement('div');
@@ -96,14 +110,20 @@ export class OptimizationPanel {
       const newValue = parseInt(e.target.value);
       if (this.onQualityChangeCallback) this.onQualityChangeCallback(newValue);
       valueSpan.innerText = newValue + '%';
-      const modeMsg = newValue <= 20 ? " (ЭКСТРЕМАЛЬНЫЙ)" : (newValue <= 50 ? " (Низкое)" : (newValue <= 80 ? " (Среднее)" : " (Высокое)"));
+      
+      let modeMsg = '';
+      if (newValue <= 20) modeMsg = ` (${t('optimizations.extreme')})`;
+      else if (newValue <= 50) modeMsg = ` (${t('optimizations.low')})`;
+      else if (newValue <= 80) modeMsg = ` (${t('optimizations.medium')})`;
+      else modeMsg = ` (${t('optimizations.high')})`;
+      
       const fpsDiv = info.querySelector('.opt-fps');
       if (fpsDiv) {
-        fpsDiv.innerHTML = `Текущее качество: ${newValue}%${modeMsg}<br>Упрощён на ${100 - newValue}%`;
+        fpsDiv.innerHTML = `${t('optimizations.currentQuality')}: ${newValue}%${modeMsg}<br>${t('optimizations.simplifiedBy')} ${100 - newValue}%`;
       } else {
         const newFpsDiv = document.createElement('div');
         newFpsDiv.className = 'opt-fps';
-        newFpsDiv.innerHTML = `Текущее качество: ${newValue}%${modeMsg}<br>Упрощён на ${100 - newValue}%`;
+        newFpsDiv.innerHTML = `${t('optimizations.currentQuality')}: ${newValue}%${modeMsg}<br>${t('optimizations.simplifiedBy')} ${100 - newValue}%`;
         info.appendChild(newFpsDiv);
       }
     };
@@ -114,7 +134,12 @@ export class OptimizationPanel {
     
     const fpsDiv = document.createElement('div');
     fpsDiv.className = 'opt-fps';
-    fpsDiv.innerHTML = `Текущее качество: ${currentValue}%`;
+    let modeMsg = '';
+    if (currentValue <= 20) modeMsg = ` (${t('optimizations.extreme')})`;
+    else if (currentValue <= 50) modeMsg = ` (${t('optimizations.low')})`;
+    else if (currentValue <= 80) modeMsg = ` (${t('optimizations.medium')})`;
+    else modeMsg = ` (${t('optimizations.high')})`;
+    fpsDiv.innerHTML = `${t('optimizations.currentQuality')}: ${currentValue}%${modeMsg}<br>${t('optimizations.simplifiedBy')} ${100 - currentValue}%`;
     info.appendChild(fpsDiv);
     
     return info;
@@ -123,14 +148,21 @@ export class OptimizationPanel {
   createOptInfo(opt, idx) {
     const info = document.createElement('div');
     info.className = 'opt-info';
+    
+    const optName = t(`optimizations.${opt.name.replace(/ /g, '')}`) || opt.name;
+    const optDesc = t(`optimizations.${opt.name.replace(/ /g, '')}Desc`) || opt.desc;
+    const optPros = t(`optimizations.${opt.name.replace(/ /g, '')}Pros`) || opt.pros;
+    const optCons = t(`optimizations.${opt.name.replace(/ /g, '')}Cons`) || opt.cons;
+    
     const gain = this.currentGains[idx] || 0;
-    const gainText = gain > 0 ? `+${gain}%` : (gain === 0 ? '0%' : 'не измерено');
+    const gainText = gain > 0 ? `+${gain}%` : (gain === 0 ? '0%' : t('optimizations.notMeasured'));
+    
     info.innerHTML = `
-      <div class="opt-title">${opt.name}</div>
-      <div class="opt-desc">${opt.desc}</div>
-      <div class="opt-pros">${opt.pros}</div>
-      <div class="opt-cons">${opt.cons}</div>
-      <div class="opt-fps">Прирост FPS: ${gainText}</div>
+      <div class="opt-title">${optName}</div>
+      <div class="opt-desc">${optDesc}</div>
+      <div class="opt-pros">${optPros}</div>
+      <div class="opt-cons">${optCons}</div>
+      <div class="opt-fps">${t('optimizations.fpsGain')}: ${gainText}</div>
     `;
     return info;
   }
