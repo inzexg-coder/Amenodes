@@ -1,4 +1,5 @@
 import { Node } from '../core/Node.js';
+import { i18n, t } from '../i18n/LanguageManager.js';
 
 export class CalcNode extends Node {
   constructor(id, x, y, title, calcType) {
@@ -22,31 +23,40 @@ export class CalcNode extends Node {
     info.className = 'calc-result';
     
     const typeMap = {
-      div3: 'Погрешность измерения',
-      div_sqrt12: 'Погрешность округления',
-      sqrt_sum_sq: 'Суммарная погрешность'
+      div3: t('calcTypes.div3'),
+      div_sqrt12: t('calcTypes.div_sqrt12'),
+      sqrt_sum_sq: t('calcTypes.sqrt_sum_sq')
     };
     
-    info.innerHTML = `<strong>${typeMap[this.calcType] || 'Погрешность'}</strong><br>
-                      Результат: ${this.resultStr}<br>
-                      <span style="font-size:11px">входов: ${graph.getIncomingEdges(this.id).length}</span>`;
+    const updateInfo = () => {
+      info.innerHTML = `<strong>${typeMap[this.calcType] || t('calcTypes.div3')}</strong><br>
+                        ${t('calcTypes.result')}: ${this.resultStr}<br>
+                        <span style="font-size:11px">${t('calcTypes.inputs')}: ${graph.getIncomingEdges(this.id).length}</span>`;
+    };
+    
+    updateInfo();
+    
+    const unsubscribe = i18n.subscribe(() => {
+      const newTypeMap = {
+        div3: t('calcTypes.div3'),
+        div_sqrt12: t('calcTypes.div_sqrt12'),
+        sqrt_sum_sq: t('calcTypes.sqrt_sum_sq')
+      };
+      info.innerHTML = `<strong>${newTypeMap[this.calcType] || t('calcTypes.div3')}</strong><br>
+                        ${t('calcTypes.result')}: ${this.resultStr}<br>
+                        <span style="font-size:11px">${t('calcTypes.inputs')}: ${graph.getIncomingEdges(this.id).length}</span>`;
+    });
     
     div.appendChild(info);
     renderer.addHandles(div, this.id, null);
     renderer.applyOptStyles(div);
     
-    this.addClickHandler(div);
-    return div;
-  }
-
-  addClickHandler(div) {
-    div.onclick = (e) => {
-      if (e.target.closest('.node-handle') || e.target.closest('input') || 
-          e.target.closest('button') || e.target.closest('.title-editable')) return;
-      e.stopPropagation();
-      document.querySelectorAll('.node').forEach(el => el.classList.remove('node-temp-selected'));
-      div.classList.add('node-temp-selected');
-      setTimeout(() => div.classList.remove('node-temp-selected'), 800);
+    const originalRemove = div.remove;
+    div.remove = function() {
+      unsubscribe();
+      if (originalRemove) originalRemove.call(this);
     };
+    
+    return div;
   }
 }
