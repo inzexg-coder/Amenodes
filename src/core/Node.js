@@ -1,4 +1,5 @@
 import { EditableTitle } from '../ui/EditableTitle.js';
+import { i18n } from '../i18n/LanguageManager.js';
 
 export class Node {
   constructor(id, type, x, y, title) {
@@ -9,6 +10,7 @@ export class Node {
     this.title = title;
     this.important = false;
     this.graph = null;
+    this.originalTitle = title; 
   }
 
   getValue() {
@@ -22,8 +24,20 @@ export class Node {
       x: this.x,
       y: this.y,
       title: this.title,
-      important: this.important
+      important: this.important,
+      originalTitle: this.originalTitle
     };
+  }
+
+  getLocalizedTitle() {
+    if (this.title !== this.originalTitle) {
+      return this.title;
+    }
+    const translated = i18n.t(`nodes.${this.type}`);
+    if (translated !== `nodes.${this.type}`) {
+      return translated;
+    }
+    return this.title;
   }
 
   createDOM(graph, renderer) {
@@ -48,8 +62,10 @@ export class Node {
     const header = document.createElement('div');
     header.className = headerClass;
 
-    const titleEditor = new EditableTitle(this.title, (newTitle) => {
+    const localizedTitle = this.getLocalizedTitle();
+    const titleEditor = new EditableTitle(localizedTitle, (newTitle) => {
       this.title = newTitle;
+      this.originalTitle = newTitle;
       graph.reevaluateAll();
       renderer.render();
       renderer.save();
