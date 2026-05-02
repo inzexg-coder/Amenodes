@@ -811,3 +811,11 @@ hr {
   border: 2px solid #6fcf97;
   box-shadow: 0 0 8px #6fcf97;
 }
+
+.node[data-type="constant"] {
+  border-left: 3px solid #ffaa55;
+}
+
+.node[data-type="constant"] .node-header {
+  background: linear-gradient(135deg, #2a2a3a, #1a1a2a);
+}
