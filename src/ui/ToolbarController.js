@@ -13,6 +13,7 @@ export class ToolbarController {
     document.getElementById('undoBtn').onclick = () => this.undo();
     document.getElementById('redoBtn').onclick = () => this.redo();
     document.getElementById('addEmptyBtn').onclick = () => this.addNumberNode();
+    document.getElementById('addConstantBtn').onclick = () => this.addConstantNode();
     document.getElementById('addGroupBtn').onclick = () => this.addGroupNode();
     document.getElementById('addOutputBtn').onclick = () => this.addOutputNode();
     document.getElementById('exportBtn').onclick = () => this.export();
