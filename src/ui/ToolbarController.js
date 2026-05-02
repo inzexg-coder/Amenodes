@@ -1,6 +1,5 @@
 import { NodeFactory } from '../nodes/NodeFactory.js';
 import { modal } from './CustomModal.js';
-import { ConstantNode } from '../nodes/ConstantNode.js';
 
 export class ToolbarController {
   constructor(graph, renderer, history, viewport, persistenceService) {
@@ -15,7 +14,7 @@ export class ToolbarController {
     document.getElementById('undoBtn').onclick = () => this.undo();
     document.getElementById('redoBtn').onclick = () => this.redo();
     document.getElementById('addEmptyBtn').onclick = () => this.addNumberNode();
-    document.getElementById('addConstantBtn').onclick = () => this.addConstantNode();
+    document.getElementById('addConstantBtn').onclick = () => this.addConstantNode(); // async
     document.getElementById('addGroupBtn').onclick = () => this.addGroupNode();
     document.getElementById('addOutputBtn').onclick = () => this.addOutputNode();
     document.getElementById('exportBtn').onclick = () => this.export();
@@ -54,17 +53,16 @@ export class ToolbarController {
     this.history.save();
   }
   
-  addConstantNode() {
+  async addConstantNode() { 
     const { x, y } = this.getCenterCoords();
-    let value = 0;
-    const input = modal.prompt('Введите значение константы:', '0');
-    if (input !== null) {
-      value = parseFloat(input) || 0;
+    const input = await modal.prompt('Введите значение константы:', '0');
+    if (input !== null && input !== undefined) {
+      const value = parseFloat(input) || 0;
+      const node = NodeFactory.createConstantAt(x - 100, y - 30, value);
+      this.graph.addNode(node);
+      this.renderer.render();
+      this.history.save();
     }
-    const node = NodeFactory.createConstantAt(x - 100, y - 30, value);
-    this.graph.addNode(node);
-    this.renderer.render();
-    this.history.save();
   }
   
   addGroupNode() {
