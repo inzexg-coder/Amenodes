@@ -20,9 +20,7 @@ export class ContextMenu {
     const sourceNode = this.graph.getNode(sourceId);
     const baseX = sourceNode ? sourceNode.x + 280 : 500;
     const baseY = sourceNode ? sourceNode.y + 300 : 300;
-    
-    this.addMenuItem(menu, 'Число + связь', () => this.createAndConnect('number', baseX, baseY, sourceId));
-    this.addMenuItem(menu, 'Группа + связь', () => this.createAndConnect('group', baseX, baseY, sourceId));
+
     this.addMenuItem(menu, 'Вывод + связь', () => this.createAndConnect('output', baseX, baseY, sourceId));
     
     menu.appendChild(document.createElement('hr'));
