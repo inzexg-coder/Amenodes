@@ -51,7 +51,20 @@ export class ToolbarController {
     this.renderer.render();
     this.history.save();
   }
-
+  
+  addConstantNode() {
+    const { x, y } = this.getCenterCoords();
+    let value = 0;
+    const input = prompt('Введите значение константы:', '0');
+    if (input !== null) {
+      value = parseFloat(input) || 0;
+    }
+    const node = NodeFactory.createConstantAt(x - 100, y - 30, value);
+    this.graph.addNode(node);
+    this.renderer.render();
+    this.history.save();
+  }
+  
   addGroupNode() {
     const { x, y } = this.getCenterCoords();
     const node = NodeFactory.createGroupAt(x - 120, y - 30);
