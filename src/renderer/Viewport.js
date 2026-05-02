@@ -38,6 +38,9 @@ export class Viewport {
     this.y = this.originY + dy;
     this.update();
     if (this.onChangeCallback) this.onChangeCallback();
+    
+    window._viewportX = this.x;
+    window._viewportY = this.y;
   }
 
   onMouseUp() {
