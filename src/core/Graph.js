@@ -263,6 +263,8 @@ export class Graph {
       let node;
       if (nodeData.type === 'number') {
         node = new NumberNode(nodeData.id, nodeData.x, nodeData.y, nodeData.title, nodeData.val);
+      } else if (nodeData.type === 'constant') {
+        node = new ConstantNode(nodeData.id, nodeData.x, nodeData.y, nodeData.title, nodeData.val);
       } else if (nodeData.type === 'group') {
         node = new GroupNode(nodeData.id, nodeData.x, nodeData.y, nodeData.title, nodeData.vals);
       } else if (nodeData.type === 'map') {
