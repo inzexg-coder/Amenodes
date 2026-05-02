@@ -5,8 +5,14 @@ export class PersistenceService {
 
   saveToStorage(viewport, zoom, quality) {
     const data = this.graph.toSerial();
-    data.viewportOffsetX = viewport?.x || 0;
-    data.viewportOffsetY = viewport?.y || 0;
+    if (viewport) {
+      const offset = viewport.getOffset();
+      data.viewportOffsetX = offset.x;
+      data.viewportOffsetY = offset.y;
+    } else {
+      data.viewportOffsetX = window._viewportX || 0;
+      data.viewportOffsetY = window._viewportY || 0;
+    }
     data.viewportZoom = zoom || 1;
     data.designQuality = quality || 100;
     localStorage.setItem('amenodes_autosave', JSON.stringify(data));
@@ -22,9 +28,17 @@ export class PersistenceService {
         if (data.designQuality !== undefined && window.applyDesignQuality) {
           window.applyDesignQuality(data.designQuality);
         }
+        if (data.viewportOffsetX !== undefined && window._viewport) {
+          window._viewport.setOffset(data.viewportOffsetX, data.viewportOffsetY);
+        }
+        if (data.viewportZoom !== undefined && window.setZoom) {
+          window.setZoom(data.viewportZoom);
+        }
         return data;
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('Failed to load from storage:', e);
+    }
     return null;
   }
 
