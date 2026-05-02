@@ -30,6 +30,10 @@ export class NodeFactory {
     return this.createNode('number', { x, y, val: value });
   }
 
+  static createConstantAt(x, y, value = 0) {
+    return this.createNode('constant', { x, y, val: value });
+  }
+
   static createGroupAt(x, y) {
     return this.createNode('group', { x, y, vals: [{ name: "Значение 1", val: 0 }] });
   }
