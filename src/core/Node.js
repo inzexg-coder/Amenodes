@@ -1,4 +1,5 @@
 import { EditableTitle } from '../ui/EditableTitle.js';
+import { i18n } from '../i18n/LanguageManager.js';
 
 export class Node {
   constructor(id, type, x, y, title) {
@@ -9,6 +10,9 @@ export class Node {
     this.title = title;
     this.important = false;
     this.graph = null;
+    this.originalTitle = title;
+    this.titleEditor = null;
+    this.unsubscribeI18n = null;
   }
 
   getValue() {
@@ -22,8 +26,34 @@ export class Node {
       x: this.x,
       y: this.y,
       title: this.title,
-      important: this.important
+      important: this.important,
+      originalTitle: this.originalTitle
     };
+  }
+
+  getLocalizedTitle() {
+    if (this.title !== this.originalTitle) {
+      return this.title;
+    }
+    const translated = i18n.t(`nodes.${this.type}`);
+    if (translated !== `nodes.${this.type}`) {
+      return translated;
+    }
+    return this.title;
+  }
+
+  updateTitleTranslation() {
+    if (this.titleEditor && this.title !== this.originalTitle) {
+      return;
+    }
+    const newTitle = this.getLocalizedTitle();
+    if (this.title !== newTitle) {
+      this.title = newTitle;
+      this.originalTitle = newTitle;
+      if (this.titleEditor) {
+        this.titleEditor.setValue(newTitle);
+      }
+    }
   }
 
   createDOM(graph, renderer) {
@@ -48,8 +78,10 @@ export class Node {
     const header = document.createElement('div');
     header.className = headerClass;
 
-    const titleEditor = new EditableTitle(this.title, (newTitle) => {
+    const localizedTitle = this.getLocalizedTitle();
+    this.titleEditor = new EditableTitle(localizedTitle, (newTitle) => {
       this.title = newTitle;
+      this.originalTitle = newTitle;
       graph.reevaluateAll();
       renderer.render();
       renderer.save();
@@ -61,6 +93,7 @@ export class Node {
     deleteBtn.textContent = '✕';
     deleteBtn.onclick = (e) => {
       e.stopPropagation();
+      if (this.unsubscribeI18n) this.unsubscribeI18n();
       graph.removeNode(this.id);
       graph.reevaluateAll();
       renderer.render();
@@ -68,9 +101,21 @@ export class Node {
     };
     actions.appendChild(deleteBtn);
 
-    header.appendChild(titleEditor.getElement());
+    header.appendChild(this.titleEditor.getElement());
     header.appendChild(actions);
     div.appendChild(header);
+
+    if (this.unsubscribeI18n) this.unsubscribeI18n();
+    this.unsubscribeI18n = i18n.subscribe(() => {
+      this.updateTitleTranslation();
+      if (this.titleEditor) {
+        const currentDisplayText = this.titleEditor.displaySpan?.textContent;
+        const newDisplayText = this.getLocalizedTitle();
+        if (currentDisplayText !== newDisplayText) {
+          this.titleEditor.setValue(newDisplayText);
+        }
+      }
+    });
 
     return div;
   }

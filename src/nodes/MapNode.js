@@ -1,5 +1,6 @@
 import { Node } from '../core/Node.js';
 import { EditableTitle } from '../ui/EditableTitle.js';
+import { i18n, t } from '../i18n/LanguageManager.js';
 
 export class MapNode extends Node {
   constructor(id, x, y, title, maps) {
@@ -137,7 +138,7 @@ export class MapNode extends Node {
     });
     
     const addBtn = document.createElement('button');
-    addBtn.textContent = '+ Добавить правило';
+    addBtn.textContent = t('map.addRule');
     addBtn.className = 'add-value-btn';
     addBtn.onclick = () => {
       this.maps.push({ x: 0, y: 0 });
@@ -150,12 +151,12 @@ export class MapNode extends Node {
     
     const passBtn = document.createElement('div');
     passBtn.className = 'map-mode-option';
-    passBtn.textContent = 'Сквозной проход';
+    passBtn.textContent = t('map.passThrough');
     passBtn.style.borderRadius = '32px 0 0 32px';
     
     const sepBtn = document.createElement('div');
     sepBtn.className = 'map-mode-option';
-    sepBtn.textContent = 'Отдельный голубой выход';
+    sepBtn.textContent = t('map.separateOutput');
     sepBtn.style.borderRadius = '0 32px 32px 0';
     
     const updateUI = () => {
@@ -200,18 +201,18 @@ export class MapNode extends Node {
     if (this.unmappedMode === 'passthrough') passBtn.classList.add('active');
     else sepBtn.classList.add('active');
     
-    this.addClickHandler(div);
-    return div;
-  }
-
-  addClickHandler(div) {
-    div.onclick = (e) => {
-      if (e.target.closest('.node-handle') || e.target.closest('input') || 
-          e.target.closest('button') || e.target.closest('.title-editable')) return;
-      e.stopPropagation();
-      document.querySelectorAll('.node').forEach(el => el.classList.remove('node-temp-selected'));
-      div.classList.add('node-temp-selected');
-      setTimeout(() => div.classList.remove('node-temp-selected'), 800);
+    const unsubscribe = i18n.subscribe(() => {
+      addBtn.textContent = t('map.addRule');
+      passBtn.textContent = t('map.passThrough');
+      sepBtn.textContent = t('map.separateOutput');
+    });
+    
+    const originalRemove = div.remove;
+    div.remove = function() {
+      unsubscribe();
+      if (originalRemove) originalRemove.call(this);
     };
+    
+    return div;
   }
 }

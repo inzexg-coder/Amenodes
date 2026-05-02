@@ -1,4 +1,6 @@
 import { Node } from '../core/Node.js';
+import { modal } from '../ui/CustomModal.js';
+import { t } from '../i18n/LanguageManager.js';
 
 export class ConstantNode extends Node {
   constructor(id, x, y, title, value) {
@@ -35,9 +37,9 @@ export class ConstantNode extends Node {
       cursor: pointer;
     `;
     
-    valueDisplay.onclick = (e) => {
+    valueDisplay.onclick = async (e) => {
       e.stopPropagation();
-      const newValue = prompt('Введите новое значение:', this.value);
+      const newValue = await modal.prompt(t('modal.enterNewValue'), String(this.value));
       if (newValue !== null) {
         const parsed = parseFloat(newValue);
         if (!isNaN(parsed)) {
@@ -55,18 +57,6 @@ export class ConstantNode extends Node {
     renderer.addHandles(div, this.id, null);
     renderer.applyOptStyles(div);
     
-    this.addClickHandler(div, renderer);
     return div;
-  }
-
-  addClickHandler(div, renderer) {
-    div.onclick = (e) => {
-      if (e.target.closest('.node-handle') || e.target.closest('input') || 
-          e.target.closest('button') || e.target.closest('.title-editable')) return;
-      e.stopPropagation();
-      document.querySelectorAll('.node').forEach(el => el.classList.remove('node-temp-selected'));
-      div.classList.add('node-temp-selected');
-      setTimeout(() => div.classList.remove('node-temp-selected'), 800);
-    };
   }
 }

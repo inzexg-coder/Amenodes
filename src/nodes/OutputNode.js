@@ -1,11 +1,12 @@
 import { Node } from '../core/Node.js';
 import { EditableTitle } from '../ui/EditableTitle.js';
 import { replaceSymbols } from '../utils/SymbolMapper.js';
+import { i18n, t } from '../i18n/LanguageManager.js';
 
 export class OutputNode extends Node {
   constructor(id, x, y, title, rows) {
     super(id, 'output', x, y, title);
-    this.rows = rows ?? [{ param: "Нет связей", value: "—" }];
+    this.rows = rows ?? [{ param: t('status.noConnections'), value: "—" }];
   }
 
   getValue() {
@@ -38,11 +39,13 @@ export class OutputNode extends Node {
     const table = document.createElement('table');
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
-    ['Параметр', 'Значение'].forEach(text => {
-      const th = document.createElement('th');
-      th.textContent = text;
-      headerRow.appendChild(th);
-    });
+    
+    const paramTh = document.createElement('th');
+    paramTh.textContent = t('common.parameter');
+    const valueTh = document.createElement('th');
+    valueTh.textContent = t('common.value');
+    headerRow.appendChild(paramTh);
+    headerRow.appendChild(valueTh);
     thead.appendChild(headerRow);
     table.appendChild(thead);
     
@@ -76,18 +79,17 @@ export class OutputNode extends Node {
     renderer.addHandles(div, this.id, null);
     renderer.applyOptStyles(div);
     
-    this.addClickHandler(div);
-    return div;
-  }
-
-  addClickHandler(div) {
-    div.onclick = (e) => {
-      if (e.target.closest('.node-handle') || e.target.closest('input') || 
-          e.target.closest('button') || e.target.closest('.title-editable')) return;
-      e.stopPropagation();
-      document.querySelectorAll('.node').forEach(el => el.classList.remove('node-temp-selected'));
-      div.classList.add('node-temp-selected');
-      setTimeout(() => div.classList.remove('node-temp-selected'), 800);
+    const unsubscribe = i18n.subscribe(() => {
+      paramTh.textContent = t('common.parameter');
+      valueTh.textContent = t('common.value');
+    });
+    
+    const originalRemove = div.remove;
+    div.remove = function() {
+      unsubscribe();
+      if (originalRemove) originalRemove.call(this);
     };
+    
+    return div;
   }
 }

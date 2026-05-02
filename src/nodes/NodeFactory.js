@@ -4,23 +4,28 @@ import { CalcNode } from './CalcNode.js';
 import { OutputNode } from './OutputNode.js';
 import { MapNode } from './MapNode.js';
 import { ConstantNode } from './ConstantNode.js';
+import { i18n } from '../i18n/LanguageManager.js';
 
 export class NodeFactory {
   static createNode(type, options = {}) {
     const { id, x, y, title, ...rest } = options;
+    
+    const defaultTitle = i18n.t(`nodes.${type}`);
+    const finalTitle = title || defaultTitle;
+    
     switch(type) {
       case 'number':
-        return new NumberNode(id || 0, x || 0, y || 0, title || 'Число', rest.val ?? 0);
+        return new NumberNode(id || 0, x || 0, y || 0, finalTitle, rest.val ?? 0);
       case 'constant':
-        return new ConstantNode(id || 0, x || 0, y || 0, title || 'Константа', rest.val ?? 0);
+        return new ConstantNode(id || 0, x || 0, y || 0, finalTitle, rest.val ?? 0);
       case 'group':
-        return new GroupNode(id || 0, x || 0, y || 0, title || 'Группа чисел', rest.vals || [{ name: "Значение 1", val: 0 }]);
+        return new GroupNode(id || 0, x || 0, y || 0, finalTitle, rest.vals || [{ name: `${i18n.t('common.value')} 1`, val: 0 }]);
       case 'calc':
-        return new CalcNode(id || 0, x || 0, y || 0, title || 'Погрешность', rest.calcType || 'div3');
+        return new CalcNode(id || 0, x || 0, y || 0, finalTitle, rest.calcType || 'div3');
       case 'output':
-        return new OutputNode(id || 0, x || 0, y || 0, title || 'Вывод', rest.rows || []);
+        return new OutputNode(id || 0, x || 0, y || 0, finalTitle, rest.rows || []);
       case 'map':
-        return new MapNode(id || 0, x || 0, y || 0, title || 'Карта', rest.maps || [{ x: 0, y: 0 }]);
+        return new MapNode(id || 0, x || 0, y || 0, finalTitle, rest.maps || [{ x: 0, y: 0 }]);
       default:
         throw new Error(`Unknown node type: ${type}`);
     }
@@ -35,7 +40,7 @@ export class NodeFactory {
   }
 
   static createGroupAt(x, y) {
-    return this.createNode('group', { x, y, vals: [{ name: "Значение 1", val: 0 }] });
+    return this.createNode('group', { x, y, vals: [{ name: `${i18n.t('common.value')} 1`, val: 0 }] });
   }
 
   static createOutputAt(x, y) {

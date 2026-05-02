@@ -1,5 +1,7 @@
 import { NodeFactory } from '../nodes/NodeFactory.js';
 import { modal } from './CustomModal.js';
+import { i18n, t } from '../i18n/LanguageManager.js';
+import { LanguageSwitcher } from './LanguageSwitcher.js';
 
 export class ToolbarController {
   constructor(graph, renderer, history, viewport, persistenceService) {
@@ -8,9 +10,12 @@ export class ToolbarController {
     this.history = history;
     this.viewport = viewport;
     this.persistence = persistenceService;
+    this.languageSwitcher = null;
   }
 
   init() {
+    this.updateButtonTexts();
+
     document.getElementById('undoBtn').onclick = () => this.undo();
     document.getElementById('redoBtn').onclick = () => this.redo();
     document.getElementById('addEmptyBtn').onclick = () => this.addNumberNode();
@@ -21,6 +26,37 @@ export class ToolbarController {
     document.getElementById('importBtn').onclick = () => this.import();
     document.getElementById('clearStorageBtn').onclick = () => this.clearStorage();
     document.getElementById('fileInput').onchange = (e) => this.handleFileImport(e);
+    
+    const fileGroup = document.querySelector('.file-group');
+    if (fileGroup) {
+      const langContainer = document.createElement('div');
+      langContainer.id = 'languageSwitcherContainer';
+      langContainer.style.display = 'inline-block';
+      langContainer.style.marginLeft = '8px';
+      fileGroup.parentNode.insertBefore(langContainer, fileGroup.nextSibling);
+      this.languageSwitcher = new LanguageSwitcher('languageSwitcherContainer');
+    }
+
+    i18n.subscribe(() => this.updateButtonTexts());
+  }
+  
+  updateButtonTexts() {
+    const buttons = {
+      undoBtn: t('toolbar.undo'),
+      redoBtn: t('toolbar.redo'),
+      addEmptyBtn: t('toolbar.number'),
+      addConstantBtn: t('toolbar.constant'),
+      addGroupBtn: t('toolbar.group'),
+      addOutputBtn: t('toolbar.output'),
+      exportBtn: t('toolbar.export'),
+      importBtn: t('toolbar.import'),
+      clearStorageBtn: t('toolbar.clearStorage')
+    };
+    
+    for (const [id, text] of Object.entries(buttons)) {
+      const btn = document.getElementById(id);
+      if (btn) btn.textContent = text;
+    }
   }
 
   undo() {
@@ -55,7 +91,7 @@ export class ToolbarController {
   
   async addConstantNode() {
     const { x, y } = this.getCenterCoords();
-    const input = await modal.prompt('Введите значение константы:', '0');
+    const input = await modal.prompt(t('modal.enterValue'), '0');
     
     if (input !== null && input !== undefined && input !== '') {
       const value = parseFloat(input);
@@ -106,7 +142,7 @@ export class ToolbarController {
   }
 
   clearStorage() {
-    modal.confirm('Очистить все сохраненные данные?').then((result) => {
+    modal.confirm(t('modal.clearStorageConfirm')).then((result) => {
       if (result) {
         localStorage.removeItem('amenodes_autosave');
       }
