@@ -1,38 +1,21 @@
 import { Node } from '../core/Node.js';
 
-console.log('[ConstantNode] Module loading');
-
 export class ConstantNode extends Node {
   constructor(id, x, y, title, value) {
-    console.log('[ConstantNode] ===== CONSTRUCTOR CALLED =====');
-    console.log('[ConstantNode] Args:', { id, x, y, title, value });
-    
     super(id, 'constant', x, y, title);
     this.value = value ?? 0;
     this.isConstant = true;
-    
-    console.log('[ConstantNode] After assignment:', {
-      id: this.id,
-      type: this.type,
-      value: this.value,
-      title: this.title
-    });
   }
 
   getValue() {
-    console.log('[ConstantNode] getValue called for id', this.id, 'returning:', [this.value]);
     return [this.value];
   }
 
   toJSON() {
-    const json = { ...super.toJSON(), val: this.value };
-    console.log('[ConstantNode] toJSON called:', json);
-    return json;
+    return { ...super.toJSON(), val: this.value };
   }
 
   createDOM(graph, renderer) {
-    console.log('[ConstantNode] createDOM for id', this.id, 'value:', this.value);
-    
     const div = this.createBaseDiv(graph, renderer);
     const content = document.createElement('div');
     content.className = 'empty-node-content';
@@ -54,15 +37,12 @@ export class ConstantNode extends Node {
     
     valueDisplay.onclick = (e) => {
       e.stopPropagation();
-      console.log('[ConstantNode] Value display clicked, current value:', this.value);
       const newValue = prompt('Введите новое значение:', this.value);
-      console.log('[ConstantNode] Prompt returned:', newValue);
       if (newValue !== null) {
         const parsed = parseFloat(newValue);
         if (!isNaN(parsed)) {
           this.value = parsed;
           valueDisplay.textContent = this.value;
-          console.log('[ConstantNode] Value updated to:', this.value);
           graph.reevaluateAll();
           renderer.render();
           renderer.save();
@@ -90,5 +70,3 @@ export class ConstantNode extends Node {
     };
   }
 }
-
-console.log('[ConstantNode] Module loaded');
