@@ -1,6 +1,6 @@
 import { NodeFactory } from '../nodes/NodeFactory.js';
 import { modal } from './CustomModal.js';
-import { ConstantNode } from '../nodes/ConstantNode.js';
+import { i18n, t } from '../i18n/LanguageManager.js';
 
 export class ContextMenu {
   constructor(graph, renderer, history, viewport) {
@@ -9,10 +9,21 @@ export class ContextMenu {
     this.history = history;
     this.viewport = viewport;
     this.currentMenu = null;
+    this.currentSourceId = null;
+    this.currentBaseX = null;
+    this.currentBaseY = null;
+
+    i18n.subscribe(() => {
+      if (this.currentMenu && this.currentSourceId !== null) {
+        this.show(this.currentMenu.style.left, this.currentMenu.style.top, this.currentSourceId);
+      }
+    });
   }
 
   show(x, y, sourceId) {
     this.close();
+    
+    this.currentSourceId = sourceId;
     
     const menu = document.createElement('div');
     menu.className = 'node-menu';
@@ -22,15 +33,17 @@ export class ContextMenu {
     const sourceNode = this.graph.getNode(sourceId);
     const baseX = sourceNode ? sourceNode.x + 280 : 500;
     const baseY = sourceNode ? sourceNode.y + 300 : 300;
+    this.currentBaseX = baseX;
+    this.currentBaseY = baseY;
 
-    this.addMenuItem(menu, 'Вывод + связь', () => this.createAndConnect('output', baseX, baseY, sourceId));
+    this.addMenuItem(menu, t('contextMenu.outputAndConnect'), () => this.createAndConnect('output', baseX, baseY, sourceId));
     
     menu.appendChild(document.createElement('hr'));
     
-    const submenuContainer = this.createSubmenu('Погрешности >', [
-      { text: 'Погрешность измерения', type: 'div3', title: 'Погрешность измерения' },
-      { text: 'Погрешность округления', type: 'div_sqrt12', title: 'Погрешность округления' },
-      { text: 'Суммарная погрешность', type: 'sqrt_sum_sq', title: 'Суммарная погрешность' }
+    const submenuContainer = this.createSubmenu(t('contextMenu.errors') + ' ▸', [
+      { text: t('contextMenu.measurementError'), type: 'div3', title: t('calcTypes.div3') },
+      { text: t('contextMenu.roundingError'), type: 'div_sqrt12', title: t('calcTypes.div_sqrt12') },
+      { text: t('contextMenu.totalError'), type: 'sqrt_sum_sq', title: t('calcTypes.sqrt_sum_sq') }
     ], (calcType, title) => {
       const node = NodeFactory.createCalcAt(baseX + 20, baseY + 160, calcType, title);
       this.graph.addNode(node);
@@ -39,19 +52,21 @@ export class ContextMenu {
     });
     menu.appendChild(submenuContainer);
     
-    this.addMenuItem(menu, 'Карта преобразований', () => this.createAndConnect('map', baseX, baseY, sourceId));
+    this.addMenuItem(menu, t('contextMenu.mapTransform'), () => this.createAndConnect('map', baseX, baseY, sourceId));
     
     menu.appendChild(document.createElement('hr'));
-    this.addMenuItem(menu, 'Выделить ВАЖНЫЙ нод', () => this.toggleImportant(sourceNode, true));
-    this.addMenuItem(menu, 'Снять выделение ВАЖНОГО', () => this.toggleImportant(sourceNode, false));
+    this.addMenuItem(menu, t('contextMenu.markImportant'), () => this.toggleImportant(sourceNode, true));
+    this.addMenuItem(menu, t('contextMenu.unmarkImportant'), () => this.toggleImportant(sourceNode, false));
     
     document.body.appendChild(menu);
     this.currentMenu = menu;
     
     setTimeout(() => {
       const closeHandler = (ev) => {
-        if (!menu.contains(ev.target)) this.close();
-        document.removeEventListener('click', closeHandler);
+        if (!menu.contains(ev.target)) {
+          this.close();
+          document.removeEventListener('click', closeHandler);
+        }
       };
       document.addEventListener('click', closeHandler);
     }, 10);
@@ -130,5 +145,6 @@ export class ContextMenu {
       this.currentMenu.remove();
       this.currentMenu = null;
     }
+    this.currentSourceId = null;
   }
 }
