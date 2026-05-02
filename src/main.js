@@ -11,6 +11,10 @@ import { FPSCounter } from './utils/FPSCounter.js';
 import { OPTIMIZATIONS } from './config/Optimizations.js';
 import { OutputNode } from './nodes/OutputNode.js';
 
+window.alert = (msg) => { modal.alert(msg); };
+window.confirm = (msg) => modal.confirm(msg);
+window.prompt = (msg, def) => modal.prompt(msg, def);
+
 class Application {
   constructor() {
     this.graph = new Graph();
