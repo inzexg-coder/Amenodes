@@ -99,10 +99,10 @@ export class Graph {
   getSourceValue(source, port = 'main', visited = new Set()) {
     if (visited.has(source.id)) return [];
     visited.add(source.id);
-    
+  
     if (source instanceof MapNode && port === 'unmapped') return source.getUnmapped();
     if (source instanceof NumberNode || source instanceof GroupNode) return source.getValue();
-    if (source instanceof ConstantNode) return source.getValue();иии
+    if (source instanceof ConstantNode) return source.getValue();
     if (source instanceof MapNode) return source.getValue();
     if (source instanceof CalcNode) {
       const result = source.getValue();
