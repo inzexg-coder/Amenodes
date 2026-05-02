@@ -819,3 +819,62 @@ hr {
 .node[data-type="constant"] .node-header {
   background: linear-gradient(135deg, #2a2a3a, #1a1a2a);
 }
+
+.language-btn {
+  background: linear-gradient(135deg, #2a3a5e, #1f2a44);
+  border: 1px solid #ffcd7e;
+  color: #ffefcf;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 6px 16px;
+  border-radius: 40px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: monospace;
+}
+
+.language-btn:hover {
+  background: linear-gradient(135deg, #3a4a6e, #2f3a54);
+  transform: scale(1.02);
+}
+
+.language-menu {
+  background: #232837f2;
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 8px 0;
+  min-width: 160px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  border: 1px solid #ffcd7e;
+  z-index: 1000;
+  font-family: monospace;
+}
+
+.language-menu-item {
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #ffefcf;
+  transition: background 0.1s;
+}
+
+.language-menu-item:hover {
+  background: #3e4b78;
+  color: #fff;
+}
+
+.language-menu-item.active {
+  background: #ffb347;
+  color: #1a1f30;
+  font-weight: bold;
+}
+
+.design-quality-extreme .language-btn {
+  border-radius: 0px !important;
+  background: #1a1e2c !important;
+}
+
+.design-quality-extreme .language-menu {
+  border-radius: 0px !important;
+  backdrop-filter: none !important;
+}
