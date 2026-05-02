@@ -10,7 +10,6 @@ export class NodeFactory {
   static createNode(type, options = {}) {
     const { id, x, y, title, ...rest } = options;
     
-    // Get localized default title
     const defaultTitle = i18n.t(`nodes.${type}`);
     const finalTitle = title || defaultTitle;
     
