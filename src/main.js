@@ -10,6 +10,8 @@ import { EventBus } from './services/EventBus.js';
 import { FPSCounter } from './utils/FPSCounter.js';
 import { OPTIMIZATIONS } from './config/Optimizations.js';
 import { OutputNode } from './nodes/OutputNode.js';
+import { i18n, t } from './i18n/LanguageManager.js';
+import { LanguageSwitcher } from './ui/LanguageSwitcher.js';
 
 window.alert = (msg) => { modal.alert(msg); };
 window.confirm = (msg) => modal.confirm(msg);
