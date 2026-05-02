@@ -11,6 +11,7 @@ export class OptimizationPanel {
     this.renderer = renderer;
     this.history = history;
     this.optState = new Array(OPTIMIZATIONS.length).fill(false);
+    this.currentGains = new Array(OPTIMIZATIONS.length).fill(0);
     this.onQualityChangeCallback = null;
     
     this.init();
@@ -22,8 +23,8 @@ export class OptimizationPanel {
     this.applyBtn.onclick = () => this.apply();
     this.rebenchBtn.onclick = async () => {
       this.panel.classList.add('hidden');
-      const { gains } = await this.benchmarkService.runBenchmark(true);
-      this.updateGains(gains);
+      const result = await this.benchmarkService.runBenchmark(true);
+      this.currentGains = result.gains;
       this.buildPanel(window.currentQualityValue || 100);
       this.panel.classList.remove('hidden');
     };
@@ -97,8 +98,9 @@ export class OptimizationPanel {
       valueSpan.innerText = newValue + '%';
       const modeMsg = newValue <= 20 ? " (ЭКСТРЕМАЛЬНЫЙ)" : (newValue <= 50 ? " (Низкое)" : (newValue <= 80 ? " (Среднее)" : " (Высокое)"));
       const fpsDiv = info.querySelector('.opt-fps');
-      if (fpsDiv) fpsDiv.innerHTML = `Текущее качество: ${newValue}%${modeMsg}<br>Упрощён на ${100 - newValue}%`;
-      else {
+      if (fpsDiv) {
+        fpsDiv.innerHTML = `Текущее качество: ${newValue}%${modeMsg}<br>Упрощён на ${100 - newValue}%`;
+      } else {
         const newFpsDiv = document.createElement('div');
         newFpsDiv.className = 'opt-fps';
         newFpsDiv.innerHTML = `Текущее качество: ${newValue}%${modeMsg}<br>Упрощён на ${100 - newValue}%`;
@@ -121,7 +123,7 @@ export class OptimizationPanel {
   createOptInfo(opt, idx) {
     const info = document.createElement('div');
     info.className = 'opt-info';
-    const gain = this.benchmarkService.getGains()[idx] || 0;
+    const gain = this.currentGains[idx] || 0;
     const gainText = gain > 0 ? `+${gain}%` : (gain === 0 ? '0%' : 'не измерено');
     info.innerHTML = `
       <div class="opt-title">${opt.name}</div>
@@ -162,5 +164,10 @@ export class OptimizationPanel {
   }
 
   updateGains(gains) {
+    this.currentGains = gains;
+  }
+
+  getState() {
+    return this.optState;
   }
 }
