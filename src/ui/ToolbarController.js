@@ -1,6 +1,5 @@
 import { NodeFactory } from '../nodes/NodeFactory.js';
 import { modal } from './CustomModal.js';
-import { ConstantNode } from '../nodes/ConstantNode.js';
 
 export class ToolbarController {
   constructor(graph, renderer, history, viewport, persistenceService) {
@@ -54,17 +53,21 @@ export class ToolbarController {
     this.history.save();
   }
   
-  addConstantNode() {
+  async addConstantNode() {
     const { x, y } = this.getCenterCoords();
-    let value = 0;
-    const input = modal.prompt('Введите значение константы:', '0');
-    if (input !== null) {
-      value = parseFloat(input) || 0;
+    const input = await modal.prompt('Введите значение константы:', '0');
+    
+    if (input !== null && input !== undefined && input !== '') {
+      const value = parseFloat(input);
+      const finalValue = isNaN(value) ? 0 : value;
+      
+      const node = NodeFactory.createConstantAt(x - 100, y - 30, finalValue);
+      this.graph.addNode(node);
+      this.graph.reevaluateAll();
+      this.graph.updateAllOutputs();
+      this.renderer.render();
+      this.history.save();
     }
-    const node = NodeFactory.createConstantAt(x - 100, y - 30, value);
-    this.graph.addNode(node);
-    this.renderer.render();
-    this.history.save();
   }
   
   addGroupNode() {
@@ -103,8 +106,10 @@ export class ToolbarController {
   }
 
   clearStorage() {
-    if (modal.confirm('Очистить все сохраненные данные?')) {
-      localStorage.removeItem('amenodes_autosave');
-    }
+    modal.confirm('Очистить все сохраненные данные?').then((result) => {
+      if (result) {
+        localStorage.removeItem('amenodes_autosave');
+      }
+    });
   }
 }

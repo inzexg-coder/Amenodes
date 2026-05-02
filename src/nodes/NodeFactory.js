@@ -11,6 +11,8 @@ export class NodeFactory {
     switch(type) {
       case 'number':
         return new NumberNode(id || 0, x || 0, y || 0, title || 'Число', rest.val ?? 0);
+      case 'constant':
+        return new ConstantNode(id || 0, x || 0, y || 0, title || 'Константа', rest.val ?? 0);
       case 'group':
         return new GroupNode(id || 0, x || 0, y || 0, title || 'Группа чисел', rest.vals || [{ name: "Значение 1", val: 0 }]);
       case 'calc':
@@ -19,8 +21,6 @@ export class NodeFactory {
         return new OutputNode(id || 0, x || 0, y || 0, title || 'Вывод', rest.rows || []);
       case 'map':
         return new MapNode(id || 0, x || 0, y || 0, title || 'Карта', rest.maps || [{ x: 0, y: 0 }]);
-      case 'constant':
-        return new ConstantNode(id || 0, x || 0, y || 0, title || 'Константа', rest.val ?? 0);
       default:
         throw new Error(`Unknown node type: ${type}`);
     }

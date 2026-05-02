@@ -2,6 +2,7 @@ import { NumberNode } from '../nodes/NumberNode.js';
 import { GroupNode } from '../nodes/GroupNode.js';
 import { CalcNode } from '../nodes/CalcNode.js';
 import { OutputNode } from '../nodes/OutputNode.js';
+import { ConstantNode } from '../nodes/ConstantNode.js';
 import { MapNode } from '../nodes/MapNode.js';
 import { Edge } from './Edge.js';
 import { typeSystem, DataType } from './DataType.js';
@@ -78,7 +79,7 @@ export class Graph {
     this.map.delete(id);
     this.edges = this.edges.filter(e => e.sourceId !== id && e.targetId !== id);
   }
-
+  
   removeEdge(id) {
     this.edges = this.edges.filter(e => e.id !== id);
   }
@@ -98,9 +99,10 @@ export class Graph {
   getSourceValue(source, port = 'main', visited = new Set()) {
     if (visited.has(source.id)) return [];
     visited.add(source.id);
-    
+  
     if (source instanceof MapNode && port === 'unmapped') return source.getUnmapped();
     if (source instanceof NumberNode || source instanceof GroupNode) return source.getValue();
+    if (source instanceof ConstantNode) return source.getValue();
     if (source instanceof MapNode) return source.getValue();
     if (source instanceof CalcNode) {
       const result = source.getValue();
