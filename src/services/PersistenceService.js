@@ -1,3 +1,4 @@
+import { modal } from '../ui/CustomModal.js';
 export class PersistenceService {
   constructor(graph) {
     this.graph = graph;
@@ -58,10 +59,10 @@ export class PersistenceService {
   }
 
   async importFromFile(file) {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       const reader = new FileReader();
       const backup = this.graph.toSerial();
-      reader.onload = (ev) => {
+      reader.onload = async (ev) => {
         try {
           const data = JSON.parse(ev.target.result);
           this.graph.loadFrom(data);
