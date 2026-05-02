@@ -20,9 +20,9 @@ export const ru = {
     group: 'Группа чисел',
     calc: 'Погрешность',
     output: 'Вывод',
-    map: 'Карта преобразований'
+    map: 'Карта'
   },
-  
+
   calcTypes: {
     div3: 'Погрешность измерения',
     div_sqrt12: 'Погрешность округления',
@@ -30,9 +30,9 @@ export const ru = {
     result: 'Результат',
     inputs: 'входов'
   },
-  
+
   map: {
-    title: 'Карта',
+    title: 'Карта преобразований',
     xCol: 'x',
     yCol: 'y',
     addRule: '+ Добавить правило',
@@ -45,7 +45,7 @@ export const ru = {
   },
 
   output: {
-    title: 'Вывод',
+    title: 'Вывод результатов',
     noConnections: 'Нет связей',
     valueCount: 'знач.'
   },
@@ -62,7 +62,7 @@ export const ru = {
     clearStorage: 'Очистить сохр.',
     language: 'Язык'
   },
-  
+
   contextMenu: {
     outputAndConnect: 'Вывод + связь',
     errors: 'Погрешности',
@@ -77,98 +77,98 @@ export const ru = {
   optimizations: {
     virtualization: 'Виртуализация',
     virtualizationDesc: 'Отсечение невидимых нод',
-    virtualizationPros: 'Снижает DOM-элементы',
-    virtualizationCons: 'Может заметна подгрузка',
+    virtualizationPros: 'Снижает количество DOM-элементов, ускоряет рендеринг',
+    virtualizationCons: 'Может быть заметна подгрузка при скролле',
     
     gpuTransforms: 'GPU-трансформации',
-    gpuTransformsDesc: 'translate3d',
-    gpuTransformsPros: 'Плавное 60 FPS',
-    gpuTransformsCons: 'Артефакты',
+    gpuTransformsDesc: 'Использование translate3d для аппаратного ускорения',
+    gpuTransformsPros: 'Обеспечивает плавную анимацию 60 FPS',
+    gpuTransformsCons: 'Могут возникать графические артефакты на некоторых видеокартах',
     
     throttleMouse: 'Throttle мыши',
-    throttleMouseDesc: 'Ограничение частоты',
-    throttleMousePros: 'Меньше лагов',
-    throttleMouseCons: 'Микро-задержка',
+    throttleMouseDesc: 'Ограничение частоты обработки событий мыши',
+    throttleMousePros: 'Снижает количество лагов при быстром перемещении',
+    throttleMouseCons: 'Создаёт микро-задержку в отклике',
     
     batchRAF: 'Batch-обновление RAF',
-    batchRAFDesc: 'Группировка изменений',
-    batchRAFPros: 'Меньше перерисовок',
-    batchRAFCons: 'Не мгновенный',
+    batchRAFDesc: 'Группировка изменений в requestAnimationFrame',
+    batchRAFPros: 'Уменьшает количество перерисовок страницы',
+    batchRAFCons: 'Обновление происходит не мгновенно',
     
     cacheHeight: 'Кэш высоты',
-    cacheHeightDesc: 'Сохранение высоты нод',
-    cacheHeightPros: 'Ускоряет расчёты',
-    cacheHeightCons: 'Инвалидация',
+    cacheHeightDesc: 'Сохранение вычисленной высоты нод',
+    cacheHeightPros: 'Ускоряет расчёты позиционирования',
+    cacheHeightCons: 'Требует инвалидации кэша при изменении',
     
     willChange: 'will-change',
-    willChangeDesc: 'Предупреждение браузеру',
-    willChangePros: 'Ускоряет анимации',
-    willChangeCons: 'Больше памяти',
+    willChangeDesc: 'Предупреждение браузеру об изменениях',
+    willChangePros: 'Ускоряет анимации и трансформации',
+    willChangeCons: 'Потребляет больше оперативной памяти',
     
     passiveEvents: 'Пассивные события',
-    passiveEventsDesc: 'scroll/touch оптимизация',
-    passiveEventsPros: 'Плавный скролл',
-    passiveEventsCons: 'Старые браузеры',
+    passiveEventsDesc: 'Оптимизация scroll/touch событий',
+    passiveEventsPros: 'Обеспечивает плавный скролл страницы',
+    passiveEventsCons: 'Не поддерживается в старых браузерах',
     
     simplifyShadows: 'Упрощение теней',
-    simplifyShadowsDesc: 'Без теней при драге',
-    simplifyShadowsPros: 'Меньше перерисовка',
-    simplifyShadowsCons: 'Пропадают тени',
+    simplifyShadowsDesc: 'Отключение теней при перетаскивании',
+    simplifyShadowsPros: 'Снижает нагрузку на перерисовку',
+    simplifyShadowsCons: 'Визуальные тени пропадают во время драга',
     
     deferredEdges: 'Отложенные связи',
-    deferredEdgesDesc: 'Связи с низким приоритетом',
-    deferredEdgesPros: 'Быстрее перемещение',
-    deferredEdgesCons: 'Линии отстают',
+    deferredEdgesDesc: 'Отрисовка связей с низким приоритетом',
+    deferredEdgesPros: 'Ускоряет перемещение нод',
+    deferredEdgesCons: 'Линии могут отставать от нод',
     
     cssContainment: 'CSS containment',
-    cssContainmentDesc: 'contain:layout',
-    cssContainmentPros: 'Изоляция макета',
-    cssContainmentCons: 'Обрезание контента',
+    cssContainmentDesc: 'Использование contain:layout',
+    cssContainmentPros: 'Изолирует макет ноды от страницы',
+    cssContainmentCons: 'Может обрезать содержимое ноды',
     
     debounceRender: 'Debounce рендера',
-    debounceRenderDesc: 'Задержка рендера',
-    debounceRenderPros: 'Экономия ресурсов',
-    debounceRenderCons: 'Задержка',
+    debounceRenderDesc: 'Задержка рендеринга при изменениях',
+    debounceRenderPros: 'Экономит ресурсы CPU при быстрых изменениях',
+    debounceRenderCons: 'Создаёт заметную задержку обновлений',
     
     cacheBoundingRect: 'Кэш getBoundingClientRect',
-    cacheBoundingRectDesc: 'Сохранение позиций',
-    cacheBoundingRectPros: 'Быстрее расчёты',
-    cacheBoundingRectCons: 'Обновление кэша',
+    cacheBoundingRectDesc: 'Сохранение позиций элементов',
+    cacheBoundingRectPros: 'Ускоряет вычисления позиций',
+    cacheBoundingRectCons: 'Требует обновления кэша при движении',
     
     pointerEventsLines: 'Pointer-events линий',
-    pointerEventsLinesDesc: 'Настройка области линий',
-    pointerEventsLinesPros: 'Быстрее клики',
-    pointerEventsLinesCons: 'Незначительно',
+    pointerEventsLinesDesc: 'Настройка области клика по линиям',
+    pointerEventsLinesPros: 'Ускоряет обработку кликов',
+    pointerEventsLinesCons: 'Влияние на производительность незначительно',
     
     lazyComputations: 'Ленивые вычисления',
-    lazyComputationsDesc: 'setTimeout фоновые',
-    lazyComputationsPros: 'UI отзывчив',
-    lazyComputationsCons: 'Задержка',
+    lazyComputationsDesc: 'Вынос вычислений в setTimeout',
+    lazyComputationsPros: 'UI остаётся отзывчивым',
+    lazyComputationsCons: 'Результаты появляются с задержкой',
     
     typedArrays: 'Типизированные массивы',
-    typedArraysDesc: 'Float32Array',
-    typedArraysPros: 'Мгновенный доступ',
-    typedArraysCons: 'Сложно',
+    typedArraysDesc: 'Использование Float32Array для данных',
+    typedArraysPros: 'Мгновенный доступ к памяти',
+    typedArraysCons: 'Усложняет код и отладку',
     
     limitHistory: 'Ограничение истории',
-    limitHistoryDesc: '50->20 шагов',
-    limitHistoryPros: 'Меньше памяти',
-    limitHistoryCons: 'Меньше истории',
+    limitHistoryDesc: 'Уменьшение глубины истории (50->20 шагов)',
+    limitHistoryPros: 'Снижает потребление памяти',
+    limitHistoryCons: 'Меньше шагов для отмены/повтора',
     
     cacheText: 'Кэш текста',
-    cacheTextDesc: 'Строки в кэше',
-    cacheTextPros: 'Ускоряет поиск',
-    cacheTextCons: 'Инвалидация',
+    cacheTextDesc: 'Кэширование строковых значений',
+    cacheTextPros: 'Ускоряет поиск и сравнение',
+    cacheTextCons: 'Требует инвалидации кэша',
     
     webglInstancing: 'WebGL-инстансинг',
-    webglInstancingDesc: 'Тысячи нод через GPU',
-    webglInstancingPros: '5000+ нод 60 FPS',
-    webglInstancingCons: 'Требует WebGL',
+    webglInstancingDesc: 'Отрисовка тысяч нод через GPU',
+    webglInstancingPros: 'Обеспечивает 60 FPS для 5000+ нод',
+    webglInstancingCons: 'Требует поддержки WebGL',
     
     designQuality: 'Качество дизайна',
-    designQualityDesc: 'Снижение визуала',
-    designQualityPros: 'FPS до +300%',
-    designQualityCons: 'Визуал страдает',
+    designQualityDesc: 'Снижение визуального качества',
+    designQualityPros: 'Увеличение FPS до +300%',
+    designQualityCons: 'Визуальное оформление ухудшается',
     
     fpsGain: 'Прирост FPS',
     notMeasured: 'не измерено',
@@ -197,13 +197,13 @@ export const ru = {
   status: {
     noConnections: 'Нет связей',
     benchmarking: 'Тестирование оптимизаций...',
-    measuringBaseline: 'Измерение базовой...',
+    measuringBaseline: 'Измерение базовой производительности...',
     baselineFPS: 'Базовый FPS',
     testing: 'Тест',
     completed: 'Тест завершён',
     saved: 'Сохранено'
   },
-  
+
   dataTypes: {
     num: 'Число',
     array: 'Группа',
