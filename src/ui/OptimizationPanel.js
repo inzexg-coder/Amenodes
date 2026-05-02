@@ -1,18 +1,16 @@
 import { OPTIMIZATIONS } from '../config/Optimizations.js';
 
 export class OptimizationPanel {
-  constructor(containerId, toggleBtnId, closeBtnId, applyBtnId, rebenchBtnId) {
-    this.panel = document.getElementById(containerId);
+  constructor(panelId, toggleBtnId, closeBtnId, applyBtnId, rebenchBtnId, benchmarkService, renderer, history) {
+    this.panel = document.getElementById(panelId);
     this.toggleBtn = document.getElementById(toggleBtnId);
     this.closeBtn = document.getElementById(closeBtnId);
     this.applyBtn = document.getElementById(applyBtnId);
     this.rebenchBtn = document.getElementById(rebenchBtnId);
+    this.benchmarkService = benchmarkService;
+    this.renderer = renderer;
+    this.history = history;
     this.optState = new Array(OPTIMIZATIONS.length).fill(false);
-    this.realGains = new Array(OPTIMIZATIONS.length).fill(0);
-    this.baselineFPS = 0;
-    this.benchmarking = false;
-    this.onApplyCallback = null;
-    this.onRebenchCallback = null;
     this.onQualityChangeCallback = null;
     
     this.init();
@@ -21,21 +19,18 @@ export class OptimizationPanel {
   init() {
     this.toggleBtn.onclick = () => this.panel.classList.toggle('hidden');
     this.closeBtn.onclick = () => this.panel.classList.add('hidden');
-    this.applyBtn.onclick = () => {
-      if (this.onApplyCallback) this.onApplyCallback(this.optState);
-      this.panel.classList.add('hidden');
-    };
+    this.applyBtn.onclick = () => this.apply();
     this.rebenchBtn.onclick = async () => {
       this.panel.classList.add('hidden');
-      if (this.onRebenchCallback) await this.onRebenchCallback();
+      const { gains } = await this.benchmarkService.runBenchmark(true);
+      this.updateGains(gains);
+      this.buildPanel(window.currentQualityValue || 100);
       this.panel.classList.remove('hidden');
     };
   }
 
-  setCallbacks(onApply, onRebench, onQualityChange) {
-    this.onApplyCallback = onApply;
-    this.onRebenchCallback = onRebench;
-    this.onQualityChangeCallback = onQualityChange;
+  setDesignQualityCallback(callback) {
+    this.onQualityChangeCallback = callback;
   }
 
   buildPanel(currentQualityValue) {
@@ -51,44 +46,7 @@ export class OptimizationPanel {
       else item.classList.add('opt-item-enabled');
       
       if (opt.type === 'slider') {
-        const info = document.createElement('div');
-        info.className = 'opt-info';
-        info.innerHTML = `
-          <div class="opt-title">${opt.name}</div>
-          <div class="opt-desc">${opt.desc}</div>
-          <div class="opt-pros">${opt.pros}</div>
-          <div class="opt-cons">${opt.cons}</div>
-          <div class="opt-fps">Текущее качество: ${currentQualityValue}%</div>
-        `;
-        
-        const sliderDiv = document.createElement('div');
-        sliderDiv.style.display = 'flex';
-        sliderDiv.style.alignItems = 'center';
-        sliderDiv.style.gap = '8px';
-        
-        const slider = document.createElement('input');
-        slider.type = 'range';
-        slider.min = opt.min;
-        slider.max = opt.max;
-        slider.step = opt.step;
-        slider.value = currentQualityValue;
-        slider.style.flex = '1';
-        
-        const valueSpan = document.createElement('span');
-        valueSpan.className = 'quality-value';
-        valueSpan.innerText = currentQualityValue + '%';
-        
-        slider.oninput = (e) => {
-          const newValue = parseInt(e.target.value);
-          if (this.onQualityChangeCallback) this.onQualityChangeCallback(newValue);
-          valueSpan.innerText = newValue + '%';
-          const modeMsg = newValue <= 20 ? " (ЭКСТРЕМАЛЬНЫЙ)" : (newValue <= 50 ? " (Низкое)" : (newValue <= 80 ? " (Среднее)" : " (Высокое)"));
-          info.querySelector('.opt-fps').innerHTML = `Текущее качество: ${newValue}%${modeMsg}<br>Упрощён на ${100 - newValue}%`;
-        };
-        
-        sliderDiv.appendChild(slider);
-        sliderDiv.appendChild(valueSpan);
-        info.appendChild(sliderDiv);
+        const info = this.createSliderInfo(opt, currentQualityValue);
         item.appendChild(info);
       } else {
         const checkbox = document.createElement('input');
@@ -98,17 +56,7 @@ export class OptimizationPanel {
         if (disabled) checkbox.disabled = true;
         checkbox.onchange = (e) => { this.optState[idx] = e.target.checked; };
         
-        const info = document.createElement('div');
-        info.className = 'opt-info';
-        const gainText = this.realGains[idx] > 0 ? `+${this.realGains[idx]}%` : (this.realGains[idx] === 0 ? '0%' : 'не измерено');
-        info.innerHTML = `
-          <div class="opt-title">${opt.name}</div>
-          <div class="opt-desc">${opt.desc}</div>
-          <div class="opt-pros">${opt.pros}</div>
-          <div class="opt-cons">${opt.cons}</div>
-          <div class="opt-fps">Прирост FPS: ${gainText}</div>
-        `;
-        
+        const info = this.createOptInfo(opt, idx);
         item.appendChild(checkbox);
         item.appendChild(info);
       }
@@ -116,27 +64,103 @@ export class OptimizationPanel {
     });
   }
 
+  createSliderInfo(opt, currentValue) {
+    const info = document.createElement('div');
+    info.className = 'opt-info';
+    info.innerHTML = `
+      <div class="opt-title">${opt.name}</div>
+      <div class="opt-desc">${opt.desc}</div>
+      <div class="opt-pros">${opt.pros}</div>
+      <div class="opt-cons">${opt.cons}</div>
+    `;
+    
+    const sliderDiv = document.createElement('div');
+    sliderDiv.style.display = 'flex';
+    sliderDiv.style.alignItems = 'center';
+    sliderDiv.style.gap = '8px';
+    
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = opt.min;
+    slider.max = opt.max;
+    slider.step = opt.step;
+    slider.value = currentValue;
+    slider.style.flex = '1';
+    
+    const valueSpan = document.createElement('span');
+    valueSpan.className = 'quality-value';
+    valueSpan.innerText = currentValue + '%';
+    
+    slider.oninput = (e) => {
+      const newValue = parseInt(e.target.value);
+      if (this.onQualityChangeCallback) this.onQualityChangeCallback(newValue);
+      valueSpan.innerText = newValue + '%';
+      const modeMsg = newValue <= 20 ? " (ЭКСТРЕМАЛЬНЫЙ)" : (newValue <= 50 ? " (Низкое)" : (newValue <= 80 ? " (Среднее)" : " (Высокое)"));
+      const fpsDiv = info.querySelector('.opt-fps');
+      if (fpsDiv) fpsDiv.innerHTML = `Текущее качество: ${newValue}%${modeMsg}<br>Упрощён на ${100 - newValue}%`;
+      else {
+        const newFpsDiv = document.createElement('div');
+        newFpsDiv.className = 'opt-fps';
+        newFpsDiv.innerHTML = `Текущее качество: ${newValue}%${modeMsg}<br>Упрощён на ${100 - newValue}%`;
+        info.appendChild(newFpsDiv);
+      }
+    };
+    
+    sliderDiv.appendChild(slider);
+    sliderDiv.appendChild(valueSpan);
+    info.appendChild(sliderDiv);
+    
+    const fpsDiv = document.createElement('div');
+    fpsDiv.className = 'opt-fps';
+    fpsDiv.innerHTML = `Текущее качество: ${currentValue}%`;
+    info.appendChild(fpsDiv);
+    
+    return info;
+  }
+
+  createOptInfo(opt, idx) {
+    const info = document.createElement('div');
+    info.className = 'opt-info';
+    const gain = this.benchmarkService.getGains()[idx] || 0;
+    const gainText = gain > 0 ? `+${gain}%` : (gain === 0 ? '0%' : 'не измерено');
+    info.innerHTML = `
+      <div class="opt-title">${opt.name}</div>
+      <div class="opt-desc">${opt.desc}</div>
+      <div class="opt-pros">${opt.pros}</div>
+      <div class="opt-cons">${opt.cons}</div>
+      <div class="opt-fps">Прирост FPS: ${gainText}</div>
+    `;
+    return info;
+  }
+
+  apply() {
+    const state = this.optState;
+    
+    if (state[0]) this.renderer.setVirtual(true);
+    else this.renderer.setVirtual(false);
+    
+    const canvasContainer = document.getElementById('canvasContainer');
+    if (state[1]) canvasContainer.style.transform = 'translate3d(0,0,0)';
+    else canvasContainer.style.transform = '';
+    
+    this.renderer.opts.willChange = state[5];
+    this.renderer.opts.contain = state[9];
+    this.renderer.opts.pointerEvents = state[12];
+    
+    this.renderer.applyOptStyles = function(el) {
+      if (this.opts.willChange) el.style.willChange = 'left, top';
+      else el.style.willChange = '';
+      if (this.opts.contain) el.style.contain = 'layout paint';
+      else el.style.contain = '';
+    };
+    
+    if (state[15]) this.history.maxSize = 20;
+    else this.history.maxSize = 50;
+    
+    this.renderer.render();
+    this.panel.classList.add('hidden');
+  }
+
   updateGains(gains) {
-    this.realGains = gains;
-  }
-
-  updateState(state) {
-    this.optState = state;
-  }
-
-  getState() {
-    return this.optState;
-  }
-
-  setBenchmarking(status) {
-    this.benchmarking = status;
-  }
-
-  isBenchmarking() {
-    return this.benchmarking;
-  }
-
-  updateBaselineFPS(fps) {
-    this.baselineFPS = fps;
   }
 }
