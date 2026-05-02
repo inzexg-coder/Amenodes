@@ -1,5 +1,3 @@
-// github actions
-
 export class Edge {
   constructor(id, sourceId, targetId, port = 'main') {
     this.id = id;

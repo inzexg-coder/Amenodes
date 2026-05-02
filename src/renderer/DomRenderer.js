@@ -1,18 +1,19 @@
-import { Edge } from '../core/Edge.js';
+import { EdgeRenderer } from './EdgeRenderer.js';
+import { ContextMenu } from '../ui/ContextMenu.js';
 import { NumberNode } from '../nodes/NumberNode.js';
 import { GroupNode } from '../nodes/GroupNode.js';
 import { CalcNode } from '../nodes/CalcNode.js';
 import { OutputNode } from '../nodes/OutputNode.js';
 import { MapNode } from '../nodes/MapNode.js';
-import { EditableTitle } from '../ui/EditableTitle.js';
 
 export class DomRenderer {
-  constructor(graph, layer, viewportElement) {
+  constructor(graph, layer, viewportElement, eventBus) {
     this.graph = graph;
     this.layer = layer;
     this.viewportElement = viewportElement;
     this.viewport = null;
     this.history = null;
+    this.eventBus = eventBus;
     this.dragNode = null;
     this.dragStartX = 0;
     this.dragStartY = 0;
@@ -23,7 +24,6 @@ export class DomRenderer {
     this.edgeSourcePort = null;
     this.tempLine = null;
     this.tempSvg = null;
-    this.contextMenu = null;
     this.virtual = false;
     this.heightCache = new Map();
     this.elementCache = new Map();
@@ -32,14 +32,26 @@ export class DomRenderer {
       contain: false,
       pointerEvents: false
     };
+    
+    this.edgeRenderer = new EdgeRenderer(this.layer);
+    this.edgeRenderer.setOnEdgeRemoved(() => {
+      this.graph.reevaluateAll();
+      this.graph.updateAllOutputs();
+      this.render();
+      this.save();
+    });
+    
+    this.contextMenu = null;
   }
 
   setViewport(viewport) {
     this.viewport = viewport;
+    window._viewport = viewport;
   }
 
   setHistory(history) {
     this.history = history;
+    window._history = history;
   }
 
   save() {
@@ -107,20 +119,10 @@ export class DomRenderer {
   }
 
   renderEdges(visibleNodes) {
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.classList.add('edge-layer');
-    svg.setAttribute("width", "100%");
-    svg.setAttribute("height", "100%");
-    svg.style.position = "absolute";
-    svg.style.top = "0";
-    svg.style.left = "0";
-    svg.style.pointerEvents = "none";
-    svg.style.overflow = "visible";
-    this.layer.appendChild(svg);
-    
     const nodeIds = new Set(visibleNodes.map(n => n.id));
-    const rectCache = new Map();
+    const filteredEdges = this.graph.edges.filter(e => nodeIds.has(e.sourceId) && nodeIds.has(e.targetId));
     
+    const rectCache = new Map();
     for (const node of visibleNodes) {
       rectCache.set(node.id, {
         x: node.x,
@@ -130,107 +132,7 @@ export class DomRenderer {
       });
     }
     
-    for (const edge of this.graph.edges) {
-      if (!nodeIds.has(edge.sourceId) || !nodeIds.has(edge.targetId)) continue;
-      
-      const source = this.graph.getNode(edge.sourceId);
-      const target = this.graph.getNode(edge.targetId);
-      if (!source || !target) continue;
-      
-      const sourceRect = rectCache.get(edge.sourceId);
-      const targetRect = rectCache.get(edge.targetId);
-      if (!sourceRect || !targetRect) continue;
-      
-      const point1 = this.getBorderPoint(sourceRect, targetRect);
-      const point2 = this.getBorderPoint(targetRect, sourceRect);
-      
-      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      line.setAttribute("x1", point1.x);
-      line.setAttribute("y1", point1.y);
-      line.setAttribute("x2", point2.x);
-      line.setAttribute("y2", point2.y);
-      line.setAttribute("stroke-width", "3");
-      line.setAttribute("stroke-linecap", "round");
-      line.classList.add("edge-line");
-      
-      const isBlue = edge.sourcePort === 'unmapped';
-      line.setAttribute("stroke", isBlue ? "#44aaff" : "#ffb347");
-      line.style.pointerEvents = "visibleStroke";
-      line.setAttribute("data-edge-id", edge.id);
-      
-      const midX = (point1.x + point2.x) / 2;
-      const midY = (point1.y + point2.y) / 2;
-      const angle = Math.atan2(point2.y - point1.y, point2.x - point1.x);
-      const tipX = midX + Math.cos(angle) * 6;
-      const tipY = midY + Math.sin(angle) * 6;
-      const backX = midX - Math.cos(angle) * 8;
-      const backY = midY - Math.sin(angle) * 8;
-      const perpX = -Math.sin(angle) * 5;
-      const perpY = Math.cos(angle) * 5;
-      const points = `${tipX},${tipY} ${backX + perpX},${backY + perpY} ${backX - perpX},${backY - perpY}`;
-      
-      const arrow = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-      arrow.setAttribute("points", points);
-      arrow.setAttribute("fill", isBlue ? "#44aaff" : "#ffb347");
-      arrow.setAttribute("stroke", isBlue ? "#88ccff" : "#ffda99");
-      arrow.setAttribute("stroke-width", "1");
-      arrow.setAttribute("stroke-linejoin", "round");
-      
-      svg.appendChild(line);
-      svg.appendChild(arrow);
-      
-      line.addEventListener('contextmenu', (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        this.graph.removeEdge(edge.id);
-        this.graph.reevaluateAll();
-        this.graph.updateAllOutputs();
-        this.render();
-        this.save();
-      });
-    }
-  }
-
-  getBorderPoint(fromRect, toRect) {
-    const centerFrom = { x: fromRect.x + fromRect.w / 2, y: fromRect.y + fromRect.h / 2 };
-    const centerTo = { x: toRect.x + toRect.w / 2, y: toRect.y + toRect.h / 2 };
-    const dx = centerTo.x - centerFrom.x;
-    const dy = centerTo.y - centerFrom.y;
-    
-    if (dx === 0 && dy === 0) {
-      return { x: fromRect.x + fromRect.w / 2, y: fromRect.y + fromRect.h };
-    }
-    
-    let t = Infinity;
-    
-    if (dx !== 0) {
-      const tx1 = (fromRect.x - centerFrom.x) / dx;
-      const tx2 = (fromRect.x + fromRect.w - centerFrom.x) / dx;
-      if (tx1 > 0 && tx1 < t) {
-        const y = centerFrom.y + dy * tx1;
-        if (y >= fromRect.y && y <= fromRect.y + fromRect.h) t = tx1;
-      }
-      if (tx2 > 0 && tx2 < t) {
-        const y = centerFrom.y + dy * tx2;
-        if (y >= fromRect.y && y <= fromRect.y + fromRect.h) t = tx2;
-      }
-    }
-    
-    if (dy !== 0) {
-      const ty1 = (fromRect.y - centerFrom.y) / dy;
-      const ty2 = (fromRect.y + fromRect.h - centerFrom.y) / dy;
-      if (ty1 > 0 && ty1 < t) {
-        const x = centerFrom.x + dx * ty1;
-        if (x >= fromRect.x && x <= fromRect.x + fromRect.w) t = ty1;
-      }
-      if (ty2 > 0 && ty2 < t) {
-        const x = centerFrom.x + dx * ty2;
-        if (x >= fromRect.x && x <= fromRect.x + fromRect.w) t = ty2;
-      }
-    }
-    
-    if (t === Infinity) t = 0;
-    return { x: centerFrom.x + dx * t, y: centerFrom.y + dy * t };
+    this.edgeRenderer.renderEdges(filteredEdges, this.graph, rectCache);
   }
 
   render() {
@@ -278,16 +180,6 @@ export class DomRenderer {
       this.applyOptStyles(element);
     }
     
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("width", "100%");
-    svg.setAttribute("height", "100%");
-    svg.style.position = "absolute";
-    svg.style.top = "0";
-    svg.style.left = "0";
-    svg.style.pointerEvents = "none";
-    svg.style.overflow = "visible";
-    this.layer.appendChild(svg);
-    
     const rectCache = new Map();
     for (const node of this.graph.nodes) {
       rectCache.set(node.id, {
@@ -298,64 +190,7 @@ export class DomRenderer {
       });
     }
     
-    for (const edge of this.graph.edges) {
-      const source = this.graph.getNode(edge.sourceId);
-      const target = this.graph.getNode(edge.targetId);
-      if (!source || !target) continue;
-      
-      const sourceRect = rectCache.get(edge.sourceId);
-      const targetRect = rectCache.get(edge.targetId);
-      if (!sourceRect || !targetRect) continue;
-      
-      const point1 = this.getBorderPoint(sourceRect, targetRect);
-      const point2 = this.getBorderPoint(targetRect, sourceRect);
-      
-      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      line.setAttribute("x1", point1.x);
-      line.setAttribute("y1", point1.y);
-      line.setAttribute("x2", point2.x);
-      line.setAttribute("y2", point2.y);
-      line.setAttribute("stroke-width", "3");
-      line.setAttribute("stroke-linecap", "round");
-      line.classList.add("edge-line");
-      
-      const isBlue = edge.sourcePort === 'unmapped';
-      line.setAttribute("stroke", isBlue ? "#44aaff" : "#ffb347");
-      line.style.pointerEvents = "visibleStroke";
-      line.setAttribute("data-edge-id", edge.id);
-      
-      const midX = (point1.x + point2.x) / 2;
-      const midY = (point1.y + point2.y) / 2;
-      const angle = Math.atan2(point2.y - point1.y, point2.x - point1.x);
-      const tipX = midX + Math.cos(angle) * 6;
-      const tipY = midY + Math.sin(angle) * 6;
-      const backX = midX - Math.cos(angle) * 8;
-      const backY = midY - Math.sin(angle) * 8;
-      const perpX = -Math.sin(angle) * 5;
-      const perpY = Math.cos(angle) * 5;
-      const points = `${tipX},${tipY} ${backX + perpX},${backY + perpY} ${backX - perpX},${backY - perpY}`;
-      
-      const arrow = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-      arrow.setAttribute("points", points);
-      arrow.setAttribute("fill", isBlue ? "#44aaff" : "#ffb347");
-      arrow.setAttribute("stroke", isBlue ? "#88ccff" : "#ffda99");
-      arrow.setAttribute("stroke-width", "1");
-      arrow.setAttribute("stroke-linejoin", "round");
-      
-      svg.appendChild(line);
-      svg.appendChild(arrow);
-      
-      line.addEventListener('contextmenu', (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        this.graph.removeEdge(edge.id);
-        this.graph.reevaluateAll();
-        this.graph.updateAllOutputs();
-        this.render();
-        this.save();
-      });
-    }
-    
+    this.edgeRenderer.renderEdges(this.graph.edges, this.graph, rectCache);
     this.attachDragEvents();
   }
 
@@ -486,127 +321,12 @@ export class DomRenderer {
     this.clearTemp();
   }
 
-  async showMenu(x, y, sourceId) {
-    if (this.contextMenu) this.contextMenu.remove();
-    
-    const menu = document.createElement('div');
-    menu.className = 'node-menu';
-    menu.style.left = x + 'px';
-    menu.style.top = y + 'px';
-    
-    const addMenuItem = (text, onClick) => {
-      const item = document.createElement('div');
-      item.className = 'node-menu-item';
-      item.textContent = text;
-      item.onclick = () => {
-        onClick();
-        this.closeMenu();
-      };
-      menu.appendChild(item);
-    };
-    
-    const sourceNode = this.graph.getNode(sourceId);
-    const baseX = sourceNode ? sourceNode.x + 280 : 500;
-    const baseY = sourceNode ? sourceNode.y + 300 : 300;
-    
-    const createAndConnect = (NodeClass, title, port, ...args) => {
-      const node = new NodeClass(0, baseX, baseY, title, ...args);
-      this.graph.addNode(node);
-      const edge = this.graph.addEdge(sourceId, node.id, port);
-      if (edge) {
-        this.graph.reevaluateAll();
-        this.graph.updateAllOutputs();
-        this.render();
-        this.save();
-      }
-    };
-    
-    addMenuItem('Число + связь', () => {
-      createAndConnect(NumberNode, "Число", 'main', 0);
-    });
-    
-    addMenuItem('Группа + связь', () => {
-      createAndConnect(GroupNode, "Группа", 'main', [{ name: "Значение", val: 0 }]);
-    });
-    
-    addMenuItem('Вывод + связь', () => {
-      createAndConnect(OutputNode, "Вывод", 'main', []);
-    });
-    
-    menu.appendChild(document.createElement('hr'));
-    
-    const submenuContainer = document.createElement('div');
-    submenuContainer.className = 'node-menu-sub';
-    const submenuTitle = document.createElement('div');
-    submenuTitle.className = 'node-menu-item';
-    submenuTitle.textContent = 'Погрешности >';
-    const submenu = document.createElement('div');
-    submenu.className = 'node-menu-submenu';
-    
-    const addCalcType = (text, type) => {
-      const item = document.createElement('div');
-      item.className = 'node-menu-item';
-      item.textContent = text;
-      item.onclick = () => {
-        const node = new CalcNode(0, baseX + 20, baseY + 160, text, type);
-        this.graph.addNode(node);
-        this.graph.addEdge(sourceId, node.id, 'main');
-        this.graph.reevaluateAll();
-        this.graph.updateAllOutputs();
-        this.render();
-        this.save();
-        this.closeMenu();
-      };
-      submenu.appendChild(item);
-    };
-    
-    addCalcType('Погрешность измерения', 'div3');
-    addCalcType('Погрешность округления', 'div_sqrt12');
-    addCalcType('Суммарная погрешность', 'sqrt_sum_sq');
-    
-    submenuContainer.appendChild(submenuTitle);
-    submenuContainer.appendChild(submenu);
-    menu.appendChild(submenuContainer);
-    
-    addMenuItem('Карта преобразований', () => {
-      createAndConnect(MapNode, "Карта", 'main', [{ x: 0, y: 0 }]);
-    });
-    
-    menu.appendChild(document.createElement('hr'));
-    
-    addMenuItem('Выделить ВАЖНЫЙ нод', () => {
-      if (sourceNode) {
-        sourceNode.important = true;
-        this.updateNodeClass(sourceNode);
-        this.render();
-        this.save();
-      }
-    });
-    
-    addMenuItem('Снять выделение ВАЖНОГО', () => {
-      if (sourceNode) {
-        sourceNode.important = false;
-        this.updateNodeClass(sourceNode);
-        this.render();
-        this.save();
-      }
-    });
-    
-    document.body.appendChild(menu);
-    this.contextMenu = menu;
-    
-    const closeHandler = (ev) => {
-      if (!menu.contains(ev.target)) this.closeMenu();
-      document.removeEventListener('click', closeHandler);
-    };
-    setTimeout(() => document.addEventListener('click', closeHandler), 10);
-  }
-
-  closeMenu() {
-    if (this.contextMenu) {
-      this.contextMenu.remove();
-      this.contextMenu = null;
+  showMenu(x, y, sourceId) {
+    if (!this.contextMenu) {
+      const ViewportClass = this.viewport ? this.viewport.constructor : null;
+      this.contextMenu = new ContextMenu(this.graph, this, this.history, this.viewport);
     }
+    this.contextMenu.show(x, y, sourceId);
   }
 
   getCanvasCoords(clientX, clientY) {
@@ -683,5 +403,11 @@ export class DomRenderer {
     this.virtual = enabled;
     this.elementCache.clear();
     this.render();
+  }
+
+  closeMenu() {
+    if (this.contextMenu) {
+      this.contextMenu.close();
+    }
   }
 }

@@ -50,8 +50,8 @@ export class History {
   autoSave() {
     try {
       const data = this.graph.toSerial();
-      data.viewportOffsetX = window.vp?.x || 0;
-      data.viewportOffsetY = window.vp?.y || 0;
+      data.viewportOffsetX = window._viewportX || 0;
+      data.viewportOffsetY = window._viewportY || 0;
       data.viewportZoom = window.currentZoom || 1;
       data.designQuality = window.currentQualityValue || 100;
       localStorage.setItem('amenodes_autosave', JSON.stringify(data));
@@ -73,8 +73,8 @@ export class History {
         if (data.designQuality !== undefined && window.applyDesignQuality) {
           window.applyDesignQuality(data.designQuality);
         }
-        if (data.viewportOffsetX !== undefined && window.vp) {
-          window.vp.setOffset(data.viewportOffsetX, data.viewportOffsetY);
+        if (data.viewportOffsetX !== undefined && window._viewport) {
+          window._viewport.setOffset(data.viewportOffsetX, data.viewportOffsetY);
         }
         if (data.viewportZoom !== undefined && window.setZoom) {
           window.setZoom(data.viewportZoom);
