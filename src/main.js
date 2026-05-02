@@ -2,7 +2,6 @@ import { Graph } from './core/Graph.js';
 import { Viewport } from './renderer/Viewport.js';
 import { DomRenderer } from './renderer/DomRenderer.js';
 import { History } from './core/History.js';
-import { NodeFactory } from './nodes/NodeFactory.js';
 import { ToolbarController } from './ui/ToolbarController.js';
 import { OptimizationPanel } from './ui/OptimizationPanel.js';
 import { BenchmarkService } from './services/BenchmarkService.js';
@@ -10,6 +9,7 @@ import { PersistenceService } from './services/PersistenceService.js';
 import { EventBus } from './services/EventBus.js';
 import { FPSCounter } from './utils/FPSCounter.js';
 import { OPTIMIZATIONS } from './config/Optimizations.js';
+import { OutputNode } from './nodes/OutputNode.js';
 
 class Application {
   constructor() {
@@ -67,6 +67,7 @@ class Application {
 
   applyDesignQuality(percent) {
     window.currentQualityValue = percent;
+    window._designQualitySaved = percent;
     document.body.classList.remove('design-quality-extreme', 'design-quality-1', 'design-quality-2');
     if (percent <= 20) document.body.classList.add('design-quality-extreme');
     else if (percent <= 50) document.body.classList.add('design-quality-1');
@@ -89,11 +90,14 @@ class Application {
     this.optPanel.buildPanel(window.currentQualityValue || 100);
     
     setTimeout(() => {
-      this.benchmarkService.runBenchmark(true).then(({ gains, baseline }) => {
-        this.optPanel.updateGains(gains);
-        this.optPanel.buildPanel(window.currentQualityValue || 100);
-      });
+      this.runInitialBenchmark();
     }, 1000);
+  }
+
+  async runInitialBenchmark() {
+    const result = await this.benchmarkService.runBenchmark(true);
+    this.optPanel.updateGains(result.gains);
+    this.optPanel.buildPanel(window.currentQualityValue || 100);
   }
 
   initEvents() {
@@ -104,12 +108,13 @@ class Application {
   }
 
   loadInitialState() {
-    if (!this.persistenceService.loadFromStorage()) {
-      const { OutputNode } = await import('./nodes/OutputNode.js');
+    const loaded = this.persistenceService.loadFromStorage();
+    if (!loaded) {
       const defaultOutput = new OutputNode(0, 400, 300, "Вывод результатов", []);
       this.graph.addNode(defaultOutput);
       this.renderer.render();
       this.history.save();
+      this.persistenceService.saveToStorage(this.viewport, window.currentZoom, window.currentQualityValue);
     } else {
       this.renderer.render();
     }
