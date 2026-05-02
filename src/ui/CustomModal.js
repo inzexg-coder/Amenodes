@@ -131,7 +131,7 @@ export class CustomModal {
     document.head.appendChild(style);
   }
 
-  alert(message, title = 'Уведомление') {
+  alert(message, title = 'Notification') {
     return new Promise((resolve) => {
       this.showModal({
         title,
@@ -141,20 +141,20 @@ export class CustomModal {
     });
   }
 
-  confirm(message, title = 'Подтверждение') {
+  confirm(message, title = 'Confirm') {
     return new Promise((resolve) => {
       this.showModal({
         title,
         body: message,
         buttons: [
-          { text: 'Отмена', type: 'secondary', callback: () => resolve(false) },
+          { text: 'Cancel', type: 'secondary', callback: () => resolve(false) },
           { text: 'OK', type: 'danger', callback: () => resolve(true) }
         ]
       });
     });
   }
 
-  prompt(message, defaultValue = '', title = 'Ввод значения') {
+  prompt(message, defaultValue = '', title = 'Enter Value') {
     return new Promise((resolve) => {
       let inputValue = defaultValue;
       
@@ -165,7 +165,7 @@ export class CustomModal {
       input.type = 'text';
       input.value = defaultValue;
       input.className = 'custom-modal-input';
-      input.placeholder = 'Введите значение...';
+      input.placeholder = 'Enter value...';
       input.onkeydown = (e) => {
         if (e.key === 'Enter') {
           resolve(inputValue);
@@ -180,7 +180,7 @@ export class CustomModal {
         bodyElement: body,
         onShow: () => input.focus(),
         buttons: [
-          { text: 'Отмена', type: 'secondary', callback: () => resolve(null) },
+          { text: 'Cancel', type: 'secondary', callback: () => resolve(null) },
           { text: 'OK', type: 'primary', callback: () => {
             inputValue = input.value;
             resolve(inputValue);
@@ -249,5 +249,6 @@ export class CustomModal {
       this.modal = null;
     }
   }
+}
 
 export const modal = new CustomModal();
