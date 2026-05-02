@@ -1,4 +1,6 @@
 import { NodeFactory } from '../nodes/NodeFactory.js';
+import { modal } from './CustomModal.js';
+import { ConstantNode } from '../nodes/ConstantNode.js';
 
 export class ToolbarController {
   constructor(graph, renderer, history, viewport, persistenceService) {
@@ -55,7 +57,7 @@ export class ToolbarController {
   addConstantNode() {
     const { x, y } = this.getCenterCoords();
     let value = 0;
-    const input = prompt('Введите значение константы:', '0');
+    const input = modal.prompt('Введите значение константы:', '0');
     if (input !== null) {
       value = parseFloat(input) || 0;
     }
@@ -101,7 +103,7 @@ export class ToolbarController {
   }
 
   clearStorage() {
-    if (confirm('Очистить все сохраненные данные?')) {
+    if (modal.confirm('Очистить все сохраненные данные?')) {
       localStorage.removeItem('amenodes_autosave');
     }
   }

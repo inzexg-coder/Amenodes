@@ -1,4 +1,6 @@
 import { NodeFactory } from '../nodes/NodeFactory.js';
+import { modal } from './CustomModal.js';
+import { ConstantNode } from '../nodes/ConstantNode.js';
 
 export class ContextMenu {
   constructor(graph, renderer, history, viewport) {
