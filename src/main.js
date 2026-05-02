@@ -11,7 +11,7 @@ import { FPSCounter } from './utils/FPSCounter.js';
 import { OPTIMIZATIONS } from './config/Optimizations.js';
 import { OutputNode } from './nodes/OutputNode.js';
 import { i18n, t } from './i18n/LanguageManager.js';
-import { LanguageSwitcher } from './ui/LanguageSwitcher.js';
+import { modal } from './ui/CustomModal.js';
 
 window.alert = (msg) => { modal.alert(msg); };
 window.confirm = (msg) => modal.confirm(msg);
@@ -31,6 +31,7 @@ class Application {
     this.initToolbar();
     this.initOptimizationPanel();
     this.initEvents();
+    this.initI18n();
     this.loadInitialState();
   }
 
@@ -44,11 +45,14 @@ class Application {
     this.renderer.setViewport(this.viewport);
     this.viewport.attach();
     this.viewport.onChange = () => this.renderer.render();
+    
+    window._renderer = this.renderer;
   }
 
   initHistory() {
     this.history = new History(this.graph);
     this.renderer.setHistory(this.history);
+    window._history = this.history;
   }
 
   initViewport() {
@@ -101,9 +105,13 @@ class Application {
   }
 
   async runInitialBenchmark() {
-    const result = await this.benchmarkService.runBenchmark(true);
-    this.optPanel.updateGains(result.gains);
-    this.optPanel.buildPanel(window.currentQualityValue || 100);
+    try {
+      const result = await this.benchmarkService.runBenchmark(true);
+      this.optPanel.updateGains(result.gains);
+      this.optPanel.buildPanel(window.currentQualityValue || 100);
+    } catch (e) {
+      console.warn('Initial benchmark failed:', e);
+    }
   }
 
   initEvents() {
@@ -111,12 +119,40 @@ class Application {
     window.addEventListener('mouseup', (e) => this.renderer.onGlobalUp(e));
     window.addEventListener('mousemove', (e) => this.renderer.onGlobalMoveEdge(e));
     window.addEventListener('mouseup', (e) => this.renderer.onGlobalUpEdge(e));
+    
+    // Close context menu on escape
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.renderer.closeMenu();
+      }
+    });
+  }
+
+  initI18n() {
+    i18n.subscribe(() => {
+      this.updateUITitles();
+    });
+    
+    this.updateUITitles();
+  }
+
+  updateUITitles() {
+    document.title = `Amenodes - ${new Date().toISOString().slice(0, 10)}`;
+    
+    if (this.renderer) {
+      this.graph.reevaluateAll();
+      this.graph.updateAllOutputs();
+      this.renderer.render();
+    }
   }
 
   loadInitialState() {
     const loaded = this.persistenceService.loadFromStorage();
     if (!loaded) {
-      const defaultOutput = new OutputNode(0, 400, 300, "Вывод результатов", []);
+      const viewportRect = document.getElementById('viewport').getBoundingClientRect();
+      const defaultX = viewportRect.width / 2 - 140;
+      const defaultY = viewportRect.height / 2 - 40;
+      const defaultOutput = new OutputNode(0, defaultX, defaultY, t('nodes.output'), []);
       this.graph.addNode(defaultOutput);
       this.renderer.render();
       this.history.save();
@@ -127,4 +163,9 @@ class Application {
   }
 }
 
-new Application();
+
+document.addEventListener('DOMContentLoaded', () => {
+  window.app = new Application();
+});
+
+export default Application;
