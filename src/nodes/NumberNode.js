@@ -35,18 +35,6 @@ export class NumberNode extends Node {
     renderer.addHandles(div, this.id, null);
     renderer.applyOptStyles(div);
     
-    this.addClickHandler(div, renderer);
     return div;
-  }
-
-  addClickHandler(div, renderer) {
-    div.onclick = (e) => {
-      if (e.target.closest('.node-handle') || e.target.closest('input') || 
-          e.target.closest('button') || e.target.closest('.title-editable')) return;
-      e.stopPropagation();
-      document.querySelectorAll('.node').forEach(el => el.classList.remove('node-temp-selected'));
-      div.classList.add('node-temp-selected');
-      setTimeout(() => div.classList.remove('node-temp-selected'), 800);
-    };
   }
 }
