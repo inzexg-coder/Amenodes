@@ -1,6 +1,31 @@
 import { OPTIMIZATIONS } from '../config/Optimizations.js';
 import { i18n, t } from '../i18n/LanguageManager.js';
 
+const getOptKey = (name) => {
+  const map = {
+    'Виртуализация': 'virtualization',
+    'GPU-трансформации': 'gpuTransforms',
+    'Throttle мыши': 'throttleMouse',
+    'Batch-обновление RAF': 'batchRAF',
+    'Кэш высоты': 'cacheHeight',
+    'will-change': 'willChange',
+    'Пассивные события': 'passiveEvents',
+    'Упрощение теней': 'simplifyShadows',
+    'Отложенные связи': 'deferredEdges',
+    'CSS containment': 'cssContainment',
+    'Debounce рендера': 'debounceRender',
+    'Кэш getBoundingClientRect': 'cacheBoundingRect',
+    'Pointer-events линий': 'pointerEventsLines',
+    'Ленивые вычисления': 'lazyComputations',
+    'Типизированные массивы': 'typedArrays',
+    'Ограничение истории': 'limitHistory',
+    'Кэш текста': 'cacheText',
+    'WebGL-инстансинг': 'webglInstancing',
+    'Качество дизайна': 'designQuality'
+  };
+  return map[name] || name.replace(/\s+/g, '');
+};
+
 export class OptimizationPanel {
   constructor(panelId, toggleBtnId, closeBtnId, applyBtnId, rebenchBtnId, benchmarkService, renderer, history) {
     this.panel = document.getElementById(panelId);
@@ -69,30 +94,32 @@ export class OptimizationPanel {
       container.appendChild(item);
     });
     
-    this.applyBtn.textContent = t('optimizations.fpsGain') + ' / ' + t('common.apply');
-    this.rebenchBtn.textContent = t('optimizations.fpsGain') + ' >';
+    this.applyBtn.textContent = t('common.apply') + ' ' + t('optimizations.fpsGain');
+    this.rebenchBtn.textContent = t('optimizations.fpsGain') + ' →';
   }
 
   createSliderInfo(opt, currentValue) {
     const info = document.createElement('div');
     info.className = 'opt-info';
     
-    const optName = t(`optimizations.${opt.name.replace(/ /g, '')}`) || opt.name;
-    const optDesc = t(`optimizations.${opt.name.replace(/ /g, '')}Desc`) || opt.desc;
-    const optPros = t(`optimizations.${opt.name.replace(/ /g, '')}Pros`) || opt.pros;
-    const optCons = t(`optimizations.${opt.name.replace(/ /g, '')}Cons`) || opt.cons;
+    const optKey = getOptKey(opt.name);
+    const optName = t(`optimizations.${optKey}`) || opt.name;
+    const optDesc = t(`optimizations.${optKey}Desc`) || opt.desc;
+    const optPros = t(`optimizations.${optKey}Pros`) || opt.pros;
+    const optCons = t(`optimizations.${optKey}Cons`) || opt.cons;
     
     info.innerHTML = `
       <div class="opt-title">${optName}</div>
       <div class="opt-desc">${optDesc}</div>
-      <div class="opt-pros">${optPros}</div>
-      <div class="opt-cons">${optCons}</div>
+      <div class="opt-pros">✓ ${optPros}</div>
+      <div class="opt-cons">✗ ${optCons}</div>
     `;
     
     const sliderDiv = document.createElement('div');
     sliderDiv.style.display = 'flex';
     sliderDiv.style.alignItems = 'center';
     sliderDiv.style.gap = '8px';
+    sliderDiv.style.marginTop = '8px';
     
     const slider = document.createElement('input');
     slider.type = 'range';
@@ -120,11 +147,6 @@ export class OptimizationPanel {
       const fpsDiv = info.querySelector('.opt-fps');
       if (fpsDiv) {
         fpsDiv.innerHTML = `${t('optimizations.currentQuality')}: ${newValue}%${modeMsg}<br>${t('optimizations.simplifiedBy')} ${100 - newValue}%`;
-      } else {
-        const newFpsDiv = document.createElement('div');
-        newFpsDiv.className = 'opt-fps';
-        newFpsDiv.innerHTML = `${t('optimizations.currentQuality')}: ${newValue}%${modeMsg}<br>${t('optimizations.simplifiedBy')} ${100 - newValue}%`;
-        info.appendChild(newFpsDiv);
       }
     };
     
@@ -149,10 +171,11 @@ export class OptimizationPanel {
     const info = document.createElement('div');
     info.className = 'opt-info';
     
-    const optName = t(`optimizations.${opt.name.replace(/ /g, '')}`) || opt.name;
-    const optDesc = t(`optimizations.${opt.name.replace(/ /g, '')}Desc`) || opt.desc;
-    const optPros = t(`optimizations.${opt.name.replace(/ /g, '')}Pros`) || opt.pros;
-    const optCons = t(`optimizations.${opt.name.replace(/ /g, '')}Cons`) || opt.cons;
+    const optKey = getOptKey(opt.name);
+    const optName = t(`optimizations.${optKey}`) || opt.name;
+    const optDesc = t(`optimizations.${optKey}Desc`) || opt.desc;
+    const optPros = t(`optimizations.${optKey}Pros`) || opt.pros;
+    const optCons = t(`optimizations.${optKey}Cons`) || opt.cons;
     
     const gain = this.currentGains[idx] || 0;
     const gainText = gain > 0 ? `+${gain}%` : (gain === 0 ? '0%' : t('optimizations.notMeasured'));
@@ -160,9 +183,9 @@ export class OptimizationPanel {
     info.innerHTML = `
       <div class="opt-title">${optName}</div>
       <div class="opt-desc">${optDesc}</div>
-      <div class="opt-pros">${optPros}</div>
-      <div class="opt-cons">${optCons}</div>
-      <div class="opt-fps">${t('optimizations.fpsGain')}: ${gainText}</div>
+      <div class="opt-pros">✓ ${optPros}</div>
+      <div class="opt-cons">✗ ${optCons}</div>
+      <div class="opt-fps" style="margin-top:8px;border-top:1px solid #2e385c;padding-top:4px;">📊 ${t('optimizations.fpsGain')}: ${gainText}</div>
     `;
     return info;
   }
