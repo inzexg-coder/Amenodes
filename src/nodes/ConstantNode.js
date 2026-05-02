@@ -34,19 +34,35 @@ export class ConstantNode extends Node {
       color: #ffaa55;
     `;
     
+    valueDisplay.style.cursor = 'pointer';
+    valueDisplay.onclick = (e) => {
+      e.stopPropagation();
+      const newValue = prompt('Введите новое значение:', this.value);
+      if (newValue !== null) {
+        const parsed = parseFloat(newValue);
+        if (!isNaN(parsed)) {
+          this.value = parsed;
+          valueDisplay.textContent = this.value;
+          graph.reevaluateAll();
+          renderer.render();
+          renderer.save();
+        }
+      }
+    };
+    
     content.appendChild(valueDisplay);
     div.appendChild(content);
     renderer.addHandles(div, this.id, null);
     renderer.applyOptStyles(div);
     
-    this.addClickHandler(div);
+    this.addClickHandler(div, renderer);
     return div;
   }
 
-  addClickHandler(div) {
+  addClickHandler(div, renderer) {
     div.onclick = (e) => {
-      if (e.target.closest('.node-handle') || e.target.closest('button') || 
-          e.target.closest('.title-editable')) return;
+      if (e.target.closest('.node-handle') || e.target.closest('input') || 
+          e.target.closest('button') || e.target.closest('.title-editable')) return;
       e.stopPropagation();
       document.querySelectorAll('.node').forEach(el => el.classList.remove('node-temp-selected'));
       div.classList.add('node-temp-selected');
