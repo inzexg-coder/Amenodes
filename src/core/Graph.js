@@ -5,6 +5,7 @@ import { OutputNode } from '../nodes/OutputNode.js';
 import { MapNode } from '../nodes/MapNode.js';
 import { Edge } from './Edge.js';
 import { typeSystem, DataType } from './DataType.js';
+import { modal } from '../ui/CustomModal.js';
 
 export class Graph {
   constructor() {
@@ -56,12 +57,12 @@ export class Graph {
     if (!source || !target) return null;
     
     if (!this.canConnect(sourceId, targetId, port)) {
-      alert(`Невозможно соединить: ${typeSystem.getTypeDefinition(typeSystem.getNodeType(source)).name} → ${typeSystem.getTypeDefinition(typeSystem.getNodeType(target)).name}`);
+      modal.alert(`Невозможно соединить: ${typeSystem.getTypeDefinition(typeSystem.getNodeType(source)).name} → ${typeSystem.getTypeDefinition(typeSystem.getNodeType(target)).name}`);
       return null;
     }
     
     if (this.hasCycle(sourceId, targetId)) {
-      alert("Циклическая зависимость!");
+      modal.alert("Циклическая зависимость!");
       return null;
     }
     
