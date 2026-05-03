@@ -32,6 +32,11 @@ export const ru = {
     inputs: 'входов'
   },
 
+  confidence: {
+    uncertaintyInputs: 'Входов с погрешностью',
+    multiplierInputs: 'Входов-множителей'
+  },
+
   map: {
     title: 'Карта преобразований',
     xCol: 'x',
@@ -49,11 +54,6 @@ export const ru = {
     title: 'Вывод результатов',
     noConnections: 'Нет связей',
     valueCount: 'знач.'
-  },
-
-  confidence: {
-    uncertaintyInputs: 'Входов с погрешностью',
-    multiplierInputs: 'Входов-множителей'
   },
 
   toolbar: {
@@ -75,6 +75,7 @@ export const ru = {
     measurementError: 'Погрешность измерения',
     roundingError: 'Погрешность округления',
     totalError: 'Суммарная погрешность',
+    confidenceInterval: 'Доверительный интервал',
     mapTransform: 'Карта преобразований',
     markImportant: 'Выделить ВАЖНЫЙ нод',
     unmarkImportant: 'Снять выделение ВАЖНОГО'
@@ -199,7 +200,7 @@ export const ru = {
     cyclicDependency: 'Циклическая зависимость!',
     invalidValue: 'Неверное значение',
     requireTwoInputs: 'Требуется ровно 2 входа',
-    missingUncertaintyOrNumber: 'Необходима погрешность и число' 
+    missingUncertaintyOrNumber: 'Необходима погрешность и число'
   },
 
   status: {
