@@ -7,6 +7,7 @@ import { MapNode } from '../nodes/MapNode.js';
 import { Edge } from './Edge.js';
 import { typeSystem, DataType } from './DataType.js';
 import { modal } from '../ui/CustomModal.js';
+import { ConfidenceIntervalNode } from '../nodes/ConfidenceIntervalNode.js'; 
 
 export class Graph {
   constructor() {
