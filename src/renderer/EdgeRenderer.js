@@ -1,6 +1,7 @@
 export class EdgeRenderer {
   constructor(layer) {
     this.layer = layer;
+    this.onEdgeRemoved = null;
   }
 
   renderEdges(edges, graph, rectCache) {
