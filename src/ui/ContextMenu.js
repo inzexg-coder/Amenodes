@@ -1,166 +1,413 @@
-import { NodeFactory } from '../nodes/NodeFactory.js';
-import { modal } from './CustomModal.js';
-import { i18n, t } from '../i18n/LanguageManager.js';
+import { EdgeRenderer } from './EdgeRenderer.js';
+import { ContextMenu } from '../ui/ContextMenu.js';
+import { NumberNode } from '../nodes/NumberNode.js';
+import { GroupNode } from '../nodes/GroupNode.js';
+import { CalcNode } from '../nodes/CalcNode.js';
+import { OutputNode } from '../nodes/OutputNode.js';
+import { MapNode } from '../nodes/MapNode.js';
+import { ConstantNode } from '../nodes/ConstantNode.js';
+import { ConfidenceIntervalNode } from '../nodes/ConfidenceIntervalNode.js';
 
-export class ContextMenu {
-  constructor(graph, renderer, history, viewport) {
+export class DomRenderer {
+  constructor(graph, layer, viewportElement, eventBus) {
     this.graph = graph;
-    this.renderer = renderer;
-    this.history = history;
-    this.viewport = viewport;
-    this.currentMenu = null;
-    this.currentSourceId = null;
-    this.currentBaseX = null;
-    this.currentBaseY = null;
-
-    i18n.subscribe(() => {
-      if (this.currentMenu && this.currentSourceId !== null) {
-        this.show(parseInt(this.currentMenu.style.left), parseInt(this.currentMenu.style.top), this.currentSourceId);
-      }
-    });
-  }
-
-  show(x, y, sourceId) {
-    this.close();
-    
-    this.currentSourceId = sourceId;
-    
-    const menu = document.createElement('div');
-    menu.className = 'node-menu';
-    menu.style.left = x + 'px';
-    menu.style.top = y + 'px';
-    
-    const sourceNode = this.graph.getNode(sourceId);
-    const baseX = sourceNode ? sourceNode.x + 280 : 500;
-    const baseY = sourceNode ? sourceNode.y + 300 : 300;
-    this.currentBaseX = baseX;
-    this.currentBaseY = baseY;
-
-    this.addMenuItem(menu, t('contextMenu.outputAndConnect'), () => this.createAndConnect('output', baseX, baseY, sourceId));
-    
-    menu.appendChild(document.createElement('hr'));
-    
-    const submenuContainer = this.createSubmenu(t('contextMenu.errors') + ' ▸', [
-      { text: t('contextMenu.measurementError'), type: 'div3', title: t('calcTypes.div3') },
-      { text: t('contextMenu.roundingError'), type: 'div_sqrt12', title: t('calcTypes.div_sqrt12') },
-      { text: t('contextMenu.totalError'), type: 'sqrt_sum_sq', title: t('calcTypes.sqrt_sum_sq') },
-      { text: t('contextMenu.confidenceInterval'), type: 'confidenceInterval', title: t('nodes.confidenceInterval') }
-    ], (calcType, title) => {
-      let node;
-      if (calcType === 'confidenceInterval') {
-        node = NodeFactory.createConfidenceIntervalAt(baseX + 20, baseY + 160);
-      } else {
-        node = NodeFactory.createCalcAt(baseX + 20, baseY + 160, calcType, title);
-      }
-      this.graph.addNode(node);
-      this.graph.addEdge(sourceId, node.id, 'main');
-      this.finishNodeCreation();
-    });
-    menu.appendChild(submenuContainer);
-
-    this.addMenuItem(menu, t('contextMenu.mapTransform'), () => this.createAndConnect('map', baseX, baseY, sourceId));
-    
-    menu.appendChild(document.createElement('hr'));
-    
-    this.addMenuItem(menu, t('contextMenu.markImportant'), () => this.toggleImportant(sourceNode, true));
-    this.addMenuItem(menu, t('contextMenu.unmarkImportant'), () => this.toggleImportant(sourceNode, false));
-    
-    document.body.appendChild(menu);
-    this.currentMenu = menu;
-    
-    setTimeout(() => {
-      const closeHandler = (ev) => {
-        if (!menu.contains(ev.target)) {
-          this.close();
-          document.removeEventListener('click', closeHandler);
-        }
-      };
-      document.addEventListener('click', closeHandler);
-    }, 10);
-  }
-
-  addMenuItem(menu, text, onClick) {
-    const item = document.createElement('div');
-    item.className = 'node-menu-item';
-    item.textContent = text;
-    item.onclick = () => {
-      onClick();
-      this.close();
+    this.layer = layer;
+    this.viewportElement = viewportElement;
+    this.viewport = null;
+    this.history = null;
+    this.eventBus = eventBus;
+    this.dragNode = null;
+    this.dragStartX = 0;
+    this.dragStartY = 0;
+    this.dragNodeStartX = 0;
+    this.dragNodeStartY = 0;
+    this.isDraggingEdge = false;
+    this.edgeSourceId = null;
+    this.edgeSourcePort = null;
+    this.tempLine = null;
+    this.tempSvg = null;
+    this.virtual = false;
+    this.heightCache = new Map();
+    this.elementCache = new Map();
+    this.opts = {
+      willChange: false,
+      contain: false,
+      pointerEvents: false
     };
-    menu.appendChild(item);
+    
+    this.edgeRenderer = new EdgeRenderer(this.layer);
+    this.edgeRenderer.setOnEdgeRemoved(() => {
+      this.graph.reevaluateAll();
+      this.graph.updateAllOutputs();
+      this.render();
+      this.save();
+    });
+    
+    this.contextMenu = null;
   }
 
-  createSubmenu(title, items, onSelect) {
-    const container = document.createElement('div');
-    container.className = 'node-menu-sub';
+  setViewport(viewport) {
+    this.viewport = viewport;
+    window._viewport = viewport;
+  }
+
+  setHistory(history) {
+    this.history = history;
+    window._history = history;
+  }
+
+  save() {
+    if (this.history) this.history.save();
+  }
+
+  invalidateCache(nodeId) {
+    this.heightCache.delete(nodeId);
+    this.elementCache.delete(nodeId);
+  }
+
+  getNodeHeight(node) {
+    if (this.heightCache.has(node.id)) {
+      return this.heightCache.get(node.id);
+    }
+    let height = node.getMinHeight();
+    if (node instanceof GroupNode) {
+      height = Math.max(height, 80 + node.values.length * 40);
+    } else if (node instanceof MapNode) {
+      height = Math.max(height, 80 + node.maps.length * 45);
+    } else if (node instanceof OutputNode) {
+      height = Math.max(height, 80 + node.rows.length * 35);
+    }
+    this.heightCache.set(node.id, height);
+    return height;
+  }
+
+  isNodeVisible(node, viewportRect, offset) {
+    const nodeX = node.x + offset.x;
+    const nodeY = node.y + offset.y;
+    const height = this.getNodeHeight(node);
+    const margin = 300;
+    return !(nodeX + 280 + margin < 0 || 
+             nodeX - margin > viewportRect.w || 
+             nodeY + height + margin < 0 || 
+             nodeY - margin > viewportRect.h);
+  }
+
+  clearTemp() {
+    this.layer.querySelectorAll('svg.temp, svg.edge-layer').forEach(svg => svg.remove());
+  }
+
+  updateNodeClass(node) {
+    const element = this.elementCache.get(node.id);
+    if (element) {
+      if (node.important) {
+        element.classList.add('node-important');
+      } else {
+        element.classList.remove('node-important');
+      }
+    }
+  }
+
+  applyOptStyles(element) {
+    if (this.opts.willChange) {
+      element.style.willChange = 'left, top';
+    } else {
+      element.style.willChange = '';
+    }
+    if (this.opts.contain) {
+      element.style.contain = 'layout paint';
+    } else {
+      element.style.contain = '';
+    }
+  }
+
+  renderEdges(visibleNodes) {
+    const nodeIds = new Set(visibleNodes.map(n => n.id));
+    const filteredEdges = this.graph.edges.filter(e => nodeIds.has(e.sourceId) && nodeIds.has(e.targetId));
     
-    const titleEl = document.createElement('div');
-    titleEl.className = 'node-menu-item';
-    titleEl.textContent = title;
-    
-    const submenu = document.createElement('div');
-    submenu.className = 'node-menu-submenu';
-    
-    for (const item of items) {
-      const subItem = document.createElement('div');
-      subItem.className = 'node-menu-item';
-      subItem.textContent = item.text;
-      subItem.onclick = () => {
-        onSelect(item.type, item.title);
-        this.close();
-      };
-      submenu.appendChild(subItem);
+    const rectCache = new Map();
+    for (const node of visibleNodes) {
+      rectCache.set(node.id, {
+        x: node.x,
+        y: node.y,
+        w: 280,
+        h: this.getNodeHeight(node)
+      });
     }
     
-    container.appendChild(titleEl);
-    container.appendChild(submenu);
-    return container;
+    this.edgeRenderer.renderEdges(filteredEdges, this.graph, rectCache);
   }
 
-  createAndConnect(nodeType, x, y, sourceId) {
-    let node;
-    switch(nodeType) {
-      case 'number': 
-        node = NodeFactory.createNumberAt(x, y); 
-        break;
-      case 'group': 
-        node = NodeFactory.createGroupAt(x, y); 
-        break;
-      case 'output': 
-        node = NodeFactory.createOutputAt(x, y); 
-        break;
-      case 'map': 
-        node = NodeFactory.createMapAt(x, y); 
-        break;
-      default: 
-        return;
-    }
-    this.graph.addNode(node);
-    this.graph.addEdge(sourceId, node.id, 'main');
-    this.finishNodeCreation();
-  }
-
-  finishNodeCreation() {
-    this.graph.reevaluateAll();
-    this.graph.updateAllOutputs();
-    this.renderer.render();
-    this.history.save();
-  }
-
-  toggleImportant(node, important) {
-    if (node) {
-      node.important = important;
-      this.renderer.updateNodeClass(node);
-      this.renderer.render();
-      this.history.save();
+  render() {
+    this.clearTemp();
+    
+    if (this.virtual && this.viewport) {
+      const viewportRect = this.viewport.getRect();
+      const offset = this.viewport.getOffset();
+      const visibleNodes = this.graph.nodes.filter(n => this.isNodeVisible(n, viewportRect, offset));
+      const hiddenNodes = this.graph.nodes.filter(n => !this.isNodeVisible(n, viewportRect, offset));
+      
+      for (const node of hiddenNodes) {
+        const element = this.elementCache.get(node.id);
+        if (element && element.parentNode) element.remove();
+      }
+      
+      for (const node of visibleNodes) {
+        if (!this.elementCache.has(node.id)) {
+          const element = node.createDOM(this.graph, this);
+          this.elementCache.set(node.id, element);
+        }
+        const element = this.elementCache.get(node.id);
+        if (element && !element.parentNode) this.layer.appendChild(element);
+        element.style.left = node.x + 'px';
+        element.style.top = node.y + 'px';
+        this.updateNodeClass(node);
+        this.applyOptStyles(element);
+      }
+      
+      this.renderEdges(visibleNodes);
+    } else {
+      this.renderAll();
     }
   }
 
-  close() {
-    if (this.currentMenu) {
-      this.currentMenu.remove();
-      this.currentMenu = null;
+  renderAll() {
+    this.layer.innerHTML = '';
+    this.elementCache.clear();
+    
+    for (const node of this.graph.nodes) {
+      const element = node.createDOM(this.graph, this);
+      this.layer.appendChild(element);
+      this.elementCache.set(node.id, element);
+      this.updateNodeClass(node);
+      this.applyOptStyles(element);
     }
-    this.currentSourceId = null;
+    
+    const rectCache = new Map();
+    for (const node of this.graph.nodes) {
+      rectCache.set(node.id, {
+        x: node.x,
+        y: node.y,
+        w: 280,
+        h: this.getNodeHeight(node)
+      });
+    }
+    
+    this.edgeRenderer.renderEdges(this.graph.edges, this.graph, rectCache);
+    this.attachDragEvents();
+  }
+
+  addHandles(container, nodeId, unmappedPort) {
+    const existingHandles = container.querySelectorAll('.node-handle');
+    existingHandles.forEach(handle => handle.remove());
+    
+    const positions = ['top', 'right', 'bottom', 'left'];
+    for (const position of positions) {
+      const dot = document.createElement('div');
+      dot.className = `node-handle handle-${position}`;
+      dot.setAttribute('data-source-id', nodeId);
+      dot.setAttribute('data-port', 'main');
+      dot.addEventListener('mousedown', this.onHandleDown.bind(this));
+      container.appendChild(dot);
+    }
+    
+    if (unmappedPort === 'unmapped') {
+      const blueHandle = document.createElement('div');
+      blueHandle.className = 'node-handle handle-right node-handle-blue';
+      blueHandle.style.right = '-7px';
+      blueHandle.style.top = 'calc(50% + 20px)';
+      blueHandle.setAttribute('data-source-id', nodeId);
+      blueHandle.setAttribute('data-port', 'unmapped');
+      blueHandle.addEventListener('mousedown', this.onHandleDown.bind(this));
+      container.appendChild(blueHandle);
+    }
+  }
+
+  onHandleDown(event) {
+    event.stopPropagation();
+    const handle = event.target.closest('.node-handle');
+    if (!handle) return;
+    
+    const sourceId = parseInt(handle.getAttribute('data-source-id'));
+    const port = handle.getAttribute('data-port') || 'main';
+    const startX = event.clientX;
+    const startY = event.clientY;
+    let moved = false;
+    
+    const onMouseMove = (moveEvent) => {
+      if (!moved && (Math.abs(moveEvent.clientX - startX) > 5 || Math.abs(moveEvent.clientY - startY) > 5)) {
+        moved = true;
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+        this.startDragEdge(sourceId, port, moveEvent.clientX, moveEvent.clientY);
+      }
+    };
+    
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      if (!moved) this.showMenu(startX, startY, sourceId);
+    };
+    
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }
+
+  startDragEdge(sourceId, port, clientX, clientY) {
+    if (this.isDraggingEdge) return;
+    this.isDraggingEdge = true;
+    this.edgeSourceId = sourceId;
+    this.edgeSourcePort = port;
+    
+    const canvasCoords = this.getCanvasCoords(clientX, clientY);
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.classList.add('temp');
+    svg.style.position = 'absolute';
+    svg.style.top = '0';
+    svg.style.left = '0';
+    svg.style.width = '100%';
+    svg.style.height = '100%';
+    svg.style.pointerEvents = 'none';
+    svg.style.zIndex = '100';
+    svg.style.overflow = 'visible';
+    this.layer.appendChild(svg);
+    this.tempSvg = svg;
+    
+    this.tempLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    this.tempLine.setAttribute("stroke", port === 'unmapped' ? "#44aaff" : "#ffaa55");
+    this.tempLine.setAttribute("stroke-width", "3");
+    this.tempLine.setAttribute("stroke-dasharray", "6,4");
+    this.tempLine.setAttribute("x1", canvasCoords.x);
+    this.tempLine.setAttribute("y1", canvasCoords.y);
+    this.tempLine.setAttribute("x2", canvasCoords.x);
+    this.tempLine.setAttribute("y2", canvasCoords.y);
+    svg.appendChild(this.tempLine);
+    
+    document.body.style.cursor = 'crosshair';
+  }
+
+  onGlobalMoveEdge(event) {
+    if (this.isDraggingEdge && this.tempLine) {
+      const point = this.getCanvasCoords(event.clientX, event.clientY);
+      this.tempLine.setAttribute("x2", point.x);
+      this.tempLine.setAttribute("y2", point.y);
+    }
+  }
+
+  onGlobalUpEdge(event) {
+    if (!this.isDraggingEdge) return;
+    
+    const targetElement = document.elementsFromPoint(event.clientX, event.clientY)
+      .find(el => el.classList && el.classList.contains('node'));
+    const targetId = targetElement ? parseInt(targetElement.getAttribute('data-id')) : null;
+    
+    if (this.tempSvg && this.tempLine) {
+      this.tempSvg.remove();
+    }
+    this.tempLine = null;
+    this.tempSvg = null;
+    
+    if (targetId && targetId !== this.edgeSourceId) {
+      const edge = this.graph.addEdge(this.edgeSourceId, targetId, this.edgeSourcePort);
+      if (edge) {
+        this.graph.reevaluateAll();
+        this.graph.updateAllOutputs();
+        this.render();
+        this.save();
+      }
+    }
+    
+    this.isDraggingEdge = false;
+    this.edgeSourceId = null;
+    this.edgeSourcePort = null;
+    document.body.style.cursor = '';
+  }
+
+  showMenu(x, y, sourceId) {
+    if (!this.contextMenu) {
+      this.contextMenu = new ContextMenu(this.graph, this, this.history, this.viewport);
+    }
+    this.contextMenu.show(x, y, sourceId);
+  }
+
+  getCanvasCoords(clientX, clientY) {
+    const rect = this.viewportElement.getBoundingClientRect();
+    const offset = this.viewport ? this.viewport.getOffset() : { x: 0, y: 0 };
+    const zoom = window.currentZoom || 1;
+    const worldX = (clientX - rect.left - offset.x) / zoom;
+    const worldY = (clientY - rect.top - offset.y) / zoom;
+    return { x: worldX, y: worldY };
+  }
+
+  attachDragEvents() {
+    document.querySelectorAll('.node').forEach(element => {
+      const header = element.querySelector('.node-header, .output-header, .calc-header, .map-header, .group-header');
+      if (header) {
+        header.addEventListener('mousedown', this.onNodeDown.bind(this));
+      }
+    });
+  }
+
+  onNodeDown(event) {
+    if (event.button !== 0) return;
+    if (event.target.closest('.node-handle') ||
+        event.target.closest('.node-actions') ||
+        event.target.closest('input') ||
+        event.target.closest('button') ||
+        event.target.closest('.title-editable')) {
+      return;
+    }
+    
+    const nodeElement = event.target.closest('.node');
+    if (!nodeElement) return;
+    
+    const nodeId = parseInt(nodeElement.getAttribute('data-id'));
+    const node = this.graph.getNode(nodeId);
+    if (!node) return;
+    
+    this.dragNode = node;
+    this.dragStartX = event.clientX;
+    this.dragStartY = event.clientY;
+    this.dragNodeStartX = node.x;
+    this.dragNodeStartY = node.y;
+    
+    document.body.style.cursor = 'grabbing';
+    event.preventDefault();
+  }
+
+  onGlobalMove(event) {
+    if (this.dragNode) {
+      const deltaX = (event.clientX - this.dragStartX) / (window.currentZoom || 1);
+      const deltaY = (event.clientY - this.dragStartY) / (window.currentZoom || 1);
+      this.dragNode.x = this.dragNodeStartX + deltaX;
+      this.dragNode.y = this.dragNodeStartY + deltaY;
+      
+      const element = document.querySelector(`.node[data-id='${this.dragNode.id}']`);
+      if (element) {
+        element.style.left = `${this.dragNode.x}px`;
+        element.style.top = `${this.dragNode.y}px`;
+      }
+      this.render();
+    }
+  }
+
+  onGlobalUp() {
+    if (this.dragNode) {
+      this.save();
+      this.dragNode = null;
+      document.body.style.cursor = '';
+    }
+  }
+
+  setVirtual(enabled) {
+    if (this.virtual === enabled) return;
+    this.virtual = enabled;
+    this.elementCache.clear();
+    this.render();
+  }
+
+  closeMenu() {
+    if (this.contextMenu) {
+      this.contextMenu.close();
+    }
   }
 }
