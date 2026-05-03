@@ -200,7 +200,8 @@ export const en = {
     cyclicDependency: 'Cyclic dependency!',
     invalidValue: 'Invalid value',
     requireTwoInputs: 'Exactly 2 inputs required',
-    missingUncertaintyOrNumber: 'Need one uncertainty and one number'
+    missingUncertaintyOrNumber: 'Need one uncertainty and one number',
+    maxTwoInputs: 'Confidence interval can have at most 2 inputs'
   },
 
   status: {
