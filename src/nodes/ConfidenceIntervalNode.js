@@ -7,8 +7,6 @@ export class ConfidenceIntervalNode extends Node {
     super(id, 'confidenceInterval', x, y, title);
     this.result = null;
     this.resultStr = "--";
-    this.uncertaintySource = null;
-    this.multiplierSource = null;
   }
 
   getValue() {
@@ -23,7 +21,7 @@ export class ConfidenceIntervalNode extends Node {
     const incoming = graph.getIncomingEdges(this.id);
     if (incoming.length !== 2) {
       this.result = null;
-      this.resultStr = t('errors.requireTwoInputs');
+      this.resultStr = "--";
       return;
     }
 
@@ -45,7 +43,7 @@ export class ConfidenceIntervalNode extends Node {
 
     if (!uncertaintyValue || !multiplierValue) {
       this.result = null;
-      this.resultStr = t('errors.missingUncertaintyOrNumber');
+      this.resultStr = "--";
       return;
     }
 
@@ -75,26 +73,31 @@ export class ConfidenceIntervalNode extends Node {
   }
 
   createDOM(graph, renderer) {
-    const div = this.createBaseDiv(graph, renderer, 'confidence-header');
-    const info = document.createElement('div');
-    info.className = 'calc-result';
-
+    const div = this.createBaseDiv(graph, renderer, 'node-header');
+    const content = document.createElement('div');
+    content.className = 'calc-result';
+    
     const updateInfo = () => {
-      const unc = graph.getIncomingEdges(this.id).filter(edge => {
+      const incoming = graph.getIncomingEdges(this.id);
+      const uncCount = incoming.filter(edge => {
         const src = graph.getNode(edge.sourceId);
-        return src && typeSystem.getNodeType(src) === DataType.UNCERT;
+        return src && (typeSystem.getNodeType(src) === DataType.UNCERT || typeSystem.getNodeType(src) === DataType.INTERVAL);
       }).length;
-      const mul = graph.getIncomingEdges(this.id).length - unc;
-      info.innerHTML = `<strong>${t('nodes.confidenceInterval')}</strong><br>
-                        ${t('confidence.uncertaintyInputs')}: ${unc}<br>
-                        ${t('confidence.multiplierInputs')}: ${mul}<br>
-                        ${t('calcTypes.result')}: ${this.resultStr}`;
+      const numCount = incoming.length - uncCount;
+      
+      content.innerHTML = `<strong>${this.getLocalizedTitle()}</strong><br>
+                         ${t('confidence.uncertaintyInputs')}: ${uncCount}<br>
+                         ${t('confidence.multiplierInputs')}: ${numCount}<br>
+                         ${t('calcTypes.result')}: ${this.resultStr}`;
     };
     
     updateInfo();
-    const unsubscribe = i18n.subscribe(updateInfo);
     
-    div.appendChild(info);
+    const unsubscribe = i18n.subscribe(() => {
+      updateInfo();
+    });
+    
+    div.appendChild(content);
     renderer.addHandles(div, this.id, null);
     renderer.applyOptStyles(div);
     
