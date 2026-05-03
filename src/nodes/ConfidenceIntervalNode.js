@@ -19,49 +19,100 @@ export class ConfidenceIntervalNode extends Node {
 
   reevaluate(graph) {
     const incoming = graph.getIncomingEdges(this.id);
-    if (incoming.length !== 2) {
+    
+    if (incoming.length === 0) {
       this.result = null;
       this.resultStr = "--";
       return;
     }
-
-    let uncertaintyValue = null;
-    let multiplierValue = null;
-
+    
+    let allValues = [];
+    let hasUncertainty = false;
+    
     for (const edge of incoming) {
       const source = graph.getNode(edge.sourceId);
       if (!source) continue;
+      
       const sourceType = typeSystem.getNodeType(source);
       const val = graph.getSourceValue(source, edge.sourcePort, new Set());
       
-      if (sourceType === DataType.UNCERT || sourceType === DataType.INTERVAL) {
-        uncertaintyValue = val;
-      } else if ([DataType.NUM, DataType.ARRAY, DataType.LIST, DataType.WLIST].includes(sourceType)) {
-        multiplierValue = val;
+      if (sourceType === DataType.UNCERT) {
+        hasUncertainty = true;
+      }
+      
+      if (Array.isArray(val)) {
+        allValues.push(...val);
+      } else if (val !== null && val !== undefined && !isNaN(val)) {
+        allValues.push(val);
       }
     }
 
-    if (!uncertaintyValue || !multiplierValue) {
+    if (allValues.length === 0 || !hasUncertainty) {
       this.result = null;
       this.resultStr = "--";
       return;
     }
-
-    const uncArr = Array.isArray(uncertaintyValue) ? uncertaintyValue : [uncertaintyValue];
-    const mulArr = Array.isArray(multiplierValue) ? multiplierValue : [multiplierValue];
-
-    const maxLen = Math.max(uncArr.length, mulArr.length);
+    
+    if (incoming.length === 1) {
+      const valid = allValues.filter(v => typeof v === 'number' && !isNaN(v));
+      if (valid.length === 0) {
+        this.result = null;
+        this.resultStr = "--";
+      } else {
+        this.result = valid;
+        this.resultStr = `[${valid.map(v => v.toFixed(6)).join(', ')}]`;
+      }
+      return;
+    }
+    
+    let uncertaintyValues = [];
+    let multiplierValues = [];
+    
+    for (const edge of incoming) {
+      const source = graph.getNode(edge.sourceId);
+      if (!source) continue;
+      
+      const sourceType = typeSystem.getNodeType(source);
+      const val = graph.getSourceValue(source, edge.sourcePort, new Set());
+      
+      let arr = [];
+      if (Array.isArray(val)) {
+        arr = val;
+      } else if (val !== null && val !== undefined && !isNaN(val)) {
+        arr = [val];
+      } else {
+        arr = [];
+      }
+      
+      if (sourceType === DataType.UNCERT) {
+        uncertaintyValues.push(...arr);
+      } else {
+        multiplierValues.push(...arr);
+      }
+    }
+    
+    if (uncertaintyValues.length === 0) {
+      this.result = null;
+      this.resultStr = "--";
+      return;
+    }
+    
+    if (multiplierValues.length === 0) {
+      multiplierValues = [1];
+    }
+    
+    const maxLen = Math.max(uncertaintyValues.length, multiplierValues.length);
     const result = [];
     for (let i = 0; i < maxLen; i++) {
-      const u = uncArr[i % uncArr.length];
-      const m = mulArr[i % mulArr.length];
-      if (typeof u === 'number' && typeof m === 'number') {
+      const u = uncertaintyValues[i % uncertaintyValues.length];
+      const m = multiplierValues[i % multiplierValues.length];
+      if (typeof u === 'number' && typeof m === 'number' && !isNaN(u) && !isNaN(m)) {
         result.push(u * m);
       } else {
         result.push(null);
       }
     }
-
+    
     const valid = result.filter(v => v !== null);
     if (valid.length === 0) {
       this.result = null;
@@ -81,7 +132,7 @@ export class ConfidenceIntervalNode extends Node {
       const incoming = graph.getIncomingEdges(this.id);
       const uncCount = incoming.filter(edge => {
         const src = graph.getNode(edge.sourceId);
-        return src && (typeSystem.getNodeType(src) === DataType.UNCERT || typeSystem.getNodeType(src) === DataType.INTERVAL);
+        return src && typeSystem.getNodeType(src) === DataType.UNCERT;
       }).length;
       const numCount = incoming.length - uncCount;
       
