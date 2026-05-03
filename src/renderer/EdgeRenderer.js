@@ -4,6 +4,9 @@ export class EdgeRenderer {
   }
 
   renderEdges(edges, graph, rectCache) {
+    const oldSvg = this.layer.querySelector('.edge-layer');
+    if (oldSvg) oldSvg.remove();
+    
     const svg = this.createSvgLayer();
     this.layer.appendChild(svg);
     
