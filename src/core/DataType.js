@@ -4,7 +4,7 @@ export const DataType = {
   AUTO: 'auto',
   UNCERT: 'uncert',
   LIST: 'list',
-  WLIST: 'wlist'
+  WLIST: 'wlist',
   INTERVAL: 'interval'
 };
 
