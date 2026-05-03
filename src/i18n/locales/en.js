@@ -32,6 +32,11 @@ export const en = {
     inputs: 'inputs'
   },
 
+  confidence: {
+    uncertaintyInputs: 'Uncertainty inputs',
+    multiplierInputs: 'Multiplier inputs'
+  },
+
   map: {
     title: 'Map',
     xCol: 'x',
@@ -49,11 +54,6 @@ export const en = {
     title: 'Output',
     noConnections: 'No connections',
     valueCount: 'values'
-  },
-
-  confidence: {
-    uncertaintyInputs: 'Uncertainty inputs',
-    multiplierInputs: 'Multiplier inputs'
   },
 
   toolbar: {
@@ -75,6 +75,7 @@ export const en = {
     measurementError: 'Measurement Uncertainty',
     roundingError: 'Rounding Uncertainty',
     totalError: 'Combined Uncertainty',
+    confidenceInterval: 'Confidence Interval',
     mapTransform: 'Map',
     markImportant: 'Mark IMPORTANT node',
     unmarkImportant: 'Remove IMPORTANT mark'
