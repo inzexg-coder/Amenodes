@@ -20,7 +20,7 @@ export const ru = {
     group: 'Группа чисел',
     calc: 'Погрешность',
     output: 'Вывод',
-    map: 'Карта'
+    map: 'Карта',
     confidenceInterval: 'Доверительный интервал'
   },
 
