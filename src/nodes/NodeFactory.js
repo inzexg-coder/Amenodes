@@ -4,8 +4,8 @@ import { CalcNode } from './CalcNode.js';
 import { OutputNode } from './OutputNode.js';
 import { MapNode } from './MapNode.js';
 import { ConstantNode } from './ConstantNode.js';
-import { i18n } from '../i18n/LanguageManager.js';
 import { ConfidenceIntervalNode } from './ConfidenceIntervalNode.js';
+import { i18n } from '../i18n/LanguageManager.js';
 
 export class NodeFactory {
   static createNode(type, options = {}) {
