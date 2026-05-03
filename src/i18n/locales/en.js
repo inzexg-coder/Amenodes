@@ -20,7 +20,8 @@ export const en = {
     group: 'Number Group',
     calc: 'Uncertainty',
     output: 'Output',
-    map: 'Map'
+    map: 'Map',
+    confidenceInterval: 'Confidence Interval'
   },
 
   calcTypes: {
