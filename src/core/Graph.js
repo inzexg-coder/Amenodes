@@ -4,10 +4,11 @@ import { CalcNode } from '../nodes/CalcNode.js';
 import { OutputNode } from '../nodes/OutputNode.js';
 import { ConstantNode } from '../nodes/ConstantNode.js';
 import { MapNode } from '../nodes/MapNode.js';
+import { ConfidenceIntervalNode } from '../nodes/ConfidenceIntervalNode.js';
 import { Edge } from './Edge.js';
 import { typeSystem, DataType } from './DataType.js';
 import { modal } from '../ui/CustomModal.js';
-import { ConfidenceIntervalNode } from '../nodes/ConfidenceIntervalNode.js'; 
+import { t } from '../i18n/LanguageManager.js';
 
 export class Graph {
   constructor() {
@@ -57,22 +58,22 @@ export class Graph {
     const source = this.map.get(sourceId);
     const target = this.map.get(targetId);
     if (!source || !target) return null;
-
+    
     if (target instanceof ConfidenceIntervalNode) {
       const existingEdges = this.getIncomingEdges(targetId);
       if (existingEdges.length >= 2) {
-        modal.alert("Доверительный интервал может иметь не более 2 входов");
+        modal.alert(t('errors.maxTwoInputs'));
         return null;
       }
     }
     
     if (!this.canConnect(sourceId, targetId, port)) {
-      modal.alert(`Невозможно соединить: ${typeSystem.getTypeDefinition(typeSystem.getNodeType(source)).name} → ${typeSystem.getTypeDefinition(typeSystem.getNodeType(target)).name}`);
+      modal.alert(`${t('errors.cannotConnect')}: ${typeSystem.getTypeDefinition(typeSystem.getNodeType(source)).name} → ${typeSystem.getTypeDefinition(typeSystem.getNodeType(target)).name}`);
       return null;
     }
     
     if (this.hasCycle(sourceId, targetId)) {
-      modal.alert("Циклическая зависимость!");
+      modal.alert(t('errors.cyclicDependency'));
       return null;
     }
     
@@ -113,6 +114,7 @@ export class Graph {
     if (source instanceof NumberNode || source instanceof GroupNode) return source.getValue();
     if (source instanceof ConstantNode) return source.getValue();
     if (source instanceof MapNode) return source.getValue();
+    if (source instanceof ConfidenceIntervalNode) return source.getValue();
     if (source instanceof CalcNode) {
       const result = source.getValue();
       if (result == null) return [];
@@ -228,25 +230,25 @@ export class Graph {
   reevaluateAll() {
     this.nodes.forEach(node => {
       if (node instanceof CalcNode) this.reevaluateCalc(node);
+      if (node instanceof ConfidenceIntervalNode) node.reevaluate(this);
       if (node instanceof MapNode) node.graph = this;
       if (node instanceof OutputNode) node.graph = this;
-      if (node instanceof ConfidenceIntervalNode) node.reevaluate(this);
     });
   }
 
   updateOutput(outputNode) {
     const input = this.getMergedInput(outputNode.id);
     if (!input.length) {
-      outputNode.rows = [{ param: "Нет связей", value: "—" }];
-      outputNode.title = "Вывод (пусто)";
+      outputNode.rows = [{ param: t('status.noConnections'), value: "—" }];
+      outputNode.title = t('output.noConnections');
       return;
     }
     const rows = input.map((val, i) => ({
-      param: `значение ${i + 1}`,
+      param: `${t('common.value')} ${i + 1}`,
       value: typeof val === 'number' && !isNaN(val) ? val.toFixed(6) : "—"
     }));
     outputNode.rows = rows;
-    outputNode.title = `Вывод (${rows.length} знач.)`;
+    outputNode.title = `${t('output.title')} (${rows.length} ${t('output.valueCount')})`;
   }
 
   updateAllOutputs() {
@@ -287,6 +289,10 @@ export class Graph {
         if (nodeData.unmappedMode) node.unmappedMode = nodeData.unmappedMode;
       } else if (nodeData.type === 'calc') {
         node = new CalcNode(nodeData.id, nodeData.x, nodeData.y, nodeData.title, nodeData.calcType);
+        node.result = nodeData.result;
+        node.resultStr = nodeData.resultStr;
+      } else if (nodeData.type === 'confidenceInterval') {
+        node = new ConfidenceIntervalNode(nodeData.id, nodeData.x, nodeData.y, nodeData.title);
         node.result = nodeData.result;
         node.resultStr = nodeData.resultStr;
       } else if (nodeData.type === 'output') {
