@@ -21,6 +21,7 @@ export const ru = {
     calc: 'Погрешность',
     output: 'Вывод',
     map: 'Карта'
+    confidenceInterval: 'Доверительный интервал'
   },
 
   calcTypes: {
@@ -48,6 +49,11 @@ export const ru = {
     title: 'Вывод результатов',
     noConnections: 'Нет связей',
     valueCount: 'знач.'
+  },
+
+  confidence: {
+    uncertaintyInputs: 'Входов с погрешностью',
+    multiplierInputs: 'Входов-множителей'
   },
 
   toolbar: {
@@ -191,7 +197,9 @@ export const ru = {
   errors: {
     cannotConnect: 'Невозможно соединить',
     cyclicDependency: 'Циклическая зависимость!',
-    invalidValue: 'Неверное значение'
+    invalidValue: 'Неверное значение',
+    requireTwoInputs: 'Требуется ровно 2 входа',
+    missingUncertaintyOrNumber: 'Необходима погрешность и число' 
   },
 
   status: {
