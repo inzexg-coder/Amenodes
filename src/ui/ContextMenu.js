@@ -15,7 +15,7 @@ export class ContextMenu {
 
     i18n.subscribe(() => {
       if (this.currentMenu && this.currentSourceId !== null) {
-        this.show(this.currentMenu.style.left, this.currentMenu.style.top, this.currentSourceId);
+        this.show(parseInt(this.currentMenu.style.left), parseInt(this.currentMenu.style.top), this.currentSourceId);
       }
     });
   }
@@ -31,8 +31,22 @@ export class ContextMenu {
     menu.style.top = y + 'px';
     
     const sourceNode = this.graph.getNode(sourceId);
-    const baseX = sourceNode ? sourceNode.x + 280 : 500;
-    const baseY = sourceNode ? sourceNode.y + 300 : 300;
+    
+    let baseX, baseY;
+    
+    if (sourceNode && this.viewport) {
+      const offset = this.viewport.getOffset();
+      const zoom = window.currentZoom || 1;
+      const sourceScreenX = sourceNode.x + offset.x / zoom + 140;
+      const sourceScreenY = sourceNode.y + offset.y / zoom + 40;
+      baseX = sourceScreenX + 20;
+      baseY = sourceScreenY + 60;
+    } else {
+      const rect = document.getElementById('viewport').getBoundingClientRect();
+      baseX = rect.width / 2 - 140;
+      baseY = rect.height / 2 - 40;
+    }
+    
     this.currentBaseX = baseX;
     this.currentBaseY = baseY;
 
@@ -43,9 +57,15 @@ export class ContextMenu {
     const submenuContainer = this.createSubmenu(t('contextMenu.errors') + ' ▸', [
       { text: t('contextMenu.measurementError'), type: 'div3', title: t('calcTypes.div3') },
       { text: t('contextMenu.roundingError'), type: 'div_sqrt12', title: t('calcTypes.div_sqrt12') },
-      { text: t('contextMenu.totalError'), type: 'sqrt_sum_sq', title: t('calcTypes.sqrt_sum_sq') }
+      { text: t('contextMenu.totalError'), type: 'sqrt_sum_sq', title: t('calcTypes.sqrt_sum_sq') },
+      { text: t('contextMenu.confidenceInterval'), type: 'confidenceInterval', title: t('nodes.confidenceInterval') }
     ], (calcType, title) => {
-      const node = NodeFactory.createCalcAt(baseX + 20, baseY + 160, calcType, title);
+      let node;
+      if (calcType === 'confidenceInterval') {
+        node = NodeFactory.createConfidenceIntervalAt(baseX + 20, baseY + 160);
+      } else {
+        node = NodeFactory.createCalcAt(baseX + 20, baseY + 160, calcType, title);
+      }
       this.graph.addNode(node);
       this.graph.addEdge(sourceId, node.id, 'main');
       this.finishNodeCreation();
@@ -55,6 +75,7 @@ export class ContextMenu {
     this.addMenuItem(menu, t('contextMenu.mapTransform'), () => this.createAndConnect('map', baseX, baseY, sourceId));
     
     menu.appendChild(document.createElement('hr'));
+    
     this.addMenuItem(menu, t('contextMenu.markImportant'), () => this.toggleImportant(sourceNode, true));
     this.addMenuItem(menu, t('contextMenu.unmarkImportant'), () => this.toggleImportant(sourceNode, false));
     
@@ -113,11 +134,20 @@ export class ContextMenu {
   createAndConnect(nodeType, x, y, sourceId) {
     let node;
     switch(nodeType) {
-      case 'number': node = NodeFactory.createNumberAt(x, y); break;
-      case 'group': node = NodeFactory.createGroupAt(x, y); break;
-      case 'output': node = NodeFactory.createOutputAt(x, y); break;
-      case 'map': node = NodeFactory.createMapAt(x, y); break;
-      default: return;
+      case 'number': 
+        node = NodeFactory.createNumberAt(x + 20, y + 80); 
+        break;
+      case 'group': 
+        node = NodeFactory.createGroupAt(x + 20, y + 80); 
+        break;
+      case 'output': 
+        node = NodeFactory.createOutputAt(x + 20, y + 80); 
+        break;
+      case 'map': 
+        node = NodeFactory.createMapAt(x + 20, y + 80); 
+        break;
+      default: 
+        return;
     }
     this.graph.addNode(node);
     this.graph.addEdge(sourceId, node.id, 'main');

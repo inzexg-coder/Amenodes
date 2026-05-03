@@ -20,7 +20,8 @@ export const ru = {
     group: 'Группа чисел',
     calc: 'Погрешность',
     output: 'Вывод',
-    map: 'Карта'
+    map: 'Карта',
+    confidenceInterval: 'Доверительный интервал'
   },
 
   calcTypes: {
@@ -29,6 +30,11 @@ export const ru = {
     sqrt_sum_sq: 'Суммарная погрешность',
     result: 'Результат',
     inputs: 'входов'
+  },
+
+  confidence: {
+    uncertaintyInputs: 'Входов с погрешностью',
+    multiplierInputs: 'Входов-множителей'
   },
 
   map: {
@@ -69,6 +75,7 @@ export const ru = {
     measurementError: 'Погрешность измерения',
     roundingError: 'Погрешность округления',
     totalError: 'Суммарная погрешность',
+    confidenceInterval: 'Доверительный интервал',
     mapTransform: 'Карта преобразований',
     markImportant: 'Выделить ВАЖНЫЙ нод',
     unmarkImportant: 'Снять выделение ВАЖНОГО'
@@ -191,7 +198,10 @@ export const ru = {
   errors: {
     cannotConnect: 'Невозможно соединить',
     cyclicDependency: 'Циклическая зависимость!',
-    invalidValue: 'Неверное значение'
+    invalidValue: 'Неверное значение',
+    requireTwoInputs: 'Требуется ровно 2 входа',
+    missingUncertaintyOrNumber: 'Необходима погрешность и число',
+    maxTwoInputs: 'Доверительный интервал может иметь не более 2 входов'
   },
 
   status: {

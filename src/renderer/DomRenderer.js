@@ -6,6 +6,7 @@ import { CalcNode } from '../nodes/CalcNode.js';
 import { OutputNode } from '../nodes/OutputNode.js';
 import { MapNode } from '../nodes/MapNode.js';
 import { ConstantNode } from '../nodes/ConstantNode.js';
+import { ConfidenceIntervalNode } from '../nodes/ConfidenceIntervalNode.js';
 
 export class DomRenderer {
   constructor(graph, layer, viewportElement, eventBus) {
@@ -319,12 +320,10 @@ export class DomRenderer {
     this.edgeSourceId = null;
     this.edgeSourcePort = null;
     document.body.style.cursor = '';
-    this.clearTemp();
   }
 
   showMenu(x, y, sourceId) {
     if (!this.contextMenu) {
-      const ViewportClass = this.viewport ? this.viewport.constructor : null;
       this.contextMenu = new ContextMenu(this.graph, this, this.history, this.viewport);
     }
     this.contextMenu.show(x, y, sourceId);

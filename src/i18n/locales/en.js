@@ -20,7 +20,8 @@ export const en = {
     group: 'Number Group',
     calc: 'Uncertainty',
     output: 'Output',
-    map: 'Map'
+    map: 'Map',
+    confidenceInterval: 'Confidence Interval'
   },
 
   calcTypes: {
@@ -29,6 +30,11 @@ export const en = {
     sqrt_sum_sq: 'Combined Uncertainty',
     result: 'Result',
     inputs: 'inputs'
+  },
+
+  confidence: {
+    uncertaintyInputs: 'Uncertainty inputs',
+    multiplierInputs: 'Multiplier inputs'
   },
 
   map: {
@@ -69,6 +75,7 @@ export const en = {
     measurementError: 'Measurement Uncertainty',
     roundingError: 'Rounding Uncertainty',
     totalError: 'Combined Uncertainty',
+    confidenceInterval: 'Confidence Interval',
     mapTransform: 'Map',
     markImportant: 'Mark IMPORTANT node',
     unmarkImportant: 'Remove IMPORTANT mark'
@@ -191,7 +198,10 @@ export const en = {
   errors: {
     cannotConnect: 'Cannot connect',
     cyclicDependency: 'Cyclic dependency!',
-    invalidValue: 'Invalid value'
+    invalidValue: 'Invalid value',
+    requireTwoInputs: 'Exactly 2 inputs required',
+    missingUncertaintyOrNumber: 'Need one uncertainty and one number',
+    maxTwoInputs: 'Confidence interval can have at most 2 inputs'
   },
 
   status: {
