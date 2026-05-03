@@ -5,6 +5,7 @@ export const DataType = {
   UNCERT: 'uncert',
   LIST: 'list',
   WLIST: 'wlist'
+  INTERVAL: 'interval'
 };
 
 export class TypeSystem {
@@ -67,6 +68,15 @@ export class TypeSystem {
       allowedOutputTypes: [DataType.AUTO, DataType.UNCERT, DataType.LIST, DataType.WLIST],
       defaultValue: []
     });
+
+    this.registerType(DataType.INTERVAL, {
+      name: 'Доверительный интервал',
+      canHaveIncomingEdges: true,
+      canHaveOutgoingEdges: true,
+      allowedInputTypes: [DataType.NUM, DataType.ARRAY, DataType.UNCERT, DataType.LIST, DataType.WLIST],
+      allowedOutputTypes: [DataType.AUTO, DataType.NUM, DataType.UNCERT],
+      defaultValue: null
+    });
   }
 
   registerType(typeName, definition) {
@@ -100,6 +110,7 @@ export class TypeSystem {
     if (node.type === 'map') {
       return node.unmappedMode === 'separate' ? DataType.WLIST : DataType.LIST;
     }
+    if (node.type === 'confidenceInterval') return DataType.INTERVAL;
     return DataType.NUM;
   }
 }
