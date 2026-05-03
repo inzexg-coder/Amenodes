@@ -57,6 +57,14 @@ export class Graph {
     const source = this.map.get(sourceId);
     const target = this.map.get(targetId);
     if (!source || !target) return null;
+
+    if (target instanceof ConfidenceIntervalNode) {
+      const existingEdges = this.getIncomingEdges(targetId);
+      if (existingEdges.length >= 2) {
+        modal.alert("Доверительный интервал может иметь не более 2 входов");
+        return null;
+      }
+    }
     
     if (!this.canConnect(sourceId, targetId, port)) {
       modal.alert(`Невозможно соединить: ${typeSystem.getTypeDefinition(typeSystem.getNodeType(source)).name} → ${typeSystem.getTypeDefinition(typeSystem.getNodeType(target)).name}`);
