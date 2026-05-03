@@ -5,6 +5,7 @@ import { OutputNode } from './OutputNode.js';
 import { MapNode } from './MapNode.js';
 import { ConstantNode } from './ConstantNode.js';
 import { i18n } from '../i18n/LanguageManager.js';
+import { ConfidenceIntervalNode } from './ConfidenceIntervalNode.js';
 
 export class NodeFactory {
   static createNode(type, options = {}) {
@@ -26,6 +27,8 @@ export class NodeFactory {
         return new OutputNode(id || 0, x || 0, y || 0, finalTitle, rest.rows || []);
       case 'map':
         return new MapNode(id || 0, x || 0, y || 0, finalTitle, rest.maps || [{ x: 0, y: 0 }]);
+      case 'confidenceInterval':
+        return new ConfidenceIntervalNode(id || 0, x || 0, y || 0, finalTitle);
       default:
         throw new Error(`Unknown node type: ${type}`);
     }
@@ -53,5 +56,9 @@ export class NodeFactory {
 
   static createMapAt(x, y) {
     return this.createNode('map', { x, y, maps: [{ x: 0, y: 0 }] });
+  }
+
+  static createConfidenceIntervalAt(x, y) {
+    return this.createNode('confidenceInterval', { x, y });
   }
 }
