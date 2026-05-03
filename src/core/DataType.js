@@ -37,7 +37,7 @@ export class TypeSystem {
       name: 'Вывод',
       canHaveIncomingEdges: true,
       canHaveOutgoingEdges: false,
-      allowedInputTypes: [DataType.NUM, DataType.ARRAY, DataType.UNCERT, DataType.LIST, DataType.WLIST],
+      allowedInputTypes: [DataType.NUM, DataType.ARRAY, DataType.UNCERT, DataType.LIST, DataType.WLIST, DataType.INTERVAL],
       allowedOutputTypes: [],
       defaultValue: null
     });
