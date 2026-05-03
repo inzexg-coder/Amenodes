@@ -200,7 +200,8 @@ export const ru = {
     cyclicDependency: 'Циклическая зависимость!',
     invalidValue: 'Неверное значение',
     requireTwoInputs: 'Требуется ровно 2 входа',
-    missingUncertaintyOrNumber: 'Необходима погрешность и число'
+    missingUncertaintyOrNumber: 'Необходима погрешность и число',
+    maxTwoInputs: 'Доверительный интервал может иметь не более 2 входов'
   },
 
   status: {
