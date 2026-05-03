@@ -221,6 +221,7 @@ export class Graph {
       if (node instanceof CalcNode) this.reevaluateCalc(node);
       if (node instanceof MapNode) node.graph = this;
       if (node instanceof OutputNode) node.graph = this;
+      if (node instanceof ConfidenceIntervalNode) node.reevaluate(this);
     });
   }
 
