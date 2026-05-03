@@ -1,4 +1,4 @@
-import { EdgeRenderer } from './EdgeRenderer.js';
+import { EdgeRenderer } from '../renderer/EdgeRenderer.js';
 import { ContextMenu } from '../ui/ContextMenu.js';
 import { NumberNode } from '../nodes/NumberNode.js';
 import { GroupNode } from '../nodes/GroupNode.js';
