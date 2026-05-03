@@ -51,6 +51,11 @@ export const en = {
     valueCount: 'values'
   },
 
+  confidence: {
+    uncertaintyInputs: 'Uncertainty inputs',
+    multiplierInputs: 'Multiplier inputs'
+  },
+
   toolbar: {
     undo: 'Undo',
     redo: 'Redo',
@@ -192,7 +197,9 @@ export const en = {
   errors: {
     cannotConnect: 'Cannot connect',
     cyclicDependency: 'Cyclic dependency!',
-    invalidValue: 'Invalid value'
+    invalidValue: 'Invalid value',
+    requireTwoInputs: 'Exactly 2 inputs required',
+    missingUncertaintyOrNumber: 'Need one uncertainty and one number'
   },
 
   status: {
