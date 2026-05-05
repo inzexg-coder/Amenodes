@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>1.1.2-INTERVAL</strong><br>
-  <sub>Internationalization Release Candidate | Multi-language support (EN/RU) with dynamic UI translation</sub>
+  <sub>Confidence Interval Node & Critical Bug Fixes</sub>
 </p>
 
 <h4 align="center">
