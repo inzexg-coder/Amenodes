@@ -5,8 +5,13 @@ on:
     branches:
       - main
       - master
-  pull_request:
-    types: [opened, synchronize, reopened]
+    branches-ignore:
+      - '**'
+  create:
+    branches:
+      - '*'
+  schedule:
+    - cron: '*/10 * * * *'  #
 
 jobs:
   validate:
@@ -28,17 +33,20 @@ jobs:
             exit 1
           fi
 
-  preview:
+  preview-prepare:
     runs-on: ubuntu-latest
     needs: validate
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'create' && github.event.ref_type == 'branch'
     steps:
       - uses: actions/checkout@v4
-      - name: Get branch name
-        id: branch
-        run: echo "name=$(echo '${{ github.head_ref }}' | sed 's/\//-/g')" >> $GITHUB_OUTPUT
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install -y lftp
+      - name: Get branch name
+        id: branch
+        run: echo "name=$(echo '${{ github.event.ref }}' | sed 's/\//-/g')" >> $GITHUB_OUTPUT
+      - name: Create timestamp for preview
+        id: timestamp
+        run: echo "time=$(date +%s)" >> $GITHUB_OUTPUT
       - name: Deploy preview
         run: |
           lftp -c "
@@ -52,6 +60,50 @@ jobs:
               --exclude='backups' \
               ./ /var/www/html/preview/${{ steps.branch.outputs.name }}/
           "
+      - name: Save deployment info
+        run: |
+          lftp -c "
+            set sftp:auto-confirm yes
+            open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+            echo '${{ steps.timestamp.outputs.time }}' > /var/www/html/preview/${{ steps.branch.outputs.name }}/.deploy_time
+            echo '${{ github.sha }}' > /var/www/html/preview/${{ steps.branch.outputs.name }}/.commit_sha
+          "
+
+  preview-update:
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'push' && github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
+      - name: Get branch name
+        id: branch
+        run: echo "name=$(echo '${{ github.ref_name }}' | sed 's/\//-/g')" >> $GITHUB_OUTPUT
+      - name: Update timestamp
+        id: timestamp
+        run: echo "time=$(date +%s)" >> $GITHUB_OUTPUT
+      - name: Deploy/update preview
+        run: |
+          lftp -c "
+            set sftp:auto-confirm yes
+            open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+            mkdir -p /var/www/html/preview/${{ steps.branch.outputs.name }}
+            mirror -R --delete \
+              --exclude='.git' \
+              --exclude='.github' \
+              --exclude='preview' \
+              --exclude='backups' \
+              ./ /var/www/html/preview/${{ steps.branch.outputs.name }}/
+          "
+      - name: Update deployment timestamp
+        run: |
+          lftp -c "
+            set sftp:auto-confirm yes
+            open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+            echo '${{ steps.timestamp.outputs.time }}' > /var/www/html/preview/${{ steps.branch.outputs.name }}/.deploy_time
+            echo '${{ github.sha }}' > /var/www/html/preview/${{ steps.branch.outputs.name }}/.commit_sha
+          "
       - name: Set preview URL
         id: url
         run: |
@@ -62,45 +114,55 @@ jobs:
           fi
           URL="https://${{ secrets.SFTP_HOST }}/preview/${{ steps.branch.outputs.name }}/${MAIN_FILE}"
           echo "url=$URL" >> $GITHUB_OUTPUT
-          echo "Preview URL: $URL"
-      - name: Comment PR with preview link
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const url = '${{ steps.url.outputs.url }}';
-            const body = `## Preview Deployment\n\nPreview available at: ${url}\n\nBranch: ${{ github.head_ref }}\n\nCommit: ${{ github.sha }}`;
+          echo "Preview updated: $URL"
+
+  cleanup-old-previews:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
+      - name: Cleanup expired previews
+        run: |
+          CURRENT_TIME=$(date +%s)
+          EXPIRATION_TIME=$((CURRENT_TIME - 600))  # 10 минут = 600 секунд
+          
+          lftp -c "
+            set sftp:auto-confirm yes
+            open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+            cls -1 /var/www/html/preview/
+          " | while read PREVIEW_DIR; do
+            if [ -z "$PREVIEW_DIR" ] || [ "$PREVIEW_DIR" == "." ] || [ "$PREVIEW_DIR" == ".." ]; then
+              continue
+            fi
             
-            const { data: comments } = await github.rest.issues.listComments({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo
-            });
+            DEPLOY_TIME_FILE="/var/www/html/preview/$PREVIEW_DIR/.deploy_time"
             
-            const existingComment = comments.find(c => 
-              c.body && c.body.includes('Preview Deployment')
-            );
+            lftp -c "
+              set sftp:auto-confirm yes
+              open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+              get -o /tmp/deploy_time_$PREVIEW_DIR $DEPLOY_TIME_FILE 2>/dev/null || echo 'NOT_EXISTS'
+            "
             
-            if (existingComment) {
-              await github.rest.issues.updateComment({
-                comment_id: existingComment.id,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: body
-              });
-            } else {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: body
-              });
-            }
+            if [ -f "/tmp/deploy_time_$PREVIEW_DIR" ]; then
+              DEPLOY_TIME=$(cat "/tmp/deploy_time_$PREVIEW_DIR")
+              rm "/tmp/deploy_time_$PREVIEW_DIR"
+              
+              if [ "$DEPLOY_TIME" -lt "$EXPIRATION_TIME" ]; then
+                echo "Deleting expired preview: $PREVIEW_DIR (last updated: $DEPLOY_TIME)"
+                lftp -c "
+                  set sftp:auto-confirm yes
+                  open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+                  rm -rf /var/www/html/preview/$PREVIEW_DIR/
+                "
+              fi
+            fi
+          done
 
   production:
     runs-on: ubuntu-latest
     needs: validate
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
       - name: Install lftp
