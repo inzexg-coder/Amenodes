@@ -1,7 +1,7 @@
 <h1 align="center">Amenoke</h1>
 
 <p align="center">
-  <strong>1.1.0-rc1-I18N</strong><br>
+  <strong>1.1.2-INTERVAL</strong><br>
   <sub>Internationalization Release Candidate | Multi-language support (EN/RU) with dynamic UI translation</sub>
 </p>
 
