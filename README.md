@@ -15,18 +15,18 @@
 
 ---
 
-## Pull Request Preview System
+## Preview Environment System
 
-Every pull request automatically deploys a live preview to https://amenoke.ru/preview/[branch-name]/amenodes.html
+Every branch automatically gets a live preview at `https://amenoke.ru/preview/[branch-name]/amenodes.html` for 10 minutes after the last commit.
 
 ### How it works
 
 The GitHub Actions workflow:
-- Runs on `pull_request` events (opened, synchronize, reopened)
-- Validates JavaScript syntax and HTML structure
-- Deploys the branch to a unique preview subdirectory
-- Posts a comment on the PR with the live preview URL
-- Updates the comment on each push to the branch
+- **Creates preview** when a new branch is created (except main/master)
+- **Updates preview** on every push to any branch (except main/master)
+- **Auto-cleans** previews after 10 minutes of inactivity
+- Validates JavaScript syntax and HTML structure before deployment
+- Shows preview URL in GitHub Actions logs and summary
 
 ### Preview URL format
 
@@ -35,6 +35,18 @@ https://amenoke.ru/preview/feature-branch-name/amenodes.html
 ```
 
 Branch names with slashes (`feature/new-feature`) become `feature-new-feature`
+
+### Preview Lifecycle
+
+```
+Branch created → Preview deployed (lives for 10 minutes)
+       ↓
+Commit after 5 min → Timer resets (lives another 10 min)
+       ↓
+Commit after 3 min → Timer resets (lives another 10 min)
+       ↓
+No activity for 10 min → Preview AUTOMATICALLY DELETED 🗑️
+```
 
 ### What gets deployed
 
@@ -51,17 +63,62 @@ Merges to `main` or `master` automatically deploy to the production site:
 https://amenoke.ru/amenodes.html
 ```
 
-### Testing PRs locally before CI
+### How to get the preview URL
+
+After each push, the preview URL appears:
+1. **In GitHub Actions logs** - Look for "✅ Preview updated at:"
+2. **In GitHub Summary** - At the bottom of the workflow run page
+3. **In deployment artifacts** - Saved as `.deploy_time` and `.commit_sha` on server
+
+### Testing previews locally before pushing
 
 ```bash
-# Clone PR branch locally
-git fetch origin pull/ID/head:pr-branch
-git checkout pr-branch
+# Create and switch to a new branch
+git checkout -b feature/your-feature
 
 # Run validation locally
 for file in $(find . -name "*.js" -type f); do node -c "$file" || exit 1; done
 grep -q "<!DOCTYPE html>" amenodes.html
+
+# Push to trigger preview deployment
+git push -u origin feature/your-feature
+
+# Preview URL will be shown in GitHub Actions
 ```
+
+### Manual cleanup (if needed)
+
+If you want to immediately remove a preview without waiting 10 minutes:
+```bash
+# Connect via SFTP
+sftp your-username@amenoke.ru
+
+# Navigate to preview directory
+cd /var/www/html/preview/
+
+# Remove specific preview
+rm -rf feature-branch-name/
+
+# Or remove all old previews manually
+find . -type d -name ".deploy_time" -mmin +10 -exec rm -rf {} \;
+```
+
+### Troubleshooting
+
+**Preview not appearing?**
+- Check if branch name is `main` or `master` (previews disabled for production branches)
+- Verify GitHub Actions ran successfully (check Actions tab)
+- Ensure there's an `amenodes.html` file in your repository
+
+**404 error on preview URL?**
+- Wait 1-2 minutes for deployment to complete
+- Check that you're using the correct branch name in URL
+- Verify the branch had activity in the last 10 minutes
+
+**Server running out of space?**
+- Automatic cleanup runs every 10 minutes via cron job
+- Inactive previews are removed automatically
+- Maximum concurrent previews = number of recently active branches
 
 ---
 
