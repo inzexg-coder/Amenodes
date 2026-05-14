@@ -5,13 +5,9 @@ on:
     branches:
       - main
       - master
-    branches-ignore:
-      - '**'
   create:
-    branches:
-      - '*'
   schedule:
-    - cron: '*/10 * * * *'  #
+    - cron: '*/10 * * * *'
 
 jobs:
   validate:
@@ -36,7 +32,7 @@ jobs:
   preview-prepare:
     runs-on: ubuntu-latest
     needs: validate
-    if: github.event_name == 'create' && github.event.ref_type == 'branch'
+    if: github.event_name == 'create' && github.event.ref_type == 'branch' && github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master'
     steps:
       - uses: actions/checkout@v4
       - name: Install lftp
@@ -68,6 +64,17 @@ jobs:
             echo '${{ steps.timestamp.outputs.time }}' > /var/www/html/preview/${{ steps.branch.outputs.name }}/.deploy_time
             echo '${{ github.sha }}' > /var/www/html/preview/${{ steps.branch.outputs.name }}/.commit_sha
           "
+      - name: Get preview URL
+        run: |
+          if [ -f "index.html" ]; then
+            MAIN_FILE="index.html"
+          else
+            MAIN_FILE="amenodes.html"
+          fi
+          PREVIEW_URL="https://${{ secrets.SFTP_HOST }}/preview/${{ steps.branch.outputs.name }}/${MAIN_FILE}"
+          echo "✅ Preview deployed at: $PREVIEW_URL"
+          echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_ENV
+          echo "url=$PREVIEW_URL" >> $GITHUB_OUTPUT
 
   preview-update:
     runs-on: ubuntu-latest
@@ -104,17 +111,25 @@ jobs:
             echo '${{ steps.timestamp.outputs.time }}' > /var/www/html/preview/${{ steps.branch.outputs.name }}/.deploy_time
             echo '${{ github.sha }}' > /var/www/html/preview/${{ steps.branch.outputs.name }}/.commit_sha
           "
-      - name: Set preview URL
-        id: url
+      - name: Get preview URL
         run: |
           if [ -f "index.html" ]; then
             MAIN_FILE="index.html"
           else
             MAIN_FILE="amenodes.html"
           fi
-          URL="https://${{ secrets.SFTP_HOST }}/preview/${{ steps.branch.outputs.name }}/${MAIN_FILE}"
-          echo "url=$URL" >> $GITHUB_OUTPUT
-          echo "Preview updated: $URL"
+          PREVIEW_URL="https://${{ secrets.SFTP_HOST }}/preview/${{ steps.branch.outputs.name }}/${MAIN_FILE}"
+          echo "✅ Preview updated at: $PREVIEW_URL"
+          echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_ENV
+          echo "url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+      - name: Add to GitHub Summary
+        run: |
+          echo "## 🚀 Preview Deployment Updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Preview URL:** [Click here](${{ env.PREVIEW_URL }})" >> $GITHUB_STEP_SUMMARY
+          echo "**Expires:** 10 minutes after last commit" >> $GITHUB_STEP_SUMMARY
 
   cleanup-old-previews:
     runs-on: ubuntu-latest
@@ -125,8 +140,9 @@ jobs:
       - name: Cleanup expired previews
         run: |
           CURRENT_TIME=$(date +%s)
-          EXPIRATION_TIME=$((CURRENT_TIME - 600))  # 10 минут = 600 секунд
+          EXPIRATION_TIME=$((CURRENT_TIME - 600))
           
+          # Получаем список preview директорий
           lftp -c "
             set sftp:auto-confirm yes
             open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
@@ -136,25 +152,26 @@ jobs:
               continue
             fi
             
-            DEPLOY_TIME_FILE="/var/www/html/preview/$PREVIEW_DIR/.deploy_time"
-            
+            # Скачиваем файл с временем деплоя
             lftp -c "
               set sftp:auto-confirm yes
               open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
-              get -o /tmp/deploy_time_$PREVIEW_DIR $DEPLOY_TIME_FILE 2>/dev/null || echo 'NOT_EXISTS'
-            "
+              get -o /tmp/deploy_time_$PREVIEW_DIR /var/www/html/preview/$PREVIEW_DIR/.deploy_time 2>/dev/null || echo 'NOT_EXISTS'
+            " 2>/dev/null
             
             if [ -f "/tmp/deploy_time_$PREVIEW_DIR" ]; then
               DEPLOY_TIME=$(cat "/tmp/deploy_time_$PREVIEW_DIR")
               rm "/tmp/deploy_time_$PREVIEW_DIR"
               
               if [ "$DEPLOY_TIME" -lt "$EXPIRATION_TIME" ]; then
-                echo "Deleting expired preview: $PREVIEW_DIR (last updated: $DEPLOY_TIME)"
+                echo "Deleting expired preview: $PREVIEW_DIR (last updated: $(date -d @$DEPLOY_TIME))"
                 lftp -c "
                   set sftp:auto-confirm yes
                   open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
                   rm -rf /var/www/html/preview/$PREVIEW_DIR/
                 "
+              else
+                echo "Keeping preview: $PREVIEW_DIR (last updated: $(date -d @$DEPLOY_TIME))"
               fi
             fi
           done
@@ -162,7 +179,7 @@ jobs:
   production:
     runs-on: ubuntu-latest
     needs: validate
-    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v4
       - name: Install lftp
@@ -186,4 +203,4 @@ jobs:
           else
             MAIN_FILE="amenodes.html"
           fi
-          echo "Production deployed to: https://${{ secrets.SFTP_HOST }}/${MAIN_FILE}"
+          echo "✅ Production deployed to: https://${{ secrets.SFTP_HOST }}/${MAIN_FILE}"
