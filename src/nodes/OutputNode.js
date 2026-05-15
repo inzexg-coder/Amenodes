@@ -14,7 +14,7 @@ export const metadata = {
 export class OutputNode extends Node {
   constructor(id, x, y, title, rows) {
     super(id, 'output', x, y, title);
-    this.rows = rows ?? [{ param: t('status.noConnections'), value: "—" }];
+    this.rows = rows || [{ param: t('status.noConnections'), value: "—" }];
   }
 
   getValue() {
@@ -25,14 +25,14 @@ export class OutputNode extends Node {
       const source = this.graph.getNode(edge.sourceId);
       if (!source) continue;
       const value = this.graph.getSourceValue(source, edge.sourcePort);
-      if (Array.isArray(value)) all.push(...value);
+      if (Array.isArray(value)) all.push.apply(all, value);
       else if (value != null && !isNaN(value)) all.push(value);
     }
     return all;
   }
 
   toJSON() {
-    return { ...super.toJSON(), rows: this.rows.map(r => ({ ...r })) };
+    return { ...super.toJSON(), rows: this.rows.map(function(r) { return { ...r }; }) };
   }
 
   getMinHeight() {
@@ -58,28 +58,30 @@ export class OutputNode extends Node {
     table.appendChild(thead);
     
     const tbody = document.createElement('tbody');
-    this.rows.forEach((row, idx) => {
-      const tr = document.createElement('tr');
-      
-      const tdParam = document.createElement('td');
-      const paramEditor = new EditableTitle(row.param, (newParam) => {
-        this.rows[idx].param = newParam;
-        renderer.save();
-      });
-      paramEditor.displaySpan.style.minWidth = '160px';
-      paramEditor.displaySpan.style.display = 'inline-block';
-      tdParam.appendChild(paramEditor.getElement());
-      
-      const tdValue = document.createElement('td');
-      const valueInput = document.createElement('input');
-      valueInput.value = replaceSymbols(row.value);
-      valueInput.disabled = true;
-      tdValue.appendChild(valueInput);
-      
-      tr.appendChild(tdParam);
-      tr.appendChild(tdValue);
-      tbody.appendChild(tr);
-    });
+    for (var i = 0; i < this.rows.length; i++) {
+      (function(idx) {
+        const tr = document.createElement('tr');
+        
+        const tdParam = document.createElement('td');
+        const paramEditor = new EditableTitle(this.rows[idx].param, function(newParam) {
+          this.rows[idx].param = newParam;
+          renderer.save();
+        }.bind(this));
+        paramEditor.displaySpan.style.minWidth = '160px';
+        paramEditor.displaySpan.style.display = 'inline-block';
+        tdParam.appendChild(paramEditor.getElement());
+        
+        const tdValue = document.createElement('td');
+        const valueInput = document.createElement('input');
+        valueInput.value = replaceSymbols(this.rows[idx].value);
+        valueInput.disabled = true;
+        tdValue.appendChild(valueInput);
+        
+        tr.appendChild(tdParam);
+        tr.appendChild(tdValue);
+        tbody.appendChild(tr);
+      }.bind(this))(i);
+    }
     table.appendChild(tbody);
     tableDiv.appendChild(table);
     div.appendChild(tableDiv);
@@ -87,16 +89,16 @@ export class OutputNode extends Node {
     renderer.addHandles(div, this.id, null);
     renderer.applyOptStyles(div);
     
-    const unsubscribe = i18n.subscribe(() => {
+    const unsubscribe = i18n.subscribe(function() {
       paramTh.textContent = t('common.parameter');
       valueTh.textContent = t('common.value');
-    });
+    }.bind(this));
     
     const originalRemove = div.remove;
     div.remove = function() {
       unsubscribe();
       if (originalRemove) originalRemove.call(this);
-    };
+    }.bind(this);
     
     return div;
   }
