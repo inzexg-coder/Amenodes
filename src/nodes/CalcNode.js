@@ -37,9 +37,9 @@ export class CalcNode extends Node {
     };
     
     const updateInfo = () => {
-      info.innerHTML = `<strong>${typeMap[this.calcType] || t('calcTypes.div3')}</strong><br>
-                        ${t('calcTypes.result')}: ${this.resultStr}<br>
-                        <span style="font-size:11px">${t('calcTypes.inputs')}: ${graph.getIncomingEdges(this.id).length}</span>`;
+      info.innerHTML = '<strong>' + (typeMap[this.calcType] || t('calcTypes.div3')) + '</strong><br>' +
+                        t('calcTypes.result') + ': ' + this.resultStr + '<br>' +
+                        '<span style="font-size:11px">' + t('calcTypes.inputs') + ': ' + graph.getIncomingEdges(this.id).length + '</span>';
     };
     
     updateInfo();
@@ -50,9 +50,9 @@ export class CalcNode extends Node {
         div_sqrt12: t('calcTypes.div_sqrt12'),
         sqrt_sum_sq: t('calcTypes.sqrt_sum_sq')
       };
-      info.innerHTML = `<strong>${newTypeMap[this.calcType] || t('calcTypes.div3')}</strong><br>
-                        ${t('calcTypes.result')}: ${this.resultStr}<br>
-                        <span style="font-size:11px">${t('calcTypes.inputs')}: ${graph.getIncomingEdges(this.id).length}</span>`;
+      info.innerHTML = '<strong>' + (newTypeMap[this.calcType] || t('calcTypes.div3')) + '</strong><br>' +
+                        t('calcTypes.result') + ': ' + this.resultStr + '<br>' +
+                        '<span style="font-size:11px">' + t('calcTypes.inputs') + ': ' + graph.getIncomingEdges(this.id).length + '</span>';
     });
     
     div.appendChild(info);
