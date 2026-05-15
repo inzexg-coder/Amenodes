@@ -10,11 +10,7 @@ export class LanguageSwitcher {
 
   init() {
     if (!this.container) return;
-    
-    if (this.container.querySelector('.language-btn')) {
-      return;
-    }
-    
+    if (this.container.querySelector('.language-btn')) return;
     this.button = document.createElement('button');
     this.button.className = 'language-btn';
     this.button.innerHTML = '<i class="fas fa-globe"></i> ' + i18n.getCurrentLanguage().toUpperCase();
@@ -22,14 +18,11 @@ export class LanguageSwitcher {
       e.stopPropagation();
       this.toggleMenu();
     }).bind(this);
-    
     this.container.appendChild(this.button);
-    
     i18n.subscribe((function(lang) {
-      this.button.innerHTML = '<i class="fas fa-globe"></i> ' + lang.toUpperCase();
+      if (this.button) this.button.innerHTML = '<i class="fas fa-globe"></i> ' + lang.toUpperCase();
       this.closeMenu();
     }).bind(this));
-    
     document.addEventListener('click', (function(e) {
       if (this.menu && !this.menu.contains(e.target) && e.target !== this.button) {
         this.closeMenu();
@@ -38,28 +31,20 @@ export class LanguageSwitcher {
   }
 
   toggleMenu() {
-    if (this.menu) {
-      this.closeMenu();
-    } else {
-      this.createMenu();
-    }
+    if (this.menu) this.closeMenu();
+    else this.createMenu();
   }
 
   createMenu() {
     this.closeMenu();
-    
     this.menu = document.createElement('div');
     this.menu.className = 'language-menu';
-    
     var languages = i18n.getAvailableLanguages();
-    
     for (var i = 0; i < languages.length; i++) {
       var lang = languages[i];
       var item = document.createElement('div');
       item.className = 'language-menu-item';
-      if (lang.code === i18n.getCurrentLanguage()) {
-        item.classList.add('active');
-      }
+      if (lang.code === i18n.getCurrentLanguage()) item.classList.add('active');
       item.innerHTML = lang.nativeName + ' (' + lang.name + ')';
       item.onclick = (function(code) {
         return function() {
@@ -69,9 +54,7 @@ export class LanguageSwitcher {
       }.bind(this))(lang.code);
       this.menu.appendChild(item);
     }
-    
     document.body.appendChild(this.menu);
-    
     var rect = this.button.getBoundingClientRect();
     this.menu.style.position = 'fixed';
     this.menu.style.top = (rect.bottom + 5) + 'px';
