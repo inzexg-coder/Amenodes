@@ -2,6 +2,14 @@ import { Node } from '../core/Node.js';
 import { EditableTitle } from '../ui/EditableTitle.js';
 import { i18n } from '../i18n/LanguageManager.js';
 
+export const metadata = {
+  type: 'group',
+  nameKey: 'nodes.group',
+  descriptionKey: 'nodeDescriptions.group',
+  author: 'Amenoke',
+  github: 'https://github.com/inzexg-coder/Amenodes'
+};
+
 export class GroupNode extends Node {
   constructor(id, x, y, title, values) {
     super(id, 'group', x, y, title);
