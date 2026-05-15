@@ -1,6 +1,25 @@
 import { OPTIMIZATIONS } from '../config/Optimizations.js';
 import { i18n, t } from '../i18n/LanguageManager.js';
 
+class OptimizationPanel {
+  apply() {
+    const state = this.optState;
+    if (state[2]) this.enableMouseThrottle();
+    else this.disableMouseThrottle();
+    if (state[3]) this.enableBatchRAF();
+    else this.disableBatchRAF();
+    if (state[6]) this.enablePassiveEvents();
+    if (state[7]) this.enableShadowSimplification();
+    if (state[8]) this.enableDeferredEdges();
+    if (state[10]) this.enableDebounceRender();
+    if (state[11]) this.enableRectCache();
+    if (state[13]) this.enableLazyComputations();
+    if (state[14]) this.enableTypedArrays();
+    if (state[16]) this.enableTextCache();
+    if (state[17]) this.enableWebGL();
+  }
+}
+
 const getOptKey = (name) => {
   const map = {
     'Виртуализация': 'virtualization',
