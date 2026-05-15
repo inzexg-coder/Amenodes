@@ -1,26 +1,28 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Amenodes - 26.4.26</title>
+<title>@Amenodes</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
+  
 <div class="toolbar">
-  <div>
-    <button id="undoBtn">Отменить</button>
-    <button id="redoBtn">Повторить</button>
-    <button id="addEmptyBtn">Число</button>
-    <button id="addConstantBtn">Константа</button>
-    <button id="addGroupBtn">Группа</button>
-    <button id="addOutputBtn">Вывод</button>
+  <div class="toolbar-group">
+    <button id="undoBtn" title="Undo"><i class="fas fa-undo-alt"></i> <span>Undo</span></button>
+    <button id="redoBtn" title="Redo"><i class="fas fa-redo-alt"></i> <span>Redo</span></button>
+    <button id="addNodeBtn" class="add-node-btn" title="Add Node"><i class="fas fa-plus-circle"></i> <span>Add Node</span></button>
   </div>
-  <div class="file-group">
-    <button id="exportBtn">Экспорт</button>
-    <button id="importBtn">Импорт</button>
-    <button id="clearStorageBtn">Очистить сохр.</button>
+  <div class="toolbar-group">
+    <div class="file-group">
+      <button id="exportBtn"><i class="fas fa-download"></i> <span>Export</span></button>
+      <button id="importBtn"><i class="fas fa-upload"></i> <span>Import</span></button>
+      <button id="clearStorageBtn"><i class="fas fa-trash-alt"></i> <span>Clear storage</span></button>
+    </div>
+    <div id="languageSwitcherContainer"></div>
   </div>
 </div>
 
@@ -32,19 +34,34 @@
 </div>
 
 <input type="file" id="fileInput" class="hidden-file-input" accept=".amnk">
-<button class="opt-toggle-btn" id="optToggleBtn">⚡</button>
+
+<button class="opt-toggle-btn" id="optToggleBtn"><i class="fas fa-tachometer-alt"></i></button>
 
 <div id="optPanel" class="opt-panel hidden">
-  <div class="opt-header">Оптимизации производительности<button id="closeOptPanel">✕</button></div>
+  <div class="opt-header">
+    Performance Optimizations
+    <button id="closeOptPanel"><i class="fas fa-times"></i></button>
+  </div>
   <div class="opt-list" id="optListContainer"></div>
-  <button id="rebenchmarkBtn" class="rebench-btn">Пересчитать влияние оптимизаций</button>
-  <button id="applyOptimizationsBtn" class="apply-btn">ПРИМЕНИТЬ ВЫБРАННЫЕ</button>
+  <button id="rebenchmarkBtn" class="rebench-btn"><i class="fas fa-chart-line"></i> Re‑benchmark</button>
+  <button id="applyOptimizationsBtn" class="apply-btn"><i class="fas fa-check-circle"></i> Apply Selected</button>
+</div>
+  
+<div class="fps-meter" id="fpsMeter">FPS: --</div>
+<div id="autosaveStatus" class="autosave-status">Saved</div>
+<div id="benchmarkStatus" class="benchmark-status" style="display:none;">Benchmarking...</div>
+
+<div id="nodeSelectionModal" class="node-modal hidden">
+  <div class="node-modal-content">
+    <div class="node-modal-header">
+      <h3><i class="fas fa-cubes"></i> Add Node</h3>
+      <button id="closeNodeModalBtn" class="close-modal"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="node-modal-body" id="nodeListContainer">
+    </div>
+  </div>
 </div>
 
-<div class="fps-meter" id="fpsMeter">FPS: --</div>
-<div id="autosaveStatus" class="autosave-status" style="opacity:0;">Сохранено</div>
-<div id="benchmarkStatus" class="benchmark-status" style="display:none;">Тестирование оптимизаций...</div>
-<script type="module" src="./src/main.js?v=3"></script>
 <script type="importmap">
 {
   "imports": {
