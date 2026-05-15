@@ -17,26 +17,30 @@ export class NodeMenu {
 
   createButton() {
     var self = this;
-    var undoBtn = document.getElementById('undoBtn');
+    
+    if (document.getElementById('nodeMenuBtn')) {
+      return;
+    }
+    
     var redoBtn = document.getElementById('redoBtn');
     
-    if (!undoBtn || !redoBtn) {
-      var toolbarFirstDiv = document.querySelector('.toolbar div:first-child');
-      if (toolbarFirstDiv) {
-        this.button = document.createElement('button');
-        this.button.id = 'nodeMenuBtn';
-        this.button.innerHTML = '<i class="fas fa-plus"></i>';
-        this.button.title = t('toolbar.addNode');
-        this.button.onclick = function() { self.toggle(); };
-        toolbarFirstDiv.appendChild(this.button);
-      }
-    } else {
+    if (redoBtn) {
       this.button = document.createElement('button');
       this.button.id = 'nodeMenuBtn';
       this.button.innerHTML = '<i class="fas fa-plus"></i>';
       this.button.title = t('toolbar.addNode');
       this.button.onclick = function() { self.toggle(); };
       redoBtn.insertAdjacentElement('afterend', this.button);
+    } else {
+      var toolbarLeft = document.querySelector('.toolbar-left');
+      if (toolbarLeft) {
+        this.button = document.createElement('button');
+        this.button.id = 'nodeMenuBtn';
+        this.button.innerHTML = '<i class="fas fa-plus"></i>';
+        this.button.title = t('toolbar.addNode');
+        this.button.onclick = function() { self.toggle(); };
+        toolbarLeft.appendChild(this.button);
+      }
     }
     
     i18n.subscribe(function() {
