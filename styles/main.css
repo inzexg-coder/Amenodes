@@ -151,7 +151,21 @@ body {
   box-shadow: 0 8px 20px rgba(0,0,0,.3);
   border: var(--border-light);
   flex-wrap: wrap;
+  gap: 12px;
+}
+
+.toolbar-left {
+  display: flex;
   gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.toolbar-right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .toolbar button {
@@ -885,11 +899,12 @@ hr {
   color: #1a1f30;
   font-weight: bold;
   font-size: 18px;
-  padding: 6px 16px;
+  padding: 6px 18px;
   border-radius: 40px;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  margin-left: 4px;
 }
 
 #nodeMenuBtn:hover {
@@ -900,6 +915,12 @@ hr {
 
 #nodeMenuBtn i {
   margin-right: 0;
+  font-size: 16px;
+}
+
+#languageSwitcherContainer {
+  display: inline-block;
+  margin-left: 8px;
 }
 
 .node-menu-overlay {
@@ -955,6 +976,11 @@ hr {
   color: #ffefcf;
   font-size: 18px;
   font-weight: 600;
+}
+
+.node-menu-header h3 i {
+  margin-right: 8px;
+  color: #ffb347;
 }
 
 .node-menu-close {
@@ -1046,7 +1072,6 @@ hr {
   text-decoration: underline;
 }
 
-/* Design quality overrides */
 .design-quality-extreme .node-menu-panel {
   border-radius: 0px !important;
   backdrop-filter: none !important;
@@ -1066,4 +1091,36 @@ hr {
 
 .design-quality-1 .node-menu-card {
   border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .toolbar-left, .toolbar-right {
+    justify-content: center;
+  }
+  
+  #nodeMenuBtn {
+    padding: 6px 14px;
+  }
+  
+  .node-menu-panel {
+    width: 95vw;
+    max-height: 85vh;
+  }
+  
+  .node-menu-card {
+    padding: 10px 12px;
+  }
+  
+  .node-menu-card-name {
+    font-size: 14px;
+  }
+  
+  .node-menu-card-desc {
+    font-size: 11px;
+  }
 }
