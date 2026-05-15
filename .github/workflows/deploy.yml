@@ -175,24 +175,19 @@ jobs:
               continue
             fi
             
-            lftp -c "
+            DEPLOY_TIME=$(lftp -c "
               set sftp:auto-confirm yes
               open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
-              get -o /tmp/deploy_time_$PREVIEW_DIR /var/www/html/preview/$PREVIEW_DIR/.deploy_time 2>/dev/null || echo ''
-            " 2>/dev/null
+              cat /var/www/html/preview/$PREVIEW_DIR/.deploy_time 2>/dev/null || echo ''
+            " 2>/dev/null)
             
-            if [ -f "/tmp/deploy_time_$PREVIEW_DIR" ]; then
-              DEPLOY_TIME=$(cat "/tmp/deploy_time_$PREVIEW_DIR")
-              rm "/tmp/deploy_time_$PREVIEW_DIR"
-              
-              if [ -n "$DEPLOY_TIME" ] && [ "$DEPLOY_TIME" -lt "$EXPIRATION_TIME" ]; then
-                echo "Deleting expired preview: $PREVIEW_DIR"
-                lftp -c "
-                  set sftp:auto-confirm yes
-                  open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
-                  rm -rf /var/www/html/preview/$PREVIEW_DIR/
-                "
-              fi
+            if [ -n "$DEPLOY_TIME" ] && [ "$DEPLOY_TIME" -lt "$EXPIRATION_TIME" ]; then
+              echo "Deleting expired preview: $PREVIEW_DIR"
+              lftp -c "
+                set sftp:auto-confirm yes
+                open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+                rm -rf /var/www/html/preview/$PREVIEW_DIR/
+              "
             fi
           done
 
