@@ -28,15 +28,17 @@ export class ToolbarController {
   }
   
   initLanguageSwitcher() {
+    if (this.languageSwitcher) return;
     let langContainer = document.getElementById('languageSwitcherContainer');
     if (!langContainer) {
       langContainer = document.createElement('div');
       langContainer.id = 'languageSwitcherContainer';
       langContainer.style.display = 'inline-block';
-      
       var fileGroup = document.querySelector('.file-group');
       if (fileGroup && fileGroup.parentNode) {
         fileGroup.parentNode.appendChild(langContainer);
+      } else {
+        document.querySelector('.toolbar-right').appendChild(langContainer);
       }
     }
     this.languageSwitcher = new LanguageSwitcher('languageSwitcherContainer');
@@ -50,7 +52,6 @@ export class ToolbarController {
       importBtn: t('toolbar.import'),
       clearStorageBtn: t('toolbar.clearStorage')
     };
-    
     for (var id in buttons) {
       var btn = document.getElementById(id);
       if (btn) btn.textContent = buttons[id];
@@ -90,9 +91,7 @@ export class ToolbarController {
 
   clearStorage() {
     modal.confirm(t('modal.clearStorageConfirm')).then(function(result) {
-      if (result) {
-        localStorage.removeItem('amenodes_autosave');
-      }
+      if (result) localStorage.removeItem('amenodes_autosave');
     });
   }
 }
