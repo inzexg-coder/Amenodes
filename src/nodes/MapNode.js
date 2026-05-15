@@ -2,6 +2,14 @@ import { Node } from '../core/Node.js';
 import { EditableTitle } from '../ui/EditableTitle.js';
 import { i18n, t } from '../i18n/LanguageManager.js';
 
+export const metadata = {
+  type: 'map',
+  nameKey: 'nodes.map',
+  descriptionKey: 'nodeDescriptions.map',
+  author: 'Amenoke',
+  github: 'https://github.com/inzexg-coder/Amenodes'
+};
+
 export class MapNode extends Node {
   constructor(id, x, y, title, maps) {
     super(id, 'map', x, y, title);
