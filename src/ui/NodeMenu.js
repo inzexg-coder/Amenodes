@@ -16,15 +16,27 @@ export class NodeMenu {
   }
 
   createButton() {
-    const toolbar = document.querySelector('.toolbar div:first-child');
-    if (!toolbar) return;
+    const undoBtn = document.getElementById('undoBtn');
+    const redoBtn = document.getElementById('redoBtn');
     
-    this.button = document.createElement('button');
-    this.button.id = 'nodeMenuBtn';
-    this.button.innerHTML = '<i class="fas fa-plus"></i>';
-    this.button.title = t('toolbar.addNode');
-    this.button.onclick = () => this.toggle();
-    toolbar.appendChild(this.button);
+    if (!undoBtn || !redoBtn) {
+      const toolbarFirstDiv = document.querySelector('.toolbar div:first-child');
+      if (toolbarFirstDiv) {
+        this.button = document.createElement('button');
+        this.button.id = 'nodeMenuBtn';
+        this.button.innerHTML = '<i class="fas fa-plus"></i>';
+        this.button.title = t('toolbar.addNode');
+        this.button.onclick = () => this.toggle();
+        toolbarFirstDiv.appendChild(this.button);
+      }
+    } else {
+      this.button = document.createElement('button');
+      this.button.id = 'nodeMenuBtn';
+      this.button.innerHTML = '<i class="fas fa-plus"></i>';
+      this.button.title = t('toolbar.addNode');
+      this.button.onclick = () => this.toggle();
+      redoBtn.insertAdjacentElement('afterend', this.button);
+    }
     
     i18n.subscribe(() => {
       if (this.button) this.button.title = t('toolbar.addNode');
@@ -54,7 +66,7 @@ export class NodeMenu {
     const header = document.createElement('div');
     header.className = 'node-menu-header';
     header.innerHTML = `
-      <h3>${t('nodeMenu.title')}</h3>
+      <h3><i class="fas fa-cubes"></i> ${t('nodeMenu.title')}</h3>
       <button class="node-menu-close"><i class="fas fa-times"></i></button>
     `;
     panel.appendChild(header);
