@@ -227,5 +227,33 @@ export const en = {
     nodeDeleted: 'Node deleted',
     edgeDeleted: 'Edge deleted',
     graphCleared: 'Graph cleared'
+  },
+
+  toolbar: {
+    undo: 'Undo',
+    redo: 'Redo',
+    number: 'Number',
+    constant: 'Constant',
+    group: 'Group',
+    output: 'Output',
+    export: 'Export',
+    import: 'Import',
+    clearStorage: 'Clear storage',
+    language: 'Language',
+    addNode: 'Add node'
+  },
+
+  nodeMenu: {
+    title: 'Nodes'
+  },
+
+  nodeDescriptions: {
+    number: 'A single numeric value that can be edited inline',
+    constant: 'A constant value that never changes',
+    group: 'A collection of named numeric values',
+    calc: 'Uncertainty calculation node (measurement, rounding, combined)',
+    output: 'Displays the results of connected nodes in a table',
+    map: 'Maps input values to output values using X→Y rules',
+    confidenceInterval: 'Calculates confidence interval by multiplying uncertainty with a multiplier'
   }
 };
