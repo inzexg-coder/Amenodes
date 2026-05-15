@@ -1,4 +1,3 @@
-import { NodeFactory } from '../nodes/NodeFactory.js';
 import { modal } from './CustomModal.js';
 import { i18n, t } from '../i18n/LanguageManager.js';
 import { LanguageSwitcher } from './LanguageSwitcher.js';
@@ -34,8 +33,8 @@ export class ToolbarController {
       langContainer = document.createElement('div');
       langContainer.id = 'languageSwitcherContainer';
       langContainer.style.display = 'inline-block';
-
-      const fileGroup = document.querySelector('.file-group');
+      
+      var fileGroup = document.querySelector('.file-group');
       if (fileGroup && fileGroup.parentNode) {
         fileGroup.parentNode.appendChild(langContainer);
       }
@@ -44,7 +43,7 @@ export class ToolbarController {
   }
   
   updateButtonTexts() {
-    const buttons = {
+    var buttons = {
       undoBtn: t('toolbar.undo'),
       redoBtn: t('toolbar.redo'),
       exportBtn: t('toolbar.export'),
@@ -52,9 +51,9 @@ export class ToolbarController {
       clearStorageBtn: t('toolbar.clearStorage')
     };
     
-    for (const [id, text] of Object.entries(buttons)) {
-      const btn = document.getElementById(id);
-      if (btn) btn.textContent = text;
+    for (var id in buttons) {
+      var btn = document.getElementById(id);
+      if (btn) btn.textContent = buttons[id];
     }
   }
 
@@ -70,16 +69,6 @@ export class ToolbarController {
     this.history.autoSave();
   }
 
-  getCenterCoords() {
-    const rect = document.getElementById('viewport').getBoundingClientRect();
-    const off = this.viewport.getOffset();
-    const zoom = window.currentZoom || 1;
-    return {
-      x: (rect.width / 2 - off.x) / zoom,
-      y: (rect.height / 2 - off.y) / zoom
-    };
-  }
-
   export() {
     this.persistence.exportToFile();
   }
@@ -90,8 +79,8 @@ export class ToolbarController {
 
   async handleFileImport(event) {
     if (!event.target.files.length) return;
-    const file = event.target.files[0];
-    const success = await this.persistence.importFromFile(file);
+    var file = event.target.files[0];
+    var success = await this.persistence.importFromFile(file);
     if (success) {
       this.renderer.render();
       this.history.save();
@@ -100,7 +89,7 @@ export class ToolbarController {
   }
 
   clearStorage() {
-    modal.confirm(t('modal.clearStorageConfirm')).then((result) => {
+    modal.confirm(t('modal.clearStorageConfirm')).then(function(result) {
       if (result) {
         localStorage.removeItem('amenodes_autosave');
       }
