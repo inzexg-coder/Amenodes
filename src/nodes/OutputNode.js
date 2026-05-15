@@ -3,6 +3,14 @@ import { EditableTitle } from '../ui/EditableTitle.js';
 import { replaceSymbols } from '../utils/SymbolMapper.js';
 import { i18n, t } from '../i18n/LanguageManager.js';
 
+export const metadata = {
+  type: 'output',
+  nameKey: 'nodes.output',
+  descriptionKey: 'nodeDescriptions.output',
+  author: 'Amenoke',
+  github: 'https://github.com/inzexg-coder/Amenodes'
+};
+
 export class OutputNode extends Node {
   constructor(id, x, y, title, rows) {
     super(id, 'output', x, y, title);
