@@ -1,6 +1,14 @@
 import { Node } from '../core/Node.js';
 import { i18n, t } from '../i18n/LanguageManager.js';
 
+export const metadata = {
+  type: 'calc',
+  nameKey: 'nodes.calc',
+  descriptionKey: 'nodeDescriptions.calc',
+  author: 'Amenoke',
+  github: 'https://github.com/inzexg-coder/Amenodes'
+};
+
 export class CalcNode extends Node {
   constructor(id, x, y, title, calcType) {
     super(id, 'calc', x, y, title);
