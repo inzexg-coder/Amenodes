@@ -1,100 +1,103 @@
 import { ru } from './locales/ru.js';
 import { en } from './locales/en.js';
 
-const LOCALES = {
+var LOCALES = {
   ru: { name: 'Русский', nativeName: 'Русский', translations: ru },
   en: { name: 'English', nativeName: 'English', translations: en }
 };
 
-class LanguageManager {
-  constructor() {
-    this.currentLanguage = this.getSavedLanguage();
-    this.listeners = [];
-    this.translations = LOCALES[this.currentLanguage]?.translations || ru;
-  }
+var LanguageManager = function() {
+  this.currentLanguage = this.getSavedLanguage();
+  this.listeners = [];
+  this.translations = LOCALES[this.currentLanguage]?.translations || ru;
+};
 
-  getSavedLanguage() {
-    const saved = localStorage.getItem('amenodes_language');
-    if (saved && LOCALES[saved]) return saved;
-    const browserLang = navigator.language.split('-')[0];
-    if (LOCALES[browserLang]) return browserLang;
-    return 'en';
-  }
+LanguageManager.prototype.getSavedLanguage = function() {
+  var saved = localStorage.getItem('amenodes_language');
+  if (saved && LOCALES[saved]) return saved;
+  var browserLang = navigator.language.split('-')[0];
+  if (LOCALES[browserLang]) return browserLang;
+  return 'en';
+};
 
-  setLanguage(lang) {
-    if (!LOCALES[lang]) return false;
-    this.currentLanguage = lang;
-    this.translations = LOCALES[lang].translations;
-    localStorage.setItem('amenodes_language', lang);
-    this.notifyListeners();
-    return true;
-  }
+LanguageManager.prototype.setLanguage = function(lang) {
+  if (!LOCALES[lang]) return false;
+  this.currentLanguage = lang;
+  this.translations = LOCALES[lang].translations;
+  localStorage.setItem('amenodes_language', lang);
+  this.notifyListeners();
+  return true;
+};
 
-  getCurrentLanguage() {
-    return this.currentLanguage;
-  }
+LanguageManager.prototype.getCurrentLanguage = function() {
+  return this.currentLanguage;
+};
 
-  getAvailableLanguages() {
-    return Object.entries(LOCALES).map(([code, info]) => ({
-      code,
-      name: info.name,
-      nativeName: info.nativeName
-    }));
+LanguageManager.prototype.getAvailableLanguages = function() {
+  var result = [];
+  for (var code in LOCALES) {
+    result.push({
+      code: code,
+      name: LOCALES[code].name,
+      nativeName: LOCALES[code].nativeName
+    });
   }
+  return result;
+};
 
-  normalizeKey(key) {
-    return key.replace(/\s+/g, '').replace(/[^a-zA-Zа-яА-Я0-9]/g, '');
-  }
-
-  t(key, params = {}) {
-    const keys = key.split('.');
-    let value = this.translations;
-    
-    for (const k of keys) {
-      if (value && typeof value === 'object' && k in value) {
-        value = value[k];
-      } else {
-        console.warn(`Translation missing: ${key}`);
-        return key;
-      }
-    }
-    
-    if (typeof value === 'string') {
-      return value.replace(/\{(\w+)\}/g, (_, param) => params[param] || `{${param}}`);
-    }
-    
-    return key;
-  }
-
-  translate(key, params = {}) {
-    return this.t(key, params);
-  }
-
-  subscribe(listener) {
-    this.listeners.push(listener);
-    return () => {
-      const index = this.listeners.indexOf(listener);
-      if (index !== -1) this.listeners.splice(index, 1);
-    };
-  }
-
-  notifyListeners() {
-    for (const listener of this.listeners) {
-      listener(this.currentLanguage, this.translations);
+LanguageManager.prototype.t = function(key, params) {
+  params = params || {};
+  var keys = key.split('.');
+  var value = this.translations;
+  
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    if (value && typeof value === 'object' && k in value) {
+      value = value[k];
+    } else {
+      console.warn('Translation missing: ' + key);
+      return key;
     }
   }
-
-  translateNodeTitle(nodeType, currentTitle, originalTitle) {
-    const translated = this.t(`nodes.${nodeType}`);
-    if (translated !== `nodes.${nodeType}` && currentTitle === originalTitle) {
-      return translated;
-    }
-    return currentTitle;
+  
+  if (typeof value === 'string') {
+    return value.replace(/\{(\w+)\}/g, function(_, param) {
+      return params[param] || '{' + param + '}';
+    });
   }
-}
+  
+  return key;
+};
 
-export const i18n = new LanguageManager();
+LanguageManager.prototype.translate = function(key, params) {
+  return this.t(key, params);
+};
 
-export function t(key, params = {}) {
+LanguageManager.prototype.subscribe = function(listener) {
+  this.listeners.push(listener);
+  var self = this;
+  return function() {
+    var index = self.listeners.indexOf(listener);
+    if (index !== -1) self.listeners.splice(index, 1);
+  };
+};
+
+LanguageManager.prototype.notifyListeners = function() {
+  for (var i = 0; i < this.listeners.length; i++) {
+    this.listeners[i](this.currentLanguage, this.translations);
+  }
+};
+
+LanguageManager.prototype.translateNodeTitle = function(nodeType, currentTitle, originalTitle) {
+  var translated = this.t('nodes.' + nodeType);
+  if (translated !== 'nodes.' + nodeType && currentTitle === originalTitle) {
+    return translated;
+  }
+  return currentTitle;
+};
+
+export var i18n = new LanguageManager();
+
+export function t(key, params) {
   return i18n.t(key, params);
 }
