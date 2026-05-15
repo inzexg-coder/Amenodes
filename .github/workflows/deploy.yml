@@ -2,13 +2,14 @@ name: Deploy Amenodes
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
   pull_request:
-    types: [ opened, synchronize, reopened ]
+    types: [opened, synchronize, reopened]
   create:
   schedule:
     - cron: '*/10 * * * *'
-  workflow_dispatch:
 
 jobs:
   validate:
@@ -28,6 +29,49 @@ jobs:
             exit 1
           fi
 
+  preview-prepare:
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'create' && github.event.ref_type == 'branch' && github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
+      - name: Get branch name
+        id: branch
+        run: echo "name=$(echo '${{ github.event.ref }}' | sed 's/\//-/g')" >> $GITHUB_OUTPUT
+      - name: Create timestamp for preview
+        id: timestamp
+        run: echo "time=$(date +%s)" >> $GITHUB_OUTPUT
+      - name: Deploy preview to subdirectory
+        run: |
+          lftp -c "
+            set sftp:auto-confirm yes
+            open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+            mkdir -p /var/www/html/preview/${{ steps.branch.outputs.name }}
+            mirror -R --delete \
+              --exclude='.git' \
+              --exclude='.github' \
+              --exclude='preview' \
+              --exclude='backups' \
+              --exclude='index' \
+              --exclude='index.html' \
+              ./ /var/www/html/preview/${{ steps.branch.outputs.name }}/
+          "
+      - name: Save deployment info
+        run: |
+          lftp -c "
+            set sftp:auto-confirm yes
+            open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+            echo '${{ steps.timestamp.outputs.time }}' > /var/www/html/preview/${{ steps.branch.outputs.name }}/.deploy_time
+            echo '${{ github.sha }}' > /var/www/html/preview/${{ steps.branch.outputs.name }}/.commit_sha
+          "
+      - name: Get preview URL
+        run: |
+          PREVIEW_URL="https://${{ secrets.SFTP_HOST }}/preview/${{ steps.branch.outputs.name }}/amenodes.html"
+          echo "✅ Preview deployed at: $PREVIEW_URL"
+          echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_ENV
+
   preview-update:
     runs-on: ubuntu-latest
     needs: validate
@@ -38,51 +82,144 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y lftp
       - name: Get branch name
         id: branch
+        run: echo "name=$(echo '${{ github.ref_name }}' | sed 's/\//-/g')" >> $GITHUB_OUTPUT
+      - name: Update timestamp
+        id: timestamp
+        run: echo "time=$(date +%s)" >> $GITHUB_OUTPUT
+      - name: Deploy/update preview to subdirectory
         run: |
-          BRANCH="${{ github.ref_name }}"
-          echo "name=${BRANCH//\//-}" >> $GITHUB_OUTPUT
-      - name: Deploy
-        env:
-          HOST: ${{ secrets.SFTP_HOST }}
-          USER: ${{ secrets.SFTP_USERNAME }}
-          PASS: ${{ secrets.SFTP_PASSWORD }}
-          BRANCH: ${{ steps.branch.outputs.name }}
+          lftp -c "
+            set sftp:auto-confirm yes
+            open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+            mkdir -p /var/www/html/preview/${{ steps.branch.outputs.name }}
+            mirror -R --delete \
+              --exclude='.git' \
+              --exclude='.github' \
+              --exclude='preview' \
+              --exclude='backups' \
+              --exclude='index' \
+              --exclude='index.html' \
+              ./ /var/www/html/preview/${{ steps.branch.outputs.name }}/
+          "
+      - name: Update deployment timestamp
         run: |
-          lftp -u "$USER","$PASS" sftp://"$HOST" <<EOF
-          rm -rf /var/www/html/preview/$BRANCH
-          mkdir -p /var/www/html/preview/$BRANCH
-          mirror -R --delete --exclude=.git --exclude=.github --exclude=preview --exclude=backups --exclude=index --exclude=index.html ./ /var/www/html/preview/$BRANCH/
-          echo $(date +%s) > /var/www/html/preview/$BRANCH/.deploy_time
-          echo ${{ github.sha }} > /var/www/html/preview/$BRANCH/.commit_sha
-          quit
-          EOF
-      - name: Show URL
+          lftp -c "
+            set sftp:auto-confirm yes
+            open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+            echo '${{ steps.timestamp.outputs.time }}' > /var/www/html/preview/${{ steps.branch.outputs.name }}/.deploy_time
+            echo '${{ github.sha }}' > /var/www/html/preview/${{ steps.branch.outputs.name }}/.commit_sha
+          "
+      - name: Get preview URL
         run: |
-          echo "Preview: https://${{ secrets.SFTP_HOST }}/preview/${{ steps.branch.outputs.name }}/amenodes.html"
+          PREVIEW_URL="https://${{ secrets.SFTP_HOST }}/preview/${{ steps.branch.outputs.name }}/amenodes.html"
+          echo "✅ Preview updated at: $PREVIEW_URL"
+          echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_ENV
+      - name: Add to GitHub Summary
+        run: |
+          echo "## 🚀 Preview Deployment Updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Preview URL:** [Click here](${{ env.PREVIEW_URL }})" >> $GITHUB_STEP_SUMMARY
+          echo "**Expires:** 10 minutes after last commit" >> $GITHUB_STEP_SUMMARY
 
   pr-comment:
     runs-on: ubuntu-latest
-    needs: preview-update
-    if: github.event_name == 'pull_request'
+    needs: [preview-prepare, preview-update]
+    if: (github.event_name == 'pull_request' && (success() || failure())) || (github.event_name == 'push' && github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master')
     steps:
-      - name: Get branch
+      - name: Get branch name
         id: branch
         run: |
-          BRANCH="${{ github.head_ref }}"
-          echo "name=${BRANCH//\//-}" >> $GITHUB_OUTPUT
-      - name: Comment PR
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BRANCH_NAME="${{ github.head_ref }}"
+          else
+            BRANCH_NAME="${{ github.ref_name }}"
+          fi
+          echo "name=$(echo $BRANCH_NAME | sed 's/\//-/g')" >> $GITHUB_OUTPUT
+      - name: Build preview URL
+        id: url
+        run: |
+          PREVIEW_URL="https://${{ secrets.SFTP_HOST }}/preview/${{ steps.branch.outputs.name }}/amenodes.html"
+          echo "url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+      - name: Find PR number
+        id: pr
         uses: actions/github-script@v7
         with:
           script: |
-            const url = `https://${{ secrets.SFTP_HOST }}/preview/${{ steps.branch.outputs.name }}/amenodes.html`;
-            const body = `## Preview updated\n\n**URL:** ${url}\n**Commit:** ${{ github.sha }}`;
-            const issue = context.payload.pull_request.number;
-            await github.rest.issues.createComment({
+            const context = github.context;
+            if (context.eventName === 'pull_request') {
+              const prNumber = context.payload.pull_request.number;
+              console.log(`PR number: ${prNumber}`);
+              return prNumber;
+            } else if (context.eventName === 'push') {
+              const { data: pulls } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${context.repo.owner}:${context.ref_name}`
+              });
+              if (pulls.length > 0) {
+                console.log(`Found PR: ${pulls[0].number}`);
+                return pulls[0].number;
+              }
+            }
+            return null;
+          result-encoding: string
+      - name: Comment on PR
+        if: steps.pr.outputs.result != 'null' && steps.pr.outputs.result != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = parseInt('${{ steps.pr.outputs.result }}');
+            const previewUrl = '${{ steps.url.outputs.url }}';
+            const sha = '${{ github.sha }}';
+            
+            let status = '';
+            let message = '';
+            
+            if ('${{ needs.preview-prepare.result }}' === 'success' || '${{ needs.preview-update.result }}' === 'success') {
+              status = '✅';
+              message = `## ${status} Preview deployment successful!\n\n` +
+                        `**Preview URL:** [${previewUrl}](${previewUrl})\n` +
+                        `**Commit:** \`${sha.substring(0, 7)}\`\n` +
+                        `**Branch:** \`${{ steps.branch.outputs.name }}\`\n` +
+                        `**Status:** Ready for testing\n\n` +
+                        `> The preview will expire 10 minutes after the last commit to this branch.`;
+            } else {
+              status = '❌';
+              message = `## ${status} Preview deployment failed!\n\n` +
+                        `**Commit:** \`${sha.substring(0, 7)}\`\n` +
+                        `**Check the workflow logs for more details.**`;
+            }
+            
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: issue,
-              body: body
+              issue_number: prNumber
             });
+            
+            const botComment = comments.find(c => 
+              c.user.type === 'Bot' && c.body.includes('Preview deployment')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: message
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: message
+              });
+            }
+            
+            console.log(`Comment ${botComment ? 'updated' : 'created'} on PR #${prNumber}`);
 
   cleanup-old-previews:
     runs-on: ubuntu-latest
@@ -90,26 +227,40 @@ jobs:
     steps:
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install -y lftp
-      - name: Cleanup
-        env:
-          HOST: ${{ secrets.SFTP_HOST }}
-          USER: ${{ secrets.SFTP_USERNAME }}
-          PASS: ${{ secrets.SFTP_PASSWORD }}
+      - name: Cleanup expired previews
         run: |
-          NOW=$(date +%s)
-          EXP=$((NOW - 600))
-          lftp -u "$USER","$PASS" sftp://"$HOST" <<EOF
-          cls -1 /var/www/html/preview/
-          quit
-          EOF > /tmp/preview_dirs.txt
-          while read dir; do
-            if [ -z "$dir" ] || [ "$dir" = "." ] || [ "$dir" = ".." ]; then continue; fi
-            time=$(lftp -u "$USER","$PASS" sftp://"$HOST" -e "cat /var/www/html/preview/$dir/.deploy_time; quit" 2>/dev/null)
-            if [ -n "$time" ] && [ "$time" -lt "$EXP" ]; then
-              lftp -u "$USER","$PASS" sftp://"$HOST" -e "rm -rf /var/www/html/preview/$dir; quit"
-              echo "Deleted $dir"
+          CURRENT_TIME=$(date +%s)
+          EXPIRATION_TIME=$((CURRENT_TIME - 600))
+          
+          lftp -c "
+            set sftp:auto-confirm yes
+            open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+            cls -1 /var/www/html/preview/
+          " | while read PREVIEW_DIR; do
+            if [ -z "$PREVIEW_DIR" ] || [ "$PREVIEW_DIR" == "." ] || [ "$PREVIEW_DIR" == ".." ]; then
+              continue
             fi
-          done < /tmp/preview_dirs.txt
+            
+            lftp -c "
+              set sftp:auto-confirm yes
+              open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+              get -o /tmp/deploy_time_$PREVIEW_DIR /var/www/html/preview/$PREVIEW_DIR/.deploy_time 2>/dev/null || echo ''
+            " 2>/dev/null
+            
+            if [ -f "/tmp/deploy_time_$PREVIEW_DIR" ]; then
+              DEPLOY_TIME=$(cat "/tmp/deploy_time_$PREVIEW_DIR")
+              rm "/tmp/deploy_time_$PREVIEW_DIR"
+              
+              if [ -n "$DEPLOY_TIME" ] && [ "$DEPLOY_TIME" -lt "$EXPIRATION_TIME" ]; then
+                echo "Deleting expired preview: $PREVIEW_DIR"
+                lftp -c "
+                  set sftp:auto-confirm yes
+                  open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+                  rm -rf /var/www/html/preview/$PREVIEW_DIR/
+                "
+              fi
+            fi
+          done
 
   production:
     runs-on: ubuntu-latest
@@ -119,15 +270,20 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install -y lftp
-      - name: Deploy production
-        env:
-          HOST: ${{ secrets.SFTP_HOST }}
-          USER: ${{ secrets.SFTP_USERNAME }}
-          PASS: ${{ secrets.SFTP_PASSWORD }}
+      - name: Deploy production to root
         run: |
-          lftp -u "$USER","$PASS" sftp://"$HOST" <<EOF
-          mirror -R --delete --exclude=.git --exclude=.github --exclude=preview --exclude=backups --exclude=index --exclude=index.html ./ /var/www/html/
-          quit
-          EOF
-      - name: URL
-        run: echo "Production: https://${{ secrets.SFTP_HOST }}/amenodes.html"
+          lftp -c "
+            set sftp:auto-confirm yes
+            open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+            mirror -R --delete \
+              --exclude='.git' \
+              --exclude='.github' \
+              --exclude='preview' \
+              --exclude='backups' \
+              --exclude='index' \
+              --exclude='index.html' \
+              ./ /var/www/html/
+          "
+      - name: Output production URL
+        run: |
+          echo "✅ Production deployed to: https://${{ secrets.SFTP_HOST }}/amenodes.html"
