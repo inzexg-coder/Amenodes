@@ -94,3 +94,57 @@ export class Viewport {
   }
 
   endDrag() {
+    if (this.isDragging) {
+      this.isDragging = false;
+      this.container.style.cursor = 'grab';
+    }
+  }
+
+  update() {
+    this.canvasContainer.style.transform = `translate(${this.x}px, ${this.y}px) scale(${window.currentZoom || 1})`;
+  }
+
+  getOffset() {
+    return { x: this.x, y: this.y };
+  }
+
+  setOffset(x, y) {
+    this.x = x;
+    this.y = y;
+    this.update();
+    if (this.onChangeCallback) this.onChangeCallback();
+  }
+
+  getRect() {
+    const rect = this.container.getBoundingClientRect();
+    return { x: rect.left, y: rect.top, w: rect.width, h: rect.height };
+  }
+
+  set onChange(callback) {
+    this.onChangeCallback = callback;
+  }
+
+  reset() {
+    this.x = 0;
+    this.y = 0;
+    this.update();
+    if (this.onChangeCallback) this.onChangeCallback();
+  }
+
+  getZoom() {
+    return window.currentZoom || 1;
+  }
+
+  setZoom(zoom, centerX = null, centerY = null) {
+    const oldZoom = this.getZoom();
+    if (centerX !== null && centerY !== null) {
+      const worldX = (centerX - this.x) / oldZoom;
+      const worldY = (centerY - this.y) / oldZoom;
+      this.x = centerX - worldX * zoom;
+      this.y = centerY - worldY * zoom;
+    }
+    window.currentZoom = Math.min(3, Math.max(0.3, zoom));
+    this.update();
+    if (this.onChangeCallback) this.onChangeCallback();
+  }
+}
