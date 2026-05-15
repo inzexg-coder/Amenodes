@@ -1,5 +1,10 @@
 import { EdgeRenderer } from './EdgeRenderer.js';
+import { DeferredEdgeRenderer } from './DeferredEdgeRenderer.js';
 import { ContextMenu } from '../ui/ContextMenu.js';
+import { throttle, rafThrottle } from '../utils/Throttle.js';
+import { debounce } from '../utils/Debounce.js';
+import { RectCache } from '../utils/RectCache.js';
+import { ShadowSimplifier } from '../utils/ShadowSimplifier.js';
 import { NumberNode } from '../nodes/NumberNode.js';
 import { GroupNode } from '../nodes/GroupNode.js';
 import { CalcNode } from '../nodes/CalcNode.js';
@@ -29,21 +34,58 @@ export class DomRenderer {
     this.virtual = false;
     this.heightCache = new Map();
     this.elementCache = new Map();
+    this.rectCache = new RectCache();
+    this.shadowSimplifier = new ShadowSimplifier();
+    this.isDeferredEdgesEnabled = false;
+    this.edgeRenderer = null;
+    this.deferredEdgeRenderer = null;
+    this.batchRAF = false;
+    this.batchPending = false;
+    this.batchNodes = new Set();
+    this.batchRafId = null;
+    this.debounceRender = false;
+    this.debouncedRender = null;
+    this.immediateRender = null;
     this.opts = {
       willChange: false,
       contain: false,
-      pointerEvents: false
+      pointerEvents: false,
+      throttleMouse: false,
+      passiveEvents: false,
+      simplifyShadows: false,
+      deferredEdges: false,
+      debounceRender: false,
+      lazyComputations: false,
+      typedArrays: false,
+      textCache: false
     };
     
+    this.initEdgeRenderers();
+    this.initThrottledHandlers();
+  }
+
+  initEdgeRenderers() {
     this.edgeRenderer = new EdgeRenderer(this.layer);
     this.edgeRenderer.setOnEdgeRemoved(() => {
       this.graph.reevaluateAll();
       this.graph.updateAllOutputs();
-      this.render();
+      this.render(true);
       this.save();
     });
     
-    this.contextMenu = null;
+    this.deferredEdgeRenderer = new DeferredEdgeRenderer(this.layer);
+    this.deferredEdgeRenderer.setOnEdgeRemoved(() => {
+      this.graph.reevaluateAll();
+      this.graph.updateAllOutputs();
+      this.render(true);
+      this.save();
+    });
+  }
+
+  initThrottledHandlers() {
+    this.throttledGlobalMove = throttle(this.onGlobalMove.bind(this), 16);
+    this.throttledGlobalMoveEdge = throttle(this.onGlobalUpEdge.bind(this), 16);
+    this.rafThrottledRender = rafThrottle(() => this.renderImmediate());
   }
 
   setViewport(viewport) {
@@ -120,7 +162,7 @@ export class DomRenderer {
     }
   }
 
-  renderEdges(visibleNodes) {
+  renderEdges(visibleNodes, priority = true) {
     const nodeIds = new Set(visibleNodes.map(n => n.id));
     const filteredEdges = this.graph.edges.filter(e => nodeIds.has(e.sourceId) && nodeIds.has(e.targetId));
     
@@ -134,10 +176,60 @@ export class DomRenderer {
       });
     }
     
-    this.edgeRenderer.renderEdges(filteredEdges, this.graph, rectCache);
+    if (this.opts.deferredEdges && this.isDeferredEdgesEnabled) {
+      if (priority) {
+        this.deferredEdgeRenderer.renderEdges(filteredEdges, this.graph, rectCache, true);
+      } else {
+        this.deferredEdgeRenderer.renderEdges(filteredEdges, this.graph, rectCache, false);
+      }
+    } else {
+      this.edgeRenderer.renderEdges(filteredEdges, this.graph, rectCache);
+    }
   }
 
-  render() {
+  render(immediate = false) {
+    if (this.opts.debounceRender && this.debounceRender) {
+      if (immediate) {
+        if (this.debouncedRender) this.debouncedRender.cancel?.();
+        this.renderImmediate();
+      } else {
+        if (!this.debouncedRender) {
+          this.debouncedRender = debounce(this.renderImmediate.bind(this), 32);
+          this.immediateRender = debounce(this.renderImmediate.bind(this), 0, true);
+        }
+        this.debouncedRender();
+      }
+    } else if (this.batchRAF && this.batchPending === false) {
+      this.scheduleBatchRender();
+    } else {
+      this.renderImmediate();
+    }
+  }
+
+  scheduleBatchRender() {
+    if (this.batchRafId) return;
+    this.batchPending = true;
+    this.batchRafId = requestAnimationFrame(() => {
+      this.flushBatchRender();
+    });
+  }
+
+  flushBatchRender() {
+    if (this.batchPending) {
+      this.renderImmediate(this.batchNodes);
+      this.batchNodes.clear();
+      this.batchPending = false;
+    }
+    this.batchRafId = null;
+  }
+
+  markNodeDirty(nodeId) {
+    if (this.batchRAF && this.batchPending) {
+      this.batchNodes.add(nodeId);
+    }
+  }
+
+  renderImmediate(dirtyNodes = null) {
     this.clearTemp();
     
     if (this.virtual && this.viewport) {
@@ -164,7 +256,10 @@ export class DomRenderer {
         this.applyOptStyles(element);
       }
       
-      this.renderEdges(visibleNodes);
+      this.renderEdges(visibleNodes, true);
+      if (this.opts.deferredEdges && this.isDeferredEdgesEnabled) {
+        this.renderEdges(visibleNodes, false);
+      }
     } else {
       this.renderAll();
     }
@@ -207,6 +302,9 @@ export class DomRenderer {
       dot.setAttribute('data-source-id', nodeId);
       dot.setAttribute('data-port', 'main');
       dot.addEventListener('mousedown', this.onHandleDown.bind(this));
+      if (this.opts.passiveEvents) {
+        dot.addEventListener('touchstart', this.onHandleDown.bind(this), { passive: false });
+      }
       container.appendChild(dot);
     }
     
@@ -218,6 +316,9 @@ export class DomRenderer {
       blueHandle.setAttribute('data-source-id', nodeId);
       blueHandle.setAttribute('data-port', 'unmapped');
       blueHandle.addEventListener('mousedown', this.onHandleDown.bind(this));
+      if (this.opts.passiveEvents) {
+        blueHandle.addEventListener('touchstart', this.onHandleDown.bind(this), { passive: false });
+      }
       container.appendChild(blueHandle);
     }
   }
@@ -238,6 +339,10 @@ export class DomRenderer {
         moved = true;
         window.removeEventListener('mousemove', onMouseMove);
         window.removeEventListener('mouseup', onMouseUp);
+        if (this.opts.passiveEvents) {
+          window.removeEventListener('touchmove', onMouseMove);
+          window.removeEventListener('touchend', onMouseUp);
+        }
         this.startDragEdge(sourceId, port, moveEvent.clientX, moveEvent.clientY);
       }
     };
@@ -245,11 +350,19 @@ export class DomRenderer {
     const onMouseUp = () => {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
+      if (this.opts.passiveEvents) {
+        window.removeEventListener('touchmove', onMouseMove);
+        window.removeEventListener('touchend', onMouseUp);
+      }
       if (!moved) this.showMenu(startX, startY, sourceId);
     };
     
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
+    if (this.opts.passiveEvents) {
+      window.addEventListener('touchmove', onMouseMove, { passive: false });
+      window.addEventListener('touchend', onMouseUp);
+    }
   }
 
   startDragEdge(sourceId, port, clientX, clientY) {
@@ -311,7 +424,7 @@ export class DomRenderer {
       if (edge) {
         this.graph.reevaluateAll();
         this.graph.updateAllOutputs();
-        this.render();
+        this.render(true);
         this.save();
       }
     }
@@ -331,10 +444,20 @@ export class DomRenderer {
 
   getCanvasCoords(clientX, clientY) {
     const rect = this.viewportElement.getBoundingClientRect();
+    let rectX = rect.left, rectY = rect.top;
+    
+    if (this.opts.cacheBoundingRect) {
+      const cached = this.rectCache.get(this.viewportElement);
+      if (cached) {
+        rectX = cached.left;
+        rectY = cached.top;
+      }
+    }
+    
     const offset = this.viewport ? this.viewport.getOffset() : { x: 0, y: 0 };
     const zoom = window.currentZoom || 1;
-    const worldX = (clientX - rect.left - offset.x) / zoom;
-    const worldY = (clientY - rect.top - offset.y) / zoom;
+    const worldX = (clientX - rectX - offset.x) / zoom;
+    const worldY = (clientY - rectY - offset.y) / zoom;
     return { x: worldX, y: worldY };
   }
 
@@ -343,12 +466,15 @@ export class DomRenderer {
       const header = element.querySelector('.node-header, .output-header, .calc-header, .map-header, .group-header');
       if (header) {
         header.addEventListener('mousedown', this.onNodeDown.bind(this));
+        if (this.opts.passiveEvents) {
+          header.addEventListener('touchstart', this.onNodeDown.bind(this), { passive: false });
+        }
       }
     });
   }
 
   onNodeDown(event) {
-    if (event.button !== 0) return;
+    if (event.button !== 0 && event.type !== 'touchstart') return;
     if (event.target.closest('.node-handle') ||
         event.target.closest('.node-actions') ||
         event.target.closest('input') ||
@@ -364,9 +490,15 @@ export class DomRenderer {
     const node = this.graph.getNode(nodeId);
     if (!node) return;
     
+    if (this.opts.simplifyShadows) {
+      this.shadowSimplifier.startDrag(nodeElement);
+    }
+    
     this.dragNode = node;
-    this.dragStartX = event.clientX;
-    this.dragStartY = event.clientY;
+    const clientX = event.clientX || (event.touches && event.touches[0]?.clientX);
+    const clientY = event.clientY || (event.touches && event.touches[0]?.clientY);
+    this.dragStartX = clientX;
+    this.dragStartY = clientY;
     this.dragNodeStartX = node.x;
     this.dragNodeStartY = node.y;
     
@@ -376,8 +508,10 @@ export class DomRenderer {
 
   onGlobalMove(event) {
     if (this.dragNode) {
-      const deltaX = (event.clientX - this.dragStartX) / (window.currentZoom || 1);
-      const deltaY = (event.clientY - this.dragStartY) / (window.currentZoom || 1);
+      const clientX = event.clientX || (event.touches && event.touches[0]?.clientX);
+      const clientY = event.clientY || (event.touches && event.touches[0]?.clientY);
+      const deltaX = (clientX - this.dragStartX) / (window.currentZoom || 1);
+      const deltaY = (clientY - this.dragStartY) / (window.currentZoom || 1);
       this.dragNode.x = this.dragNodeStartX + deltaX;
       this.dragNode.y = this.dragNodeStartY + deltaY;
       
@@ -386,15 +520,31 @@ export class DomRenderer {
         element.style.left = `${this.dragNode.x}px`;
         element.style.top = `${this.dragNode.y}px`;
       }
-      this.render();
+      
+      if (this.opts.throttleMouse) {
+        this.throttledGlobalMove(event);
+      } else {
+        if (this.batchRAF && this.batchPending) {
+          this.markNodeDirty(this.dragNode.id);
+          this.scheduleBatchRender();
+        } else {
+          this.render(this.opts.debounceRender ? false : true);
+        }
+      }
     }
   }
 
   onGlobalUp() {
     if (this.dragNode) {
+      if (this.opts.simplifyShadows) {
+        this.shadowSimplifier.endDrag();
+      }
       this.save();
       this.dragNode = null;
       document.body.style.cursor = '';
+      if (this.batchRAF && this.batchPending) {
+        this.flushBatchRender();
+      }
     }
   }
 
@@ -402,7 +552,52 @@ export class DomRenderer {
     if (this.virtual === enabled) return;
     this.virtual = enabled;
     this.elementCache.clear();
-    this.render();
+    this.render(true);
+  }
+
+  setDeferredEdges(enabled) {
+    this.isDeferredEdgesEnabled = enabled;
+    this.opts.deferredEdges = enabled;
+    this.render(true);
+  }
+
+  setBatchRAF(enabled) {
+    this.batchRAF = enabled;
+    if (!enabled && this.batchRafId) {
+      cancelAnimationFrame(this.batchRafId);
+      this.batchRafId = null;
+      this.batchPending = false;
+      this.render(true);
+    }
+  }
+
+  setDebounceRender(enabled) {
+    this.debounceRender = enabled;
+    if (!enabled && this.debouncedRender) {
+      this.debouncedRender.cancel?.();
+      this.debouncedRender = null;
+    }
+  }
+
+  setThrottleMouse(enabled) {
+    this.opts.throttleMouse = enabled;
+  }
+
+  setPassiveEvents(enabled) {
+    this.opts.passiveEvents = enabled;
+  }
+
+  setSimplifyShadows(enabled) {
+    this.opts.simplifyShadows = enabled;
+  }
+
+  setRectCache(enabled) {
+    this.opts.cacheBoundingRect = enabled;
+    if (enabled) {
+      this.rectCache.enable();
+    } else {
+      this.rectCache.disable();
+    }
   }
 
   closeMenu() {
