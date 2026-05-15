@@ -16,17 +16,18 @@ export class NodeMenu {
   }
 
   createButton() {
-    const undoBtn = document.getElementById('undoBtn');
-    const redoBtn = document.getElementById('redoBtn');
+    var self = this;
+    var undoBtn = document.getElementById('undoBtn');
+    var redoBtn = document.getElementById('redoBtn');
     
     if (!undoBtn || !redoBtn) {
-      const toolbarFirstDiv = document.querySelector('.toolbar div:first-child');
+      var toolbarFirstDiv = document.querySelector('.toolbar div:first-child');
       if (toolbarFirstDiv) {
         this.button = document.createElement('button');
         this.button.id = 'nodeMenuBtn';
         this.button.innerHTML = '<i class="fas fa-plus"></i>';
         this.button.title = t('toolbar.addNode');
-        this.button.onclick = () => this.toggle();
+        this.button.onclick = function() { self.toggle(); };
         toolbarFirstDiv.appendChild(this.button);
       }
     } else {
@@ -34,12 +35,12 @@ export class NodeMenu {
       this.button.id = 'nodeMenuBtn';
       this.button.innerHTML = '<i class="fas fa-plus"></i>';
       this.button.title = t('toolbar.addNode');
-      this.button.onclick = () => this.toggle();
+      this.button.onclick = function() { self.toggle(); };
       redoBtn.insertAdjacentElement('afterend', this.button);
     }
     
-    i18n.subscribe(() => {
-      if (this.button) this.button.title = t('toolbar.addNode');
+    i18n.subscribe(function() {
+      if (self.button) self.button.title = t('toolbar.addNode');
     });
   }
 
@@ -54,56 +55,53 @@ export class NodeMenu {
   open() {
     if (this.menuElement) this.close();
     
-    const types = NodeFactory.getAvailableNodeTypes();
+    var types = NodeFactory.getAvailableNodeTypes();
     if (!types.length) return;
     
-    const overlay = document.createElement('div');
+    var overlay = document.createElement('div');
     overlay.className = 'node-menu-overlay';
     
-    const panel = document.createElement('div');
+    var panel = document.createElement('div');
     panel.className = 'node-menu-panel';
     
-    const header = document.createElement('div');
+    var header = document.createElement('div');
     header.className = 'node-menu-header';
-    header.innerHTML = `
-      <h3><i class="fas fa-cubes"></i> ${t('nodeMenu.title')}</h3>
-      <button class="node-menu-close"><i class="fas fa-times"></i></button>
-    `;
+    header.innerHTML = '<h3><i class="fas fa-cubes"></i> ' + t('nodeMenu.title') + '</h3><button class="node-menu-close"><i class="fas fa-times"></i></button>';
     panel.appendChild(header);
     
-    const list = document.createElement('div');
+    var list = document.createElement('div');
     list.className = 'node-menu-list';
     
-    for (const nodeType of types) {
-      const card = document.createElement('div');
+    for (var i = 0; i < types.length; i++) {
+      var nodeType = types[i];
+      var card = document.createElement('div');
       card.className = 'node-menu-card';
       card.setAttribute('data-type', nodeType.type);
       
-      const name = document.createElement('div');
+      var name = document.createElement('div');
       name.className = 'node-menu-card-name';
-      name.innerHTML = `<i class="fas fa-cube"></i> ${t(nodeType.nameKey)}`;
+      name.innerHTML = '<i class="fas fa-cube"></i> ' + t(nodeType.nameKey);
       
-      const desc = document.createElement('div');
+      var desc = document.createElement('div');
       desc.className = 'node-menu-card-desc';
       desc.textContent = t(nodeType.descriptionKey);
       
-      const meta = document.createElement('div');
+      var meta = document.createElement('div');
       meta.className = 'node-menu-card-meta';
-      meta.innerHTML = `
-        <span><i class="fas fa-user"></i> ${nodeType.author || 'Amenoke'}</span>
-        <a href="${nodeType.github || '#'}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
-          <i class="fab fa-github"></i> GitHub
-        </a>
-      `;
+      meta.innerHTML = '<span><i class="fas fa-user"></i> ' + (nodeType.author || 'Amenoke') + '</span>' +
+        '<a href="' + (nodeType.github || '#') + '" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">' +
+        '<i class="fab fa-github"></i> GitHub</a>';
       
       card.appendChild(name);
       card.appendChild(desc);
       card.appendChild(meta);
       
-      card.onclick = () => {
-        this.createNode(nodeType.type);
-        this.close();
-      };
+      card.onclick = (function(type) {
+        return function() {
+          this.createNode(type);
+          this.close();
+        }.bind(this);
+      }.bind(this))(nodeType.type);
       
       list.appendChild(card);
     }
@@ -111,11 +109,11 @@ export class NodeMenu {
     panel.appendChild(list);
     overlay.appendChild(panel);
     
-    overlay.onclick = (e) => {
+    overlay.onclick = function(e) {
       if (e.target === overlay) this.close();
-    };
+    }.bind(this);
     
-    header.querySelector('.node-menu-close').onclick = () => this.close();
+    header.querySelector('.node-menu-close').onclick = function() { this.close(); }.bind(this);
     
     document.body.appendChild(overlay);
     this.menuElement = overlay;
@@ -123,14 +121,14 @@ export class NodeMenu {
   }
 
   createNode(type) {
-    const viewportRect = document.getElementById('viewport').getBoundingClientRect();
-    const offset = this.viewport.getOffset();
-    const zoom = window.currentZoom || 1;
+    var viewportRect = document.getElementById('viewport').getBoundingClientRect();
+    var offset = this.viewport.getOffset();
+    var zoom = window.currentZoom || 1;
     
-    const centerX = (viewportRect.width / 2 - offset.x) / zoom - 140;
-    const centerY = (viewportRect.height / 2 - offset.y) / zoom - 40;
+    var centerX = (viewportRect.width / 2 - offset.x) / zoom - 140;
+    var centerY = (viewportRect.height / 2 - offset.y) / zoom - 40;
     
-    const node = NodeFactory.createNode(type, { x: centerX, y: centerY });
+    var node = NodeFactory.createNode(type, { x: centerX, y: centerY });
     this.graph.addNode(node);
     this.graph.reevaluateAll();
     this.graph.updateAllOutputs();
