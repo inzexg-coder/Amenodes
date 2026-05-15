@@ -2,11 +2,9 @@ name: Deploy Amenodes
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ main, master ]
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened ]
   create:
   schedule:
     - cron: '*/10 * * * *'
@@ -40,67 +38,51 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y lftp
       - name: Get branch name
         id: branch
-        run: echo "name=$(echo '${{ github.ref_name }}' | sed 's/\//-/g')" >> $GITHUB_OUTPUT
-      - name: Update timestamp
-        id: timestamp
-        run: echo "time=$(date +%s)" >> $GITHUB_OUTPUT
-      - name: Deploy preview
         run: |
-          lftp -c "set sftp:auto-confirm yes; open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}; rm -rf /var/www/html/preview/${{ steps.branch.outputs.name }}; mkdir -p /var/www/html/preview/${{ steps.branch.outputs.name }}; mirror -R --delete --verbose --exclude=.git --exclude=.github --exclude=preview --exclude=backups --exclude=index --exclude=index.html ./ /var/www/html/preview/${{ steps.branch.outputs.name }}/"
-      - name: Save deployment info
+          BRANCH="${{ github.ref_name }}"
+          echo "name=${BRANCH//\//-}" >> $GITHUB_OUTPUT
+      - name: Deploy
+        env:
+          HOST: ${{ secrets.SFTP_HOST }}
+          USER: ${{ secrets.SFTP_USERNAME }}
+          PASS: ${{ secrets.SFTP_PASSWORD }}
+          BRANCH: ${{ steps.branch.outputs.name }}
         run: |
-          lftp -c "set sftp:auto-confirm yes; open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}; echo '${{ steps.timestamp.outputs.time }}' > /var/www/html/preview/${{ steps.branch.outputs.name }}/.deploy_time; echo '${{ github.sha }}' > /var/www/html/preview/${{ steps.branch.outputs.name }}/.commit_sha"
-      - name: Get preview URL
+          lftp -u "$USER","$PASS" sftp://"$HOST" <<EOF
+          rm -rf /var/www/html/preview/$BRANCH
+          mkdir -p /var/www/html/preview/$BRANCH
+          mirror -R --delete --exclude=.git --exclude=.github --exclude=preview --exclude=backups --exclude=index --exclude=index.html ./ /var/www/html/preview/$BRANCH/
+          echo $(date +%s) > /var/www/html/preview/$BRANCH/.deploy_time
+          echo ${{ github.sha }} > /var/www/html/preview/$BRANCH/.commit_sha
+          quit
+          EOF
+      - name: Show URL
         run: |
-          echo "Preview URL: https://${{ secrets.SFTP_HOST }}/preview/${{ steps.branch.outputs.name }}/amenodes.html"
-          echo "PREVIEW_URL=https://${{ secrets.SFTP_HOST }}/preview/${{ steps.branch.outputs.name }}/amenodes.html" >> $GITHUB_ENV
-      - name: Add to summary
-        run: |
-          echo "## Preview Updated" >> $GITHUB_STEP_SUMMARY
-          echo "Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "URL: https://${{ secrets.SFTP_HOST }}/preview/${{ steps.branch.outputs.name }}/amenodes.html" >> $GITHUB_STEP_SUMMARY
+          echo "Preview: https://${{ secrets.SFTP_HOST }}/preview/${{ steps.branch.outputs.name }}/amenodes.html"
 
   pr-comment:
     runs-on: ubuntu-latest
     needs: preview-update
     if: github.event_name == 'pull_request'
     steps:
-      - name: Get branch name
+      - name: Get branch
         id: branch
-        run: echo "name=$(echo '${{ github.head_ref }}' | sed 's/\//-/g')" >> $GITHUB_OUTPUT
-      - name: Comment on PR
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          echo "name=${BRANCH//\//-}" >> $GITHUB_OUTPUT
+      - name: Comment PR
         uses: actions/github-script@v7
         with:
           script: |
-            const previewUrl = `https://${{ secrets.SFTP_HOST }}/preview/${{ steps.branch.outputs.name }}/amenodes.html`;
-            const sha = '${{ github.sha }}';
-            const message = '## Preview deployment updated!\n\n' +
-              '**Preview URL:** ' + previewUrl + '\n' +
-              '**Commit:** `' + sha.substring(0, 7) + '`\n' +
-              '**Branch:** `${{ github.head_ref }}`\n\n' +
-              'Clear browser cache (Ctrl+Shift+R) if changes do not appear.';
-            const { data: comments } = await github.rest.issues.listComments({
+            const url = `https://${{ secrets.SFTP_HOST }}/preview/${{ steps.branch.outputs.name }}/amenodes.html`;
+            const body = `## Preview updated\n\n**URL:** ${url}\n**Commit:** ${{ github.sha }}`;
+            const issue = context.payload.pull_request.number;
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number
+              issue_number: issue,
+              body: body
             });
-            const botComment = comments.find(c => c.user.type === 'Bot' && c.body.includes('Preview deployment'));
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: message
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.payload.pull_request.number,
-                body: message
-              });
-            }
 
   cleanup-old-previews:
     runs-on: ubuntu-latest
@@ -108,21 +90,26 @@ jobs:
     steps:
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install -y lftp
-      - name: Cleanup expired previews
+      - name: Cleanup
+        env:
+          HOST: ${{ secrets.SFTP_HOST }}
+          USER: ${{ secrets.SFTP_USERNAME }}
+          PASS: ${{ secrets.SFTP_PASSWORD }}
         run: |
-          CURRENT_TIME=$(date +%s)
-          EXPIRATION_TIME=$((CURRENT_TIME - 600))
-          PREVIEWS=$(lftp -c "set sftp:auto-confirm yes; open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}; cls -1 /var/www/html/preview/")
-          for PREVIEW_DIR in $PREVIEWS; do
-            if [ "$PREVIEW_DIR" = "." ] || [ "$PREVIEW_DIR" = ".." ]; then
-              continue
+          NOW=$(date +%s)
+          EXP=$((NOW - 600))
+          lftp -u "$USER","$PASS" sftp://"$HOST" <<EOF
+          cls -1 /var/www/html/preview/
+          quit
+          EOF > /tmp/preview_dirs.txt
+          while read dir; do
+            if [ -z "$dir" ] || [ "$dir" = "." ] || [ "$dir" = ".." ]; then continue; fi
+            time=$(lftp -u "$USER","$PASS" sftp://"$HOST" -e "cat /var/www/html/preview/$dir/.deploy_time; quit" 2>/dev/null)
+            if [ -n "$time" ] && [ "$time" -lt "$EXP" ]; then
+              lftp -u "$USER","$PASS" sftp://"$HOST" -e "rm -rf /var/www/html/preview/$dir; quit"
+              echo "Deleted $dir"
             fi
-            DEPLOY_TIME=$(lftp -c "set sftp:auto-confirm yes; open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}; cat /var/www/html/preview/$PREVIEW_DIR/.deploy_time 2>/dev/null" || echo "")
-            if [ -n "$DEPLOY_TIME" ] && [ "$DEPLOY_TIME" -lt "$EXPIRATION_TIME" ]; then
-              echo "Deleting expired preview: $PREVIEW_DIR"
-              lftp -c "set sftp:auto-confirm yes; open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}; rm -rf /var/www/html/preview/$PREVIEW_DIR/"
-            fi
-          done
+          done < /tmp/preview_dirs.txt
 
   production:
     runs-on: ubuntu-latest
@@ -133,7 +120,14 @@ jobs:
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install -y lftp
       - name: Deploy production
+        env:
+          HOST: ${{ secrets.SFTP_HOST }}
+          USER: ${{ secrets.SFTP_USERNAME }}
+          PASS: ${{ secrets.SFTP_PASSWORD }}
         run: |
-          lftp -c "set sftp:auto-confirm yes; open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}; mirror -R --delete --verbose --exclude=.git --exclude=.github --exclude=preview --exclude=backups --exclude=index --exclude=index.html ./ /var/www/html/"
-      - name: Output URL
+          lftp -u "$USER","$PASS" sftp://"$HOST" <<EOF
+          mirror -R --delete --exclude=.git --exclude=.github --exclude=preview --exclude=backups --exclude=index --exclude=index.html ./ /var/www/html/
+          quit
+          EOF
+      - name: URL
         run: echo "Production: https://${{ secrets.SFTP_HOST }}/amenodes.html"
