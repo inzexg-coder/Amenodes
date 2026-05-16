@@ -15,6 +15,7 @@ export class OutputNode extends Node {
   constructor(id, x, y, title, rows) {
     super(id, 'output', x, y, title);
     this.rows = rows ?? [{ param: t('status.noConnections'), value: "—" }];
+    this.graph = null;
   }
 
   getValue() {
