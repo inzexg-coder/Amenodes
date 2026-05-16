@@ -5,7 +5,8 @@ export const metadata = {
   nameKey: 'nodes.number',
   descriptionKey: 'nodeDescriptions.number',
   author: 'Amenoke',
-  github: 'https://github.com/inzexg-coder/Amenodes'
+  github: 'https://github.com/inzexg-coder/Amenodes',
+  icon: 'fa-hashtag'
 };
 
 export class NumberNode extends Node {
