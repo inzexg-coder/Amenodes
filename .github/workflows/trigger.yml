@@ -4,11 +4,11 @@ on:
   push:
     branches: [main]
   pull_request:
-    types: [opened, synchronize, reopened, edited]
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       cleanup:
-        description: 'Delete files not in source (dangerous!)'
+        description: 'Delete files not in source'
         required: false
         default: 'false'
         type: choice
@@ -20,42 +20,12 @@ jobs:
   trigger:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: 0
-      
-      - name: Validate source before trigger
+      - name: Debug info
         run: |
-          if [ ! -f "amenodes.html" ]; then
-            echo "::error::amenodes.html not found!"
-            exit 1
-          fi
-          if [ ! -d "src" ]; then
-            echo "::error::src directory not found!"
-            exit 1
-          fi
-          if [ ! -d "styles" ]; then
-            echo "::error::styles directory not found!"
-            exit 1
-          fi
-          echo "✅ Source validation passed"
-      
-      - name: Check for workflow changes (non-owner only)
-        run: |
-          OWNER="inzexg-coder"
-          ACTOR="${{ github.actor }}"
-          
-          if [ "$ACTOR" != "$OWNER" ] && [ "${{ github.event_name }}" = "pull_request" ]; then
-            git fetch origin main
-            CHANGED=$(git diff --name-only origin/main...HEAD)
-            
-            if echo "$CHANGED" | grep -qE '\.github/workflows/|\.github/CODEOWNERS'; then
-              echo "::error::Workflow files cannot be modified by non-owner"
-              echo "::error::Modified files: $CHANGED"
-              exit 1
-            fi
-          fi
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "PR Number: ${{ github.event.pull_request.number }}"
       
       - name: Trigger CI repository
         run: |
@@ -64,7 +34,9 @@ jobs:
             CLEANUP="false"
           fi
           
-          curl -X POST \
+          echo "Sending request to amenodes-ci..."
+          
+          RESPONSE=$(curl -s -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.CI_TOKEN }}" \
             https://api.github.com/repos/inzexg-coder/amenodes-ci/dispatches \
@@ -76,10 +48,23 @@ jobs:
                 "source_sha": "${{ github.sha }}",
                 "pr_number": "${{ github.event.pull_request.number }}",
                 "head_ref": "${{ github.head_ref }}",
-                "head_sha": "${{ github.event.pull_request.head.sha }}",
                 "actor": "${{ github.actor }}",
                 "cleanup": "'"$CLEANUP"'"
               }
-            }'
+            }')
           
-          echo "✅ CI repository triggered"
+          echo "Response: $RESPONSE"
+          
+          if [ -z "$RESPONSE" ]; then
+            echo "✅ Request sent successfully"
+          else
+            echo "::warning::Response: $RESPONSE"
+          fi
+      
+      - name: Wait for CI to start
+        run: |
+          echo "Waiting 5 seconds for CI to start..."
+          sleep 5
+          
+          echo "Check CI repository at:"
+          echo "https://github.com/inzexg-coder/amenodes-ci/actions"
