@@ -6,7 +6,15 @@ export const metadata = {
   nameKey: 'nodes.calc',
   descriptionKey: 'nodeDescriptions.calc',
   author: 'Amenoke',
-  github: 'https://github.com/inzexg-coder/Amenodes'
+  github: 'https://github.com/inzexg-coder/Amenodes',
+  icon: 'fa-calculator',
+  isCategory: true,
+  categoryName: 'errors',
+  subnodes: [
+    { type: 'div3', nameKey: 'calcTypes.div3', calcType: 'div3' },
+    { type: 'div_sqrt12', nameKey: 'calcTypes.div_sqrt12', calcType: 'div_sqrt12' },
+    { type: 'sqrt_sum_sq', nameKey: 'calcTypes.sqrt_sum_sq', calcType: 'sqrt_sum_sq' }
+  ]
 };
 
 export class CalcNode extends Node {
