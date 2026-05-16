@@ -9,10 +9,34 @@ import { i18n } from '../i18n/LanguageManager.js';
 
 const nodeRegistry = new Map();
 const nodeTypesList = [];
+const categoryNodes = new Map();
 
 function registerNode(type, ctor, metadata) {
   nodeRegistry.set(type, { ctor, metadata });
-  nodeTypesList.push({ type, ...metadata });
+  
+  if (metadata.isCategory && metadata.subnodes) {
+    categoryNodes.set(type, metadata);
+    nodeTypesList.push({
+      type: type,
+      nameKey: metadata.nameKey,
+      descriptionKey: metadata.descriptionKey,
+      author: metadata.author,
+      github: metadata.github,
+      icon: metadata.icon,
+      isCategory: true,
+      categoryName: metadata.categoryName,
+      subnodes: metadata.subnodes
+    });
+  } else {
+    nodeTypesList.push({
+      type: type,
+      nameKey: metadata.nameKey,
+      descriptionKey: metadata.descriptionKey,
+      author: metadata.author,
+      github: metadata.github,
+      icon: metadata.icon
+    });
+  }
 }
 
 registerNode('number', NumberNode, numberMeta);
@@ -26,6 +50,11 @@ registerNode('confidenceInterval', ConfidenceIntervalNode, confidenceMeta);
 export class NodeFactory {
   static getAvailableNodeTypes() {
     return nodeTypesList;
+  }
+
+  static getCategorySubnodes(categoryType) {
+    const category = categoryNodes.get(categoryType);
+    return category ? category.subnodes : [];
   }
 
   static getMetadata(type) {
