@@ -7,7 +7,8 @@ export const metadata = {
   nameKey: 'nodes.confidenceInterval',
   descriptionKey: 'nodeDescriptions.confidenceInterval',
   author: 'Amenoke',
-  github: 'https://github.com/inzexg-coder/Amenodes'
+  github: 'https://github.com/inzexg-coder/Amenodes',
+  icon: 'fa-chart-simple'
 };
 
 export class ConfidenceIntervalNode extends Node {
