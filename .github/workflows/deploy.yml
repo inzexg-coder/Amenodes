@@ -22,7 +22,7 @@ jobs:
         with:
           fetch-depth: 0
       
-      - name: Check if workflow files were changed by non-owner
+      - name: Check for new or modified workflow files
         id: check
         run: |
           AUTHOR="${{ github.actor }}"
@@ -30,33 +30,61 @@ jobs:
           
           echo "Author: $AUTHOR"
           echo "Owner: $OWNER"
-
+          
           if [ "$AUTHOR" = "$OWNER" ]; then
             echo "workflow_changed=false" >> $GITHUB_OUTPUT
-            echo "Owner is making changes, skipping workflow file check"
             exit 0
           fi
-
+          
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD 2>/dev/null || echo "")
           else
             CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
           fi
           
-          echo "Changed files:"
-          echo "$CHANGED_FILES"
-
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            NEW_FILES=$(git ls-files --others --exclude-standard | grep -E '\.github/workflows/.*\.ya?ml' || echo "")
+          else
+            NEW_FILES=$(git ls-files --others --exclude-standard | head -20 || echo "")
+          fi
+          
+          echo "Changed files: $CHANGED_FILES"
+          echo "New files: $NEW_FILES"
+          
           if echo "$CHANGED_FILES" | grep -qE '\.github/workflows/|\.github/CODEOWNERS'; then
             echo "workflow_changed=true" >> $GITHUB_OUTPUT
-            echo "::error::Workflow files cannot be modified by non-owner users!"
-            echo "::error::User $AUTHOR attempted to modify protected files"
-            echo "::error::Modified files:"
-            echo "$CHANGED_FILES" | grep -E '\.github/workflows/|\.github/CODEOWNERS'
+            echo "::error::User $AUTHOR attempted to MODIFY protected files"
             exit 1
           fi
           
+          if echo "$NEW_FILES" | grep -qE '\.github/workflows/.*\.ya?ml'; then
+            echo "workflow_changed=true" >> $GITHUB_OUTPUT
+            echo "::error::User $AUTHOR attempted to ADD new workflow file"
+            echo "::error::New files: $NEW_FILES"
+            exit 1
+          fi
+          
+          WORKFLOW_COUNT=$(find .github/workflows -name "*.yml" 2>/dev/null | wc -l)
+          if [ -d ".github/workflows" ] && [ "$WORKFLOW_COUNT" -gt 1 ]; then
+            if [ -z "$(git ls-tree origin/${{ github.base_ref }} .github/workflows/ 2>/dev/null || echo "")" ]; then
+              echo "workflow_changed=true" >> $GITHUB_OUTPUT
+              echo "::error::User $AUTHOR attempted to CREATE workflows directory"
+              exit 1
+            fi
+          fi
+          
+          if [ -f ".github/workflows/deploy.yml" ]; then
+            DEPLOY_HASH=$(sha256sum .github/workflows/deploy.yml | cut -d' ' -f1)
+            MAIN_HASH=$(git show origin/main:.github/workflows/deploy.yml 2>/dev/null | sha256sum | cut -d' ' -f1)
+            
+            if [ -n "$MAIN_HASH" ] && [ "$DEPLOY_HASH" != "$MAIN_HASH" ]; then
+              echo "workflow_changed=true" >> $GITHUB_OUTPUT
+              echo "::error::deploy.yml has been modified"
+              exit 1
+            fi
+          fi
+          
           echo "workflow_changed=false" >> $GITHUB_OUTPUT
-          echo "No protected files were modified"
 
   security-check:
     runs-on: ubuntu-latest
