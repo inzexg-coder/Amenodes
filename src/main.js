@@ -12,6 +12,7 @@ import { OPTIMIZATIONS } from './config/Optimizations.js';
 import { OutputNode } from './nodes/OutputNode.js';
 import { i18n, t } from './i18n/LanguageManager.js';
 import { modal } from './ui/CustomModal.js';
+import { NodeMenu } from './ui/NodeMenu.js';
 
 window.alert = (msg) => { modal.alert(msg); };
 window.confirm = (msg) => modal.confirm(msg);
@@ -30,6 +31,7 @@ class Application {
     this.initViewport();
     this.initToolbar();
     this.initOptimizationPanel();
+    this.initNodeMenu();
     this.initEvents();
     this.initI18n();
     this.loadInitialState();
@@ -43,7 +45,6 @@ class Application {
     this.viewport = new Viewport(viewportEl, canvasContainer);
     this.renderer = new DomRenderer(this.graph, nodesLayer, viewportEl, this.eventBus);
     this.renderer.setViewport(this.viewport);
-    this.viewport.attach();
     this.viewport.onChange = () => this.renderer.render();
     
     window._renderer = this.renderer;
@@ -104,6 +105,11 @@ class Application {
     }, 1000);
   }
 
+  initNodeMenu() {
+    this.nodeMenu = new NodeMenu(this.graph, this.renderer, this.viewport);
+    this.nodeMenu.init();
+  }
+
   async runInitialBenchmark() {
     try {
       const result = await this.benchmarkService.runBenchmark(true);
@@ -120,7 +126,6 @@ class Application {
     window.addEventListener('mousemove', (e) => this.renderer.onGlobalMoveEdge(e));
     window.addEventListener('mouseup', (e) => this.renderer.onGlobalUpEdge(e));
     
-    // Close context menu on escape
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         this.renderer.closeMenu();
@@ -162,7 +167,6 @@ class Application {
     }
   }
 }
-
 
 document.addEventListener('DOMContentLoaded', () => {
   window.app = new Application();
