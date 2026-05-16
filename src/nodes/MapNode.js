@@ -7,7 +7,8 @@ export const metadata = {
   nameKey: 'nodes.map',
   descriptionKey: 'nodeDescriptions.map',
   author: 'Amenoke',
-  github: 'https://github.com/inzexg-coder/Amenodes'
+  github: 'https://github.com/inzexg-coder/Amenodes',
+  icon: 'fa-map'
 };
 
 export class MapNode extends Node {
