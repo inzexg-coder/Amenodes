@@ -4,35 +4,66 @@ on:
   push:
     branches: [main]
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, reopened, edited]
   workflow_dispatch:
+    inputs:
+      cleanup:
+        description: 'Delete files not in source (dangerous!)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 jobs:
   trigger:
     runs-on: ubuntu-latest
     steps:
-      - name: Check author
+      - name: Checkout source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      
+      - name: Validate source before trigger
+        run: |
+          if [ ! -f "amenodes.html" ]; then
+            echo "::error::amenodes.html not found!"
+            exit 1
+          fi
+          if [ ! -d "src" ]; then
+            echo "::error::src directory not found!"
+            exit 1
+          fi
+          if [ ! -d "styles" ]; then
+            echo "::error::styles directory not found!"
+            exit 1
+          fi
+          echo "✅ Source validation passed"
+      
+      - name: Check for workflow changes (non-owner only)
         run: |
           OWNER="inzexg-coder"
           ACTOR="${{ github.actor }}"
           
-          if [ "$ACTOR" != "$OWNER" ]; then
-            echo "Non-owner PR detected, checking for workflow changes..."
-            
-            git clone --depth 1 https://github.com/${{ github.repository }}.git repo
-            cd repo
+          if [ "$ACTOR" != "$OWNER" ] && [ "${{ github.event_name }}" = "pull_request" ]; then
             git fetch origin main
             CHANGED=$(git diff --name-only origin/main...HEAD)
             
-            if echo "$CHANGED" | grep -q '.github/workflows/'; then
-              echo "::error::Workflow changes are not allowed from non-owners"
+            if echo "$CHANGED" | grep -qE '\.github/workflows/|\.github/CODEOWNERS'; then
+              echo "::error::Workflow files cannot be modified by non-owner"
+              echo "::error::Modified files: $CHANGED"
               exit 1
             fi
           fi
       
       - name: Trigger CI repository
-        if: success()
         run: |
+          CLEANUP="${{ github.event.inputs.cleanup }}"
+          if [ -z "$CLEANUP" ]; then
+            CLEANUP="false"
+          fi
+          
           curl -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.CI_TOKEN }}" \
@@ -44,6 +75,11 @@ jobs:
                 "source_ref": "${{ github.ref }}",
                 "source_sha": "${{ github.sha }}",
                 "pr_number": "${{ github.event.pull_request.number }}",
-                "head_ref": "${{ github.head_ref }}"
+                "head_ref": "${{ github.head_ref }}",
+                "head_sha": "${{ github.event.pull_request.head.sha }}",
+                "actor": "${{ github.actor }}",
+                "cleanup": "'"$CLEANUP"'"
               }
             }'
+          
+          echo "✅ CI repository triggered"
