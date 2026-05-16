@@ -7,7 +7,8 @@ export const metadata = {
   nameKey: 'nodes.group',
   descriptionKey: 'nodeDescriptions.group',
   author: 'Amenoke',
-  github: 'https://github.com/inzexg-coder/Amenodes'
+  github: 'https://github.com/inzexg-coder/Amenodes',
+  icon: 'fa-layer-group'
 };
 
 export class GroupNode extends Node {
