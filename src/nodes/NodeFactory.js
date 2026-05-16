@@ -1,17 +1,46 @@
-import { NumberNode } from './NumberNode.js';
-import { GroupNode } from './GroupNode.js';
-import { CalcNode } from './CalcNode.js';
-import { OutputNode } from './OutputNode.js';
-import { MapNode } from './MapNode.js';
-import { ConstantNode } from './ConstantNode.js';
-import { ConfidenceIntervalNode } from './ConfidenceIntervalNode.js';
+import { NumberNode, metadata as numberMeta } from './NumberNode.js';
+import { GroupNode, metadata as groupMeta } from './GroupNode.js';
+import { CalcNode, metadata as calcMeta } from './CalcNode.js';
+import { OutputNode, metadata as outputMeta } from './OutputNode.js';
+import { MapNode, metadata as mapMeta } from './MapNode.js';
+import { ConstantNode, metadata as constantMeta } from './ConstantNode.js';
+import { ConfidenceIntervalNode, metadata as confidenceMeta } from './ConfidenceIntervalNode.js';
 import { i18n } from '../i18n/LanguageManager.js';
 
+const nodeRegistry = new Map();
+const nodeTypesList = [];
+
+function registerNode(type, ctor, metadata) {
+  nodeRegistry.set(type, { ctor, metadata });
+  nodeTypesList.push({ type, ...metadata });
+}
+
+registerNode('number', NumberNode, numberMeta);
+registerNode('constant', ConstantNode, constantMeta);
+registerNode('group', GroupNode, groupMeta);
+registerNode('calc', CalcNode, calcMeta);
+registerNode('output', OutputNode, outputMeta);
+registerNode('map', MapNode, mapMeta);
+registerNode('confidenceInterval', ConfidenceIntervalNode, confidenceMeta);
+
 export class NodeFactory {
+  static getAvailableNodeTypes() {
+    return nodeTypesList;
+  }
+
+  static getMetadata(type) {
+    const entry = nodeRegistry.get(type);
+    return entry ? entry.metadata : null;
+  }
+
   static createNode(type, options = {}) {
-    const { id, x, y, title, ...rest } = options;
+    const entry = nodeRegistry.get(type);
+    if (!entry) {
+      throw new Error(`Unknown node type: ${type}`);
+    }
     
-    const defaultTitle = i18n.t(`nodes.${type}`);
+    const { id, x, y, title, ...rest } = options;
+    const defaultTitle = i18n.t(entry.metadata.nameKey);
     const finalTitle = title || defaultTitle;
     
     switch(type) {
