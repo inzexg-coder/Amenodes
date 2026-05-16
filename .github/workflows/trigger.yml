@@ -2,21 +2,37 @@ name: Trigger CI
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [main]
   pull_request:
-    types: [opened, synchronize, reopened]
-  workflow_dispatch:
+    types: [opened, synchronize]
 
 jobs:
   trigger:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger external CI
+      - name: Check author
         run: |
-          curl -L \
-            -X POST \
+          OWNER="inzexg-coder"
+          ACTOR="${{ github.actor }}"
+          
+          if [ "$ACTOR" != "$OWNER" ]; then
+            echo "Non-owner PR detected, checking for workflow changes..."
+            
+            git clone --depth 1 https://github.com/${{ github.repository }}.git repo
+            cd repo
+            git fetch origin main
+            CHANGED=$(git diff --name-only origin/main...HEAD)
+            
+            if echo "$CHANGED" | grep -q '.github/workflows/'; then
+              echo "::error::Workflow changes are not allowed from non-owners"
+              exit 1
+            fi
+          fi
+      
+      - name: Trigger CI repository
+        if: success()
+        run: |
+          curl -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.CI_TOKEN }}" \
             https://api.github.com/repos/inzexg-coder/amenodes-ci/dispatches \
