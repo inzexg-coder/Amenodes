@@ -5,7 +5,8 @@ export const metadata = {
   nameKey: 'nodes.constant',
   descriptionKey: 'nodeDescriptions.constant',
   author: 'Amenoke',
-  github: 'https://github.com/inzexg-coder/Amenodes'
+  github: 'https://github.com/inzexg-coder/Amenodes',
+  icon: 'fa-infinity'
 };
 
 export class ConstantNode extends Node {
