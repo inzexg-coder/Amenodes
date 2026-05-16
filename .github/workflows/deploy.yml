@@ -75,6 +75,7 @@ jobs:
           lftp -c "
             set sftp:auto-confirm yes
             open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+            mkdir -p /var/www/html/preview/${{ steps.branch.outputs.name }}
             echo '${{ steps.timestamp.outputs.time }}' > /var/www/html/preview/${{ steps.branch.outputs.name }}/.deploy_time
             echo '${{ github.sha }}' > /var/www/html/preview/${{ steps.branch.outputs.name }}/.commit_sha
           "
@@ -169,6 +170,7 @@ jobs:
           lftp -c "
             set sftp:auto-confirm yes
             open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
+            mkdir -p /var/www/html/preview
             cls -1 /var/www/html/preview/
           " | while read PREVIEW_DIR; do
             if [ -z "$PREVIEW_DIR" ] || [ "$PREVIEW_DIR" == "." ] || [ "$PREVIEW_DIR" == ".." ]; then
@@ -179,7 +181,7 @@ jobs:
               set sftp:auto-confirm yes
               open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
               cat /var/www/html/preview/$PREVIEW_DIR/.deploy_time 2>/dev/null || echo ''
-            " 2>/dev/null)
+            " 2>/dev/null | tr -d '\n\r')
             
             if [ -n "$DEPLOY_TIME" ] && [ "$DEPLOY_TIME" -lt "$EXPIRATION_TIME" ]; then
               echo "Deleting expired preview: $PREVIEW_DIR"
