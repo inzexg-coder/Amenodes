@@ -55,7 +55,7 @@ jobs:
       - name: Create timestamp for preview
         id: timestamp
         run: echo "time=$(date +%s)" >> $GITHUB_OUTPUT
-      - name: Deploy preview to subdirectory
+      - name: Create directory and deploy preview
         run: |
           lftp -c "
             set sftp:auto-confirm yes
@@ -166,15 +166,18 @@ jobs:
           CURRENT_TIME=$(date +%s)
           EXPIRATION_TIME=$((CURRENT_TIME - 600))
           
-          lftp -c "
+          PREVIEWS=$(lftp -c "
             set sftp:auto-confirm yes
             open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
-            cd /var/www/html/preview/
-            cls -1
-          " | while read PREVIEW_DIR; do
+            cls -1 /var/www/html/preview/
+          ")
+          
+          echo "$PREVIEWS" | while read PREVIEW_DIR; do
             if [ -z "$PREVIEW_DIR" ] || [ "$PREVIEW_DIR" == "." ] || [ "$PREVIEW_DIR" == ".." ]; then
               continue
             fi
+            
+            echo "Checking preview: $PREVIEW_DIR"
             
             DEPLOY_TIME=$(lftp -c "
               set sftp:auto-confirm yes
@@ -183,12 +186,16 @@ jobs:
             " | tr -d '\n\r')
             
             if [ -n "$DEPLOY_TIME" ] && [ "$DEPLOY_TIME" -lt "$EXPIRATION_TIME" ]; then
-              echo "Deleting expired preview: $PREVIEW_DIR"
+              echo "Deleting expired preview: $PREVIEW_DIR (last deploy: $DEPLOY_TIME)"
               lftp -c "
                 set sftp:auto-confirm yes
                 open -u ${{ secrets.SFTP_USERNAME }},${{ secrets.SFTP_PASSWORD }} sftp://${{ secrets.SFTP_HOST }}
                 rm -rf /var/www/html/preview/$PREVIEW_DIR/
               "
+            elif [ -z "$DEPLOY_TIME" ]; then
+              echo "No deploy time file for $PREVIEW_DIR, skipping"
+            else
+              echo "Preview $PREVIEW_DIR is still valid (last deploy: $DEPLOY_TIME)"
             fi
           done
 
