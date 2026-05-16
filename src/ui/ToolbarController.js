@@ -16,19 +16,28 @@ export class ToolbarController {
   init() {
     this.updateButtonTexts();
 
-    document.getElementById('undoBtn').onclick = () => this.undo();
-    document.getElementById('redoBtn').onclick = () => this.redo();
-    document.getElementById('addEmptyBtn').onclick = () => this.addNumberNode();
-    document.getElementById('addConstantBtn').onclick = () => this.addConstantNode();
-    document.getElementById('addGroupBtn').onclick = () => this.addGroupNode();
-    document.getElementById('addOutputBtn').onclick = () => this.addOutputNode();
-    document.getElementById('exportBtn').onclick = () => this.export();
-    document.getElementById('importBtn').onclick = () => this.import();
-    document.getElementById('clearStorageBtn').onclick = () => this.clearStorage();
-    document.getElementById('fileInput').onchange = (e) => this.handleFileImport(e);
+    // Проверяем существование элементов перед добавлением обработчиков
+    const undoBtn = document.getElementById('undoBtn');
+    if (undoBtn) undoBtn.onclick = () => this.undo();
     
+    const redoBtn = document.getElementById('redoBtn');
+    if (redoBtn) redoBtn.onclick = () => this.redo();
+    
+    const exportBtn = document.getElementById('exportBtn');
+    if (exportBtn) exportBtn.onclick = () => this.export();
+    
+    const importBtn = document.getElementById('importBtn');
+    if (importBtn) importBtn.onclick = () => this.import();
+    
+    const clearStorageBtn = document.getElementById('clearStorageBtn');
+    if (clearStorageBtn) clearStorageBtn.onclick = () => this.clearStorage();
+    
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) fileInput.onchange = (e) => this.handleFileImport(e);
+    
+    // Добавляем контейнер для переключателя языка, если его нет
     const fileGroup = document.querySelector('.file-group');
-    if (fileGroup) {
+    if (fileGroup && !document.getElementById('languageSwitcherContainer')) {
       const langContainer = document.createElement('div');
       langContainer.id = 'languageSwitcherContainer';
       langContainer.style.display = 'inline-block';
@@ -44,10 +53,6 @@ export class ToolbarController {
     const buttons = {
       undoBtn: t('toolbar.undo'),
       redoBtn: t('toolbar.redo'),
-      addEmptyBtn: t('toolbar.number'),
-      addConstantBtn: t('toolbar.constant'),
-      addGroupBtn: t('toolbar.group'),
-      addOutputBtn: t('toolbar.output'),
       exportBtn: t('toolbar.export'),
       importBtn: t('toolbar.import'),
       clearStorageBtn: t('toolbar.clearStorage')
@@ -71,63 +76,13 @@ export class ToolbarController {
     this.history.autoSave();
   }
 
-  getCenterCoords() {
-    const rect = document.getElementById('viewport').getBoundingClientRect();
-    const off = this.viewport.getOffset();
-    const zoom = window.currentZoom || 1;
-    return {
-      x: (rect.width / 2 - off.x) / zoom,
-      y: (rect.height / 2 - off.y) / zoom
-    };
-  }
-
-  addNumberNode() {
-    const { x, y } = this.getCenterCoords();
-    const node = NodeFactory.createNumberAt(x - 100, y - 30);
-    this.graph.addNode(node);
-    this.renderer.render();
-    this.history.save();
-  }
-  
-  async addConstantNode() {
-    const { x, y } = this.getCenterCoords();
-    const input = await modal.prompt(t('modal.enterValue'), '0');
-    
-    if (input !== null && input !== undefined && input !== '') {
-      const value = parseFloat(input);
-      const finalValue = isNaN(value) ? 0 : value;
-      
-      const node = NodeFactory.createConstantAt(x - 100, y - 30, finalValue);
-      this.graph.addNode(node);
-      this.graph.reevaluateAll();
-      this.graph.updateAllOutputs();
-      this.renderer.render();
-      this.history.save();
-    }
-  }
-  
-  addGroupNode() {
-    const { x, y } = this.getCenterCoords();
-    const node = NodeFactory.createGroupAt(x - 120, y - 30);
-    this.graph.addNode(node);
-    this.renderer.render();
-    this.history.save();
-  }
-
-  addOutputNode() {
-    const { x, y } = this.getCenterCoords();
-    const node = NodeFactory.createOutputAt(x - 100, y - 30);
-    this.graph.addNode(node);
-    this.renderer.render();
-    this.history.save();
-  }
-
   export() {
     this.persistence.exportToFile();
   }
 
   import() {
-    document.getElementById('fileInput').click();
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) fileInput.click();
   }
 
   async handleFileImport(event) {
