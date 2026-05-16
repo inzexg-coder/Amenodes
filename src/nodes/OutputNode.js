@@ -8,7 +8,8 @@ export const metadata = {
   nameKey: 'nodes.output',
   descriptionKey: 'nodeDescriptions.output',
   author: 'Amenoke',
-  github: 'https://github.com/inzexg-coder/Amenodes'
+  github: 'https://github.com/inzexg-coder/Amenodes',
+  icon: 'fa-chart-line'
 };
 
 export class OutputNode extends Node {
