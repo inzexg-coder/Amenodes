@@ -17,6 +17,7 @@ export class MapNode extends Node {
     this.xCol = "x";
     this.yCol = "y";
     this.unmappedMode = "passthrough";
+    this.graph = null;
   }
 
   getUnmapped() {
