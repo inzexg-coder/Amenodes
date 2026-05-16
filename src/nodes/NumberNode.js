@@ -1,5 +1,14 @@
 import { Node } from '../core/Node.js';
 
+export const metadata = {
+  type: 'number',
+  nameKey: 'nodes.number',
+  descriptionKey: 'nodeDescriptions.number',
+  author: 'Amenoke',
+  github: 'https://github.com/inzexg-coder/Amenodes',
+  icon: 'fa-hashtag'
+};
+
 export class NumberNode extends Node {
   constructor(id, x, y, title, value) {
     super(id, 'number', x, y, title);

@@ -1,26 +1,23 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Amenodes - 26.4.26</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>@Amenodes</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
 <div class="toolbar">
   <div>
-    <button id="undoBtn">Отменить</button>
-    <button id="redoBtn">Повторить</button>
-    <button id="addEmptyBtn">Число</button>
-    <button id="addConstantBtn">Константа</button>
-    <button id="addGroupBtn">Группа</button>
-    <button id="addOutputBtn">Вывод</button>
+    <button id="undoBtn"><i class="fas fa-undo-alt"></i> Undo</button>
+    <button id="redoBtn"><i class="fas fa-redo-alt"></i> Redo</button>
   </div>
   <div class="file-group">
-    <button id="exportBtn">Экспорт</button>
-    <button id="importBtn">Импорт</button>
-    <button id="clearStorageBtn">Очистить сохр.</button>
+    <button id="exportBtn"><i class="fas fa-download"></i> Export</button>
+    <button id="importBtn"><i class="fas fa-upload"></i> Import</button>
+    <button id="clearStorageBtn"><i class="fas fa-trash-alt"></i> Clear storage</button>
   </div>
 </div>
 
@@ -32,19 +29,22 @@
 </div>
 
 <input type="file" id="fileInput" class="hidden-file-input" accept=".amnk">
-<button class="opt-toggle-btn" id="optToggleBtn">⚡</button>
+<button class="opt-toggle-btn" id="optToggleBtn"><i class="fas fa-tachometer-alt"></i></button>
 
 <div id="optPanel" class="opt-panel hidden">
-  <div class="opt-header">Оптимизации производительности<button id="closeOptPanel">✕</button></div>
+  <div class="opt-header">
+    <span><i class="fas fa-microchip"></i> Performance Optimizations</span>
+    <button id="closeOptPanel"><i class="fas fa-times"></i></button>
+  </div>
   <div class="opt-list" id="optListContainer"></div>
-  <button id="rebenchmarkBtn" class="rebench-btn">Пересчитать влияние оптимизаций</button>
-  <button id="applyOptimizationsBtn" class="apply-btn">ПРИМЕНИТЬ ВЫБРАННЫЕ</button>
+  <button id="rebenchmarkBtn" class="rebench-btn"><i class="fas fa-chart-line"></i> Recalculate optimizations impact</button>
+  <button id="applyOptimizationsBtn" class="apply-btn"><i class="fas fa-check-circle"></i> APPLY SELECTED</button>
 </div>
 
-<div class="fps-meter" id="fpsMeter">FPS: --</div>
-<div id="autosaveStatus" class="autosave-status" style="opacity:0;">Сохранено</div>
-<div id="benchmarkStatus" class="benchmark-status" style="display:none;">Тестирование оптимизаций...</div>
-<script type="module" src="./src/main.js?v=3"></script>
+<div class="fps-meter" id="fpsMeter"><i class="fas fa-chart-line"></i> FPS: --</div>
+<div id="autosaveStatus" class="autosave-status"><i class="fas fa-save"></i> Saved</div>
+<div id="benchmarkStatus" class="benchmark-status" style="display:none;"><i class="fas fa-flask"></i> Benchmarking optimizations...</div>
+
 <script type="importmap">
 {
   "imports": {

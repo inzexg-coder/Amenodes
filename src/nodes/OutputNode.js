@@ -3,10 +3,20 @@ import { EditableTitle } from '../ui/EditableTitle.js';
 import { replaceSymbols } from '../utils/SymbolMapper.js';
 import { i18n, t } from '../i18n/LanguageManager.js';
 
+export const metadata = {
+  type: 'output',
+  nameKey: 'nodes.output',
+  descriptionKey: 'nodeDescriptions.output',
+  author: 'Amenoke',
+  github: 'https://github.com/inzexg-coder/Amenodes',
+  icon: 'fa-chart-line'
+};
+
 export class OutputNode extends Node {
   constructor(id, x, y, title, rows) {
     super(id, 'output', x, y, title);
     this.rows = rows ?? [{ param: t('status.noConnections'), value: "—" }];
+    this.graph = null;
   }
 
   getValue() {

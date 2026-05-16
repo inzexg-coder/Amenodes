@@ -14,7 +14,7 @@ export class LanguageSwitcher {
     this.button = document.createElement('button');
     this.button.id = 'languageBtn';
     this.button.className = 'language-btn';
-    this.button.innerHTML = `${i18n.getCurrentLanguage().toUpperCase()}`;
+    this.button.innerHTML = `<i class="fas fa-globe"></i> ${i18n.getCurrentLanguage().toUpperCase()}`;
     this.button.onclick = (e) => {
       e.stopPropagation();
       this.toggleMenu();
@@ -23,7 +23,7 @@ export class LanguageSwitcher {
     this.container.appendChild(this.button);
     
     i18n.subscribe((lang) => {
-      this.button.innerHTML = `${lang.toUpperCase()}`;
+      this.button.innerHTML = `<i class="fas fa-globe"></i> ${lang.toUpperCase()}`;
       this.closeMenu();
     });
     

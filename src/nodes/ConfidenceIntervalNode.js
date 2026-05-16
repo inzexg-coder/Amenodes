@@ -2,6 +2,15 @@ import { Node } from '../core/Node.js';
 import { typeSystem, DataType } from '../core/DataType.js';
 import { i18n, t } from '../i18n/LanguageManager.js';
 
+export const metadata = {
+  type: 'confidenceInterval',
+  nameKey: 'nodes.confidenceInterval',
+  descriptionKey: 'nodeDescriptions.confidenceInterval',
+  author: 'Amenoke',
+  github: 'https://github.com/inzexg-coder/Amenodes',
+  icon: 'fa-chart-simple'
+};
+
 export class ConfidenceIntervalNode extends Node {
   constructor(id, x, y, title) {
     super(id, 'confidenceInterval', x, y, title);

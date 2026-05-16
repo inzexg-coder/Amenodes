@@ -24,6 +24,21 @@ export const en = {
     confidenceInterval: 'Confidence Interval'
   },
 
+  nodeDescriptions: {
+    number: 'A single numeric value that can be edited inline',
+    constant: 'A constant value that never changes',
+    group: 'A collection of named numeric values',
+    calc: 'Uncertainty calculation node (measurement, rounding, combined)',
+    output: 'Displays the results of connected nodes in a table',
+    map: 'Maps input values to output values using X→Y rules',
+    confidenceInterval: 'Calculates confidence interval by multiplying uncertainty with a multiplier'
+  },
+
+  nodeMenu: {
+    title: 'Add Node',
+    search: 'Search nodes...'
+  },
+
   calcTypes: {
     div3: 'Measurement Uncertainty',
     div_sqrt12: 'Rounding Uncertainty',
@@ -59,14 +74,10 @@ export const en = {
   toolbar: {
     undo: 'Undo',
     redo: 'Redo',
-    number: 'Number',
-    constant: 'Constant',
-    group: 'Group',
-    output: 'Output',
     export: 'Export',
     import: 'Import',
     clearStorage: 'Clear storage',
-    language: 'Language'
+    addNode: 'Add node'
   },
 
   contextMenu: {

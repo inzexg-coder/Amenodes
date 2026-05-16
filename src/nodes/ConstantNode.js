@@ -1,5 +1,14 @@
 import { Node } from '../core/Node.js';
 
+export const metadata = {
+  type: 'constant',
+  nameKey: 'nodes.constant',
+  descriptionKey: 'nodeDescriptions.constant',
+  author: 'Amenoke',
+  github: 'https://github.com/inzexg-coder/Amenodes',
+  icon: 'fa-infinity'
+};
+
 export class ConstantNode extends Node {
   constructor(id, x, y, title, value) {
     super(id, 'constant', x, y, title);
