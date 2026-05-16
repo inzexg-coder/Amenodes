@@ -1,42 +1,32 @@
 name: Trigger CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      cleanup:
-        description: 'Delete files not in source'
-        required: false
-        default: 'false'
-        type: choice
-        options:
-          - 'false'
-          - 'true'
 
 jobs:
   trigger:
     runs-on: ubuntu-latest
     steps:
-      - name: Debug info
+      - name: Get PR info
+        id: pr
         run: |
-          echo "Event: ${{ github.event_name }}"
-          echo "Ref: ${{ github.ref }}"
-          echo "Actor: ${{ github.actor }}"
-          echo "PR Number: ${{ github.event.pull_request.number }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+            echo "head_ref=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
+            echo "head_sha=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "pr_number=" >> $GITHUB_OUTPUT
+            echo "head_ref=" >> $GITHUB_OUTPUT
+            echo "head_sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
       
       - name: Trigger CI repository
         run: |
-          CLEANUP="${{ github.event.inputs.cleanup }}"
-          if [ -z "$CLEANUP" ]; then
-            CLEANUP="false"
-          fi
-          
-          echo "Sending request to amenodes-ci..."
-          
-          RESPONSE=$(curl -s -X POST \
+          curl -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.CI_TOKEN }}" \
             https://api.github.com/repos/inzexg-coder/amenodes-ci/dispatches \
@@ -45,26 +35,9 @@ jobs:
               "client_payload": {
                 "source_repo": "${{ github.repository }}",
                 "source_ref": "${{ github.ref }}",
-                "source_sha": "${{ github.sha }}",
-                "pr_number": "${{ github.event.pull_request.number }}",
-                "head_ref": "${{ github.head_ref }}",
-                "actor": "${{ github.actor }}",
-                "cleanup": "'"$CLEANUP"'"
+                "source_sha": "${{ steps.pr.outputs.head_sha }}",
+                "pr_number": "${{ steps.pr.outputs.pr_number }}",
+                "head_ref": "${{ steps.pr.outputs.head_ref }}",
+                "actor": "${{ github.actor }}"
               }
-            }')
-          
-          echo "Response: $RESPONSE"
-          
-          if [ -z "$RESPONSE" ]; then
-            echo "✅ Request sent successfully"
-          else
-            echo "::warning::Response: $RESPONSE"
-          fi
-      
-      - name: Wait for CI to start
-        run: |
-          echo "Waiting 5 seconds for CI to start..."
-          sleep 5
-          
-          echo "Check CI repository at:"
-          echo "https://github.com/inzexg-coder/amenodes-ci/actions"
+            }'
