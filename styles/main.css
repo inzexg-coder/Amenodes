@@ -1160,3 +1160,75 @@ hr {
 .design-quality-extreme .node-menu-search input {
   border-radius: 0px;
 }
+
+.node-menu-category {
+  position: relative;
+  flex-wrap: wrap;
+}
+
+.node-menu-submenu-container {
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #2e385c;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.node-menu-subcard {
+  background: #0f1222;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.node-menu-subcard:hover {
+  background: #1f2540;
+  transform: translateX(4px);
+}
+
+.node-menu-subcard-icon {
+  width: 32px;
+  height: 32px;
+  background: #2a3a5e;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #ffb347;
+}
+
+.node-menu-subcard-info {
+  flex: 1;
+}
+
+.node-menu-subcard-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #ffefcf;
+}
+
+.node-menu-card-expand {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6d8ae0;
+  font-size: 14px;
+  transition: transform 0.2s;
+}
+
+.design-quality-extreme .node-menu-subcard {
+  border-radius: 0px;
+}
+
+.design-quality-extreme .node-menu-subcard-icon {
+  border-radius: 0px;
+}
