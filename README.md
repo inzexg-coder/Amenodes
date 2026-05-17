@@ -1,8 +1,8 @@
 <h1 align="center">Amenoke</h1>
 
 <p align="center">
-  <strong>1.1.2-INTERVAL</strong><br>
-  <sub>Confidence Interval Node & Critical Bug Fixes</sub>
+  <strong>1.2.0</strong><br>
+  <sub>Global user support</sub>
 </p>
 
 <h4 align="center">
@@ -21,12 +21,16 @@ Every branch automatically gets a live preview at `https://amenoke.ru/preview/[b
 
 ### How it works
 
-The GitHub Actions workflow:
-- **Creates preview** when a new branch is created (except main/master)
-- **Updates preview** on every push to any branch (except main/master)
-- **Auto-cleans** previews after 10 minutes of inactivity
-- Validates JavaScript syntax and HTML structure before deployment
-- Shows preview URL in GitHub Actions logs and summary
+The CI/CD pipeline uses two repositories:
+- **Public repository (`Amenodes`)** – contains the source code and a lightweight trigger workflow.
+- **Private repository (`amenodes-ci`)** – contains the full deployment logic, secrets, and secure environment.
+
+Workflow:
+- **Creates preview** when a new branch is created (except `main`/`master`).
+- **Updates preview** on every push to any branch.
+- **Auto-cleans** previews after 10 minutes of inactivity.
+- Validates JavaScript syntax and HTML structure before deployment.
+- Posts a detailed comment on each Pull Request with the preview URL and check results.
 
 ### Preview URL format
 
@@ -34,27 +38,28 @@ The GitHub Actions workflow:
 https://amenoke.ru/preview/feature-branch-name/amenodes.html
 ```
 
-Branch names with slashes (`feature/new-feature`) become `feature-new-feature`
+Branch names with slashes (`feature/new-feature`) become `feature-new-feature`.
 
 ### Preview Lifecycle
 
 ```
-Branch created → Preview deployed (lives for 10 minutes)
+Branch created → Trigger sent → CI repository deploys preview (lives 10 min)
        ↓
 Commit after 5 min → Timer resets (lives another 10 min)
        ↓
 Commit after 3 min → Timer resets (lives another 10 min)
        ↓
-No activity for 10 min → Preview AUTOMATICALLY DELETED 🗑️
+No activity for 10 min → Preview automatically deleted
 ```
 
 ### What gets deployed
 
 The workflow mirrors the entire repository except:
 - `.git/` directory
-- `.github/` directory  
+- `.github/` directory
 - `preview/` directory (prevents recursive deployment)
 - `backups/` directory
+- `index/` and `index.html` (reserved paths)
 
 ### Production deployment
 
@@ -62,13 +67,13 @@ Merges to `main` or `master` automatically deploy to the production site:
 ```
 https://amenoke.ru/amenodes.html
 ```
+Production deployment never deletes existing files – only adds or updates them.
 
 ### How to get the preview URL
 
 After each push, the preview URL appears:
-1. **In GitHub Actions logs** - Look for "✅ Preview updated at:"
-2. **In GitHub Summary** - At the bottom of the workflow run page
-3. **In deployment artifacts** - Saved as `.deploy_time` and `.commit_sha` on server
+1. **In the Pull Request comment** – a detailed report with the preview link.
+2. **In GitHub Actions logs** – look for "Preview deployed for branch".
 
 ### Testing previews locally before pushing
 
@@ -83,42 +88,26 @@ grep -q "<!DOCTYPE html>" amenodes.html
 # Push to trigger preview deployment
 git push -u origin feature/your-feature
 
-# Preview URL will be shown in GitHub Actions
-```
-
-### Manual cleanup (if needed)
-
-If you want to immediately remove a preview without waiting 10 minutes:
-```bash
-# Connect via SFTP
-sftp your-username@amenoke.ru
-
-# Navigate to preview directory
-cd /var/www/html/preview/
-
-# Remove specific preview
-rm -rf feature-branch-name/
-
-# Or remove all old previews manually
-find . -type d -name ".deploy_time" -mmin +10 -exec rm -rf {} \;
+# Preview URL will appear as a comment in the automatically created Pull Request
 ```
 
 ### Troubleshooting
 
 **Preview not appearing?**
-- Check if branch name is `main` or `master` (previews disabled for production branches)
-- Verify GitHub Actions ran successfully (check Actions tab)
-- Ensure there's an `amenodes.html` file in your repository
+- Check if branch name is `main` or `master` (previews disabled for production branches).
+- Verify GitHub Actions ran successfully in the main repository (look for `Trigger CI` workflow).
+- Ensure the CI repository (`amenodes-ci`) exists and has valid secrets (`GH_TOKEN`, `SFTP_*`).
+- Make sure there is an `amenodes.html` file in your repository.
 
 **404 error on preview URL?**
-- Wait 1-2 minutes for deployment to complete
-- Check that you're using the correct branch name in URL
-- Verify the branch had activity in the last 10 minutes
+- Wait 1-2 minutes for deployment to complete.
+- Check the CI repository logs for errors.
+- Verify you are using the correct branch name in the URL.
 
 **Server running out of space?**
-- Automatic cleanup runs every 10 minutes via cron job
-- Inactive previews are removed automatically
-- Maximum concurrent previews = number of recently active branches
+- Automatic cleanup runs every 10 minutes via cron job.
+- Inactive previews are removed automatically.
+- Maximum concurrent previews = number of recently active branches.
 
 ---
 
@@ -179,27 +168,21 @@ root/
 │   │   ├── History.js            # Undo/redo with localStorage autosave
 │   │   └── DataType.js           # Type system for connection validation
 │   ├── nodes/
-│   │   ├── NumberNode.js         # Single numeric value node
-│   │   ├── ConstantNode.js       # Constant value node with visual display
-│   │   ├── GroupNode.js          # Multi-value container node
-│   │   ├── CalcNode.js           # Calculation node (div3, div_sqrt12, sqrt_sum_sq)
-│   │   ├── OutputNode.js         # Results display node with table view
-│   │   ├── MapNode.js            # Value mapping/transformation node
 │   │   └── NodeFactory.js        # Factory for creating nodes with localized titles
 │   ├── renderer/
 │   │   ├── Viewport.js           # Pan/zoom viewport controller
-│   │   └── DomRenderer.js        # DOM manipulation, edge rendering, drag handling
+│   │   ├── DomRenderer.js        # DOM manipulation, edge rendering, drag handling
+│   │   └── EdgeRenderer.js       # SVG edge rendering with arrows
 │   ├── ui/
 │   │   ├── EditableTitle.js      # Inline editable title component
 │   │   ├── OptimizationPanel.js  # Performance tuning panel UI with benchmarking
 │   │   ├── ContextMenu.js        # Right-click context menu for nodes
 │   │   ├── CustomModal.js        # Custom modal dialogs
-│   │   └── LanguageSwitcher.js   # Language toggle button with dropdown menu
+│   │   ├── LanguageSwitcher.js   # Language toggle button with dropdown menu
+│   │   └── NodeMenu.js           # Node selection menu with metadata
 │   ├── i18n/
 │   │   ├── LanguageManager.js    # Core i18n manager with subscription system
 │   │   └── locales/
-│   │       ├── ru.js             # Russian translations
-│   │       └── en.js             # English translations
 │   ├── services/
 │   │   ├── BenchmarkService.js   # Performance benchmarking for optimizations
 │   │   ├── PersistenceService.js # Save/load to localStorage and files
@@ -221,13 +204,7 @@ root/
 |-------|------|---------|--------------|
 | `Graph` | `core/Graph.js` | Manages nodes, edges, dependency resolution | `addNode()`, `addEdge()`, `removeNode()`, `reevaluateAll()` |
 | `Node` | `core/Node.js` | Abstract base class with translation support | `createBaseDiv()`, `getLocalizedTitle()`, `toJSON()` |
-| `NumberNode` | `nodes/NumberNode.js` | Single numeric input/output | `getValue()`, `createDOM()` |
-| `ConstantNode` | `nodes/ConstantNode.js` | Constant value with inline editing | `getValue()`, `createDOM()` |
-| `GroupNode` | `nodes/GroupNode.js` | Array of named numeric values | `getValue()`, `createDOM()` |
-| `CalcNode` | `nodes/CalcNode.js` | Mathematical operations | `getValue()`, `createDOM()` |
-| `OutputNode` | `nodes/OutputNode.js` | Results display in table format | `getValue()`, `createDOM()` |
-| `MapNode` | `nodes/MapNode.js` | X→Y value mapping | `getValue()`, `getUnmapped()`, `createDOM()` |
-| `NodeFactory` | `nodes/NodeFactory.js` | Node creation with localization | `createNode()`, `create*At()` methods |
+| `NodeFactory` | `nodes/NodeFactory.js` | Node creation with metadata and localization | `createNode()`, `getAvailableNodeTypes()` |
 | `Edge` | `core/Edge.js` | Connection between ports | `toJSON()` |
 | `DataType` | `core/DataType.js` | Type validation for connections | `canConnect()`, `getNodeType()` |
 | `History` | `core/History.js` | Undo/redo with autosave | `save()`, `undo()`, `redo()`, `autoSave()` |
@@ -239,6 +216,7 @@ root/
 | `ContextMenu` | `ui/ContextMenu.js` | Right-click context menu | `show()`, `close()` |
 | `CustomModal` | `ui/CustomModal.js` | Custom modal dialogs | `alert()`, `confirm()`, `prompt()` |
 | `LanguageSwitcher` | `ui/LanguageSwitcher.js` | Language toggle dropdown | `init()`, `toggleMenu()` |
+| `NodeMenu` | `ui/NodeMenu.js` | Node selection with search and metadata | `open()`, `close()`, `createNode()` |
 | `LanguageManager` | `i18n/LanguageManager.js` | Core i18n with subscription | `t()`, `setLanguage()`, `subscribe()` |
 | `BenchmarkService` | `services/BenchmarkService.js` | Performance benchmarking | `runBenchmark()`, `captureState()` |
 | `PersistenceService` | `services/PersistenceService.js` | Save/load functionality | `saveToStorage()`, `exportToFile()` |
@@ -281,6 +259,7 @@ const groupNode = NodeFactory.createGroupAt(200, 350);
 const calcNode = NodeFactory.createCalcAt(500, 150, 'div3', 'Measurement Error');
 const outputNode = NodeFactory.createOutputAt(500, 350);
 const mapNode = NodeFactory.createMapAt(500, 250);
+const confidenceNode = NodeFactory.createConfidenceIntervalAt(500, 450);
 
 graph.addNode(numberNode);
 ```
@@ -476,10 +455,21 @@ git checkout -b feature/your-feature-name
 
 1. Push to your feature branch
 2. Open PR against `main` branch
-3. A preview deployment will automatically appear as a comment
-4. Wait for validation checks (syntax, HTML)
-5. Request review from project maintainer
-6. After approval, squash and merge
+3. CI automatically runs validation and deploys a preview
+4. A detailed comment with preview URL and check results will appear in the PR
+5. Review the preview and the code changes
+6. Merge using **Squash and merge** when ready
+7. Delete the branch after merging
+
+### Branch Protection Rules
+
+The `main` branch is protected with the following rules:
+- Linear history required (no merge commits)
+- Direct pushes are blocked – all changes must go through Pull Requests
+- Force pushes are disabled
+- Deletion of the branch is prohibited
+- Status checks must pass (JavaScript syntax, HTML validation)
+- No approval required for the repository owner (automatic merge allowed after checks pass)
 
 ---
 
