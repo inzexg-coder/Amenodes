@@ -1,43 +1,31 @@
-name: Trigger CI
+name: Trigger CI Deploy
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches: [main, master]
+    paths-ignore:
+      - 'src/nodes-list.json'  
+  workflow_run:
+    workflows: ["Update nodes list"] 
+    types:
+      - completed
+    branches:
+      - main
+      - master
 
 jobs:
   trigger:
+    if: ${{ github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Get PR info
-        id: pr
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-            echo "head_ref=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
-            echo "head_sha=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
-          else
-            echo "pr_number=" >> $GITHUB_OUTPUT
-            echo "head_ref=" >> $GITHUB_OUTPUT
-            echo "head_sha=${{ github.sha }}" >> $GITHUB_OUTPUT
-          fi
-      
-      - name: Trigger CI repository
-        run: |
-          curl -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.CI_TOKEN }}" \
-            https://api.github.com/repos/inzexg-coder/amenodes-ci/dispatches \
-            -d '{
-              "event_type": "deploy",
-              "client_payload": {
-                "source_repo": "${{ github.repository }}",
-                "source_ref": "${{ github.ref }}",
-                "source_sha": "${{ steps.pr.outputs.head_sha }}",
-                "pr_number": "${{ steps.pr.outputs.pr_number }}",
-                "head_ref": "${{ steps.pr.outputs.head_ref }}",
-                "actor": "${{ github.actor }}"
-              }
-            }'
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.CI_REPO_TOKEN }}
+          repository: inzexg-coder/amenodes-ci
+          event-type: deploy
+          client-payload: |
+            {
+              "branch": "${{ github.ref_name }}",
+              "commit": "${{ github.sha }}"
+            }
