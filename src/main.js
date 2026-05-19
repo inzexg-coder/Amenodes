@@ -26,6 +26,7 @@ class Application {
     this.fpsCounter = new FPSCounter('fpsMeter');
     this.benchmarkService = new BenchmarkService(this.graph, this.fpsCounter, OPTIMIZATIONS);
     this.persistenceService = new PersistenceService(this.graph);
+
     this.initRenderer();
     this.initHistory();
     this.initViewport();
@@ -34,10 +35,10 @@ class Application {
     this.initNodeMenu();
     this.initEvents();
     this.initI18n();
-
+    
     this.initNodesAndStart();
   }
-  
+
   initRenderer() {
     const viewportEl = document.getElementById('viewport');
     const canvasContainer = document.getElementById('canvasContainer');
@@ -87,7 +88,6 @@ class Application {
     else if (percent <= 80) document.body.classList.add('design-quality-2');
   }
 
-
   initToolbar() {
     this.toolbar = new ToolbarController(
       this.graph, this.renderer, this.history, this.viewport, this.persistenceService
@@ -108,12 +108,10 @@ class Application {
     }, 1000);
   }
 
-
   initNodeMenu() {
     this.nodeMenu = new NodeMenu(this.graph, this.renderer, this.viewport);
     this.nodeMenu.init();
   }
-
 
   async runInitialBenchmark() {
     try {
@@ -141,6 +139,9 @@ class Application {
   initI18n() {
     i18n.subscribe(() => {
       this.updateUITitles();
+      if (this.renderer) {
+        this.renderer.render();
+      }
     });
     
     this.updateUITitles();
@@ -149,20 +150,23 @@ class Application {
   updateUITitles() {
     document.title = `Amenodes - ${new Date().toISOString().slice(0, 10)}`;
     
-    if (this.renderer) {
+    if (this.graph) {
       this.graph.reevaluateAll();
       this.graph.updateAllOutputs();
+    }
+    
+    if (this.renderer) {
       this.renderer.render();
     }
   }
-  
+
   async initNodesAndStart() {
     try {
       await loadAllNodes();
       typeSystem.initFromNodeRegistry(nodeRegistry);
+      this.updateUITitles();
       this.loadInitialState();
       this.renderer.render();
-      
       console.log(`[Application] Ready with ${nodeRegistry.size} node types`);
     } catch (err) {
       console.error('[Application] Failed to initialize nodes:', err);
@@ -170,7 +174,7 @@ class Application {
       this.renderer.render();
     }
   }
-
+  
   loadInitialState() {
     const loaded = this.persistenceService.loadFromStorage();
     
@@ -185,17 +189,17 @@ class Application {
         const centerX = (viewportRect.width / 2 - offset.x) / zoom - 140;
         const centerY = (viewportRect.height / 2 - offset.y) / zoom - 40;
         
-        const defaultOutput = new OutputClass(0, centerX, centerY, t('nodes.output'), { rows: [] });
+        const defaultOutput = new OutputClass(null, centerX, centerY, t('nodes.output'), { rows: [] });
         this.graph.addNode(defaultOutput);
         this.renderer.render();
         this.history.save();
         this.persistenceService.saveToStorage(this.viewport, window.currentZoom, window.currentQualityValue);
       } else {
-        console.warn('[Application] Output node class not found, cannot create default node');
       }
     }
   }
 }
+
 document.addEventListener('DOMContentLoaded', () => {
   window.app = new Application();
 });
