@@ -163,9 +163,9 @@ export class NodeMenu {
           <div class="node-menu-card-add"><i class="fas fa-plus-circle"></i></div>
         `;
         
-        subCard.onclick = (e) => {
+        subCard.onclick = async (e) => {
           e.stopPropagation();
-          this.createNode(category.type, subnode);
+          await this.createNodeByType(category.type, subnode);
           this.close();
         };
         
@@ -210,34 +210,59 @@ export class NodeMenu {
       <div class="node-menu-card-add"><i class="fas fa-plus-circle"></i></div>
     `;
     
-    card.querySelector('.node-menu-card-add').onclick = (e) => {
+    card.querySelector('.node-menu-card-add').onclick = async (e) => {
       e.stopPropagation();
-      this.createNode(nodeType.type);
+      await this.createNode(nodeType.type);
       this.close();
     };
     
-    card.onclick = () => {
-      this.createNode(nodeType.type);
+    card.onclick = async () => {
+      await this.createNode(nodeType.type);
       this.close();
     };
     
     container.appendChild(card);
   }
 
-  createNode(type, subnode = null) {
+  async createNodeByType(categoryType, subnode) {
     const { x, y } = this.getCenterPosition();
     
     const options = { x, y };
+    Object.assign(options, subnode);
     
-    if (subnode) {
-      Object.assign(options, subnode);
+    const NodeClass = NodeFactory.getNodeClass(categoryType);
+    
+    if (NodeClass && typeof NodeClass.onCreate === 'function') {
+      const node = await NodeClass.onCreate(this.graph, x, y, options);
+      if (node) {
+        this.finishNodeCreation();
+      }
+    } else {
+      const node = NodeFactory.createNode(categoryType, options);
+      if (node) {
+        this.graph.addNode(node);
+        this.finishNodeCreation();
+      }
     }
+  }
+
+  async createNode(type) {
+    const { x, y } = this.getCenterPosition();
+    const options = { x, y };
     
-    const node = NodeFactory.createNode(type, options);
+    const NodeClass = NodeFactory.getNodeClass(type);
     
-    if (node) {
-      this.graph.addNode(node);
-      this.finishNodeCreation();
+    if (NodeClass && typeof NodeClass.onCreate === 'function') {
+      const node = await NodeClass.onCreate(this.graph, x, y, options);
+      if (node) {
+        this.finishNodeCreation();
+      }
+    } else {
+      const node = NodeFactory.createNode(type, options);
+      if (node) {
+        this.graph.addNode(node);
+        this.finishNodeCreation();
+      }
     }
   }
 
