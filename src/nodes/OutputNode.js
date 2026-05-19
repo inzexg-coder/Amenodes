@@ -9,13 +9,19 @@ export const metadata = {
   descriptionKey: 'nodeDescriptions.output',
   author: 'Amenoke',
   github: 'https://github.com/inzexg-coder/Amenodes',
-  icon: 'fa-chart-line'
+  icon: 'fa-chart-line',
+  dataType: 'auto',
+  canHaveIncomingEdges: true,
+  canHaveOutgoingEdges: false,
+  allowedInputTypes: ['num', 'array', 'uncert', 'list', 'wlist', 'interval'],
+  allowedOutputTypes: [],
+  defaultValue: null
 };
 
 export class OutputNode extends Node {
-  constructor(id, x, y, title, rows) {
-    super(id, 'output', x, y, title);
-    this.rows = rows ?? [{ param: t('status.noConnections'), value: "—" }];
+  constructor(id, x, y, title, options = {}) {
+    super(id, 'output', x, y, title, options);
+    this.rows = options.rows ?? [{ param: t('status.noConnections'), value: "—" }];
     this.graph = null;
   }
 
@@ -41,6 +47,29 @@ export class OutputNode extends Node {
     return Math.max(80, 80 + this.rows.length * 35);
   }
 
+  updateDisplay(graph) {
+    const input = graph.getMergedInput(this.id);
+    if (!input.length) {
+      this.rows = [{ param: t('status.noConnections'), value: "—" }];
+      this.title = t('output.noConnections');
+      return;
+    }
+    const rows = input.map((val, i) => ({
+      param: `${t('common.value')} ${i + 1}`,
+      value: typeof val === 'number' && !isNaN(val) ? val.toFixed(6) : "—"
+    }));
+    this.rows = rows;
+    this.title = `${t('output.title')} (${rows.length} ${t('output.valueCount')})`;
+  }
+
+  onAttach(graph) {
+    this.graph = graph;
+  }
+
+  onDetach() {
+    this.graph = null;
+  }
+
   createDOM(graph, renderer) {
     const div = this.createBaseDiv(graph, renderer, 'output-header');
     const tableDiv = document.createElement('div');
@@ -60,28 +89,34 @@ export class OutputNode extends Node {
     table.appendChild(thead);
     
     const tbody = document.createElement('tbody');
-    this.rows.forEach((row, idx) => {
-      const tr = document.createElement('tr');
-      
-      const tdParam = document.createElement('td');
-      const paramEditor = new EditableTitle(row.param, (newParam) => {
-        this.rows[idx].param = newParam;
-        renderer.save();
+    
+    const updateTable = () => {
+      tbody.innerHTML = '';
+      this.rows.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        
+        const tdParam = document.createElement('td');
+        const paramEditor = new EditableTitle(row.param, (newParam) => {
+          this.rows[idx].param = newParam;
+          renderer.save();
+        });
+        paramEditor.displaySpan.style.minWidth = '160px';
+        paramEditor.displaySpan.style.display = 'inline-block';
+        tdParam.appendChild(paramEditor.getElement());
+        
+        const tdValue = document.createElement('td');
+        const valueInput = document.createElement('input');
+        valueInput.value = replaceSymbols(row.value);
+        valueInput.disabled = true;
+        tdValue.appendChild(valueInput);
+        
+        tr.appendChild(tdParam);
+        tr.appendChild(tdValue);
+        tbody.appendChild(tr);
       });
-      paramEditor.displaySpan.style.minWidth = '160px';
-      paramEditor.displaySpan.style.display = 'inline-block';
-      tdParam.appendChild(paramEditor.getElement());
-      
-      const tdValue = document.createElement('td');
-      const valueInput = document.createElement('input');
-      valueInput.value = replaceSymbols(row.value);
-      valueInput.disabled = true;
-      tdValue.appendChild(valueInput);
-      
-      tr.appendChild(tdParam);
-      tr.appendChild(tdValue);
-      tbody.appendChild(tr);
-    });
+    };
+    
+    updateTable();
     table.appendChild(tbody);
     tableDiv.appendChild(table);
     div.appendChild(tableDiv);
@@ -92,6 +127,7 @@ export class OutputNode extends Node {
     const unsubscribe = i18n.subscribe(() => {
       paramTh.textContent = t('common.parameter');
       valueTh.textContent = t('common.value');
+      updateTable();
     });
     
     const originalRemove = div.remove;

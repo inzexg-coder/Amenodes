@@ -1,6 +1,6 @@
 export const ru = {
   common: {
-    ok: 'OK',
+    ok: 'ОК',
     cancel: 'Отмена',
     save: 'Сохранить',
     delete: 'Удалить',
@@ -14,63 +14,6 @@ export const ru = {
     parameter: 'Параметр'
   },
 
-  nodes: {
-    number: 'Число',
-    constant: 'Константа',
-    group: 'Группа чисел',
-    calc: 'Погрешность',
-    output: 'Вывод',
-    map: 'Карта',
-    confidenceInterval: 'Доверительный интервал'
-  },
-
-  nodeDescriptions: {
-    number: 'Одно числовое значение, которое можно редактировать',
-    constant: 'Постоянное значение, которое никогда не меняется',
-    group: 'Набор именованных числовых значений',
-    calc: 'Узел расчёта погрешности (измерение, округление, суммарная)',
-    output: 'Отображает результаты подключённых узлов в виде таблицы',
-    map: 'Преобразует входные значения в выходные по правилам X→Y',
-    confidenceInterval: 'Вычисляет доверительный интервал, умножая погрешность на множитель'
-  },
-
-  nodeMenu: {
-    title: 'Добавить узел',
-    search: 'Поиск узлов...'
-  },
-
-  calcTypes: {
-    div3: 'Погрешность измерения',
-    div_sqrt12: 'Погрешность округления',
-    sqrt_sum_sq: 'Суммарная погрешность',
-    result: 'Результат',
-    inputs: 'входов'
-  },
-
-  confidence: {
-    uncertaintyInputs: 'Входов с погрешностью',
-    multiplierInputs: 'Входов-множителей'
-  },
-
-  map: {
-    title: 'Карта преобразований',
-    xCol: 'x',
-    yCol: 'y',
-    addRule: '+ Добавить правило',
-    passThrough: 'Сквозной проход',
-    separateOutput: 'Отдельный голубой выход'
-  },
-
-  group: {
-    addValue: '+ Добавить значение'
-  },
-
-  output: {
-    title: 'Вывод результатов',
-    noConnections: 'Нет связей',
-    valueCount: 'знач.'
-  },
-
   toolbar: {
     undo: 'Отменить',
     redo: 'Повторить',
@@ -80,21 +23,20 @@ export const ru = {
     addNode: 'Добавить узел'
   },
 
+  nodeMenu: {
+    title: 'Добавить узел',
+    search: 'Поиск узлов...'
+  },
+
   contextMenu: {
-    outputAndConnect: 'Вывод + связь',
-    errors: 'Погрешности',
-    measurementError: 'Погрешность измерения',
-    roundingError: 'Погрешность округления',
-    totalError: 'Суммарная погрешность',
-    confidenceInterval: 'Доверительный интервал',
-    mapTransform: 'Карта преобразований',
-    markImportant: 'Выделить ВАЖНЫЙ нод',
-    unmarkImportant: 'Снять выделение ВАЖНОГО'
+    markImportant: 'Выделить ВАЖНЫЙ узел',
+    unmarkImportant: 'Снять выделение ВАЖНОГО',
+    outputAndConnect: 'Создать вывод и соединить'
   },
 
   optimizations: {
     virtualization: 'Виртуализация',
-    virtualizationDesc: 'Отсечение невидимых нод',
+    virtualizationDesc: 'Отсечение невидимых узлов',
     virtualizationPros: 'Снижает количество DOM-элементов, ускоряет рендеринг',
     virtualizationCons: 'Может быть заметна подгрузка при скролле',
     
@@ -114,7 +56,7 @@ export const ru = {
     batchRAFCons: 'Обновление происходит не мгновенно',
     
     cacheHeight: 'Кэш высоты',
-    cacheHeightDesc: 'Сохранение вычисленной высоты нод',
+    cacheHeightDesc: 'Сохранение вычисленной высоты узлов',
     cacheHeightPros: 'Ускоряет расчёты позиционирования',
     cacheHeightCons: 'Требует инвалидации кэша при изменении',
     
@@ -135,13 +77,13 @@ export const ru = {
     
     deferredEdges: 'Отложенные связи',
     deferredEdgesDesc: 'Отрисовка связей с низким приоритетом',
-    deferredEdgesPros: 'Ускоряет перемещение нод',
-    deferredEdgesCons: 'Линии могут отставать от нод',
+    deferredEdgesPros: 'Ускоряет перемещение узлов',
+    deferredEdgesCons: 'Линии могут отставать от узлов',
     
     cssContainment: 'CSS containment',
     cssContainmentDesc: 'Использование contain:layout',
-    cssContainmentPros: 'Изолирует макет ноды от страницы',
-    cssContainmentCons: 'Может обрезать содержимое ноды',
+    cssContainmentPros: 'Изолирует макет узла от страницы',
+    cssContainmentCons: 'Может обрезать содержимое узла',
     
     debounceRender: 'Debounce рендера',
     debounceRenderDesc: 'Задержка рендеринга при изменениях',
@@ -160,7 +102,7 @@ export const ru = {
     
     lazyComputations: 'Ленивые вычисления',
     lazyComputationsDesc: 'Вынос вычислений в setTimeout',
-    lazyComputationsPros: 'UI остаётся отзывчивым',
+    lazyComputationsPros: 'Интерфейс остаётся отзывчивым',
     lazyComputationsCons: 'Результаты появляются с задержкой',
     
     typedArrays: 'Типизированные массивы',
@@ -179,8 +121,8 @@ export const ru = {
     cacheTextCons: 'Требует инвалидации кэша',
     
     webglInstancing: 'WebGL-инстансинг',
-    webglInstancingDesc: 'Отрисовка тысяч нод через GPU',
-    webglInstancingPros: 'Обеспечивает 60 FPS для 5000+ нод',
+    webglInstancingDesc: 'Отрисовка тысяч узлов через GPU',
+    webglInstancingPros: 'Обеспечивает 60 FPS для 5000+ узлов',
     webglInstancingCons: 'Требует поддержки WebGL',
     
     designQuality: 'Качество дизайна',
@@ -207,12 +149,9 @@ export const ru = {
   },
 
   errors: {
-    cannotConnect: 'Невозможно соединить',
     cyclicDependency: 'Циклическая зависимость!',
-    invalidValue: 'Неверное значение',
-    requireTwoInputs: 'Требуется ровно 2 входа',
-    missingUncertaintyOrNumber: 'Необходима погрешность и число',
-    maxTwoInputs: 'Доверительный интервал может иметь не более 2 входов'
+    cannotConnect: 'Невозможно соединить',
+    maxTwoInputs: 'Максимум два входа'
   },
 
   status: {
@@ -225,17 +164,8 @@ export const ru = {
     saved: 'Сохранено'
   },
 
-  dataTypes: {
-    num: 'Число',
-    array: 'Группа',
-    auto: 'Вывод',
-    uncert: 'Погрешность',
-    list: 'Карта (список)',
-    wlist: 'Карта (весовая)'
-  },
-
   operations: {
-    nodeDeleted: 'Нод удалён',
+    nodeDeleted: 'Узел удалён',
     edgeDeleted: 'Связь удалена',
     graphCleared: 'Граф очищен'
   }

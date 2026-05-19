@@ -2,7 +2,7 @@ import { EditableTitle } from '../ui/EditableTitle.js';
 import { i18n } from '../i18n/LanguageManager.js';
 
 export class Node {
-  constructor(id, type, x, y, title) {
+  constructor(id, type, x, y, title, options = {}) {
     this.id = id;
     this.type = type;
     this.x = x;
@@ -13,22 +13,34 @@ export class Node {
     this.originalTitle = title;
     this.titleEditor = null;
     this.unsubscribeI18n = null;
+    
+    Object.assign(this, options);
   }
-
+  
   getValue() {
     return [];
   }
 
-  toJSON() {
-    return {
-      id: this.id,
-      type: this.type,
-      x: this.x,
-      y: this.y,
-      title: this.title,
-      important: this.important,
-      originalTitle: this.originalTitle
-    };
+  getOutputValue(port = 'main', visited = new Set(), graph = null) {
+    return this.getValue();
+  }
+
+  canAcceptEdge(source, port = 'main') {
+    return { ok: true };
+  }
+
+  onAttach(graph) {
+    this.graph = graph;
+  }
+  
+  onDetach() {
+    this.graph = null;
+  }
+  
+  reevaluate(graph) {
+  }
+
+  updateDisplay(graph) {
   }
 
   getLocalizedTitle() {
@@ -56,8 +68,16 @@ export class Node {
     }
   }
 
-  createDOM(graph, renderer) {
-    throw new Error("Implement createDOM in subclass");
+  toJSON() {
+    return {
+      id: this.id,
+      type: this.type,
+      x: this.x,
+      y: this.y,
+      title: this.title,
+      important: this.important,
+      originalTitle: this.originalTitle
+    };
   }
 
   getMinHeight() {
@@ -118,5 +138,9 @@ export class Node {
     });
 
     return div;
+  }
+
+  createDOM(graph, renderer) {
+    throw new Error("Implement createDOM in subclass");
   }
 }

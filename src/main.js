@@ -9,10 +9,11 @@ import { PersistenceService } from './services/PersistenceService.js';
 import { EventBus } from './services/EventBus.js';
 import { FPSCounter } from './utils/FPSCounter.js';
 import { OPTIMIZATIONS } from './config/Optimizations.js';
-import { OutputNode } from './nodes/OutputNode.js';
 import { i18n, t } from './i18n/LanguageManager.js';
 import { modal } from './ui/CustomModal.js';
 import { NodeMenu } from './ui/NodeMenu.js';
+import { loadAllNodes, nodeRegistry, getNodeClass } from './nodes/registry.js';
+import { typeSystem } from './core/DataType.js';
 
 window.alert = (msg) => { modal.alert(msg); };
 window.confirm = (msg) => modal.confirm(msg);
@@ -25,7 +26,7 @@ class Application {
     this.fpsCounter = new FPSCounter('fpsMeter');
     this.benchmarkService = new BenchmarkService(this.graph, this.fpsCounter, OPTIMIZATIONS);
     this.persistenceService = new PersistenceService(this.graph);
-    
+
     this.initRenderer();
     this.initHistory();
     this.initViewport();
@@ -34,7 +35,8 @@ class Application {
     this.initNodeMenu();
     this.initEvents();
     this.initI18n();
-    this.loadInitialState();
+    
+    this.initNodesAndStart();
   }
 
   initRenderer() {
@@ -59,6 +61,7 @@ class Application {
   initViewport() {
     let currentZoom = 1;
     const viewportEl = document.getElementById('viewport');
+    
     const setZoom = (z) => {
       currentZoom = Math.min(3, Math.max(0.3, z));
       window.currentZoom = currentZoom;
@@ -136,6 +139,9 @@ class Application {
   initI18n() {
     i18n.subscribe(() => {
       this.updateUITitles();
+      if (this.renderer) {
+        this.renderer.render();
+      }
     });
     
     this.updateUITitles();
@@ -144,26 +150,52 @@ class Application {
   updateUITitles() {
     document.title = `Amenodes - ${new Date().toISOString().slice(0, 10)}`;
     
-    if (this.renderer) {
+    if (this.graph) {
       this.graph.reevaluateAll();
       this.graph.updateAllOutputs();
+    }
+    
+    if (this.renderer) {
       this.renderer.render();
     }
   }
 
+  async initNodesAndStart() {
+    try {
+      await loadAllNodes();
+      typeSystem.initFromNodeRegistry(nodeRegistry);
+      this.updateUITitles();
+      this.loadInitialState();
+      this.renderer.render();
+      console.log(`[Application] Ready with ${nodeRegistry.size} node types`);
+    } catch (err) {
+      console.error('[Application] Failed to initialize nodes:', err);
+      this.loadInitialState();
+      this.renderer.render();
+    }
+  }
+  
   loadInitialState() {
     const loaded = this.persistenceService.loadFromStorage();
+    
     if (!loaded) {
-      const viewportRect = document.getElementById('viewport').getBoundingClientRect();
-      const defaultX = viewportRect.width / 2 - 140;
-      const defaultY = viewportRect.height / 2 - 40;
-      const defaultOutput = new OutputNode(0, defaultX, defaultY, t('nodes.output'), []);
-      this.graph.addNode(defaultOutput);
-      this.renderer.render();
-      this.history.save();
-      this.persistenceService.saveToStorage(this.viewport, window.currentZoom, window.currentQualityValue);
-    } else {
-      this.renderer.render();
+      const OutputClass = getNodeClass('output');
+      
+      if (OutputClass) {
+        const viewportRect = document.getElementById('viewport').getBoundingClientRect();
+        const offset = this.viewport.getOffset();
+        const zoom = window.currentZoom || 1;
+        
+        const centerX = (viewportRect.width / 2 - offset.x) / zoom - 140;
+        const centerY = (viewportRect.height / 2 - offset.y) / zoom - 40;
+        
+        const defaultOutput = new OutputClass(null, centerX, centerY, t('nodes.output'), { rows: [] });
+        this.graph.addNode(defaultOutput);
+        this.renderer.render();
+        this.history.save();
+        this.persistenceService.saveToStorage(this.viewport, window.currentZoom, window.currentQualityValue);
+      } else {
+      }
     }
   }
 }

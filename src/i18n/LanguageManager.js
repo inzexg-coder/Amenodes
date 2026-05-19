@@ -1,7 +1,7 @@
-import { ru } from './locales/ru.js';
 import { en } from './locales/en.js';
+import { ru } from './locales/ru.js';
 
-const LOCALES = {
+const BASE_LOCALES = {
   ru: { name: 'Русский', nativeName: 'Русский', translations: ru },
   en: { name: 'English', nativeName: 'English', translations: en }
 };
@@ -10,21 +10,48 @@ class LanguageManager {
   constructor() {
     this.currentLanguage = this.getSavedLanguage();
     this.listeners = [];
-    this.translations = LOCALES[this.currentLanguage]?.translations || ru;
+    this.nodeTranslations = { en: {}, ru: {} };
+    this.translations = {};
+    this.updateTranslations();
+  }
+  
+  setNodeTranslations(translations) {
+    this.nodeTranslations = translations;
+    this.updateTranslations();
+    this.notifyListeners();
+  }
+
+  updateTranslations() {
+    const base = BASE_LOCALES[this.currentLanguage]?.translations || {};
+    const nodes = this.nodeTranslations[this.currentLanguage] || {};
+    this.translations = this.mergeDeep(base, nodes);
+  }
+
+  mergeDeep(target, source) {
+    const result = { ...target };
+    for (const key in source) {
+      if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+        result[key] = this.mergeDeep(result[key] || {}, source[key]);
+      } else {
+        result[key] = source[key];
+      }
+    }
+    return result;
   }
 
   getSavedLanguage() {
     const saved = localStorage.getItem('amenodes_language');
-    if (saved && LOCALES[saved]) return saved;
+    if (saved && BASE_LOCALES[saved]) return saved;
     const browserLang = navigator.language.split('-')[0];
-    if (LOCALES[browserLang]) return browserLang;
+    if (BASE_LOCALES[browserLang]) return browserLang;
     return 'en';
   }
 
   setLanguage(lang) {
-    if (!LOCALES[lang]) return false;
+    if (!BASE_LOCALES[lang]) return false;
     this.currentLanguage = lang;
-    this.translations = LOCALES[lang].translations;
+    window._currentLanguage = lang;
+    this.updateTranslations();
     localStorage.setItem('amenodes_language', lang);
     this.notifyListeners();
     return true;
@@ -35,15 +62,11 @@ class LanguageManager {
   }
 
   getAvailableLanguages() {
-    return Object.entries(LOCALES).map(([code, info]) => ({
+    return Object.entries(BASE_LOCALES).map(([code, info]) => ({
       code,
       name: info.name,
       nativeName: info.nativeName
     }));
-  }
-
-  normalizeKey(key) {
-    return key.replace(/\s+/g, '').replace(/[^a-zA-Zа-яА-Я0-9]/g, '');
   }
 
   t(key, params = {}) {
@@ -54,20 +77,15 @@ class LanguageManager {
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
       } else {
-        console.warn(`Translation missing: ${key}`);
         return key;
       }
     }
     
     if (typeof value === 'string') {
-      return value.replace(/\{(\w+)\}/g, (_, param) => params[param] || `{${param}}`);
+      return value.replace(/\{(\w+)\}/g, (_, param) => params[param] ?? `{${param}}`);
     }
     
     return key;
-  }
-
-  translate(key, params = {}) {
-    return this.t(key, params);
   }
 
   subscribe(listener) {
@@ -83,17 +101,10 @@ class LanguageManager {
       listener(this.currentLanguage, this.translations);
     }
   }
-
-  translateNodeTitle(nodeType, currentTitle, originalTitle) {
-    const translated = this.t(`nodes.${nodeType}`);
-    if (translated !== `nodes.${nodeType}` && currentTitle === originalTitle) {
-      return translated;
-    }
-    return currentTitle;
-  }
 }
 
 export const i18n = new LanguageManager();
+window._currentLanguage = i18n.getCurrentLanguage();
 
 export function t(key, params = {}) {
   return i18n.t(key, params);

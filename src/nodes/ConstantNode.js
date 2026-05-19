@@ -6,13 +6,19 @@ export const metadata = {
   descriptionKey: 'nodeDescriptions.constant',
   author: 'Amenoke',
   github: 'https://github.com/inzexg-coder/Amenodes',
-  icon: 'fa-infinity'
+  icon: 'fa-infinity',
+  dataType: 'num',
+  canHaveIncomingEdges: false,
+  canHaveOutgoingEdges: true,
+  allowedInputTypes: [],
+  allowedOutputTypes: ['num', 'array', 'auto', 'uncert', 'list', 'wlist'],
+  defaultValue: 0
 };
 
 export class ConstantNode extends Node {
-  constructor(id, x, y, title, value) {
-    super(id, 'constant', x, y, title);
-    this.value = value ?? 0;
+  constructor(id, x, y, title, options = {}) {
+    super(id, 'constant', x, y, title, options);
+    this.value = options.val ?? 0;
     this.isConstant = true;
   }
 
@@ -49,5 +55,20 @@ export class ConstantNode extends Node {
     renderer.applyOptStyles(div);
     
     return div;
+  }
+
+  static async onCreate(graph, x, y, options = {}) {
+    const { modal } = await import('../ui/CustomModal.js');
+    const { t } = await import('../i18n/LanguageManager.js');
+    
+    const value = await modal.prompt(t('modal.enterNewValue'), '0');
+    if (value === null) return null;
+    
+    const numValue = parseFloat(value);
+    const finalValue = isNaN(numValue) ? 0 : numValue;
+    
+    const node = new ConstantNode(null, x, y, t('nodes.constant'), { val: finalValue });
+    graph.addNode(node);
+    return node;
   }
 }

@@ -20,6 +20,25 @@ export class ContextMenu {
     });
   }
 
+  getNodeScreenPosition(sourceNode) {
+    if (sourceNode && this.viewport) {
+      const offset = this.viewport.getOffset();
+      const zoom = window.currentZoom || 1;
+      const sourceScreenX = sourceNode.x + offset.x / zoom + 140;
+      const sourceScreenY = sourceNode.y + offset.y / zoom + 40;
+      return {
+        x: sourceScreenX + 20,
+        y: sourceScreenY + 60
+      };
+    }
+    
+    const rect = document.getElementById('viewport').getBoundingClientRect();
+    return {
+      x: rect.width / 2 - 140,
+      y: rect.height / 2 - 40
+    };
+  }
+
   show(x, y, sourceId) {
     this.close();
     
@@ -31,48 +50,54 @@ export class ContextMenu {
     menu.style.top = y + 'px';
     
     const sourceNode = this.graph.getNode(sourceId);
-    
-    let baseX, baseY;
-    
-    if (sourceNode && this.viewport) {
-      const offset = this.viewport.getOffset();
-      const zoom = window.currentZoom || 1;
-      const sourceScreenX = sourceNode.x + offset.x / zoom + 140;
-      const sourceScreenY = sourceNode.y + offset.y / zoom + 40;
-      baseX = sourceScreenX + 20;
-      baseY = sourceScreenY + 60;
-    } else {
-      const rect = document.getElementById('viewport').getBoundingClientRect();
-      baseX = rect.width / 2 - 140;
-      baseY = rect.height / 2 - 40;
-    }
-    
+    const { x: baseX, y: baseY } = this.getNodeScreenPosition(sourceNode);
     this.currentBaseX = baseX;
     this.currentBaseY = baseY;
 
-    this.addMenuItem(menu, t('contextMenu.outputAndConnect'), () => this.createAndConnect('output', baseX, baseY, sourceId));
+    const allTypes = NodeFactory.getAvailableNodeTypes();
     
-    menu.appendChild(document.createElement('hr'));
+    const categories = allTypes.filter(t => t.isCategory === true);
+    const regularNodes = allTypes.filter(t => !t.isCategory);
     
-    const submenuContainer = this.createSubmenu(t('contextMenu.errors') + ' ▸', [
-      { text: t('contextMenu.measurementError'), type: 'div3', title: t('calcTypes.div3') },
-      { text: t('contextMenu.roundingError'), type: 'div_sqrt12', title: t('calcTypes.div_sqrt12') },
-      { text: t('contextMenu.totalError'), type: 'sqrt_sum_sq', title: t('calcTypes.sqrt_sum_sq') },
-      { text: t('contextMenu.confidenceInterval'), type: 'confidenceInterval', title: t('nodes.confidenceInterval') }
-    ], (calcType, title) => {
-      let node;
-      if (calcType === 'confidenceInterval') {
-        node = NodeFactory.createConfidenceIntervalAt(baseX + 20, baseY + 160);
-      } else {
-        node = NodeFactory.createCalcAt(baseX + 20, baseY + 160, calcType, title);
-      }
-      this.graph.addNode(node);
-      this.graph.addEdge(sourceId, node.id, 'main');
-      this.finishNodeCreation();
+    this.addMenuItem(menu, t('contextMenu.outputAndConnect'), () => {
+      this.createAndConnect('output', baseX, baseY, sourceId);
     });
-    menu.appendChild(submenuContainer);
     
-    this.addMenuItem(menu, t('contextMenu.mapTransform'), () => this.createAndConnect('map', baseX, baseY, sourceId));
+    if (categories.length > 0 || regularNodes.length > 0) {
+      menu.appendChild(document.createElement('hr'));
+    }
+    
+    for (const category of categories) {
+      const submenuItems = (category.subnodes || []).map(subnode => ({
+        text: t(subnode.nameKey),
+        type: category.type,
+        subnode: subnode,
+        title: t(subnode.nameKey)
+      }));
+      
+      const submenuContainer = this.createSubmenu(
+        t(category.nameKey) + ' ▸',
+        submenuItems,
+        (type, subnode, title) => {
+          const node = NodeFactory.createNode(type, {
+            x: baseX + 20,
+            y: baseY + 160,
+            title: title,
+            ...subnode
+          });
+          this.graph.addNode(node);
+          this.graph.addEdge(sourceId, node.id, 'main');
+          this.finishNodeCreation();
+        }
+      );
+      menu.appendChild(submenuContainer);
+    }
+    
+    for (const nodeType of regularNodes) {
+      this.addMenuItem(menu, t(nodeType.nameKey), () => {
+        this.createAndConnect(nodeType.type, baseX, baseY, sourceId);
+      });
+    }
     
     menu.appendChild(document.createElement('hr'));
     
@@ -120,7 +145,7 @@ export class ContextMenu {
       subItem.className = 'node-menu-item';
       subItem.textContent = item.text;
       subItem.onclick = () => {
-        onSelect(item.type, item.title);
+        onSelect(item.type, item.subnode, item.title);
         this.close();
       };
       submenu.appendChild(subItem);
@@ -131,27 +156,18 @@ export class ContextMenu {
     return container;
   }
 
-  createAndConnect(nodeType, x, y, sourceId) {
-    let node;
-    switch(nodeType) {
-      case 'number': 
-        node = NodeFactory.createNumberAt(x + 20, y + 80); 
-        break;
-      case 'group': 
-        node = NodeFactory.createGroupAt(x + 20, y + 80); 
-        break;
-      case 'output': 
-        node = NodeFactory.createOutputAt(x + 20, y + 80); 
-        break;
-      case 'map': 
-        node = NodeFactory.createMapAt(x + 20, y + 80); 
-        break;
-      default: 
-        return;
+  createAndConnect(nodeType, x, y, sourceId, extraOptions = {}) {
+    const node = NodeFactory.createNode(nodeType, {
+      x: x + 20,
+      y: y + 80,
+      ...extraOptions
+    });
+    
+    if (node) {
+      this.graph.addNode(node);
+      this.graph.addEdge(sourceId, node.id, 'main');
+      this.finishNodeCreation();
     }
-    this.graph.addNode(node);
-    this.graph.addEdge(sourceId, node.id, 'main');
-    this.finishNodeCreation();
   }
 
   finishNodeCreation() {

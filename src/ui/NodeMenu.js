@@ -1,6 +1,5 @@
 import { NodeFactory } from '../nodes/NodeFactory.js';
 import { i18n, t } from '../i18n/LanguageManager.js';
-import { modal } from './CustomModal.js';
 
 export class NodeMenu {
   constructor(graph, renderer, viewport) {
@@ -10,10 +9,17 @@ export class NodeMenu {
     this.menuElement = null;
     this.button = null;
     this.isOpen = false;
+    this.unsubscribeI18n = null;
   }
 
   init() {
     this.createButton();
+    this.unsubscribeI18n = i18n.subscribe(() => {
+      if (this.isOpen) {
+        this.close();
+        this.open();
+      }
+    });
   }
 
   createButton() {
@@ -38,6 +44,17 @@ export class NodeMenu {
     } else {
       this.open();
     }
+  }
+
+  getCenterPosition() {
+    const rect = document.getElementById('viewport').getBoundingClientRect();
+    const offset = this.viewport.getOffset();
+    const zoom = window.currentZoom || 1;
+    
+    return {
+      x: (rect.width / 2 - offset.x) / zoom - 100,
+      y: (rect.height / 2 - offset.y) / zoom - 40
+    };
   }
 
   open() {
@@ -81,11 +98,12 @@ export class NodeMenu {
     const searchInput = searchBox.querySelector('#nodeMenuSearch');
     searchInput.oninput = () => {
       const query = searchInput.value.toLowerCase();
-      const filtered = types.filter(type => 
-        t(type.nameKey).toLowerCase().includes(query) ||
-        t(type.descriptionKey).toLowerCase().includes(query) ||
-        (type.author && type.author.toLowerCase().includes(query))
-      );
+      const filtered = types.filter(type => {
+        const name = t(type.nameKey).toLowerCase();
+        const desc = t(type.descriptionKey).toLowerCase();
+        const author = (type.author || '').toLowerCase();
+        return name.includes(query) || desc.includes(query) || author.includes(query);
+      });
       this.renderNodeList(filtered, list);
     };
     
@@ -103,170 +121,163 @@ export class NodeMenu {
   renderNodeList(types, container) {
     container.innerHTML = '';
     
-    for (const nodeType of types) {
-      if (nodeType.isCategory) {
-        const categoryCard = document.createElement('div');
-        categoryCard.className = 'node-menu-card node-menu-category';
-        
-        const icon = nodeType.icon || 'fa-folder';
-        const name = t(nodeType.nameKey);
-        const description = t(nodeType.descriptionKey);
-        
-        categoryCard.innerHTML = `
-          <div class="node-menu-card-icon"><i class="fas ${icon}"></i></div>
-          <div class="node-menu-card-info">
-            <div class="node-menu-card-name">${name}</div>
-            <div class="node-menu-card-desc">${description}</div>
-            <div class="node-menu-card-meta">
-              <span class="node-menu-card-author"><i class="fas fa-user"></i> ${nodeType.author || 'Amenoke'}</span>
-              ${nodeType.github ? `<a href="${nodeType.github}" target="_blank" class="node-menu-card-github"><i class="fab fa-github"></i></a>` : ''}
-            </div>
-          </div>
-          <div class="node-menu-card-expand"><i class="fas fa-chevron-right"></i></div>
-        `;
-        
-        const submenuContainer = document.createElement('div');
-        submenuContainer.className = 'node-menu-submenu-container';
-        submenuContainer.style.display = 'none';
-        
-        const subnodes = NodeFactory.getCategorySubnodes('calc');
-        for (const subnode of subnodes) {
-          const subCard = document.createElement('div');
-          subCard.className = 'node-menu-subcard';
-          subCard.innerHTML = `
-            <div class="node-menu-subcard-icon"><i class="fas fa-microchip"></i></div>
-            <div class="node-menu-subcard-info">
-              <div class="node-menu-subcard-name">${t(subnode.nameKey)}</div>
-            </div>
-            <div class="node-menu-card-add"><i class="fas fa-plus-circle"></i></div>
-          `;
-          
-          subCard.onclick = (e) => {
-            e.stopPropagation();
-            this.createCalcNode(subnode.calcType, t(subnode.nameKey));
-            this.close();
-          };
-          
-          submenuContainer.appendChild(subCard);
-        }
-        
-        categoryCard.appendChild(submenuContainer);
-        
-        categoryCard.onclick = (e) => {
-          e.stopPropagation();
-          const isExpanded = submenuContainer.style.display === 'flex';
-          submenuContainer.style.display = isExpanded ? 'none' : 'flex';
-          const icon = categoryCard.querySelector('.node-menu-card-expand i');
-          if (icon) {
-            icon.className = isExpanded ? 'fas fa-chevron-right' : 'fas fa-chevron-down';
-          }
-        };
-        
-        container.appendChild(categoryCard);
-      } else {
-        const card = document.createElement('div');
-        card.className = 'node-menu-card';
-        card.setAttribute('data-type', nodeType.type);
-        
-        const icon = nodeType.icon || 'fa-circle';
-        const name = t(nodeType.nameKey);
-        const description = t(nodeType.descriptionKey);
-        
-        card.innerHTML = `
-          <div class="node-menu-card-icon"><i class="fas ${icon}"></i></div>
-          <div class="node-menu-card-info">
-            <div class="node-menu-card-name">${name}</div>
-            <div class="node-menu-card-desc">${description}</div>
-            <div class="node-menu-card-meta">
-              <span class="node-menu-card-author"><i class="fas fa-user"></i> ${nodeType.author || 'Amenoke'}</span>
-              ${nodeType.github ? `<a href="${nodeType.github}" target="_blank" class="node-menu-card-github"><i class="fab fa-github"></i></a>` : ''}
-            </div>
+    const categories = types.filter(t => t.isCategory === true);
+    const regularNodes = types.filter(t => !t.isCategory);
+    
+    for (const category of categories) {
+      this.renderCategoryCard(category, container);
+    }
+    
+    for (const nodeType of regularNodes) {
+      this.renderNodeCard(nodeType, container);
+    }
+  }
+
+  renderCategoryCard(category, container) {
+    const categoryCard = document.createElement('div');
+    categoryCard.className = 'node-menu-card node-menu-category';
+    
+    const icon = category.icon || 'fa-folder';
+    const name = t(category.nameKey);
+    const description = t(category.descriptionKey);
+    
+    categoryCard.innerHTML = `
+      <div class="node-menu-card-icon"><i class="fas ${icon}"></i></div>
+      <div class="node-menu-card-info">
+        <div class="node-menu-card-name">${name}</div>
+        <div class="node-menu-card-desc">${description}</div>
+        <div class="node-menu-card-meta">
+          <span class="node-menu-card-author"><i class="fas fa-user"></i> ${category.author || 'Amenoke'}</span>
+          ${category.github ? `<a href="${category.github}" target="_blank" class="node-menu-card-github"><i class="fab fa-github"></i></a>` : ''}
+        </div>
+      </div>
+      <div class="node-menu-card-expand"><i class="fas fa-chevron-right"></i></div>
+    `;
+    
+    const submenuContainer = document.createElement('div');
+    submenuContainer.className = 'node-menu-submenu-container';
+    submenuContainer.style.display = 'none';
+    
+    if (category.subnodes && category.subnodes.length) {
+      for (const subnode of category.subnodes) {
+        const subCard = document.createElement('div');
+        subCard.className = 'node-menu-subcard';
+        subCard.innerHTML = `
+          <div class="node-menu-subcard-icon"><i class="fas fa-microchip"></i></div>
+          <div class="node-menu-subcard-info">
+            <div class="node-menu-subcard-name">${t(subnode.nameKey)}</div>
           </div>
           <div class="node-menu-card-add"><i class="fas fa-plus-circle"></i></div>
         `;
         
-        card.querySelector('.node-menu-card-add').onclick = (e) => {
+        subCard.onclick = async (e) => {
           e.stopPropagation();
-          this.createNode(nodeType.type);
+          await this.createNodeByType(category.type, subnode);
           this.close();
         };
         
-        card.onclick = () => {
-          this.createNode(nodeType.type);
-          this.close();
-        };
-        
-        container.appendChild(card);
+        submenuContainer.appendChild(subCard);
+      }
+    }
+    
+    categoryCard.appendChild(submenuContainer);
+    
+    categoryCard.onclick = (e) => {
+      e.stopPropagation();
+      const isExpanded = submenuContainer.style.display === 'flex';
+      submenuContainer.style.display = isExpanded ? 'none' : 'flex';
+      const icon = categoryCard.querySelector('.node-menu-card-expand i');
+      if (icon) {
+        icon.className = isExpanded ? 'fas fa-chevron-right' : 'fas fa-chevron-down';
+      }
+    };
+    
+    container.appendChild(categoryCard);
+  }
+
+  renderNodeCard(nodeType, container) {
+    const card = document.createElement('div');
+    card.className = 'node-menu-card';
+    card.setAttribute('data-type', nodeType.type);
+    
+    const icon = nodeType.icon || 'fa-circle';
+    const name = t(nodeType.nameKey);
+    const description = t(nodeType.descriptionKey);
+    
+    card.innerHTML = `
+      <div class="node-menu-card-icon"><i class="fas ${icon}"></i></div>
+      <div class="node-menu-card-info">
+        <div class="node-menu-card-name">${name}</div>
+        <div class="node-menu-card-desc">${description}</div>
+        <div class="node-menu-card-meta">
+          <span class="node-menu-card-author"><i class="fas fa-user"></i> ${nodeType.author || 'Amenoke'}</span>
+          ${nodeType.github ? `<a href="${nodeType.github}" target="_blank" class="node-menu-card-github"><i class="fab fa-github"></i></a>` : ''}
+        </div>
+      </div>
+      <div class="node-menu-card-add"><i class="fas fa-plus-circle"></i></div>
+    `;
+    
+    card.querySelector('.node-menu-card-add').onclick = async (e) => {
+      e.stopPropagation();
+      await this.createNode(nodeType.type);
+      this.close();
+    };
+    
+    card.onclick = async () => {
+      await this.createNode(nodeType.type);
+      this.close();
+    };
+    
+    container.appendChild(card);
+  }
+
+  async createNodeByType(categoryType, subnode) {
+    const { x, y } = this.getCenterPosition();
+    
+    const options = { x, y };
+    Object.assign(options, subnode);
+    
+    const NodeClass = NodeFactory.getNodeClass(categoryType);
+    
+    if (NodeClass && typeof NodeClass.onCreate === 'function') {
+      const node = await NodeClass.onCreate(this.graph, x, y, options);
+      if (node) {
+        this.finishNodeCreation();
+      }
+    } else {
+      const node = NodeFactory.createNode(categoryType, options);
+      if (node) {
+        this.graph.addNode(node);
+        this.finishNodeCreation();
       }
     }
   }
 
-  createCalcNode(calcType, title) {
-    const rect = document.getElementById('viewport').getBoundingClientRect();
-    const offset = this.viewport.getOffset();
-    const zoom = window.currentZoom || 1;
+  async createNode(type) {
+    const { x, y } = this.getCenterPosition();
+    const options = { x, y };
     
-    const centerX = (rect.width / 2 - offset.x) / zoom;
-    const centerY = (rect.height / 2 - offset.y) / zoom;
+    const NodeClass = NodeFactory.getNodeClass(type);
     
-    const node = NodeFactory.createCalcAt(centerX - 100, centerY - 40, calcType, title);
-    this.graph.addNode(node);
+    if (NodeClass && typeof NodeClass.onCreate === 'function') {
+      const node = await NodeClass.onCreate(this.graph, x, y, options);
+      if (node) {
+        this.finishNodeCreation();
+      }
+    } else {
+      const node = NodeFactory.createNode(type, options);
+      if (node) {
+        this.graph.addNode(node);
+        this.finishNodeCreation();
+      }
+    }
+  }
+
+  finishNodeCreation() {
     this.graph.reevaluateAll();
     this.graph.updateAllOutputs();
     this.renderer.render();
     if (this.renderer.history) this.renderer.save();
-  }
-
-  createNode(type) {
-    const rect = document.getElementById('viewport').getBoundingClientRect();
-    const offset = this.viewport.getOffset();
-    const zoom = window.currentZoom || 1;
-    
-    const centerX = (rect.width / 2 - offset.x) / zoom;
-    const centerY = (rect.height / 2 - offset.y) / zoom;
-    
-    let node;
-    switch(type) {
-      case 'number':
-        node = NodeFactory.createNumberAt(centerX - 100, centerY - 40);
-        break;
-      case 'constant':
-        modal.prompt('Enter value:', '0').then(value => {
-          if (value !== null) {
-            const num = parseFloat(value);
-            const finalValue = isNaN(num) ? 0 : num;
-            node = NodeFactory.createConstantAt(centerX - 100, centerY - 40, finalValue);
-            this.graph.addNode(node);
-            this.graph.reevaluateAll();
-            this.graph.updateAllOutputs();
-            this.renderer.render();
-            if (this.renderer.history) this.renderer.save();
-          }
-        });
-        return;
-      case 'group':
-        node = NodeFactory.createGroupAt(centerX - 120, centerY - 40);
-        break;
-      case 'output':
-        node = NodeFactory.createOutputAt(centerX - 100, centerY - 40);
-        break;
-      case 'map':
-        node = NodeFactory.createMapAt(centerX - 120, centerY - 40);
-        break;
-      case 'confidenceInterval':
-        node = NodeFactory.createConfidenceIntervalAt(centerX - 100, centerY - 40);
-        break;
-      default:
-        return;
-    }
-    
-    if (node) {
-      this.graph.addNode(node);
-      this.graph.reevaluateAll();
-      this.graph.updateAllOutputs();
-      this.renderer.render();
-      if (this.renderer.history) this.renderer.save();
-    }
   }
 
   close() {
@@ -275,5 +286,13 @@ export class NodeMenu {
       this.menuElement = null;
     }
     this.isOpen = false;
+  }
+
+  destroy() {
+    if (this.unsubscribeI18n) {
+      this.unsubscribeI18n();
+      this.unsubscribeI18n = null;
+    }
+    this.close();
   }
 }

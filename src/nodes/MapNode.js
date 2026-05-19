@@ -8,16 +8,22 @@ export const metadata = {
   descriptionKey: 'nodeDescriptions.map',
   author: 'Amenoke',
   github: 'https://github.com/inzexg-coder/Amenodes',
-  icon: 'fa-map'
+  icon: 'fa-map',
+  dataType: 'list',
+  canHaveIncomingEdges: true,
+  canHaveOutgoingEdges: true,
+  allowedInputTypes: ['num', 'array', 'uncert', 'list', 'wlist'],
+  allowedOutputTypes: ['auto', 'uncert', 'list', 'wlist'],
+  defaultValue: []
 };
 
 export class MapNode extends Node {
-  constructor(id, x, y, title, maps) {
-    super(id, 'map', x, y, title);
-    this.maps = maps ?? [{ x: 0, y: 0 }];
-    this.xCol = "x";
-    this.yCol = "y";
-    this.unmappedMode = "passthrough";
+  constructor(id, x, y, title, options = {}) {
+    super(id, 'map', x, y, title, options);
+    this.maps = options.maps ?? [{ x: 0, y: 0 }];
+    this.xCol = options.xCol ?? "x";
+    this.yCol = options.yCol ?? "y";
+    this.unmappedMode = options.unmappedMode ?? "passthrough";
     this.graph = null;
   }
 
@@ -40,6 +46,11 @@ export class MapNode extends Node {
     return result;
   }
 
+  getOutputValue(port = 'main', visited = new Set(), graph) {
+    if (port === 'unmapped') return this.getUnmapped();
+    return this.getValue();
+  }
+
   toJSON() {
     return {
       ...super.toJSON(),
@@ -52,6 +63,14 @@ export class MapNode extends Node {
 
   getMinHeight() {
     return Math.max(80, 80 + this.maps.length * 45);
+  }
+
+  onAttach(graph) {
+    this.graph = graph;
+  }
+
+  onDetach() {
+    this.graph = null;
   }
 
   createDOM(graph, renderer) {

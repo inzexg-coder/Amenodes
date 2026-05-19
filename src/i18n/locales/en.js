@@ -14,63 +14,6 @@ export const en = {
     parameter: 'Parameter'
   },
 
-  nodes: {
-    number: 'Number',
-    constant: 'Constant',
-    group: 'Number Group',
-    calc: 'Uncertainty',
-    output: 'Output',
-    map: 'Map',
-    confidenceInterval: 'Confidence Interval'
-  },
-
-  nodeDescriptions: {
-    number: 'A single numeric value that can be edited inline',
-    constant: 'A constant value that never changes',
-    group: 'A collection of named numeric values',
-    calc: 'Uncertainty calculation node (measurement, rounding, combined)',
-    output: 'Displays the results of connected nodes in a table',
-    map: 'Maps input values to output values using X→Y rules',
-    confidenceInterval: 'Calculates confidence interval by multiplying uncertainty with a multiplier'
-  },
-
-  nodeMenu: {
-    title: 'Add Node',
-    search: 'Search nodes...'
-  },
-
-  calcTypes: {
-    div3: 'Measurement Uncertainty',
-    div_sqrt12: 'Rounding Uncertainty',
-    sqrt_sum_sq: 'Combined Uncertainty',
-    result: 'Result',
-    inputs: 'inputs'
-  },
-
-  confidence: {
-    uncertaintyInputs: 'Uncertainty inputs',
-    multiplierInputs: 'Multiplier inputs'
-  },
-
-  map: {
-    title: 'Map',
-    xCol: 'x',
-    yCol: 'y',
-    addRule: '+ Add rule',
-    passThrough: 'Passthrough',
-    separateOutput: 'Separate blue output'
-  },
-
-  group: {
-    addValue: '+ Add value'
-  },
-
-  output: {
-    title: 'Output',
-    noConnections: 'No connections',
-    valueCount: 'values'
-  },
-
   toolbar: {
     undo: 'Undo',
     redo: 'Redo',
@@ -80,16 +23,15 @@ export const en = {
     addNode: 'Add node'
   },
 
+  nodeMenu: {
+    title: 'Add Node',
+    search: 'Search nodes...'
+  },
+
   contextMenu: {
-    outputAndConnect: 'Output + connect',
-    errors: 'Uncertainties',
-    measurementError: 'Measurement Uncertainty',
-    roundingError: 'Rounding Uncertainty',
-    totalError: 'Combined Uncertainty',
-    confidenceInterval: 'Confidence Interval',
-    mapTransform: 'Map',
     markImportant: 'Mark IMPORTANT node',
-    unmarkImportant: 'Remove IMPORTANT mark'
+    unmarkImportant: 'Remove IMPORTANT mark',
+    outputAndConnect: 'Create output and connect'
   },
 
   optimizations: {
@@ -207,12 +149,9 @@ export const en = {
   },
 
   errors: {
-    cannotConnect: 'Cannot connect',
     cyclicDependency: 'Cyclic dependency!',
-    invalidValue: 'Invalid value',
-    requireTwoInputs: 'Exactly 2 inputs required',
-    missingUncertaintyOrNumber: 'Need one uncertainty and one number',
-    maxTwoInputs: 'Confidence interval can have at most 2 inputs'
+    cannotConnect: 'Cannot connect',
+    maxTwoInputs: 'Maximum two inputs allowed'
   },
 
   status: {
@@ -223,15 +162,6 @@ export const en = {
     testing: 'Testing',
     completed: 'Benchmark completed',
     saved: 'Saved'
-  },
-
-  dataTypes: {
-    num: 'Number',
-    array: 'Array',
-    auto: 'Auto',
-    uncert: 'Uncertainty',
-    list: 'List map',
-    wlist: 'Weighted list map'
   },
 
   operations: {
