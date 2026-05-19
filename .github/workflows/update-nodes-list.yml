@@ -2,21 +2,23 @@ name: Update nodes list
 
 on:
   push:
-    branches: [main, master]
     paths:
       - 'src/nodes/*.js'
       - 'src/nodes/**/*.js'
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
-  update-nodes-list:
+  update:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
       
-      - name: Generate nodes list JSON
+      - name: Generate nodes list
         run: |
           echo "[" > src/nodes-list.json
           find src/nodes -maxdepth 1 -name "*.js" ! -name "index.js" ! -name "manifest.js" ! -name "translations.js" -type f | while read file; do
@@ -25,14 +27,14 @@ jobs:
           done
           sed -i '$ s/,$//' src/nodes-list.json
           echo "]" >> src/nodes-list.json
-          
-          echo "Generated nodes-list.json:"
-          cat src/nodes-list.json
       
-      - name: Commit and push if changed
+      - name: Commit and push
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: auto-update nodes-list.json"
+          commit_message: "chore: update nodes-list.json for ${{ github.ref_name }}"
           file_pattern: src/nodes-list.json
-          commit_user_name: "GitHub Actions"
-          commit_user_email: "actions@github.com"
+          branch: ${{ github.ref_name }}
+      
+      - name: Output result
+        run: |
+          echo "nodes-list.json updated for ${{ github.ref_name }}"
