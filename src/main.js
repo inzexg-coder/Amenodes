@@ -12,7 +12,7 @@ import { OPTIMIZATIONS } from './config/Optimizations.js';
 import { i18n, t } from './i18n/LanguageManager.js';
 import { modal } from './ui/CustomModal.js';
 import { NodeMenu } from './ui/NodeMenu.js';
-import { loadAllNodes, nodeRegistry, getNodeClass } from './nodes/index.js';
+import { loadAllNodes, nodeRegistry, getNodeClass } from './nodes/registry.js';
 import { typeSystem } from './core/DataType.js';
 
 window.alert = (msg) => { modal.alert(msg); };
