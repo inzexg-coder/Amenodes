@@ -8,5 +8,9 @@ export default {
     addRule: '+ Добавить правило',
     passThrough: 'Сквозной проход',
     separateOutput: 'Отдельный голубой выход'
+  },
+  dataTypes: {
+    list: 'Список',
+    wlist: 'Взвешенный список'
   }
 };
