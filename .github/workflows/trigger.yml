@@ -21,7 +21,7 @@ jobs:
           echo "sanitized_branch=$(echo ${BRANCH_NAME} | sed 's/\//-/g')" >> $GITHUB_OUTPUT
       
       - name: Comment about deployment start
-        uses: actions/github-script@v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -68,44 +68,57 @@ jobs:
               body: body
             });
       
-      - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.CI_REPO_TOKEN }}
-          repository: inzexg-coder/amenodes-ci
-          event-type: deploy
-          client-payload: |
-            {
-              "source_repo": "${{ github.repository }}",
-              "source_ref": "${{ github.ref }}",
-              "source_sha": "${{ github.event.pull_request.head.sha }}",
-              "head_ref": "${{ steps.extract_branch.outputs.branch_name }}",
-              "pr_number": "${{ github.event.pull_request.number }}",
-              "actor": "${{ github.actor }}"
-            }
+      - name: Trigger CI via GitHub API
+        env:
+          GH_TOKEN: ${{ secrets.CI_REPO_TOKEN }}
+          PAYLOAD: ${{ toJSON(github.event) }}
+        run: |
+          curl -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/inzexg-coder/amenodes-ci/dispatches \
+            -d '{
+              "event_type": "deploy",
+              "client_payload": {
+                "source_repo": "${{ github.repository }}",
+                "source_ref": "${{ github.ref }}",
+                "source_sha": "${{ github.event.pull_request.head.sha }}",
+                "head_ref": "${{ steps.extract_branch.outputs.branch_name }}",
+                "pr_number": "${{ github.event.pull_request.number }}",
+                "actor": "${{ github.actor }}"
+              }
+            }'
 
   trigger-production:
     name: Trigger production deployment
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     steps:
-      - name: Comment about deployment start (optional)
+      - name: Log deployment start
         run: |
           echo "::notice::Production deployment triggered for ${{ github.ref_name }}"
           echo "📦 Commit: ${{ github.sha }}"
           echo "👤 Actor: ${{ github.actor }}"
       
-      - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.CI_REPO_TOKEN }}
-          repository: inzexg-coder/amenodes-ci
-          event-type: deploy
-          client-payload: |
-            {
-              "source_repo": "${{ github.repository }}",
-              "source_ref": "${{ github.ref }}",
-              "source_sha": "${{ github.sha }}",
-              "head_ref": "${{ github.ref_name }}",
-              "actor": "${{ github.actor }}"
-            }
+      - name: Trigger CI via GitHub API
+        env:
+          GH_TOKEN: ${{ secrets.CI_REPO_TOKEN }}
+        run: |
+          curl -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/inzexg-coder/amenodes-ci/dispatches \
+            -d '{
+              "event_type": "deploy",
+              "client_payload": {
+                "source_repo": "${{ github.repository }}",
+                "source_ref": "${{ github.ref }}",
+                "source_sha": "${{ github.sha }}",
+                "head_ref": "${{ github.ref_name }}",
+                "actor": "${{ github.actor }}"
+              }
+            }'
