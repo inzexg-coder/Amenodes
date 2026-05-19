@@ -16,14 +16,18 @@ for (const path in nodeModules) {
       ctor: nodeClass,
       metadata: mod.metadata
     });
-
-    if (mod.metadata.translations) {
-      const translations = mod.metadata.translations;
-      for (const lang of ['en', 'ru']) {
-        if (translations[lang]) {
-          Object.assign(nodeTranslations[lang], translations[lang]);
-        }
-      }
-    }
   }
+}
+
+const enModules = import.meta.glob('./locales/en/*.js', { eager: true });
+const ruModules = import.meta.glob('./locales/ru/*.js', { eager: true });
+
+for (const path in enModules) {
+  const translations = enModules[path].default;
+  Object.assign(nodeTranslations.en, translations);
+}
+
+for (const path in ruModules) {
+  const translations = ruModules[path].default;
+  Object.assign(nodeTranslations.ru, translations);
 }
