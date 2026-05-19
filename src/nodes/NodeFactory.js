@@ -1,4 +1,4 @@
-import { nodeRegistry } from './index.js';
+import { nodeRegistry } from './registry.js';
 import { i18n } from '../i18n/LanguageManager.js';
 
 export class NodeFactory {
