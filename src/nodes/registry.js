@@ -14,6 +14,18 @@ function getBaseUrl() {
   return '/src/nodes/';
 }
 
+function deepMerge(target, source) {
+  const result = { ...target };
+  for (const key in source) {
+    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      result[key] = deepMerge(result[key] || {}, source[key]);
+    } else {
+      result[key] = source[key];
+    }
+  }
+  return result;
+}
+
 async function loadTranslationsForNode(fileName) {
   const baseUrl = getBaseUrl();
   const baseName = fileName.replace('.js', '');
@@ -23,7 +35,7 @@ async function loadTranslationsForNode(fileName) {
     const enUrl = `${baseUrl}locales/en/${baseName}.js`;
     const enModule = await import(enUrl);
     if (enModule.default) {
-      Object.assign(nodeTranslations.en, enModule.default);
+      nodeTranslations.en = deepMerge(nodeTranslations.en, enModule.default);
       console.log(`Loaded EN translations for ${baseName}`);
       loaded = true;
     }
@@ -35,7 +47,7 @@ async function loadTranslationsForNode(fileName) {
     const ruUrl = `${baseUrl}locales/ru/${baseName}.js`;
     const ruModule = await import(ruUrl);
     if (ruModule.default) {
-      Object.assign(nodeTranslations.ru, ruModule.default);
+      nodeTranslations.ru = deepMerge(nodeTranslations.ru, ruModule.default);
       console.log(`Loaded RU translations for ${baseName}`);
       loaded = true;
     }
@@ -56,6 +68,7 @@ async function registerAllNodes() {
       await loadTranslationsForNode(fileName);
     }
   }
+
   i18n.setNodeTranslations(nodeTranslations);
   
   console.log(`[NodeRegistry] Total nodes: ${nodeRegistry.size}`);
