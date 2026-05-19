@@ -1,7 +1,8 @@
-import { nodesManifest } from './manifest/manifest.js';
+import { nodesManifest } from './manifest.js';
 
 export const nodeRegistry = new Map();
 export const nodeTranslations = { en: {}, ru: {} };
+
 for (const { ctor, metadata } of nodesManifest) {
   if (metadata?.type) {
     nodeRegistry.set(metadata.type, { ctor, metadata });
@@ -16,7 +17,9 @@ for (const { ctor, metadata } of nodesManifest) {
   }
 }
 
-console.log(`[NodeRegistry] Total: ${nodeRegistry.size} nodes`);
+export async function loadAllNodes() {
+  return Promise.resolve();
+}
 
 export function getNodeMetadata(type) {
   return nodeRegistry.get(type)?.metadata || null;
