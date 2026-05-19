@@ -9,10 +9,12 @@ import { PersistenceService } from './services/PersistenceService.js';
 import { EventBus } from './services/EventBus.js';
 import { FPSCounter } from './utils/FPSCounter.js';
 import { OPTIMIZATIONS } from './config/Optimizations.js';
-import { OutputNode } from './nodes/OutputNode.js';
 import { i18n, t } from './i18n/LanguageManager.js';
 import { modal } from './ui/CustomModal.js';
 import { NodeMenu } from './ui/NodeMenu.js';
+
+import { nodeRegistry } from './nodes/index.js';
+import { typeSystem } from './core/DataType.js';
 
 window.alert = (msg) => { modal.alert(msg); };
 window.confirm = (msg) => modal.confirm(msg);
@@ -25,6 +27,8 @@ class Application {
     this.fpsCounter = new FPSCounter('fpsMeter');
     this.benchmarkService = new BenchmarkService(this.graph, this.fpsCounter, OPTIMIZATIONS);
     this.persistenceService = new PersistenceService(this.graph);
+    
+    typeSystem.initFromNodeRegistry(nodeRegistry);
     
     this.initRenderer();
     this.initHistory();
@@ -157,8 +161,16 @@ class Application {
       const viewportRect = document.getElementById('viewport').getBoundingClientRect();
       const defaultX = viewportRect.width / 2 - 140;
       const defaultY = viewportRect.height / 2 - 40;
-      const defaultOutput = new OutputNode(0, defaultX, defaultY, t('nodes.output'), []);
-      this.graph.addNode(defaultOutput);
+      const defaultOutput = NodeFactory.createNode('output', {
+        id: 0,
+        x: defaultX,
+        y: defaultY,
+        title: t('nodes.output'),
+        rows: []
+      });
+      if (defaultOutput) {
+        this.graph.addNode(defaultOutput);
+      }
       this.renderer.render();
       this.history.save();
       this.persistenceService.saveToStorage(this.viewport, window.currentZoom, window.currentQualityValue);
