@@ -30,7 +30,8 @@ export const en = {
 
   contextMenu: {
     markImportant: 'Mark IMPORTANT node',
-    unmarkImportant: 'Remove IMPORTANT mark'
+    unmarkImportant: 'Remove IMPORTANT mark',
+    outputAndConnect: 'Create output and connect'
   },
 
   optimizations: {
