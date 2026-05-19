@@ -133,79 +133,89 @@ export class CustomModal {
 
   alert(message, title = null) {
     return new Promise((resolve) => {
-      this.showModal({
-        title: title || 'Notification',
-        body: message,
-        buttons: [{ text: 'OK', type: 'primary', callback: () => {
-          this.close();
-          resolve();
-        }}]
+      // Импортируем i18n динамически, чтобы избежать циклических зависимостей
+      import('../i18n/LanguageManager.js').then(({ t }) => {
+        const modalTitle = title || t('modal.notification');
+        this.showModal({
+          title: modalTitle,
+          body: message,
+          buttons: [{ text: t('common.ok'), type: 'primary', callback: () => {
+            this.close();
+            resolve();
+          }}]
+        });
       });
     });
   }
 
   confirm(message, title = null) {
     return new Promise((resolve) => {
-      this.showModal({
-        title: title || 'Confirm',
-        body: message,
-        buttons: [
-          { text: 'Cancel', type: 'secondary', callback: () => {
-            this.close();
-            resolve(false);
-          }},
-          { text: 'OK', type: 'danger', callback: () => {
-            this.close();
-            resolve(true);
-          }}
-        ]
+      import('../i18n/LanguageManager.js').then(({ t }) => {
+        const modalTitle = title || t('modal.confirm');
+        this.showModal({
+          title: modalTitle,
+          body: message,
+          buttons: [
+            { text: t('common.cancel'), type: 'secondary', callback: () => {
+              this.close();
+              resolve(false);
+            }},
+            { text: t('common.ok'), type: 'danger', callback: () => {
+              this.close();
+              resolve(true);
+            }}
+          ]
+        });
       });
     });
   }
 
   prompt(message, defaultValue = '', title = null) {
     return new Promise((resolve) => {
-      let resolved = false;
-      
-      const body = document.createElement('div');
-      body.textContent = message;
-      
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.value = defaultValue;
-      input.className = 'custom-modal-input';
-      input.placeholder = 'Enter value...';
-      
-      const doResolve = (value) => {
-        if (!resolved) {
-          resolved = true;
-          this.close();
-          resolve(value);
-        }
-      };
-      
-      input.onkeydown = (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          doResolve(input.value);
-        }
-      };
-      
-      body.appendChild(input);
-      
-      this.showModal({
-        title: title || 'Enter Value',
-        bodyElement: body,
-        onShow: () => {
-          setTimeout(() => {
-            input.focus();
-            input.select();
-          }, 50);
-        },
-        buttons: [
-          { text: 'Cancel', type: 'secondary', callback: () => doResolve(null) },
-          { text: 'OK', type: 'primary', callback: () => doResolve(input.value) }
-        ]
+      import('../i18n/LanguageManager.js').then(({ t }) => {
+        let resolved = false;
+        const modalTitle = title || t('modal.enterValue');
+        
+        const body = document.createElement('div');
+        body.textContent = message;
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = defaultValue;
+        input.className = 'custom-modal-input';
+        input.placeholder = t('modal.enterNewValue');
+        
+        const doResolve = (value) => {
+          if (!resolved) {
+            resolved = true;
+            this.close();
+            resolve(value);
+          }
+        };
+        
+        input.onkeydown = (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            doResolve(input.value);
+          }
+        };
+        
+        body.appendChild(input);
+        
+        this.showModal({
+          title: modalTitle,
+          bodyElement: body,
+          onShow: () => {
+            setTimeout(() => {
+              input.focus();
+              input.select();
+            }, 50);
+          },
+          buttons: [
+            { text: t('common.cancel'), type: 'secondary', callback: () => doResolve(null) },
+            { text: t('common.ok'), type: 'primary', callback: () => doResolve(input.value) }
+          ]
+        });
       });
     });
   }
