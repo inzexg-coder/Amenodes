@@ -39,6 +39,8 @@ async function registerAllNodes() {
   for (const { ctor, metadata, fileName } of nodesManifest) {
     if (metadata?.type) {
       nodeRegistry.set(metadata.type, { ctor, metadata });
+      // Прикрепляем metadata к конструктору, чтобы node.constructor.metadata работал
+      ctor.metadata = metadata;
       await loadTranslationsForNode(fileName);
     }
   }
