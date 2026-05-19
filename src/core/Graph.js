@@ -45,7 +45,7 @@ export class Graph {
     if (!this.canConnect(sourceId, targetId, port)) {
       const sourceType = typeSystem.getNodeType(source);
       const targetType = typeSystem.getNodeType(target);
-
+      
       const sourceTypeName = this.getTypeDisplayName(sourceType);
       const targetTypeName = this.getTypeDisplayName(targetType);
       
@@ -67,17 +67,10 @@ export class Graph {
 
   getTypeDisplayName(typeKey) {
     if (!typeKey) return 'Unknown';
-    
-    const typeDef = typeSystem.getTypeDefinition(typeKey);
-    if (typeDef && typeDef.name) {
-      return typeDef.name;
-    }
-
     const translated = t(`dataTypes.${typeKey}`);
     if (translated !== `dataTypes.${typeKey}`) {
       return translated;
     }
-    
     return typeKey.charAt(0).toUpperCase() + typeKey.slice(1);
   }
 
