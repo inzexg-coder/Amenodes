@@ -2,7 +2,7 @@ import { Edge } from './Edge.js';
 import { typeSystem } from './DataType.js';
 import { NodeFactory } from '../nodes/NodeFactory.js';
 import { modal } from '../ui/CustomModal.js';
-import { t } from '../i18n/LanguageManager.js';
+import { i18n, t } from '../i18n/LanguageManager.js';
 
 export class Graph {
   constructor() {
@@ -43,7 +43,13 @@ export class Graph {
     }
 
     if (!this.canConnect(sourceId, targetId, port)) {
-      modal.alert(`${t('errors.cannotConnect')}: ${typeSystem.getTypeDefinition(typeSystem.getNodeType(source)).name} → ${typeSystem.getTypeDefinition(typeSystem.getNodeType(target)).name}`);
+      const sourceType = typeSystem.getNodeType(source);
+      const targetType = typeSystem.getNodeType(target);
+
+      const sourceTypeName = this.getTypeDisplayName(sourceType);
+      const targetTypeName = this.getTypeDisplayName(targetType);
+      
+      modal.alert(`${t('errors.cannotConnect')}: ${sourceTypeName} → ${targetTypeName}`);
       return null;
     }
 
@@ -57,6 +63,22 @@ export class Graph {
     const edge = new Edge(this.nextEdgeId++, sourceId, targetId, port);
     this.edges.push(edge);
     return edge;
+  }
+
+  getTypeDisplayName(typeKey) {
+    if (!typeKey) return 'Unknown';
+    
+    const typeDef = typeSystem.getTypeDefinition(typeKey);
+    if (typeDef && typeDef.name) {
+      return typeDef.name;
+    }
+
+    const translated = t(`dataTypes.${typeKey}`);
+    if (translated !== `dataTypes.${typeKey}`) {
+      return translated;
+    }
+    
+    return typeKey.charAt(0).toUpperCase() + typeKey.slice(1);
   }
 
   removeEdge(id) {
@@ -101,6 +123,7 @@ export class Graph {
 
     return typeSystem.canConnect(sourceType, source.type, targetType, target.type);
   }
+  
   getSourceValue(source, port = 'main', visited = new Set()) {
     if (visited.has(source.id)) return [];
     visited.add(source.id);
