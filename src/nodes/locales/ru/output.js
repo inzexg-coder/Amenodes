@@ -5,5 +5,8 @@ export default {
     title: 'Вывод результатов',
     noConnections: 'Нет связей',
     valueCount: 'знач.'
+  },
+  dataTypes: {
+    auto: 'Автоматический'
   }
 };
