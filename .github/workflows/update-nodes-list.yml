@@ -1,0 +1,38 @@
+name: Update nodes list
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'src/nodes/*.js'
+      - 'src/nodes/**/*.js'
+  workflow_dispatch: 
+
+jobs:
+  update-nodes-list:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Generate nodes list JSON
+        run: |
+          echo "[" > src/nodes-list.json
+          find src/nodes -maxdepth 1 -name "*.js" ! -name "index.js" ! -name "manifest.js" ! -name "translations.js" -type f | while read file; do
+            filename=$(basename "$file")
+            echo "  \"$filename\"," >> src/nodes-list.json
+          done
+          sed -i '$ s/,$//' src/nodes-list.json
+          echo "]" >> src/nodes-list.json
+          
+          echo "Generated nodes-list.json:"
+          cat src/nodes-list.json
+      
+      - name: Commit and push if changed
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: auto-update nodes-list.json"
+          file_pattern: src/nodes-list.json
+          commit_user_name: "GitHub Actions"
+          commit_user_email: "actions@github.com"
