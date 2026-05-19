@@ -1,6 +1,5 @@
 import { en } from './locales/en.js';
 import { ru } from './locales/ru.js';
-import { nodeTranslations } from '../nodes/registry.js';
 
 const BASE_LOCALES = {
   ru: { name: 'Русский', nativeName: 'Русский', translations: ru },
@@ -11,12 +10,26 @@ class LanguageManager {
   constructor() {
     this.currentLanguage = this.getSavedLanguage();
     this.listeners = [];
+    this.nodeTranslations = { en: {}, ru: {} };
+    this.translations = {};
+    this.loadNodeTranslations();
     this.updateTranslations();
+  }
+
+  async loadNodeTranslations() {
+    try {
+      const module = await import('../nodes/registry.js');
+      this.nodeTranslations = module.nodeTranslations || { en: {}, ru: {} };
+      this.updateTranslations();
+      this.notifyListeners();
+    } catch (err) {
+      console.warn('Failed to load node translations:', err);
+    }
   }
 
   updateTranslations() {
     const base = BASE_LOCALES[this.currentLanguage]?.translations || {};
-    const nodes = nodeTranslations[this.currentLanguage] || {};
+    const nodes = this.nodeTranslations[this.currentLanguage] || {};
     this.translations = this.mergeDeep(base, nodes);
   }
 
