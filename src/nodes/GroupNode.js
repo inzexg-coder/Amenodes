@@ -1,6 +1,6 @@
 import { Node } from '../core/Node.js';
 import { EditableTitle } from '../ui/EditableTitle.js';
-import { i18n } from '../i18n/LanguageManager.js';
+import { i18n, t } from '../i18n/LanguageManager.js';
 
 export const metadata = {
   type: 'group',
@@ -8,13 +8,19 @@ export const metadata = {
   descriptionKey: 'nodeDescriptions.group',
   author: 'Amenoke',
   github: 'https://github.com/inzexg-coder/Amenodes',
-  icon: 'fa-layer-group'
+  icon: 'fa-layer-group',
+  dataType: 'array',
+  canHaveIncomingEdges: false,
+  canHaveOutgoingEdges: true,
+  allowedInputTypes: [],
+  allowedOutputTypes: ['num', 'array', 'auto', 'uncert', 'list', 'wlist'],
+  defaultValue: []
 };
 
 export class GroupNode extends Node {
-  constructor(id, x, y, title, values) {
-    super(id, 'group', x, y, title);
-    this.values = values ?? [{ name: `${i18n.t('common.value')} 1`, val: 0 }];
+  constructor(id, x, y, title, options = {}) {
+    super(id, 'group', x, y, title, options);
+    this.values = options.vals ?? [{ name: `${i18n.t('common.value')} 1`, val: 0 }];
   }
 
   getValue() {
@@ -82,10 +88,10 @@ export class GroupNode extends Node {
     });
     
     const addBtn = document.createElement('button');
-    addBtn.textContent = i18n.t('group.addValue');
+    addBtn.textContent = t('group.addValue');
     addBtn.className = 'add-value-btn';
     addBtn.onclick = () => {
-      const newValueName = `${i18n.t('common.value')} ${this.values.length + 1}`;
+      const newValueName = `${t('common.value')} ${this.values.length + 1}`;
       this.values.push({ name: newValueName, val: 0 });
       update();
     };
@@ -96,7 +102,7 @@ export class GroupNode extends Node {
     renderer.applyOptStyles(div);
     
     const unsubscribe = i18n.subscribe(() => {
-      addBtn.textContent = i18n.t('group.addValue');
+      addBtn.textContent = t('group.addValue');
     });
     
     const originalRemove = div.remove;
