@@ -24,7 +24,6 @@ export const nodesManifest = [
   { ctor: OutputNode, metadata: outputMeta, fileName: 'output.js' },
   { ctor: MapNode, metadata: mapMeta, fileName: 'map.js' },
   { ctor: ConfidenceIntervalNode, metadata: confidenceMeta, fileName: 'confidenceInterval.js' },
-];
-  
-  // { ctor: MyNode, metadata: myNodeMeta, fileName: 'node.js' },
+
+// { ctor: MyNode, metadata: myNodeMeta, fileName: 'node.js' },
 ];
