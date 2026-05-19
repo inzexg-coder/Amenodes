@@ -1,31 +1,29 @@
 export const nodeRegistry = new Map();
-const modules = import.meta.glob('./*.js', { eager: true });
+export const nodeTranslations = { en: {}, ru: {} };
 
-for (const path in modules) {
+const nodeModules = import.meta.glob('./*.js', { eager: true });
+
+for (const path in nodeModules) {
   if (path === './index.js') continue;
   if (path.includes('./_template')) continue;
-  if (path.includes('./_')) continue;
+  if (path.includes('./locales')) continue;
   
-  const mod = modules[path];
-
+  const mod = nodeModules[path];
+  
   if (mod.metadata && mod[mod.metadata.type]) {
     const nodeClass = mod[mod.metadata.type];
     nodeRegistry.set(mod.metadata.type, {
       ctor: nodeClass,
       metadata: mod.metadata
     });
-    console.log(`[NodeRegistry] Registered: ${mod.metadata.type}`);
-  } else {
-    console.warn(`[NodeRegistry] Skipping ${path} - missing metadata or class`);
+
+    if (mod.metadata.translations) {
+      const translations = mod.metadata.translations;
+      for (const lang of ['en', 'ru']) {
+        if (translations[lang]) {
+          Object.assign(nodeTranslations[lang], translations[lang]);
+        }
+      }
+    }
   }
-}
-
-export const registeredTypes = Array.from(nodeRegistry.keys());
-
-export function getNodeMetadata(type) {
-  return nodeRegistry.get(type)?.metadata || null;
-}
-
-export function getNodeClass(type) {
-  return nodeRegistry.get(type)?.ctor || null;
 }
