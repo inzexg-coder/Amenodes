@@ -56,4 +56,19 @@ export class ConstantNode extends Node {
     
     return div;
   }
+
+  static async onCreate(graph, x, y, options = {}) {
+    const { modal } = await import('../ui/CustomModal.js');
+    const { t } = await import('../i18n/LanguageManager.js');
+    
+    const value = await modal.prompt(t('modal.enterNewValue'), '0');
+    if (value === null) return null;
+    
+    const numValue = parseFloat(value);
+    const finalValue = isNaN(numValue) ? 0 : numValue;
+    
+    const node = new ConstantNode(null, x, y, t('nodes.constant'), { val: finalValue });
+    graph.addNode(node);
+    return node;
+  }
 }
