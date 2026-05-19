@@ -1,33 +1,25 @@
+import { nodesManifest } from './manifest.js';
+import { nodeTranslations } from './translations.js';
+
 export const nodeRegistry = new Map();
-export const nodeTranslations = { en: {}, ru: {} };
 
-const nodeModules = import.meta.glob('./*.js', { eager: true });
-
-for (const path in nodeModules) {
-  if (path === './index.js') continue;
-  if (path.includes('./_template')) continue;
-  if (path.includes('./locales')) continue;
-  
-  const mod = nodeModules[path];
-  
-  if (mod.metadata && mod[mod.metadata.type]) {
-    const nodeClass = mod[mod.metadata.type];
-    nodeRegistry.set(mod.metadata.type, {
-      ctor: nodeClass,
-      metadata: mod.metadata
-    });
+for (const { ctor, metadata } of nodesManifest) {
+  if (metadata && metadata.type) {
+    nodeRegistry.set(metadata.type, { ctor, metadata });
+    console.log(`[NodeRegistry] Registered: ${metadata.type}`);
   }
 }
 
-const enModules = import.meta.glob('./locales/en/*.js', { eager: true });
-const ruModules = import.meta.glob('./locales/ru/*.js', { eager: true });
+export { nodeTranslations };
 
-for (const path in enModules) {
-  const translations = enModules[path].default;
-  Object.assign(nodeTranslations.en, translations);
+export function getNodeMetadata(type) {
+  return nodeRegistry.get(type)?.metadata || null;
 }
 
-for (const path in ruModules) {
-  const translations = ruModules[path].default;
-  Object.assign(nodeTranslations.ru, translations);
+export function getNodeClass(type) {
+  return nodeRegistry.get(type)?.ctor || null;
+}
+
+export function getAllTypes() {
+  return Array.from(nodeRegistry.keys());
 }
