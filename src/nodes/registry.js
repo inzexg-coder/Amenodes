@@ -64,8 +64,9 @@ async function registerAllNodes() {
       await loadTranslationsForNode(fileName);
     }
   }
-
+  
   i18n.setNodeTranslations(nodeTranslations);
+  
   console.log(`[NodeRegistry] Total nodes: ${nodeRegistry.size}`);
   console.log(`[NodeRegistry] EN sections: ${Object.keys(nodeTranslations.en).join(', ')}`);
   console.log(`[NodeRegistry] RU sections: ${Object.keys(nodeTranslations.ru).join(', ')}`);
