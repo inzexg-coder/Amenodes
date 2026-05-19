@@ -5,5 +5,8 @@ export default {
     title: 'Output',
     noConnections: 'No connections',
     valueCount: 'values'
+  },
+  dataTypes: {
+    auto: 'Auto'
   }
 };
