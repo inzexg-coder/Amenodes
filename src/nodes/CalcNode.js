@@ -8,6 +8,12 @@ export const metadata = {
   author: 'Amenoke',
   github: 'https://github.com/inzexg-coder/Amenodes',
   icon: 'fa-calculator',
+  dataType: 'uncert',
+  canHaveIncomingEdges: true,
+  canHaveOutgoingEdges: true,
+  allowedInputTypes: ['num', 'array', 'uncert'],
+  allowedOutputTypes: ['num', 'array', 'auto', 'uncert', 'list', 'wlist'],
+  defaultValue: null,
   isCategory: true,
   categoryName: 'errors',
   subnodes: [
@@ -18,11 +24,11 @@ export const metadata = {
 };
 
 export class CalcNode extends Node {
-  constructor(id, x, y, title, calcType) {
-    super(id, 'calc', x, y, title);
-    this.calcType = calcType;
-    this.result = null;
-    this.resultStr = "--";
+  constructor(id, x, y, title, options = {}) {
+    super(id, 'calc', x, y, title, options);
+    this.calcType = options.calcType ?? 'div3';
+    this.result = options.result ?? null;
+    this.resultStr = options.resultStr ?? "--";
   }
 
   getValue() {
@@ -31,6 +37,40 @@ export class CalcNode extends Node {
 
   toJSON() {
     return { ...super.toJSON(), calcType: this.calcType, result: this.result, resultStr: this.resultStr };
+  }
+
+  reevaluate(graph) {
+    if (this.calcType === 'sqrt_sum_sq') {
+      const paired = graph.getPairedForSqrt(this.id);
+      if (paired.ok && paired.res.length > 0) {
+        this.result = paired.res;
+        this.resultStr = `[${paired.res.map(v => v.toFixed(6)).join(', ')}]`;
+      } else {
+        this.result = null;
+        this.resultStr = "--";
+      }
+      return;
+    }
+    
+    const input = graph.getMergedInput(this.id);
+    if (!input.length) {
+      this.result = null;
+      this.resultStr = "--";
+      return;
+    }
+    
+    if (this.calcType === 'div3') {
+      const result = input.map(v => typeof v === 'number' ? v / 3 : null).filter(v => v !== null);
+      this.result = result.length ? result : null;
+      this.resultStr = result.length ? `[${result.map(v => v.toFixed(6)).join(', ')}]` : "--";
+    } else if (this.calcType === 'div_sqrt12') {
+      const result = input.map(v => typeof v === 'number' ? v / Math.sqrt(12) : null).filter(v => v !== null);
+      this.result = result.length ? result : null;
+      this.resultStr = result.length ? `[${result.map(v => v.toFixed(6)).join(', ')}]` : "--";
+    }
+  }
+
+  updateDisplay() {
   }
 
   createDOM(graph, renderer) {
