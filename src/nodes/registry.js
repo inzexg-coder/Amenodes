@@ -2,7 +2,10 @@ import { nodesManifest } from './manifest/this-manifest.js';
 import { i18n } from '../i18n/LanguageManager.js';
 
 export const nodeRegistry = new Map();
-export const nodeTranslations = { en: {}, ru: {} };
+export const nodeTranslations = {
+  en: { nodes: {}, nodeDescriptions: {} },
+  ru: { nodes: {}, nodeDescriptions: {} }
+};
 
 function getBaseUrl() {
   const isPreview = window.location.pathname.includes('/preview/');
@@ -14,30 +17,21 @@ function getBaseUrl() {
   return '/src/nodes/';
 }
 
-function deepMerge(target, source) {
-  const result = { ...target };
-  for (const key in source) {
-    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-      result[key] = deepMerge(result[key] || {}, source[key]);
-    } else {
-      result[key] = source[key];
-    }
-  }
-  return result;
-}
-
 async function loadTranslationsForNode(fileName) {
   const baseUrl = getBaseUrl();
   const baseName = fileName.replace('.js', '');
-  let loaded = false;
 
   try {
     const enUrl = `${baseUrl}locales/en/${baseName}.js`;
     const enModule = await import(enUrl);
     if (enModule.default) {
-      nodeTranslations.en = deepMerge(nodeTranslations.en, enModule.default);
+      if (enModule.default.nodes) {
+        Object.assign(nodeTranslations.en.nodes, enModule.default.nodes);
+      }
+      if (enModule.default.nodeDescriptions) {
+        Object.assign(nodeTranslations.en.nodeDescriptions, enModule.default.nodeDescriptions);
+      }
       console.log(`Loaded EN translations for ${baseName}`);
-      loaded = true;
     }
   } catch (err) {
     console.warn(`Failed to load EN translations for ${baseName}:`, err.message);
@@ -47,16 +41,16 @@ async function loadTranslationsForNode(fileName) {
     const ruUrl = `${baseUrl}locales/ru/${baseName}.js`;
     const ruModule = await import(ruUrl);
     if (ruModule.default) {
-      nodeTranslations.ru = deepMerge(nodeTranslations.ru, ruModule.default);
+      if (ruModule.default.nodes) {
+        Object.assign(nodeTranslations.ru.nodes, ruModule.default.nodes);
+      }
+      if (ruModule.default.nodeDescriptions) {
+        Object.assign(nodeTranslations.ru.nodeDescriptions, ruModule.default.nodeDescriptions);
+      }
       console.log(`Loaded RU translations for ${baseName}`);
-      loaded = true;
     }
   } catch (err) {
     console.warn(`Failed to load RU translations for ${baseName}:`, err.message);
-  }
-
-  if (!loaded) {
-    console.error(`No translations found for ${baseName}. Node titles will show keys like "nodes.${baseName}".`);
   }
 }
 
@@ -70,10 +64,9 @@ async function registerAllNodes() {
   }
 
   i18n.setNodeTranslations(nodeTranslations);
-  
   console.log(`[NodeRegistry] Total nodes: ${nodeRegistry.size}`);
-  console.log(`[NodeRegistry] EN translations keys: ${Object.keys(nodeTranslations.en).length}`);
-  console.log(`[NodeRegistry] RU translations keys: ${Object.keys(nodeTranslations.ru).length}`);
+  console.log(`[NodeRegistry] EN nodes: ${Object.keys(nodeTranslations.en.nodes).join(', ')}`);
+  console.log(`[NodeRegistry] RU nodes: ${Object.keys(nodeTranslations.ru.nodes).join(', ')}`);
 }
 
 export async function loadAllNodes() {
