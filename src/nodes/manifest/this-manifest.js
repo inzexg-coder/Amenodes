@@ -17,13 +17,14 @@ import { ConfidenceIntervalNode, metadata as confidenceMeta } from '../Confidenc
 // ═══════════════════════════════════════════════════════════════════════
 
 export const nodesManifest = [
-  { ctor: NumberNode, metadata: numberMeta },
-  { ctor: ConstantNode, metadata: constantMeta },
-  { ctor: GroupNode, metadata: groupMeta },
-  { ctor: CalcNode, metadata: calcMeta },
-  { ctor: OutputNode, metadata: outputMeta },
-  { ctor: MapNode, metadata: mapMeta },
-  { ctor: ConfidenceIntervalNode, metadata: confidenceMeta },
+  { ctor: NumberNode, metadata: numberMeta, fileName: 'number.js' },
+  { ctor: ConstantNode, metadata: constantMeta, fileName: 'constant.js' },
+  { ctor: GroupNode, metadata: groupMeta, fileName: 'group.js' },
+  { ctor: CalcNode, metadata: calcMeta, fileName: 'calc.js' },
+  { ctor: OutputNode, metadata: outputMeta, fileName: 'output.js' },
+  { ctor: MapNode, metadata: mapMeta, fileName: 'map.js' },
+  { ctor: ConfidenceIntervalNode, metadata: confidenceMeta, fileName: 'confidenceInterval.js' },
+];
   
   // { ctor: MyNode, metadata: myNodeMeta },
 ];
