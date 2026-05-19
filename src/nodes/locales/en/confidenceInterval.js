@@ -4,5 +4,9 @@ export default {
   confidence: {
     uncertaintyInputs: 'Uncertainty inputs',
     multiplierInputs: 'Multiplier inputs'
+  },
+  dataTypes: {
+    interval: 'Interval',
+    uncert: 'Uncertainty'
   }
 };
