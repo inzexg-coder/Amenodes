@@ -12,19 +12,13 @@ class LanguageManager {
     this.listeners = [];
     this.nodeTranslations = { en: {}, ru: {} };
     this.translations = {};
-    this.loadNodeTranslations();
     this.updateTranslations();
   }
-
-  async loadNodeTranslations() {
-    try {
-      const module = await import('../nodes/registry.js');
-      this.nodeTranslations = module.nodeTranslations || { en: {}, ru: {} };
-      this.updateTranslations();
-      this.notifyListeners();
-    } catch (err) {
-      console.warn('Failed to load node translations:', err);
-    }
+  
+  setNodeTranslations(translations) {
+    this.nodeTranslations = translations;
+    this.updateTranslations();
+    this.notifyListeners();
   }
 
   updateTranslations() {
