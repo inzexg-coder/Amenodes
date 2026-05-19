@@ -20,6 +20,54 @@ jobs:
           echo "branch_name=${BRANCH_NAME}" >> $GITHUB_OUTPUT
           echo "sanitized_branch=$(echo ${BRANCH_NAME} | sed 's/\//-/g')" >> $GITHUB_OUTPUT
       
+      - name: Comment about deployment start
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = ${{ github.event.pull_request.number }};
+            const branch = '${{ steps.extract_branch.outputs.branch_name }}';
+            const sha = '${{ github.event.pull_request.head.sha }}';
+            const actor = '${{ github.actor }}';
+            
+            const body = `## 🚀 Deployment started\n\n` +
+              `| | |\n|---|---|\n` +
+              `| **Status** | ⏳ Building and deploying... |\n` +
+              `| **Branch** | \`${branch}\` |\n` +
+              `| **Commit** | \`${sha.substring(0, 7)}\` |\n` +
+              `| **Triggered by** | @${actor} |\n\n` +
+              `### 📋 What happens now\n\n` +
+              `1. 🔄 Generating \`nodes-list.json\` from \`src/nodes/\`\n` +
+              `2. ☁️ Uploading to preview server\n` +
+              `3. ✅ Comment will be updated when ready\n\n` +
+              `---\n` +
+              `*Deployment started at ${new Date().toISOString()}*`;
+            
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            
+            const oldComments = comments.filter(c => 
+              c.user.type === 'Bot' && 
+              c.body && c.body.includes('Deployment started')
+            );
+            for (const old of oldComments) {
+              await github.rest.issues.deleteComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: old.id
+              });
+            }
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: body
+            });
+      
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v3
         with:
@@ -41,6 +89,12 @@ jobs:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     steps:
+      - name: Comment about deployment start (optional)
+        run: |
+          echo "::notice::Production deployment triggered for ${{ github.ref_name }}"
+          echo "📦 Commit: ${{ github.sha }}"
+          echo "👤 Actor: ${{ github.actor }}"
+      
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v3
         with:
