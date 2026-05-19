@@ -1,5 +1,6 @@
 import { ru } from './locales/ru.js';
 import { en } from './locales/en.js';
+import { nodeTranslations } from '../nodes/index.js';
 
 const LOCALES = {
   ru: { name: 'Русский', nativeName: 'Русский', translations: ru },
@@ -10,7 +11,24 @@ class LanguageManager {
   constructor() {
     this.currentLanguage = this.getSavedLanguage();
     this.listeners = [];
-    this.translations = LOCALES[this.currentLanguage]?.translations || ru;
+    this.updateTranslations();
+  }
+
+  updateTranslations() {
+    const baseTranslations = LOCALES[this.currentLanguage]?.translations || {};
+    this.translations = this.mergeDeep(baseTranslations, nodeTranslations[this.currentLanguage] || {});
+  }
+
+  mergeDeep(target, source) {
+    const result = { ...target };
+    for (const key in source) {
+      if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+        result[key] = this.mergeDeep(result[key] || {}, source[key]);
+      } else {
+        result[key] = source[key];
+      }
+    }
+    return result;
   }
 
   getSavedLanguage() {
@@ -24,7 +42,8 @@ class LanguageManager {
   setLanguage(lang) {
     if (!LOCALES[lang]) return false;
     this.currentLanguage = lang;
-    this.translations = LOCALES[lang].translations;
+    window._currentLanguage = lang;
+    this.updateTranslations();
     localStorage.setItem('amenodes_language', lang);
     this.notifyListeners();
     return true;
@@ -42,10 +61,6 @@ class LanguageManager {
     }));
   }
 
-  normalizeKey(key) {
-    return key.replace(/\s+/g, '').replace(/[^a-zA-Zа-яА-Я0-9]/g, '');
-  }
-
   t(key, params = {}) {
     const keys = key.split('.');
     let value = this.translations;
@@ -54,20 +69,15 @@ class LanguageManager {
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
       } else {
-        console.warn(`Translation missing: ${key}`);
         return key;
       }
     }
     
     if (typeof value === 'string') {
-      return value.replace(/\{(\w+)\}/g, (_, param) => params[param] || `{${param}}`);
+      return value.replace(/\{(\w+)\}/g, (_, param) => params[param] ?? `{${param}}`);
     }
     
     return key;
-  }
-
-  translate(key, params = {}) {
-    return this.t(key, params);
   }
 
   subscribe(listener) {
@@ -83,17 +93,10 @@ class LanguageManager {
       listener(this.currentLanguage, this.translations);
     }
   }
-
-  translateNodeTitle(nodeType, currentTitle, originalTitle) {
-    const translated = this.t(`nodes.${nodeType}`);
-    if (translated !== `nodes.${nodeType}` && currentTitle === originalTitle) {
-      return translated;
-    }
-    return currentTitle;
-  }
 }
 
 export const i18n = new LanguageManager();
+window._currentLanguage = i18n.getCurrentLanguage();
 
 export function t(key, params = {}) {
   return i18n.t(key, params);
