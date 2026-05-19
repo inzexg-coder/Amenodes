@@ -31,7 +31,7 @@ export const ru = {
   contextMenu: {
     markImportant: 'Выделить ВАЖНЫЙ узел',
     unmarkImportant: 'Снять выделение ВАЖНОГО',
-    outputAndConnect: 'Создать связь с выводом'
+    outputAndConnect: 'Создать вывод и соединить'
   },
 
   optimizations: {
@@ -150,7 +150,8 @@ export const ru = {
 
   errors: {
     cyclicDependency: 'Циклическая зависимость!',
-    cannotConnect: 'Невозможно соединить'
+    cannotConnect: 'Невозможно соединить',
+    maxTwoInputs: 'Максимум два входа'
   },
 
   status: {
