@@ -1,39 +1,49 @@
 import { nodesManifest } from './manifest/this-manifest.js';
+import { i18n } from '../i18n/LanguageManager.js';
 
 export const nodeRegistry = new Map();
 export const nodeTranslations = { en: {}, ru: {} };
 
+function getBaseUrl() {
+  const isPreview = window.location.pathname.includes('/preview/');
+  if (isPreview) {
+    const match = window.location.pathname.match(/\/preview\/([^\/]+)/);
+    const branch = match ? match[1] : 'main';
+    return `https://amenoke.ru/preview/${branch}/src/nodes/`;
+  }
+  return '/src/nodes/';
+}
+
 async function loadTranslationsForNode(fileName) {
+  const baseUrl = getBaseUrl();
   const baseName = fileName.replace('.js', '');
   
   try {
-    const enModule = await import(`./locales/en/${baseName}.js`);
+    const enUrl = `${baseUrl}locales/en/${baseName}.js`;
+    const enModule = await import(enUrl);
     if (enModule.default) {
       Object.assign(nodeTranslations.en, enModule.default);
-      console.log(`[NodeRegistry] Loaded en translations for ${baseName}`);
     }
-  } catch (err) {
-  }
+  } catch (err) {}
   
   try {
-    const ruModule = await import(`./locales/ru/${baseName}.js`);
+    const ruUrl = `${baseUrl}locales/ru/${baseName}.js`;
+    const ruModule = await import(ruUrl);
     if (ruModule.default) {
       Object.assign(nodeTranslations.ru, ruModule.default);
-      console.log(`[NodeRegistry] Loaded ru translations for ${baseName}`);
     }
-  } catch (err) {
-  }
+  } catch (err) {}
 }
 
 async function registerAllNodes() {
   for (const { ctor, metadata, fileName } of nodesManifest) {
     if (metadata?.type) {
       nodeRegistry.set(metadata.type, { ctor, metadata });
-      console.log(`[NodeRegistry] Registered: ${metadata.type} from ${fileName}`);
-      
       await loadTranslationsForNode(fileName);
     }
   }
+
+  i18n.setNodeTranslations(nodeTranslations);
   
   console.log(`[NodeRegistry] Total nodes: ${nodeRegistry.size}`);
   console.log(`[NodeRegistry] Translations loaded: en=${Object.keys(nodeTranslations.en).length}, ru=${Object.keys(nodeTranslations.ru).length}`);
