@@ -26,5 +26,5 @@ export const nodesManifest = [
   { ctor: ConfidenceIntervalNode, metadata: confidenceMeta, fileName: 'confidenceInterval.js' },
 ];
   
-  // { ctor: MyNode, metadata: myNodeMeta },
+  // { ctor: MyNode, metadata: myNodeMeta, fileName: 'node.js' },
 ];
