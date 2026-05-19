@@ -16,14 +16,22 @@ export class NodeFactory {
       throw new Error(`Unknown node type: ${type}`);
     }
     
-    const { id, x, y, title, ...rest } = options;
+    const { id, x, y, title, ...customParams } = options;
     const defaultTitle = i18n.t(entry.metadata.nameKey);
     const finalTitle = title || defaultTitle;
-    
-    return new entry.ctor(id || 0, x || 0, y || 0, finalTitle, rest);
+
+    return new entry.ctor(id || 0, x || 0, y || 0, finalTitle, customParams);
   }
 
   static createNodeAt(type, x, y, customParams = {}) {
     return this.createNode(type, { x, y, ...customParams });
+  }
+
+  static hasNodeType(type) {
+    return nodeRegistry.has(type);
+  }
+
+  static getAllTypes() {
+    return Array.from(nodeRegistry.keys());
   }
 }
