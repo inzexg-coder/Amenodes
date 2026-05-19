@@ -1,8 +1,8 @@
-import { ru } from './locales/ru.js';
 import { en } from './locales/en.js';
+import { ru } from './locales/ru.js';
 import { nodeTranslations } from '../nodes/index.js';
 
-const LOCALES = {
+const BASE_LOCALES = {
   ru: { name: 'Русский', nativeName: 'Русский', translations: ru },
   en: { name: 'English', nativeName: 'English', translations: en }
 };
@@ -15,8 +15,9 @@ class LanguageManager {
   }
 
   updateTranslations() {
-    const baseTranslations = LOCALES[this.currentLanguage]?.translations || {};
-    this.translations = this.mergeDeep(baseTranslations, nodeTranslations[this.currentLanguage] || {});
+    const base = BASE_LOCALES[this.currentLanguage]?.translations || {};
+    const nodes = nodeTranslations[this.currentLanguage] || {};
+    this.translations = this.mergeDeep(base, nodes);
   }
 
   mergeDeep(target, source) {
@@ -33,14 +34,14 @@ class LanguageManager {
 
   getSavedLanguage() {
     const saved = localStorage.getItem('amenodes_language');
-    if (saved && LOCALES[saved]) return saved;
+    if (saved && BASE_LOCALES[saved]) return saved;
     const browserLang = navigator.language.split('-')[0];
-    if (LOCALES[browserLang]) return browserLang;
+    if (BASE_LOCALES[browserLang]) return browserLang;
     return 'en';
   }
 
   setLanguage(lang) {
-    if (!LOCALES[lang]) return false;
+    if (!BASE_LOCALES[lang]) return false;
     this.currentLanguage = lang;
     window._currentLanguage = lang;
     this.updateTranslations();
@@ -54,7 +55,7 @@ class LanguageManager {
   }
 
   getAvailableLanguages() {
-    return Object.entries(LOCALES).map(([code, info]) => ({
+    return Object.entries(BASE_LOCALES).map(([code, info]) => ({
       code,
       name: info.name,
       nativeName: info.nativeName
