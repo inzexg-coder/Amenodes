@@ -8,5 +8,9 @@ export default {
     addRule: '+ Add rule',
     passThrough: 'Passthrough',
     separateOutput: 'Separate blue output'
+  },
+  dataTypes: {
+    list: 'List',
+    wlist: 'Weighted List'
   }
 };
