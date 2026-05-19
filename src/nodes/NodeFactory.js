@@ -10,6 +10,10 @@ export class NodeFactory {
     return nodeRegistry.get(type)?.metadata || null;
   }
 
+  static getNodeClass(type) {
+    return nodeRegistry.get(type)?.ctor || null;
+  }
+
   static createNode(type, options = {}) {
     const entry = nodeRegistry.get(type);
     if (!entry) {
@@ -19,9 +23,10 @@ export class NodeFactory {
     const { id, x, y, title, ...customParams } = options;
     const defaultTitle = i18n.t(entry.metadata.nameKey);
     const finalTitle = title || defaultTitle;
-
+    
     return new entry.ctor(id || 0, x || 0, y || 0, finalTitle, customParams);
   }
+
 
   static createNodeAt(type, x, y, customParams = {}) {
     return this.createNode(type, { x, y, ...customParams });
