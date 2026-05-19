@@ -7,5 +7,8 @@ export default {
     sqrt_sum_sq: 'Суммарная погрешность',
     result: 'Результат',
     inputs: 'входов'
+  },
+  dataTypes: {
+    uncert: 'Погрешность'
   }
 };
