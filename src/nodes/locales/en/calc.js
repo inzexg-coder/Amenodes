@@ -7,5 +7,8 @@ export default {
     sqrt_sum_sq: 'Combined Uncertainty',
     result: 'Result',
     inputs: 'inputs'
+  },
+  dataTypes: {
+    uncert: 'Uncertainty'
   }
 };
