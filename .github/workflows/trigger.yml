@@ -3,19 +3,42 @@ name: Trigger CI Deploy
 on:
   push:
     branches: [main, master]
-    paths-ignore:
-      - 'src/nodes-list.json'  
-  workflow_run:
-    workflows: ["Update nodes list"] 
-    types:
-      - completed
-    branches:
-      - main
-      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, master]
 
 jobs:
-  trigger:
-    if: ${{ github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
+  trigger-preview:
+    name: Trigger preview deployment
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract branch name
+        id: extract_branch
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+          echo "branch_name=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+          echo "sanitized_branch=$(echo ${BRANCH_NAME} | sed 's/\//-/g')" >> $GITHUB_OUTPUT
+      
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.CI_REPO_TOKEN }}
+          repository: inzexg-coder/amenodes-ci
+          event-type: deploy
+          client-payload: |
+            {
+              "source_repo": "${{ github.repository }}",
+              "source_ref": "${{ github.ref }}",
+              "source_sha": "${{ github.event.pull_request.head.sha }}",
+              "head_ref": "${{ steps.extract_branch.outputs.branch_name }}",
+              "pr_number": "${{ github.event.pull_request.number }}",
+              "actor": "${{ github.actor }}"
+            }
+
+  trigger-production:
+    name: Trigger production deployment
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     steps:
       - name: Repository Dispatch
@@ -26,6 +49,9 @@ jobs:
           event-type: deploy
           client-payload: |
             {
-              "branch": "${{ github.ref_name }}",
-              "commit": "${{ github.sha }}"
+              "source_repo": "${{ github.repository }}",
+              "source_ref": "${{ github.ref }}",
+              "source_sha": "${{ github.sha }}",
+              "head_ref": "${{ github.ref_name }}",
+              "actor": "${{ github.actor }}"
             }
