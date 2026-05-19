@@ -25,8 +25,14 @@ export class TypeSystem {
   }
 
   getNodeType(node) {
+    console.log('Node:', node.type);
+    console.log('Constructor metadata:', node.constructor.metadata);
     const meta = node.constructor.metadata;
-    if (meta && meta.dataType) return meta.dataType;
+    if (meta && meta.dataType) {
+      console.log('Returning dataType:', meta.dataType);
+      return meta.dataType;
+    }
+    console.log('No metadata or dataType, returning unknown');
     return 'unknown';
   }
 
