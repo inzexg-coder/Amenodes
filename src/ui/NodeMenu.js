@@ -9,10 +9,17 @@ export class NodeMenu {
     this.menuElement = null;
     this.button = null;
     this.isOpen = false;
+    this.unsubscribeI18n = null;
   }
 
   init() {
     this.createButton();
+    this.unsubscribeI18n = i18n.subscribe(() => {
+      if (this.isOpen) {
+        this.close();
+        this.open();
+      }
+    });
   }
 
   createButton() {
@@ -279,5 +286,13 @@ export class NodeMenu {
       this.menuElement = null;
     }
     this.isOpen = false;
+  }
+
+  destroy() {
+    if (this.unsubscribeI18n) {
+      this.unsubscribeI18n();
+      this.unsubscribeI18n = null;
+    }
+    this.close();
   }
 }
