@@ -3,36 +3,50 @@ import { nodesManifest } from './manifest/this-manifest.js';
 export const nodeRegistry = new Map();
 export const nodeTranslations = { en: {}, ru: {} };
 
-for (const { ctor, metadata } of nodesManifest) {
-  if (metadata?.type) {
-    nodeRegistry.set(metadata.type, { ctor, metadata });
-    
-    if (metadata.translations) {
-      for (const lang of ['en', 'ru']) {
-        if (metadata.translations[lang]) {
-          Object.assign(nodeTranslations[lang], metadata.translations[lang]);
-        }
-      }
+async function loadTranslationsForNode(fileName) {
+  const baseName = fileName.replace('.js', '');
+  
+  try {
+    const enModule = await import(`./locales/en/${baseName}.js`);
+    if (enModule.default) {
+      Object.assign(nodeTranslations.en, enModule.default);
+      console.log(`[NodeRegistry] Loaded en translations for ${baseName}`);
     }
+  } catch (err) {
+  }
+  
+  try {
+    const ruModule = await import(`./locales/ru/${baseName}.js`);
+    if (ruModule.default) {
+      Object.assign(nodeTranslations.ru, ruModule.default);
+      console.log(`[NodeRegistry] Loaded ru translations for ${baseName}`);
+    }
+  } catch (err) {
   }
 }
 
-export async function loadAllNodes() {
-  return Promise.resolve();
+async function registerAllNodes() {
+  for (const { ctor, metadata, fileName } of nodesManifest) {
+    if (metadata?.type) {
+      nodeRegistry.set(metadata.type, { ctor, metadata });
+      console.log(`[NodeRegistry] Registered: ${metadata.type} from ${fileName}`);
+      
+      await loadTranslationsForNode(fileName);
+    }
+  }
+  
+  console.log(`[NodeRegistry] Total nodes: ${nodeRegistry.size}`);
+  console.log(`[NodeRegistry] Translations loaded: en=${Object.keys(nodeTranslations.en).length}, ru=${Object.keys(nodeTranslations.ru).length}`);
 }
 
-export function getNodeMetadata(type) {
-  return nodeRegistry.get(type)?.metadata || null;
+export async function loadAllNodes() {
+  await registerAllNodes();
 }
 
 export function getNodeClass(type) {
   return nodeRegistry.get(type)?.ctor || null;
 }
 
-export function getAllNodeTypes() {
-  return Array.from(nodeRegistry.keys());
-}
-
-export function isNodeTypeRegistered(type) {
-  return nodeRegistry.has(type);
+export function getNodeMetadata(type) {
+  return nodeRegistry.get(type)?.metadata || null;
 }
