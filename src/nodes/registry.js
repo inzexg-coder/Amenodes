@@ -1,4 +1,4 @@
-import { nodesManifest } from './manifest.js';
+import { nodesManifest } from './this-manifest.js';
 
 export const nodeRegistry = new Map();
 export const nodeTranslations = { en: {}, ru: {} };
