@@ -8,14 +8,20 @@ export const metadata = {
   descriptionKey: 'nodeDescriptions.confidenceInterval',
   author: 'Amenoke',
   github: 'https://github.com/inzexg-coder/Amenodes',
-  icon: 'fa-chart-simple'
+  icon: 'fa-chart-simple',
+  dataType: 'interval',
+  canHaveIncomingEdges: true,
+  canHaveOutgoingEdges: true,
+  allowedInputTypes: ['num', 'array', 'uncert', 'list', 'wlist'],
+  allowedOutputTypes: ['auto', 'num', 'uncert'],
+  defaultValue: null
 };
 
 export class ConfidenceIntervalNode extends Node {
-  constructor(id, x, y, title) {
-    super(id, 'confidenceInterval', x, y, title);
-    this.result = null;
-    this.resultStr = "--";
+  constructor(id, x, y, title, options = {}) {
+    super(id, 'confidenceInterval', x, y, title, options);
+    this.result = options.result ?? null;
+    this.resultStr = options.resultStr ?? "--";
   }
 
   getValue() {
@@ -24,6 +30,14 @@ export class ConfidenceIntervalNode extends Node {
 
   toJSON() {
     return { ...super.toJSON(), result: this.result, resultStr: this.resultStr };
+  }
+
+  canAcceptEdge(source, port) {
+    const incoming = this.graph?.getIncomingEdges(this.id) || [];
+    if (incoming.length >= 2) {
+      return { ok: false, message: t('errors.maxTwoInputs') };
+    }
+    return { ok: true };
   }
 
   reevaluate(graph) {
@@ -80,6 +94,10 @@ export class ConfidenceIntervalNode extends Node {
       this.result = valid;
       this.resultStr = `[${valid.map(v => v.toFixed(6)).join(', ')}]`;
     }
+  }
+
+  updateDisplay() {
+    // DOM обновится при следующем рендере
   }
 
   createDOM(graph, renderer) {
