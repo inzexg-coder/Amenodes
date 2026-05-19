@@ -2,10 +2,7 @@ import { nodesManifest } from './manifest/this-manifest.js';
 import { i18n } from '../i18n/LanguageManager.js';
 
 export const nodeRegistry = new Map();
-export const nodeTranslations = {
-  en: { nodes: {}, nodeDescriptions: {} },
-  ru: { nodes: {}, nodeDescriptions: {} }
-};
+export const nodeTranslations = { en: {}, ru: {} };
 
 function getBaseUrl() {
   const isPreview = window.location.pathname.includes('/preview/');
@@ -17,6 +14,21 @@ function getBaseUrl() {
   return '/src/nodes/';
 }
 
+function deepMerge(target, source) {
+  if (!source) return target;
+  const result = { ...target };
+  for (const key in source) {
+    const sourceVal = source[key];
+    const targetVal = result[key];
+    if (sourceVal && typeof sourceVal === 'object' && !Array.isArray(sourceVal)) {
+      result[key] = deepMerge(targetVal, sourceVal);
+    } else {
+      result[key] = sourceVal;
+    }
+  }
+  return result;
+}
+
 async function loadTranslationsForNode(fileName) {
   const baseUrl = getBaseUrl();
   const baseName = fileName.replace('.js', '');
@@ -25,12 +37,7 @@ async function loadTranslationsForNode(fileName) {
     const enUrl = `${baseUrl}locales/en/${baseName}.js`;
     const enModule = await import(enUrl);
     if (enModule.default) {
-      if (enModule.default.nodes) {
-        Object.assign(nodeTranslations.en.nodes, enModule.default.nodes);
-      }
-      if (enModule.default.nodeDescriptions) {
-        Object.assign(nodeTranslations.en.nodeDescriptions, enModule.default.nodeDescriptions);
-      }
+      nodeTranslations.en = deepMerge(nodeTranslations.en, enModule.default);
       console.log(`Loaded EN translations for ${baseName}`);
     }
   } catch (err) {
@@ -41,12 +48,7 @@ async function loadTranslationsForNode(fileName) {
     const ruUrl = `${baseUrl}locales/ru/${baseName}.js`;
     const ruModule = await import(ruUrl);
     if (ruModule.default) {
-      if (ruModule.default.nodes) {
-        Object.assign(nodeTranslations.ru.nodes, ruModule.default.nodes);
-      }
-      if (ruModule.default.nodeDescriptions) {
-        Object.assign(nodeTranslations.ru.nodeDescriptions, ruModule.default.nodeDescriptions);
-      }
+      nodeTranslations.ru = deepMerge(nodeTranslations.ru, ruModule.default);
       console.log(`Loaded RU translations for ${baseName}`);
     }
   } catch (err) {
@@ -65,8 +67,8 @@ async function registerAllNodes() {
 
   i18n.setNodeTranslations(nodeTranslations);
   console.log(`[NodeRegistry] Total nodes: ${nodeRegistry.size}`);
-  console.log(`[NodeRegistry] EN nodes: ${Object.keys(nodeTranslations.en.nodes).join(', ')}`);
-  console.log(`[NodeRegistry] RU nodes: ${Object.keys(nodeTranslations.ru.nodes).join(', ')}`);
+  console.log(`[NodeRegistry] EN sections: ${Object.keys(nodeTranslations.en).join(', ')}`);
+  console.log(`[NodeRegistry] RU sections: ${Object.keys(nodeTranslations.ru).join(', ')}`);
 }
 
 export async function loadAllNodes() {
