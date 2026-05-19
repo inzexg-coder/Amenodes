@@ -17,38 +17,50 @@ function getBaseUrl() {
 async function loadTranslationsForNode(fileName) {
   const baseUrl = getBaseUrl();
   const baseName = fileName.replace('.js', '');
-  
+  let loaded = false;
+
   try {
     const enUrl = `${baseUrl}locales/en/${baseName}.js`;
     const enModule = await import(enUrl);
     if (enModule.default) {
       Object.assign(nodeTranslations.en, enModule.default);
+      console.log(`Loaded EN translations for ${baseName}`);
+      loaded = true;
     }
-  } catch (err) {}
-  
+  } catch (err) {
+    console.warn(`Failed to load EN translations for ${baseName}:`, err.message);
+  }
+
   try {
     const ruUrl = `${baseUrl}locales/ru/${baseName}.js`;
     const ruModule = await import(ruUrl);
     if (ruModule.default) {
       Object.assign(nodeTranslations.ru, ruModule.default);
+      console.log(`Loaded RU translations for ${baseName}`);
+      loaded = true;
     }
-  } catch (err) {}
+  } catch (err) {
+    console.warn(`Failed to load RU translations for ${baseName}:`, err.message);
+  }
+
+  if (!loaded) {
+    console.error(`No translations found for ${baseName}. Node titles will show keys like "nodes.${baseName}".`);
+  }
 }
 
 async function registerAllNodes() {
   for (const { ctor, metadata, fileName } of nodesManifest) {
     if (metadata?.type) {
       nodeRegistry.set(metadata.type, { ctor, metadata });
-      // Прикрепляем metadata к конструктору, чтобы node.constructor.metadata работал
       ctor.metadata = metadata;
       await loadTranslationsForNode(fileName);
     }
   }
-
   i18n.setNodeTranslations(nodeTranslations);
   
   console.log(`[NodeRegistry] Total nodes: ${nodeRegistry.size}`);
-  console.log(`[NodeRegistry] Translations loaded: en=${Object.keys(nodeTranslations.en).length}, ru=${Object.keys(nodeTranslations.ru).length}`);
+  console.log(`[NodeRegistry] EN translations keys: ${Object.keys(nodeTranslations.en).length}`);
+  console.log(`[NodeRegistry] RU translations keys: ${Object.keys(nodeTranslations.ru).length}`);
 }
 
 export async function loadAllNodes() {
