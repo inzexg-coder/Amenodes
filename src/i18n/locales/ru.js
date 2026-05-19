@@ -30,7 +30,8 @@ export const ru = {
 
   contextMenu: {
     markImportant: 'Выделить ВАЖНЫЙ узел',
-    unmarkImportant: 'Снять выделение ВАЖНОГО'
+    unmarkImportant: 'Снять выделение ВАЖНОГО',
+    outputAndConnect: 'Создать связь с выводом'
   },
 
   optimizations: {
