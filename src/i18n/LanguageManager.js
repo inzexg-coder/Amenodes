@@ -1,6 +1,6 @@
 import { en } from './locales/en.js';
 import { ru } from './locales/ru.js';
-import { nodeTranslations } from '../nodes/index.js';
+import { nodeTranslations } from '../nodes/registry.js';
 
 const BASE_LOCALES = {
   ru: { name: 'Русский', nativeName: 'Русский', translations: ru },
