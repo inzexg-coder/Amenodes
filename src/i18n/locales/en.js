@@ -150,7 +150,8 @@ export const en = {
 
   errors: {
     cyclicDependency: 'Cyclic dependency!',
-    cannotConnect: 'Cannot connect'
+    cannotConnect: 'Cannot connect',
+    maxTwoInputs: 'Maximum two inputs allowed'
   },
 
   status: {
