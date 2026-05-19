@@ -1,12 +1,5 @@
 import { EdgeRenderer } from './EdgeRenderer.js';
 import { ContextMenu } from '../ui/ContextMenu.js';
-import { NumberNode } from '../nodes/NumberNode.js';
-import { GroupNode } from '../nodes/GroupNode.js';
-import { CalcNode } from '../nodes/CalcNode.js';
-import { OutputNode } from '../nodes/OutputNode.js';
-import { MapNode } from '../nodes/MapNode.js';
-import { ConstantNode } from '../nodes/ConstantNode.js';
-import { ConfidenceIntervalNode } from '../nodes/ConfidenceIntervalNode.js';
 
 export class DomRenderer {
   constructor(graph, layer, viewportElement, eventBus) {
@@ -69,14 +62,7 @@ export class DomRenderer {
     if (this.heightCache.has(node.id)) {
       return this.heightCache.get(node.id);
     }
-    let height = node.getMinHeight();
-    if (node instanceof GroupNode) {
-      height = Math.max(height, 80 + node.values.length * 40);
-    } else if (node instanceof MapNode) {
-      height = Math.max(height, 80 + node.maps.length * 45);
-    } else if (node instanceof OutputNode) {
-      height = Math.max(height, 80 + node.rows.length * 35);
-    }
+    const height = node.getMinHeight();
     this.heightCache.set(node.id, height);
     return height;
   }
