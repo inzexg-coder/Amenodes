@@ -1,8 +1,17 @@
-<h1 align="center">Amenoke</h1>
+<h1 align="center">Amenodes</h1>
 
 <p align="center">
-  <strong>1.2.0</strong><br>
-  <sub>Global user support</sub>
+  <img src="https://img.shields.io/github/stars/inzexg-coder/Amenodes?style=for-the-badge&color=ffb347" alt="Stars">
+  <img src="https://img.shields.io/github/forks/inzexg-coder/Amenodes?style=for-the-badge&color=6d8ae0" alt="Forks">
+  <br>
+  <img src="https://img.shields.io/github/issues/inzexg-coder/Amenodes?style=for-the-badge&color=e74c3c" alt="Issues">
+  <img src="https://img.shields.io/github/issues-pr/inzexg-coder/Amenodes?style=for-the-badge&color=2ecc71" alt="Pull Requests">
+  <img src="https://img.shields.io/github/last-commit/inzexg-coder/Amenodes?style=for-the-badge&color=3498db" alt="Last Commit">
+</p>
+
+<p align="center">
+  <strong>1.3.0</strong><br>
+  <sub>Visual Programming Language for Data Analysis</sub>
 </p>
 
 <h4 align="center">
@@ -15,146 +24,112 @@
 
 ---
 
-## Preview Environment System
+## 📖 About Amenodes
+
+**Amenodes** is a node-based visual programming language developed in JavaScript for data analysis and calculations, replacing cumbersome Excel spreadsheets with a flexible, visual interface and a rich set of mathematical tools.
+
+### Key Features
+
+- **Visual Node Editor** – Drag-and-drop nodes, connect them with wires, and see results update in real-time.
+- **Rich Node Library** – Number nodes, constants, groups, calculators (uncertainty propagation), mapping nodes, confidence intervals, and output displays.
+- **Real-time Computation** – Automatic reevaluation when connections or values change.
+- **Type System** – Smart connection validation prevents invalid links (e.g., connecting text to a number input).
+- **Internationalization (i18n)** – Full support for English and Russian with an easy-to-extend translation system.
+- **Performance Optimizations** – Built-in benchmarking and optimization panel to tune rendering (virtualization, GPU transforms, caching, and more).
+- **Undo/Redo** – Full history with auto-save to localStorage.
+- **Import/Export** – Save your graphs to `.amnk` files and load them back.
+- **Pan & Zoom** – Right-click drag to pan, scroll to zoom.
+- **Customizable UI** – Design quality slider to trade off visual effects for performance (up to +300% FPS).
+
+---
+
+## 🚀 Quick Start
+
+### Live Demo
+
+Try Amenodes online: **[https://amenoke.ru/amenodes.html](https://amenoke.ru/amenodes.html)**
+
+### Local Development
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/inzexg-coder/Amenodes.git
+   cd Amenodes
+   ```
+
+2. Start a local server (e.g., with Python):
+   ```bash
+   python -m http.server 8000
+   # or
+   npx serve .
+   ```
+
+3. Open `http://localhost:8000/amenodes.html` in your browser.
+
+---
+
+## 🎮 User Guide
+
+### Creating Nodes
+
+Click the **+** button in the toolbar or right-click on an existing node's handle to open the node menu. Select any node type – it will appear on the canvas.
+
+### Connecting Nodes
+
+- Click and drag from a colored circle (handle) on the right/bottom/top/left of a node to another node's handle.
+- A line with an arrow indicates the connection.
+- Right-click on a connection line to delete it.
+
+### Working with Nodes
+
+- **Edit titles** – Click on any node title to rename it.
+- **Mark as important** – Right-click on a node and select "Mark IMPORTANT node" – the node gets a blue glow.
+- **Delete nodes** – Click the ✕ button in the node header.
+- **Drag nodes** – Click and drag the header to move nodes around.
+
+### Toolbar
+
+| Button | Action |
+|--------|--------|
+| **Undo** | Revert the last action |
+| **Redo** | Re-apply a reverted action |
+| **Export** | Save your graph as a `.amnk` file |
+| **Import** | Load a previously saved `.amnk` file |
+| **Clear storage** | Delete the auto-saved graph from localStorage |
+| **Language** | Switch between English and Russian |
+
+### Performance Panel
+
+Click the **speedometer icon** (bottom-right) to open the optimization panel. You can:
+- Enable/disable individual optimizations (virtualization, GPU transforms, will-change, etc.)
+- Run benchmarks to measure FPS gains
+- Adjust the **Design Quality** slider – lower quality dramatically improves performance (up to +300% FPS) at the cost of visual polish.
+
+---
+
+## 🔧 Preview Environment (for Contributors)
 
 Every branch automatically gets a live preview at `https://amenoke.ru/preview/[branch-name]/amenodes.html` for 10 minutes after the last commit.
-
-### How it works
-
-The CI/CD pipeline uses two repositories:
-- **Public repository (`Amenodes`)** – contains the source code and a lightweight trigger workflow.
-- **Private repository (`amenodes-ci`)** – contains the full deployment logic, secrets, and secure environment.
-
-Workflow:
-- **Creates preview** when a new branch is created (except `main`/`master`).
-- **Updates preview** on every push to any branch.
-- **Auto-cleans** previews after 10 minutes of inactivity.
-- Validates JavaScript syntax and HTML structure before deployment.
-- Posts a detailed comment on each Pull Request with the preview URL and check results.
-
-### Preview URL format
-
-```
-https://amenoke.ru/preview/feature-branch-name/amenodes.html
-```
-
-Branch names with slashes (`feature/new-feature`) become `feature-new-feature`.
 
 ### Preview Lifecycle
 
 ```
-Branch created → Trigger sent → CI repository deploys preview (lives 10 min)
+Branch created → Preview deployed (lives 10 min)
        ↓
 Commit after 5 min → Timer resets (lives another 10 min)
-       ↓
-Commit after 3 min → Timer resets (lives another 10 min)
        ↓
 No activity for 10 min → Preview automatically deleted
 ```
 
-### What gets deployed
+### Production Deployment
 
-The workflow mirrors the entire repository except:
-- `.git/` directory
-- `.github/` directory
-- `preview/` directory (prevents recursive deployment)
-- `backups/` directory
-- `index/` and `index.html` (reserved paths)
-
-### Production deployment
-
-Merges to `main` or `master` automatically deploy to the production site:
-```
-https://amenoke.ru/amenodes.html
-```
-Production deployment never deletes existing files – only adds or updates them.
-
-### How to get the preview URL
-
-After each push, the preview URL appears:
-1. **In the Pull Request comment** – a detailed report with the preview link.
-2. **In GitHub Actions logs** – look for "Preview deployed for branch".
-
-### Testing previews locally before pushing
-
-```bash
-# Create and switch to a new branch
-git checkout -b feature/your-feature
-
-# Run validation locally
-for file in $(find . -name "*.js" -type f); do node -c "$file" || exit 1; done
-grep -q "<!DOCTYPE html>" amenodes.html
-
-# Push to trigger preview deployment
-git push -u origin feature/your-feature
-
-# Preview URL will appear as a comment in the automatically created Pull Request
-```
-
-### Troubleshooting
-
-**Preview not appearing?**
-- Check if branch name is `main` or `master` (previews disabled for production branches).
-- Verify GitHub Actions ran successfully in the main repository (look for `Trigger CI` workflow).
-- Ensure the CI repository (`amenodes-ci`) exists and has valid secrets (`GH_TOKEN`, `SFTP_*`).
-- Make sure there is an `amenodes.html` file in your repository.
-
-**404 error on preview URL?**
-- Wait 1-2 minutes for deployment to complete.
-- Check the CI repository logs for errors.
-- Verify you are using the correct branch name in the URL.
-
-**Server running out of space?**
-- Automatic cleanup runs every 10 minutes via cron job.
-- Inactive previews are removed automatically.
-- Maximum concurrent previews = number of recently active branches.
+Merges to `main` or `master` automatically deploy to: `https://amenoke.ru/amenodes.html`
 
 ---
 
-## Introduction
-
-AMNDS is a node-based visual programming language developed in JavaScript for data analysis and work, replacing cumbersome Excel spreadsheets with a large set of mathematical tools.
-
----
-
-## Tools under development
-
-See Wikipedia update statistics and problem resolutions in the following graphs:
-
-<a href="https://next.ossinsight.io/widgets/official/analyze-repo-pushes-and-commits-per-month?repo_id=1224446727" target="_blank" style="display: block" align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://next.ossinsight.io/widgets/official/analyze-repo-pushes-and-commits-per-month/thumbnail.png?repo_id=1224446727&image_size=auto&color_scheme=dark" width="auto" height="180">
-    <img alt="Pushes and Commits of inzexg-coder/Amenodes" src="https://next.ossinsight.io/widgets/official/analyze-repo-pushes-and-commits-per-month/thumbnail.png?repo_id=1224446727&image_size=auto&color_scheme=dark" width="auto" height="180">
-  </picture>
-</a>
-
-<a href="https://next.ossinsight.io/widgets/official/analyze-user-contribution-time-distribution?user_id=280004226&period=all_times" target="_blank" style="display: block" align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://next.ossinsight.io/widgets/official/analyze-user-contribution-time-distribution/thumbnail.png?user_id=244792661&period=all_times&image_size=auto&color_scheme=dark" width="auto" height="180">
-    <img alt="Contribution Time Distribution of Amenoke" src="https://next.ossinsight.io/widgets/official/analyze-user-contribution-time-distribution/thumbnail.png?user_id=244792661&period=all_times&image_size=auto&color_scheme=dark" width="auto" height="180">
-  </picture>
-</a>
-
----
-
-## Amenoke stats
-
-My latest actions on the GitHub page, somehow related to the project or others:
-
-<a href="https://next.ossinsight.io/widgets/official/compose-user-dashboard-stats?user_id=244792661" target="_blank" style="display: block" align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://next.ossinsight.io/widgets/official/compose-user-dashboard-stats/thumbnail.png?user_id=244792661&image_size=auto&color_scheme=dark" width="890" height="auto">
-    <img alt="Dashboard stats of @inzexg-coder" src="https://next.ossinsight.io/widgets/official/compose-user-dashboard-stats/thumbnail.png?user_id=244792661&image_size=auto&color_scheme=dark" width="890" height="auto">
-  </picture>
-</a>
-
----
-
-## Developer Documentation
+## 📚 Developer Documentation
 
 ### Project Architecture
-
-The codebase is modularized into ES6 classes organized by responsibility. Below is the complete directory structure:
 
 ```
 root/
@@ -168,7 +143,9 @@ root/
 │   │   ├── History.js            # Undo/redo with localStorage autosave
 │   │   └── DataType.js           # Type system for connection validation
 │   ├── nodes/
-│   │   └── NodeFactory.js        # Factory for creating nodes with localized titles
+│   │   ├── registry.js           # Node registration and translation loading
+│   │   ├── manifest/this-manifest.js  # Node manifest
+│   │   └── locales/              # Per-node translations (en/ru)
 │   ├── renderer/
 │   │   ├── Viewport.js           # Pan/zoom viewport controller
 │   │   ├── DomRenderer.js        # DOM manipulation, edge rendering, drag handling
@@ -177,12 +154,14 @@ root/
 │   │   ├── EditableTitle.js      # Inline editable title component
 │   │   ├── OptimizationPanel.js  # Performance tuning panel UI with benchmarking
 │   │   ├── ContextMenu.js        # Right-click context menu for nodes
-│   │   ├── CustomModal.js        # Custom modal dialogs
+│   │   ├── CustomModal.js        # Custom modal dialogs (alert/confirm/prompt)
 │   │   ├── LanguageSwitcher.js   # Language toggle button with dropdown menu
 │   │   └── NodeMenu.js           # Node selection menu with metadata
 │   ├── i18n/
 │   │   ├── LanguageManager.js    # Core i18n manager with subscription system
 │   │   └── locales/
+│   │       ├── en.js             # Base English translations
+│   │       └── ru.js             # Base Russian translations
 │   ├── services/
 │   │   ├── BenchmarkService.js   # Performance benchmarking for optimizations
 │   │   ├── PersistenceService.js # Save/load to localStorage and files
@@ -196,239 +175,105 @@ root/
     └── main.css                  # All application styles
 ```
 
----
+### Adding a New Node Type
 
-## Class Responsibility Matrix
+1. Create a new node class in `src/nodes/` extending `Node` from `core/Node.js`.
+2. Define `metadata` object with at least:
+   ```javascript
+   export const metadata = {
+     type: 'myNode',           // unique identifier
+     nameKey: 'nodes.myNode',  // translation key
+     dataType: 'num',          // 'num', 'array', 'uncert', 'list', 'wlist', 'interval', 'auto'
+     canHaveIncomingEdges: true/false,
+     canHaveOutgoingEdges: true/false,
+     allowedInputTypes: [...],
+     allowedOutputTypes: [...],
+     icon: 'fa-icon'
+   };
+   ```
+3. Implement `createDOM(graph, renderer)` method.
+4. Add translation files:
+   - `src/nodes/locales/en/myNode.js` → `export default { nodes: { myNode: 'My Node' }, nodeDescriptions: {...}, dataTypes: {...} }`
+   - `src/nodes/locales/ru/myNode.js` → Russian version
+5. Register the node in `src/nodes/manifest/this-manifest.js`:
+   ```javascript
+   import { MyNode, metadata as myNodeMeta } from '../MyNode.js';
+   // ... add to nodesManifest array
+   ```
 
-| Class | Path | Purpose | Key Methods |
-|-------|------|---------|--------------|
-| `Graph` | `core/Graph.js` | Manages nodes, edges, dependency resolution | `addNode()`, `addEdge()`, `removeNode()`, `reevaluateAll()` |
-| `Node` | `core/Node.js` | Abstract base class with translation support | `createBaseDiv()`, `getLocalizedTitle()`, `toJSON()` |
-| `NodeFactory` | `nodes/NodeFactory.js` | Node creation with metadata and localization | `createNode()`, `getAvailableNodeTypes()` |
-| `Edge` | `core/Edge.js` | Connection between ports | `toJSON()` |
-| `DataType` | `core/DataType.js` | Type validation for connections | `canConnect()`, `getNodeType()` |
-| `History` | `core/History.js` | Undo/redo with autosave | `save()`, `undo()`, `redo()`, `autoSave()` |
-| `Viewport` | `renderer/Viewport.js` | Camera control (pan with right mouse) | `attach()`, `update()`, `getOffset()` |
-| `DomRenderer` | `renderer/DomRenderer.js` | Node DOM and edge SVG rendering | `render()`, `addHandles()`, `setVirtual()` |
-| `EdgeRenderer` | `renderer/EdgeRenderer.js` | SVG edge rendering with arrows | `renderEdges()`, `getBorderPoint()` |
-| `EditableTitle` | `ui/EditableTitle.js` | Click-to-edit title with symbols | `startEdit()`, `finish()`, `getElement()` |
-| `OptimizationPanel` | `ui/OptimizationPanel.js` | Performance settings with benchmarking | `buildPanel()`, `apply()`, `updateGains()` |
-| `ContextMenu` | `ui/ContextMenu.js` | Right-click context menu | `show()`, `close()` |
-| `CustomModal` | `ui/CustomModal.js` | Custom modal dialogs | `alert()`, `confirm()`, `prompt()` |
-| `LanguageSwitcher` | `ui/LanguageSwitcher.js` | Language toggle dropdown | `init()`, `toggleMenu()` |
-| `NodeMenu` | `ui/NodeMenu.js` | Node selection with search and metadata | `open()`, `close()`, `createNode()` |
-| `LanguageManager` | `i18n/LanguageManager.js` | Core i18n with subscription | `t()`, `setLanguage()`, `subscribe()` |
-| `BenchmarkService` | `services/BenchmarkService.js` | Performance benchmarking | `runBenchmark()`, `captureState()` |
-| `PersistenceService` | `services/PersistenceService.js` | Save/load functionality | `saveToStorage()`, `exportToFile()` |
-| `EventBus` | `services/EventBus.js` | Event pub/sub system | `on()`, `off()`, `emit()` |
-| `SymbolMapper` | `utils/SymbolMapper.js` | Symbol substitution | `replaceSymbols()` |
-| `FPSCounter` | `utils/FPSCounter.js` | FPS monitoring | `start()`, `measure()` |
-| `OPTIMIZATIONS` | `config/Optimizations.js` | Optimization descriptors | None |
+### Internationalization System
 
----
+- **Base translations** (`src/i18n/locales/en.js`, `ru.js`) – contain UI strings (`common`, `toolbar`, `modal`, `errors`, etc.)
+- **Node translations** (`src/nodes/locales/`) – contain `nodes`, `nodeDescriptions`, and node-specific UI sections (`calcTypes`, `output`, `group`, `map`, `confidence`, `dataTypes`).
+- Translations are merged via `deepMerge` – node translations override base translations.
+- Use `t('key')` in any component to get the current language's translation.
 
-## How to Use the Classes for Developers
+### Adding New Translations for Node Data Types
 
-### Core Graph Management
-
+To add a new data type (e.g., `'matrix'`), add to the node's translation file:
 ```javascript
-import { Graph } from './core/Graph.js';
-import { NumberNode } from './nodes/NumberNode.js';
-import { OutputNode } from './nodes/OutputNode.js';
-
-const graph = new Graph();
-
-const numNode = new NumberNode(null, 100, 100, "My Number", 42);
-const outNode = new OutputNode(null, 400, 100, "Output", []);
-
-graph.addNode(numNode);
-graph.addNode(outNode);
-graph.addEdge(numNode.id, outNode.id);
-graph.reevaluateAll();
-graph.updateAllOutputs();
-```
-
-### Creating Nodes with Factory (Recommended)
-
-```javascript
-import { NodeFactory } from './nodes/NodeFactory.js';
-
-const numberNode = NodeFactory.createNumberAt(200, 150, 100);
-const constantNode = NodeFactory.createConstantAt(200, 250, 3.14159);
-const groupNode = NodeFactory.createGroupAt(200, 350);
-const calcNode = NodeFactory.createCalcAt(500, 150, 'div3', 'Measurement Error');
-const outputNode = NodeFactory.createOutputAt(500, 350);
-const mapNode = NodeFactory.createMapAt(500, 250);
-const confidenceNode = NodeFactory.createConfidenceIntervalAt(500, 450);
-
-graph.addNode(numberNode);
-```
-
-### Using the Type System
-
-```javascript
-import { typeSystem, DataType } from './core/DataType.js';
-
-const canConnect = typeSystem.canConnect(
-  DataType.NUM,   // source type
-  'number',       // source node type
-  DataType.AUTO,  // target type
-  'output'        // target node type
-);
-
-const nodeType = typeSystem.getNodeType(someNode);
-```
-
-### Undo/Redo with History
-
-```javascript
-import { History } from './core/History.js';
-
-const history = new History(graph, 50);
-history.save();
-history.undo();
-history.redo();
-history.autoSave();
-```
-
-### Rendering with Viewport and DomRenderer
-
-```javascript
-import { Viewport } from './renderer/Viewport.js';
-import { DomRenderer } from './renderer/DomRenderer.js';
-
-const viewport = new Viewport(viewportElement, canvasContainer);
-const renderer = new DomRenderer(graph, nodesLayer, viewportElement, eventBus);
-
-renderer.setViewport(viewport);
-renderer.setHistory(history);
-renderer.render();
-renderer.setVirtual(true); // Enable virtualization for performance
-```
-
-### Internationalization (i18n)
-
-```javascript
-import { i18n, t } from './i18n/LanguageManager.js';
-
-const lang = i18n.getCurrentLanguage(); // 'en' or 'ru'
-const translated = t('common.ok'); // 'OK' or 'ОК'
-
-i18n.setLanguage('ru');
-
-const unsubscribe = i18n.subscribe((lang, translations) => {
-  console.log(`Language changed to ${lang}`);
-  this.updateUI();
-});
-
-unsubscribe();
-```
-
-### Adding New Translations
-
-1. Add keys to both `src/i18n/locales/ru.js` and `src/i18n/locales/en.js`
-2. Use nested object structure: `category.subcategory.key`
-3. Use `t('category.subcategory.key')` in components
-
-```javascript
-// locales/en.js
-export const en = {
-  myFeature: {
-    buttonText: 'Click Me',
-    description: 'This is a {color} button'
+export default {
+  // ... existing translations
+  dataTypes: {
+    matrix: 'Matrix'  // English
   }
 };
-
-// In component
-const text = t('myFeature.buttonText');
-const desc = t('myFeature.description', { color: 'red' });
 ```
 
-### Performance Benchmarking
-
+And in the Russian file:
 ```javascript
-import { BenchmarkService } from './services/BenchmarkService.js';
-import { OPTIMIZATIONS } from './config/Optimizations.js';
-
-const benchmarkService = new BenchmarkService(graph, fpsCounter, OPTIMIZATIONS);
-const result = await benchmarkService.runBenchmark();
-console.log(`Baseline FPS: ${result.baseline}`);
-console.log(`Gains: ${result.gains}`);
+export default {
+  dataTypes: {
+    matrix: 'Матрица'
+  }
+};
 ```
 
-### Save/Load Functionality
+### Type System
 
-```javascript
-import { PersistenceService } from './services/PersistenceService.js';
+The type system validates connections:
+- Each node declares its `dataType`.
+- Each node declares `allowedInputTypes` and `allowedOutputTypes`.
+- `DataType.canConnect()` checks compatibility.
 
-const persistence = new PersistenceService(graph);
-persistence.saveToStorage(viewport, currentZoom, qualityValue);
-const saved = persistence.loadFromStorage();
-persistence.exportToFile();
-const success = await persistence.importFromFile(file);
-```
+### Key Classes for Developers
 
-### Custom Modal Dialogs
-
-```javascript
-import { modal } from './ui/CustomModal.js';
-
-await modal.alert('Something happened');
-const confirmed = await modal.confirm('Are you sure?');
-const value = await modal.prompt('Enter value:', 'default');
-```
-
-### Event Bus
-
-```javascript
-import { EventBus } from './services/EventBus.js';
-
-const bus = new EventBus();
-bus.on('node:created', (data) => console.log(data.nodeId));
-bus.emit('node:created', { nodeId: 123 });
-```
+| Class | Path | Purpose |
+|-------|------|---------|
+| `Graph` | `core/Graph.js` | Manages nodes, edges, evaluation |
+| `Node` | `core/Node.js` | Abstract base class for nodes |
+| `NodeFactory` | `nodes/NodeFactory.js` | Node creation with i18n |
+| `DataType` | `core/DataType.js` | Connection type validation |
+| `History` | `core/History.js` | Undo/redo with autosave |
+| `Viewport` | `renderer/Viewport.js` | Pan/zoom control |
+| `DomRenderer` | `renderer/DomRenderer.js` | DOM rendering, drag handling |
+| `EdgeRenderer` | `renderer/EdgeRenderer.js` | SVG edge rendering |
+| `LanguageManager` | `i18n/LanguageManager.js` | i18n with subscriptions |
+| `BenchmarkService` | `services/BenchmarkService.js` | Performance benchmarking |
 
 ---
 
-## Versioning System
+## 📝 Versioning
 
-Amenoke follows a structured versioning scheme combining semantic versioning, pre-release labels, and change-type codes.
+Format: `MAJOR.MINOR.PATCH[-PRERELEASE][-CODETYPE]`
 
-### Format
-`MAJOR.MINOR.PATCH[-PRERELEASE][-CODETYPE]`
-
-| Component | Meaning | Example |
-|-----------|---------|---------|
-| **MAJOR** | Breaking changes (incompatible API) | `2.0.0` |
-| **MINOR** | Backward-compatible new features | `1.2.0` |
-| **PATCH** | Backward-compatible bug fixes | `1.0.1` |
-| **PRERELEASE** | Development phase: `-alphaN`, `-betaN`, `-rcN` | `-rc1` |
-| **CODETYPE** | Nature of changes: `API`, `TYP`, `SEC`, `OPT`, `DEP`, `REM`, `SYN`, `I18N` | `-I18N` |
-
-### Change Type Codes
-
-| Code | Meaning | When to Use |
-|------|---------|--------------|
-| `API` | Public API changes | After modifying `Graph.js` public interface |
-| `TYP` | Type system enhancements | After changes to `DataType.js` or `Node.js` |
-| `SEC` | Security fixes | After patching vulnerabilities |
-| `OPT` | Performance optimizations | After changes in `Optimizations.js` or renderer |
-| `DEP` | Deprecations | After marking old features as deprecated |
-| `REM` | Removed features | After deleting old functionality |
-| `SYN` | Syntax/parser changes | After modifying node connection rules |
-| `I18N` | Internationalization | After adding/updating language support |
+| Component | Meaning |
+|-----------|---------|
+| **MAJOR** | Breaking changes |
+| **MINOR** | New features (backward-compatible) |
+| **PATCH** | Bug fixes |
+| **PRERELEASE** | `-alphaN`, `-betaN`, `-rcN` |
+| **CODETYPE** | `API`, `TYP`, `SEC`, `OPT`, `DEP`, `REM`, `SYN`, `I18N` |
 
 ---
 
-## Git Workflow for Contributors
+## 🤝 Contributing
 
-### Repository Setup
-
-```bash
-git clone https://github.com/inzexg-coder/Amenodes.git
-cd Amenodes
-git checkout -b feature/your-feature-name
-```
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit changes (see commit convention below)
+4. Push to the branch
+5. Open a Pull Request – CI will deploy a preview automatically
 
 ### Commit Convention
 
@@ -443,37 +288,9 @@ git checkout -b feature/your-feature-name
 | `i18n:` | Translation changes |
 | `chore:` | Build/config changes |
 
-### Before Committing
-
-1. Test all existing node types
-2. Run manual FPS benchmark
-3. Ensure no regression in undo/redo
-4. Verify import/export compatibility
-5. Test language switching
-
-### Pull Request Process
-
-1. Push to your feature branch
-2. Open PR against `main` branch
-3. CI automatically runs validation and deploys a preview
-4. A detailed comment with preview URL and check results will appear in the PR
-5. Review the preview and the code changes
-6. Merge using **Squash and merge** when ready
-7. Delete the branch after merging
-
-### Branch Protection Rules
-
-The `main` branch is protected with the following rules:
-- Linear history required (no merge commits)
-- Direct pushes are blocked – all changes must go through Pull Requests
-- Force pushes are disabled
-- Deletion of the branch is prohibited
-- Status checks must pass (JavaScript syntax, HTML validation)
-- No approval required for the repository owner (automatic merge allowed after checks pass)
-
 ---
 
-## Contact & Support
+## 📬 Contact & Support
 
 <a href="https://t.me/Amenoke" target="_blank">
 <img src=https://img.shields.io/badge/telegram-%2300acee.svg?color=1DA1F2&style=for-the-badge&logo=telegram&logoColor=white alt=telegram>
