@@ -83,6 +83,11 @@ class Application {
       setZoom(currentZoom * (1 - e.deltaY * 0.005));
     }, { passive: false });
     
+    viewportEl.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      return false;
+    });
+    
     window.setZoom = setZoom;
     window.currentZoom = currentZoom;
     window.applyDesignQuality = (p) => this.applyDesignQuality(p);
@@ -218,8 +223,26 @@ class Application {
     if (collapseLeft && leftSidebar) {
       collapseLeft.onclick = () => leftSidebar.classList.toggle('collapsed');
     }
-    if (collapseRight && rightSidebar) {
-      collapseRight.onclick = () => rightSidebar.classList.toggle('collapsed');
+    
+    const rightSidebarHeader = document.querySelector('#rightSidebar .sidebar-header');
+    if (rightSidebarHeader && !document.getElementById('propertiesToggleBtn')) {
+      const toggleBtn = document.createElement('button');
+      toggleBtn.id = 'propertiesToggleBtn';
+      toggleBtn.className = 'properties-toggle';
+      toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+      toggleBtn.title = 'Toggle Properties Panel';
+      toggleBtn.onclick = () => {
+        if (rightSidebar) {
+          rightSidebar.classList.toggle('collapsed');
+          const icon = toggleBtn.querySelector('i');
+          if (rightSidebar.classList.contains('collapsed')) {
+            icon.className = 'fas fa-chevron-left';
+          } else {
+            icon.className = 'fas fa-chevron-right';
+          }
+        }
+      };
+      rightSidebarHeader.appendChild(toggleBtn);
     }
     
     if (closeSettingsModal) closeSettingsModal.onclick = () => this.closeCanvasSettings();
