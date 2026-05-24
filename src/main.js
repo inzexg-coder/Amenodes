@@ -130,8 +130,8 @@ class Application {
   }
 
   openCanvasSettings() {
-    const modal = document.getElementById('canvasSettingsModal');
-    if (!modal) return;
+    const modalEl = document.getElementById('canvasSettingsModal');
+    if (!modalEl) return;
     
     const gridStyleSelect = document.getElementById('gridStyleSelect');
     const gridSizeInput = document.getElementById('gridSize');
@@ -151,12 +151,12 @@ class Application {
       }
     });
     
-    modal.classList.remove('hidden');
+    modalEl.classList.remove('hidden');
   }
 
   closeCanvasSettings() {
-    const modal = document.getElementById('canvasSettingsModal');
-    if (modal) modal.classList.add('hidden');
+    const modalEl = document.getElementById('canvasSettingsModal');
+    if (modalEl) modalEl.classList.add('hidden');
   }
 
   saveCanvasSettings() {
@@ -193,7 +193,6 @@ class Application {
     const optToggleBtn = document.getElementById('optToggleBtn');
     const fileInput = document.getElementById('fileInput');
     const collapseLeft = document.getElementById('collapseLeftBtn');
-    const collapseRight = document.getElementById('collapseRightBtn');
     const leftSidebar = document.getElementById('leftSidebar');
     const rightSidebar = document.getElementById('rightSidebar');
     const closeSettingsModal = document.getElementById('closeSettingsModal');
