@@ -29,7 +29,13 @@ const getOptKey = (name) => {
 export class OptimizationPanel {
   constructor(panelId, toggleBtnId, closeBtnId, applyBtnId, rebenchBtnId, benchmarkService, renderer, history) {
     this.panel = document.getElementById(panelId);
-    this.toggleBtn = document.getElementById(toggleBtnId);
+    this.toggleBtn = null;
+    if (toggleBtnId) {
+      this.toggleBtn = document.getElementById(toggleBtnId);
+    }
+    if (!this.toggleBtn) {
+      this.toggleBtn = document.getElementById('optToggleBtn');
+    }
     this.closeBtn = document.getElementById(closeBtnId);
     this.applyBtn = document.getElementById(applyBtnId);
     this.rebenchBtn = document.getElementById(rebenchBtnId);
@@ -44,16 +50,31 @@ export class OptimizationPanel {
   }
 
   init() {
-    this.toggleBtn.onclick = () => this.panel.classList.toggle('hidden');
-    this.closeBtn.onclick = () => this.panel.classList.add('hidden');
-    this.applyBtn.onclick = () => this.apply();
-    this.rebenchBtn.onclick = async () => {
-      this.panel.classList.add('hidden');
-      const result = await this.benchmarkService.runBenchmark(true);
-      this.currentGains = result.gains;
-      this.buildPanel(window.currentQualityValue || 100);
-      this.panel.classList.remove('hidden');
-    };
+    if (this.toggleBtn) {
+      this.toggleBtn.onclick = () => {
+        if (this.panel) this.panel.classList.toggle('hidden');
+      };
+    }
+    
+    if (this.closeBtn) {
+      this.closeBtn.onclick = () => {
+        if (this.panel) this.panel.classList.add('hidden');
+      };
+    }
+    
+    if (this.applyBtn) {
+      this.applyBtn.onclick = () => this.apply();
+    }
+    
+    if (this.rebenchBtn) {
+      this.rebenchBtn.onclick = async () => {
+        if (this.panel) this.panel.classList.add('hidden');
+        const result = await this.benchmarkService.runBenchmark(true);
+        this.currentGains = result.gains;
+        this.buildPanel(window.currentQualityValue || 100);
+        if (this.panel) this.panel.classList.remove('hidden');
+      };
+    }
     
     i18n.subscribe(() => {
       this.buildPanel(window.currentQualityValue || 100);
@@ -94,8 +115,12 @@ export class OptimizationPanel {
       container.appendChild(item);
     });
     
-    this.applyBtn.textContent = t('common.apply') + ' ' + t('optimizations.fpsGain');
-    this.rebenchBtn.textContent = t('optimizations.fpsGain') + ' →';
+    if (this.applyBtn) {
+      this.applyBtn.textContent = t('common.apply') + ' ' + t('optimizations.fpsGain');
+    }
+    if (this.rebenchBtn) {
+      this.rebenchBtn.textContent = t('optimizations.fpsGain') + ' →';
+    }
   }
 
   createSliderInfo(opt, currentValue) {
@@ -193,29 +218,58 @@ export class OptimizationPanel {
   apply() {
     const state = this.optState;
     
-    if (state[0]) this.renderer.setVirtual(true);
-    else this.renderer.setVirtual(false);
+    if (state[0] && this.renderer && this.renderer.setVirtual) {
+      this.renderer.setVirtual(true);
+    } else if (this.renderer && this.renderer.setVirtual) {
+      this.renderer.setVirtual(false);
+    }
     
     const canvasContainer = document.getElementById('canvasContainer');
-    if (state[1]) canvasContainer.style.transform = 'translate3d(0,0,0)';
-    else canvasContainer.style.transform = '';
+    if (canvasContainer) {
+      if (state[1]) {
+        canvasContainer.style.transform = 'translate3d(0,0,0)';
+      } else {
+        canvasContainer.style.transform = '';
+      }
+    }
     
-    this.renderer.opts.willChange = state[5];
-    this.renderer.opts.contain = state[9];
-    this.renderer.opts.pointerEvents = state[12];
+    if (this.renderer && this.renderer.opts) {
+      this.renderer.opts.willChange = state[5];
+      this.renderer.opts.contain = state[9];
+      this.renderer.opts.pointerEvents = state[12];
+    }
     
-    this.renderer.applyOptStyles = function(el) {
-      if (this.opts.willChange) el.style.willChange = 'left, top';
-      else el.style.willChange = '';
-      if (this.opts.contain) el.style.contain = 'layout paint';
-      else el.style.contain = '';
-    };
+    if (this.renderer && this.renderer.applyOptStyles) {
+      const self = this;
+      this.renderer.applyOptStyles = function(el) {
+        if (self.renderer && self.renderer.opts && self.renderer.opts.willChange) {
+          el.style.willChange = 'left, top';
+        } else if (el) {
+          el.style.willChange = '';
+        }
+        if (self.renderer && self.renderer.opts && self.renderer.opts.contain) {
+          el.style.contain = 'layout paint';
+        } else if (el) {
+          el.style.contain = '';
+        }
+      };
+    }
     
-    if (state[15]) this.history.maxSize = 20;
-    else this.history.maxSize = 50;
+    if (this.history) {
+      if (state[15]) {
+        this.history.maxSize = 20;
+      } else {
+        this.history.maxSize = 50;
+      }
+    }
     
-    this.renderer.render();
-    this.panel.classList.add('hidden');
+    if (this.renderer && this.renderer.render) {
+      this.renderer.render();
+    }
+    
+    if (this.panel) {
+      this.panel.classList.add('hidden');
+    }
   }
 
   updateGains(gains) {
