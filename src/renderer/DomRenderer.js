@@ -22,6 +22,8 @@ export class DomRenderer {
     this.virtual = false;
     this.heightCache = new Map();
     this.elementCache = new Map();
+    this.selectedNodeId = null;          
+    this.onNodeSelected = null;         
     this.opts = {
       willChange: false,
       contain: false,
@@ -85,11 +87,9 @@ export class DomRenderer {
   updateNodeClass(node) {
     const element = this.elementCache.get(node.id);
     if (element) {
-      if (node.important) {
-        element.classList.add('node-important');
-      } else {
-        element.classList.remove('node-important');
-      }
+      element.classList.remove('node-important', 'node-selected');
+      if (node.important) element.classList.add('node-important');
+      if (this.selectedNodeId === node.id) element.classList.add('node-selected');
     }
   }
 
@@ -121,6 +121,19 @@ export class DomRenderer {
     }
     
     this.edgeRenderer.renderEdges(filteredEdges, this.graph, rectCache);
+  }
+
+  setSelectedNode(nodeId) {
+    if (this.selectedNodeId === nodeId) return;
+    if (this.selectedNodeId !== null) {
+      const oldElement = this.elementCache.get(this.selectedNodeId);
+      if (oldElement) oldElement.classList.remove('node-selected');
+    }
+    this.selectedNodeId = nodeId;
+    if (nodeId !== null) {
+      const newElement = this.elementCache.get(nodeId);
+      if (newElement) newElement.classList.add('node-selected');
+    }
   }
 
   render() {
@@ -350,6 +363,11 @@ export class DomRenderer {
     const node = this.graph.getNode(nodeId);
     if (!node) return;
     
+    if (this.onNodeSelected) {
+      this.onNodeSelected(nodeId);
+    }
+    this.setSelectedNode(nodeId);
+
     this.dragNode = node;
     this.dragStartX = event.clientX;
     this.dragStartY = event.clientY;
