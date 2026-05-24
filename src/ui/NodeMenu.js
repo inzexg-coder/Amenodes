@@ -23,15 +23,22 @@ export class NodeMenu {
   }
 
   createButton() {
-    const toolbar = document.querySelector('.toolbar div:first-child');
+    const toolbar = document.querySelector('.canvas-controls');
     if (!toolbar) return;
     
     this.button = document.createElement('button');
     this.button.id = 'nodeMenuBtn';
-    this.button.innerHTML = '<i class="fas fa-plus"></i>';
+    this.button.className = 'top-btn';
+    this.button.innerHTML = '<i class="fas fa-plus"></i> Add Node';
     this.button.title = t('toolbar.addNode');
     this.button.onclick = () => this.toggle();
-    toolbar.appendChild(this.button);
+    
+    const addNodeBtn = document.getElementById('addNodeBtn');
+    if (addNodeBtn && addNodeBtn.parentNode) {
+      addNodeBtn.parentNode.insertBefore(this.button, addNodeBtn);
+    } else {
+      toolbar.appendChild(this.button);
+    }
     
     i18n.subscribe(() => {
       if (this.button) this.button.title = t('toolbar.addNode');
@@ -278,6 +285,10 @@ export class NodeMenu {
     this.graph.updateAllOutputs();
     this.renderer.render();
     if (this.renderer.history) this.renderer.save();
+    const nodeCountEl = document.getElementById('nodeCount');
+    if (nodeCountEl) {
+      nodeCountEl.textContent = `${this.graph.nodes.length} nodes`;
+    }
   }
 
   close() {
