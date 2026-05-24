@@ -1,5 +1,5 @@
 import { NodeFactory } from '../nodes/NodeFactory.js';
-import { modal } from './CustomModal.js';
+import { modal } from '../ui/CustomModal.js';
 import { i18n, t } from '../i18n/LanguageManager.js';
 
 export class ContextMenu {
@@ -175,6 +175,7 @@ export class ContextMenu {
     this.graph.updateAllOutputs();
     this.renderer.render();
     this.history.save();
+    
     const nodeCountEl = document.getElementById('nodeCount');
     if (nodeCountEl) {
       nodeCountEl.textContent = `${this.graph.nodes.length} nodes`;
