@@ -28,7 +28,7 @@ class Application {
     this.persistenceService = new PersistenceService(this.graph);
     this.gridStyle = localStorage.getItem('canvas_grid_style') || 'dots';
     this.gridSize = parseInt(localStorage.getItem('canvas_grid_size') || '20');
-    this.backgroundColor = localStorage.getItem('canvas_bg_color') || 'radial-gradient(circle at 20% 30%, #1a1e2c, #0a0c14)';
+    this.backgroundColor = 'radial-gradient(circle at 20% 30%, #1a1e2c, #0a0c14)';
     this.snapToGrid = localStorage.getItem('canvas_snap_to_grid') === 'true';
 
     this.initRenderer();
@@ -52,6 +52,7 @@ class Application {
     this.viewport = new Viewport(viewportEl, canvasContainer);
     this.renderer = new DomRenderer(this.graph, nodesLayer, viewportEl, this.eventBus);
     this.renderer.setViewport(this.viewport);
+    this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
     this.viewport.onChange = () => {
       this.renderer.render();
       this.updateCoordIndicator();
@@ -141,16 +142,6 @@ class Application {
     if (gridSizeInput) gridSizeInput.value = this.gridSize;
     if (snapToGridCheck) snapToGridCheck.checked = this.snapToGrid;
     
-    const presets = document.querySelectorAll('.color-preset');
-    presets.forEach(preset => {
-      const bg = preset.getAttribute('data-bg');
-      if (bg === this.backgroundColor) {
-        preset.classList.add('selected');
-      } else {
-        preset.classList.remove('selected');
-      }
-    });
-    
     modalEl.classList.remove('hidden');
   }
 
@@ -163,20 +154,18 @@ class Application {
     const gridStyleSelect = document.getElementById('gridStyleSelect');
     const gridSizeInput = document.getElementById('gridSize');
     const snapToGridCheck = document.getElementById('snapToGrid');
-    const selectedPreset = document.querySelector('.color-preset.selected');
     
     this.gridStyle = gridStyleSelect ? gridStyleSelect.value : 'dots';
     this.gridSize = gridSizeInput ? parseInt(gridSizeInput.value) : 20;
     this.snapToGrid = snapToGridCheck ? snapToGridCheck.checked : false;
     
-    if (selectedPreset) {
-      this.backgroundColor = selectedPreset.getAttribute('data-bg') || this.backgroundColor;
-    }
-    
     localStorage.setItem('canvas_grid_style', this.gridStyle);
     localStorage.setItem('canvas_grid_size', this.gridSize.toString());
     localStorage.setItem('canvas_snap_to_grid', this.snapToGrid.toString());
-    localStorage.setItem('canvas_bg_color', this.backgroundColor);
+    
+    if (this.renderer) {
+      this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
+    }
     
     this.applyCanvasSettings();
     this.closeCanvasSettings();
@@ -247,14 +236,6 @@ class Application {
     if (closeSettingsModal) closeSettingsModal.onclick = () => this.closeCanvasSettings();
     if (cancelSettings) cancelSettings.onclick = () => this.closeCanvasSettings();
     if (applySettings) applySettings.onclick = () => this.saveCanvasSettings();
-    
-    const colorPresets = document.querySelectorAll('.color-preset');
-    colorPresets.forEach(preset => {
-      preset.onclick = () => {
-        colorPresets.forEach(p => p.classList.remove('selected'));
-        preset.classList.add('selected');
-      };
-    });
     
     if (newCanvasBtn) {
       newCanvasBtn.onclick = () => {
@@ -469,6 +450,11 @@ class Application {
     });
   }
   
+  snapToGridValue(value) {
+    if (!this.snapToGrid) return value;
+    return Math.round(value / this.gridSize) * this.gridSize;
+  }
+
   createNodeAtCenter(type, subnode = null) {
     const viewportRect = document.getElementById('viewport').getBoundingClientRect();
     const offset = this.viewport.getOffset();
@@ -477,10 +463,8 @@ class Application {
     let x = (viewportRect.width / 2 - offset.x) / zoom - 140;
     let y = (viewportRect.height / 2 - offset.y) / zoom - 40;
     
-    if (this.snapToGrid) {
-      x = Math.round(x / this.gridSize) * this.gridSize;
-      y = Math.round(y / this.gridSize) * this.gridSize;
-    }
+    x = this.snapToGridValue(x);
+    y = this.snapToGridValue(y);
     
     const options = { x, y };
     if (subnode) Object.assign(options, subnode);
