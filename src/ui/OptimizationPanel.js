@@ -29,7 +29,7 @@ const getOptKey = (name) => {
 export class OptimizationPanel {
   constructor(panelId, toggleBtnId, closeBtnId, applyBtnId, rebenchBtnId, benchmarkService, renderer, history) {
     this.panel = document.getElementById(panelId);
-    this.toggleBtn = document.getElementById(toggleBtnId);
+    this.toggleBtn = toggleBtnId ? document.getElementById(toggleBtnId) : null;
     this.closeBtn = document.getElementById(closeBtnId);
     this.applyBtn = document.getElementById(applyBtnId);
     this.rebenchBtn = document.getElementById(rebenchBtnId);
@@ -44,16 +44,27 @@ export class OptimizationPanel {
   }
 
   init() {
-    this.toggleBtn.onclick = () => this.panel.classList.toggle('hidden');
-    this.closeBtn.onclick = () => this.panel.classList.add('hidden');
-    this.applyBtn.onclick = () => this.apply();
-    this.rebenchBtn.onclick = async () => {
-      this.panel.classList.add('hidden');
-      const result = await this.benchmarkService.runBenchmark(true);
-      this.currentGains = result.gains;
-      this.buildPanel(window.currentQualityValue || 100);
-      this.panel.classList.remove('hidden');
-    };
+    if (this.toggleBtn) {
+      this.toggleBtn.onclick = () => this.panel.classList.toggle('hidden');
+    }
+    
+    if (this.closeBtn) {
+      this.closeBtn.onclick = () => this.panel.classList.add('hidden');
+    }
+    
+    if (this.applyBtn) {
+      this.applyBtn.onclick = () => this.apply();
+    }
+    
+    if (this.rebenchBtn) {
+      this.rebenchBtn.onclick = async () => {
+        this.panel.classList.add('hidden');
+        const result = await this.benchmarkService.runBenchmark(true);
+        this.currentGains = result.gains;
+        this.buildPanel(window.currentQualityValue || 100);
+        this.panel.classList.remove('hidden');
+      };
+    }
     
     i18n.subscribe(() => {
       this.buildPanel(window.currentQualityValue || 100);
@@ -94,8 +105,12 @@ export class OptimizationPanel {
       container.appendChild(item);
     });
     
-    this.applyBtn.textContent = t('common.apply') + ' ' + t('optimizations.fpsGain');
-    this.rebenchBtn.textContent = t('optimizations.fpsGain') + ' →';
+    if (this.applyBtn) {
+      this.applyBtn.textContent = t('common.apply') + ' ' + t('optimizations.fpsGain');
+    }
+    if (this.rebenchBtn) {
+      this.rebenchBtn.textContent = t('optimizations.fpsGain') + ' →';
+    }
   }
 
   createSliderInfo(opt, currentValue) {
@@ -197,8 +212,10 @@ export class OptimizationPanel {
     else this.renderer.setVirtual(false);
     
     const canvasContainer = document.getElementById('canvasContainer');
-    if (state[1]) canvasContainer.style.transform = 'translate3d(0,0,0)';
-    else canvasContainer.style.transform = '';
+    if (canvasContainer) {
+      if (state[1]) canvasContainer.style.transform = 'translate3d(0,0,0)';
+      else canvasContainer.style.transform = '';
+    }
     
     this.renderer.opts.willChange = state[5];
     this.renderer.opts.contain = state[9];
@@ -215,7 +232,7 @@ export class OptimizationPanel {
     else this.history.maxSize = 50;
     
     this.renderer.render();
-    this.panel.classList.add('hidden');
+    if (this.panel) this.panel.classList.add('hidden');
   }
 
   updateGains(gains) {
