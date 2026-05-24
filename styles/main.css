@@ -23,6 +23,7 @@ body {
   justify-content: center;
   z-index: 10000;
   backdrop-filter: blur(2px);
+  transition: opacity 0.3s ease;
 }
 
 .splash-card {
@@ -634,6 +635,10 @@ body {
   color: #aab4d4;
 }
 
+.modal-close:hover {
+  color: #ffb347;
+}
+
 .modal-body {
   padding: 20px;
 }
@@ -666,6 +671,12 @@ body {
 .color-preset:hover {
   transform: scale(1.1);
   border-color: #ffb347;
+}
+
+.color-preset.selected {
+  border-color: #ffb347;
+  transform: scale(1.1);
+  box-shadow: 0 0 0 2px rgba(255, 179, 71, 0.3);
 }
 
 .setting-group select, .setting-group input[type="number"] {
@@ -785,6 +796,12 @@ body {
   font-size: 12px;
   z-index: 500;
   color: #ffcd7e;
+}
+
+.loading-nodes {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6d8ae0;
 }
 
 ::-webkit-scrollbar {
