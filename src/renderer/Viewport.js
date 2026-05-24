@@ -1,5 +1,5 @@
 import { NodeFactory } from '../nodes/NodeFactory.js';
-import { modal } from './CustomModal.js';
+import { modal } from '../ui/CustomModal.js';
 import { i18n, t } from '../i18n/LanguageManager.js';
 
 export class ContextMenu {
