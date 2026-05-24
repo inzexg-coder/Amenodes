@@ -2,9 +2,6 @@ import { Graph } from './core/Graph.js';
 import { Viewport } from './renderer/Viewport.js';
 import { DomRenderer } from './renderer/DomRenderer.js';
 import { History } from './core/History.js';
-import { ToolbarController } from './ui/ToolbarController.js';
-import { OptimizationPanel } from './ui/OptimizationPanel.js';
-import { BenchmarkService } from './services/BenchmarkService.js';
 import { PersistenceService } from './services/PersistenceService.js';
 import { EventBus } from './services/EventBus.js';
 import { FPSCounter } from './utils/FPSCounter.js';
@@ -14,6 +11,10 @@ import { modal } from './ui/CustomModal.js';
 import { NodeMenu } from './ui/NodeMenu.js';
 import { loadAllNodes, nodeRegistry, getNodeClass } from './nodes/registry.js';
 import { typeSystem } from './core/DataType.js';
+import { SplashManager } from './scripts/splash.js';
+import { OptimizationPanel } from './ui/OptimizationPanel.js';
+import { BenchmarkService } from './services/BenchmarkService.js';
+import { ToolbarController } from './ui/ToolbarController.js';
 
 window.alert = (msg) => { modal.alert(msg); };
 window.confirm = (msg) => modal.confirm(msg);
@@ -26,15 +27,17 @@ class Application {
     this.fpsCounter = new FPSCounter('fpsMeter');
     this.benchmarkService = new BenchmarkService(this.graph, this.fpsCounter, OPTIMIZATIONS);
     this.persistenceService = new PersistenceService(this.graph);
+    this.splashManager = new SplashManager(this);
 
     this.initRenderer();
     this.initHistory();
     this.initViewport();
-    this.initToolbar();
+    this.initUI();
     this.initOptimizationPanel();
     this.initNodeMenu();
     this.initEvents();
     this.initI18n();
+    this.initSidebar();
     
     this.initNodesAndStart();
   }
@@ -47,7 +50,10 @@ class Application {
     this.viewport = new Viewport(viewportEl, canvasContainer);
     this.renderer = new DomRenderer(this.graph, nodesLayer, viewportEl, this.eventBus);
     this.renderer.setViewport(this.viewport);
-    this.viewport.onChange = () => this.renderer.render();
+    this.viewport.onChange = () => {
+      this.renderer.render();
+      this.updateCoordIndicator();
+    };
     
     window._renderer = this.renderer;
   }
@@ -67,6 +73,7 @@ class Application {
       window.currentZoom = currentZoom;
       this.viewport.update();
       this.renderer.render();
+      this.updateZoomIndicator();
     };
     
     viewportEl.addEventListener('wheel', (e) => {
@@ -88,24 +95,54 @@ class Application {
     else if (percent <= 80) document.body.classList.add('design-quality-2');
   }
 
-  initToolbar() {
-    this.toolbar = new ToolbarController(
-      this.graph, this.renderer, this.history, this.viewport, this.persistenceService
-    );
-    this.toolbar.init();
+  initUI() {
+    const undoBtn = document.getElementById('undoBtn');
+    const redoBtn = document.getElementById('redoBtn');
+    const exportBtn = document.getElementById('canvasExportBtn');
+    const importBtn = document.getElementById('canvasImportBtn');
+    const clearStorageBtn = document.getElementById('clearStorageBtn');
+    const addNodeBtn = document.getElementById('addNodeBtn');
+    const canvasSettingsBtn = document.getElementById('canvasSettingsBtn');
+    const optToggleBtn = document.getElementById('optToggleBtn');
+    const fileInput = document.getElementById('fileInput');
+    
+    if (undoBtn) undoBtn.onclick = () => this.undo();
+    if (redoBtn) redoBtn.onclick = () => this.redo();
+    if (exportBtn) exportBtn.onclick = () => this.export();
+    if (importBtn) importBtn.onclick = () => this.import();
+    if (clearStorageBtn) clearStorageBtn.onclick = () => this.clearStorage();
+    if (addNodeBtn) addNodeBtn.onclick = () => this.openNodeMenu();
+    if (canvasSettingsBtn) canvasSettingsBtn.onclick = () => this.splashManager.openCanvasSettings();
+    if (optToggleBtn) {
+      optToggleBtn.onclick = () => {
+        const panel = document.getElementById('optPanel');
+        if (panel) panel.classList.toggle('hidden');
+      };
+    }
+    if (fileInput) fileInput.onchange = (e) => this.handleFileImport(e);
+
+    const collapseLeft = document.getElementById('collapseLeftBtn');
+    const collapseRight = document.getElementById('collapseRightBtn');
+    const leftSidebar = document.getElementById('leftSidebar');
+    const rightSidebar = document.getElementById('rightSidebar');
+    
+    if (collapseLeft && leftSidebar) {
+      collapseLeft.onclick = () => leftSidebar.classList.toggle('collapsed');
+    }
+    if (collapseRight && rightSidebar) {
+      collapseRight.onclick = () => rightSidebar.classList.toggle('collapsed');
+    }
+    
+    this.splashManager.init();
   }
 
   initOptimizationPanel() {
     this.optPanel = new OptimizationPanel(
-      'optPanel', 'optToggleBtn', 'closeOptPanel', 'applyOptimizationsBtn', 'rebenchmarkBtn',
+      'optPanel', null, 'closeOptPanel', 'applyOptimizationsBtn', 'rebenchmarkBtn',
       this.benchmarkService, this.renderer, this.history
     );
     this.optPanel.setDesignQualityCallback((value) => this.applyDesignQuality(value));
     this.optPanel.buildPanel(window.currentQualityValue || 100);
-    
-    setTimeout(() => {
-      this.runInitialBenchmark();
-    }, 1000);
   }
 
   initNodeMenu() {
@@ -113,14 +150,218 @@ class Application {
     this.nodeMenu.init();
   }
 
-  async runInitialBenchmark() {
-    try {
-      const result = await this.benchmarkService.runBenchmark(true);
-      this.optPanel.updateGains(result.gains);
-      this.optPanel.buildPanel(window.currentQualityValue || 100);
-    } catch (e) {
-      console.warn('Initial benchmark failed:', e);
+  openNodeMenu() {
+    if (this.nodeMenu) {
+      this.nodeMenu.toggle();
     }
+  }
+
+  async initNodesAndStart() {
+    try {
+      await loadAllNodes();
+      typeSystem.initFromNodeRegistry(nodeRegistry);
+      this.updateUITitles();
+      this.populateNodesLibrary();
+      this.loadInitialState();
+      this.renderer.render();
+      console.log(`[Application] Ready with ${nodeRegistry.size} node types`);
+    } catch (err) {
+      console.error('[Application] Failed to initialize nodes:', err);
+      this.loadInitialState();
+      this.renderer.render();
+    }
+  }
+  
+  populateNodesLibrary() {
+    const container = document.getElementById('nodesLibraryList');
+    if (!container) return;
+    
+    const types = NodeFactory.getAvailableNodeTypes();
+    const categories = types.filter(t => t.isCategory === true);
+    const regularNodes = types.filter(t => !t.isCategory && !t.isCategory);
+    
+    container.innerHTML = '';
+    
+    if (regularNodes.length) {
+      const categoryDiv = document.createElement('div');
+      categoryDiv.className = 'node-category';
+      categoryDiv.innerHTML = `
+        <div class="category-header">
+          <i class="fas fa-microchip"></i>
+          <span>Core Nodes</span>
+          <i class="fas fa-chevron-down chevron"></i>
+        </div>
+        <div class="category-nodes"></div>
+      `;
+      
+      const nodesContainer = categoryDiv.querySelector('.category-nodes');
+      regularNodes.forEach(nodeType => {
+        const item = document.createElement('div');
+        item.className = 'node-list-item';
+        item.innerHTML = `
+          <i class="fas ${nodeType.icon || 'fa-circle'}"></i>
+          <span>${t(nodeType.nameKey)}</span>
+        `;
+        item.onclick = () => this.createNodeAtCenter(nodeType.type);
+        nodesContainer.appendChild(item);
+      });
+      
+      const header = categoryDiv.querySelector('.category-header');
+      header.onclick = () => {
+        header.classList.toggle('collapsed');
+        nodesContainer.classList.toggle('hidden');
+      };
+      
+      container.appendChild(categoryDiv);
+    }
+    
+    categories.forEach(category => {
+      const categoryDiv = document.createElement('div');
+      categoryDiv.className = 'node-category';
+      categoryDiv.innerHTML = `
+        <div class="category-header">
+          <i class="fas ${category.icon || 'fa-folder'}"></i>
+          <span>${t(category.nameKey)}</span>
+          <i class="fas fa-chevron-down chevron"></i>
+        </div>
+        <div class="category-nodes"></div>
+      `;
+      
+      const nodesContainer = categoryDiv.querySelector('.category-nodes');
+      if (category.subnodes) {
+        category.subnodes.forEach(subnode => {
+          const item = document.createElement('div');
+          item.className = 'node-list-item';
+          item.innerHTML = `
+            <i class="fas fa-calculator"></i>
+            <span>${t(subnode.nameKey)}</span>
+          `;
+          item.onclick = () => this.createNodeAtCenter(category.type, subnode);
+          nodesContainer.appendChild(item);
+        });
+      }
+      
+      const header = categoryDiv.querySelector('.category-header');
+      header.onclick = () => {
+        header.classList.toggle('collapsed');
+        nodesContainer.classList.toggle('hidden');
+      };
+      
+      container.appendChild(categoryDiv);
+    });
+  }
+  
+  createNodeAtCenter(type, subnode = null) {
+    const viewportRect = document.getElementById('viewport').getBoundingClientRect();
+    const offset = this.viewport.getOffset();
+    const zoom = window.currentZoom || 1;
+    
+    const x = (viewportRect.width / 2 - offset.x) / zoom - 140;
+    const y = (viewportRect.height / 2 - offset.y) / zoom - 40;
+    
+    const options = { x, y };
+    if (subnode) Object.assign(options, subnode);
+    
+    const node = NodeFactory.createNode(type, options);
+    if (node) {
+      this.graph.addNode(node);
+      this.finishNodeCreation();
+    }
+  }
+  
+  finishNodeCreation() {
+    this.graph.reevaluateAll();
+    this.graph.updateAllOutputs();
+    this.renderer.render();
+    this.history.save();
+    this.updateNodeCount();
+  }
+  
+  loadInitialState() {
+    const loaded = this.persistenceService.loadFromStorage();
+    this.updateNodeCount();
+    this.updateEdgeCount();
+    
+    if (!loaded && this.graph.nodes.length === 0) {
+    }
+  }
+  
+  updateNodeCount() {
+    const nodeCountEl = document.getElementById('nodeCount');
+    if (nodeCountEl) {
+      nodeCountEl.textContent = `${this.graph.nodes.length} nodes`;
+    }
+  }
+  
+  updateEdgeCount() {
+    const edgeCountEl = document.getElementById('edgeCount');
+    if (edgeCountEl) {
+      edgeCountEl.textContent = `${this.graph.edges.length} connections`;
+    }
+  }
+  
+  updateZoomIndicator() {
+    const zoomIndicator = document.getElementById('zoomIndicator');
+    if (zoomIndicator) {
+      const percent = Math.round((window.currentZoom || 1) * 100);
+      zoomIndicator.textContent = `${percent}%`;
+    }
+  }
+  
+  updateCoordIndicator() {
+    const indicator = document.getElementById('coordIndicator');
+    if (indicator && this.viewport) {
+      const offset = this.viewport.getOffset();
+      indicator.textContent = `X: ${Math.round(offset.x)} | Y: ${Math.round(offset.y)}`;
+    }
+  }
+
+  undo() {
+    this.history.undo();
+    this.renderer.render();
+    this.history.autoSave();
+    this.updateNodeCount();
+    this.updateEdgeCount();
+  }
+
+  redo() {
+    this.history.redo();
+    this.renderer.render();
+    this.history.autoSave();
+    this.updateNodeCount();
+    this.updateEdgeCount();
+  }
+
+  export() {
+    this.persistenceService.exportToFile();
+  }
+
+  import() {
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) fileInput.click();
+  }
+
+  async handleFileImport(event) {
+    if (!event.target.files.length) return;
+    const file = event.target.files[0];
+    const success = await this.persistenceService.importFromFile(file);
+    if (success) {
+      this.renderer.render();
+      this.history.save();
+      this.updateNodeCount();
+      this.updateEdgeCount();
+      this.updateZoomIndicator();
+    }
+    event.target.value = '';
+  }
+
+  clearStorage() {
+    modal.confirm(t('modal.clearStorageConfirm')).then((result) => {
+      if (result) {
+        localStorage.removeItem('amenodes_autosave');
+        modal.alert(t('modal.storageCleared'));
+      }
+    });
   }
 
   initEvents() {
@@ -133,12 +374,43 @@ class Application {
       if (e.key === 'Escape') {
         this.renderer.closeMenu();
       }
+      if (e.key === 'Delete' && this.renderer.contextMenu?.currentSourceId) {
+        const nodeId = this.renderer.contextMenu.currentSourceId;
+        if (nodeId) {
+          this.graph.removeNode(nodeId);
+          this.renderer.render();
+          this.history.save();
+          this.updateNodeCount();
+          this.updateEdgeCount();
+        }
+      }
     });
+    
+    const originalRemoveNode = this.graph.removeNode.bind(this.graph);
+    this.graph.removeNode = (id) => {
+      originalRemoveNode(id);
+      this.updateNodeCount();
+      this.updateEdgeCount();
+    };
+    
+    const originalAddEdge = this.graph.addEdge.bind(this.graph);
+    this.graph.addEdge = (sourceId, targetId, port) => {
+      const edge = originalAddEdge(sourceId, targetId, port);
+      if (edge) this.updateEdgeCount();
+      return edge;
+    };
+    
+    const originalRemoveEdge = this.graph.removeEdge.bind(this.graph);
+    this.graph.removeEdge = (id) => {
+      originalRemoveEdge(id);
+      this.updateEdgeCount();
+    };
   }
 
   initI18n() {
     i18n.subscribe(() => {
       this.updateUITitles();
+      this.populateNodesLibrary();
       if (this.renderer) {
         this.renderer.render();
       }
@@ -160,43 +432,47 @@ class Application {
     }
   }
 
-  async initNodesAndStart() {
-    try {
-      await loadAllNodes();
-      typeSystem.initFromNodeRegistry(nodeRegistry);
-      this.updateUITitles();
-      this.loadInitialState();
-      this.renderer.render();
-      console.log(`[Application] Ready with ${nodeRegistry.size} node types`);
-    } catch (err) {
-      console.error('[Application] Failed to initialize nodes:', err);
-      this.loadInitialState();
-      this.renderer.render();
-    }
+  initSidebar() {
+    this.renderer.onNodeSelect = (node) => {
+      this.updatePropertiesPanel(node);
+    };
   }
   
-  loadInitialState() {
-    const loaded = this.persistenceService.loadFromStorage();
+  updatePropertiesPanel(node) {
+    const panel = document.getElementById('propertiesPanel');
+    if (!panel) return;
     
-    if (!loaded) {
-      const OutputClass = getNodeClass('output');
-      
-      if (OutputClass) {
-        const viewportRect = document.getElementById('viewport').getBoundingClientRect();
-        const offset = this.viewport.getOffset();
-        const zoom = window.currentZoom || 1;
-        
-        const centerX = (viewportRect.width / 2 - offset.x) / zoom - 140;
-        const centerY = (viewportRect.height / 2 - offset.y) / zoom - 40;
-        
-        const defaultOutput = new OutputClass(null, centerX, centerY, t('nodes.output'), { rows: [] });
-        this.graph.addNode(defaultOutput);
-        this.renderer.render();
-        this.history.save();
-        this.persistenceService.saveToStorage(this.viewport, window.currentZoom, window.currentQualityValue);
-      } else {
-      }
+    if (!node) {
+      panel.innerHTML = `
+        <div class="empty-property">
+          <i class="fas fa-hand-pointer"></i>
+          <p>Select a node to edit properties</p>
+        </div>
+      `;
+      return;
     }
+    
+    panel.innerHTML = `
+      <div class="property-group">
+        <div class="property-label">Node Type</div>
+        <div class="property-value">${node.type}</div>
+      </div>
+      <div class="property-group">
+        <div class="property-label">ID</div>
+        <div class="property-value">${node.id}</div>
+      </div>
+      <div class="property-group">
+        <div class="property-label">Position</div>
+        <div class="property-value">X: ${Math.round(node.x)}, Y: ${Math.round(node.y)}</div>
+      </div>
+      <div class="property-group">
+        <div class="property-label">Connections</div>
+        <div class="property-value">
+          Inputs: ${this.graph.getIncomingEdges(node.id).length}<br>
+          Outputs: ${this.graph.getOutgoingEdges(node.id).length}
+        </div>
+      </div>
+    `;
   }
 }
 
