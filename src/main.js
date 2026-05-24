@@ -9,7 +9,7 @@ import { OPTIMIZATIONS } from './config/Optimizations.js';
 import { i18n, t } from './i18n/LanguageManager.js';
 import { modal } from './ui/CustomModal.js';
 import { NodeMenu } from './ui/NodeMenu.js';
-import { loadAllNodes, nodeRegistry, getNodeClass } from './nodes/registry.js';
+import { loadAllNodes, nodeRegistry } from './nodes/registry.js';
 import { typeSystem } from './core/DataType.js';
 import { OptimizationPanel } from './ui/OptimizationPanel.js';
 import { BenchmarkService } from './services/BenchmarkService.js';
