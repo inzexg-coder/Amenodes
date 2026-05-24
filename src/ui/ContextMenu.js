@@ -175,6 +175,14 @@ export class ContextMenu {
     this.graph.updateAllOutputs();
     this.renderer.render();
     this.history.save();
+    const nodeCountEl = document.getElementById('nodeCount');
+    if (nodeCountEl) {
+      nodeCountEl.textContent = `${this.graph.nodes.length} nodes`;
+    }
+    const edgeCountEl = document.getElementById('edgeCount');
+    if (edgeCountEl) {
+      edgeCountEl.textContent = `${this.graph.edges.length} connections`;
+    }
   }
 
   toggleImportant(node, important) {
