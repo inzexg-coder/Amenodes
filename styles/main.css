@@ -720,7 +720,7 @@ body {
   position: fixed;
   bottom: 80px;
   right: 24px;
-  width: 400px;
+  width: 420px;
   max-height: 80vh;
   background: rgba(20, 24, 36, 0.98);
   backdrop-filter: blur(12px);
@@ -743,6 +743,7 @@ body {
   font-weight: bold;
   display: flex;
   justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 205, 126, 0.3);
 }
 
 .opt-list {
@@ -759,7 +760,63 @@ body {
   gap: 12px;
   background: rgba(15, 18, 34, 0.8);
   border-radius: 12px;
-  padding: 10px 12px;
+  padding: 12px;
+  transition: all 0.1s;
+}
+
+.opt-item-enabled {
+  border-left: 3px solid #6fcf97;
+}
+
+.opt-item-disabled {
+  opacity: 0.5;
+  filter: grayscale(0.2);
+}
+
+.opt-info {
+  flex: 1;
+}
+
+.opt-title {
+  font-weight: 700;
+  font-size: 13px;
+  color: #ffefcf;
+  margin-bottom: 4px;
+}
+
+.opt-desc {
+  font-size: 11px;
+  color: #aab4d4;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.opt-pros {
+  font-size: 10px;
+  color: #6fcf97;
+  margin-top: 2px;
+}
+
+.opt-cons {
+  font-size: 10px;
+  color: #e74c3c;
+  margin-top: 2px;
+}
+
+.opt-fps {
+  font-size: 11px;
+  color: #88dd88;
+  font-family: monospace;
+  margin-top: 5px;
+  font-weight: bold;
+  border-top: 1px solid #2e385c;
+  padding-top: 4px;
+}
+
+.quality-value {
+  font-size: 11px;
+  color: #ffcd7e;
+  margin-left: 8px;
 }
 
 .apply-btn, .rebench-btn {
@@ -769,6 +826,7 @@ body {
   border: none;
   font-weight: bold;
   cursor: pointer;
+  transition: all 0.15s;
 }
 
 .apply-btn {
@@ -776,9 +834,18 @@ body {
   color: #1a1f30;
 }
 
+.apply-btn:hover {
+  background: #ffcc66;
+  transform: scale(1.02);
+}
+
 .rebench-btn {
   background: #3e4b78;
   color: #ffefcf;
+}
+
+.rebench-btn:hover {
+  background: #5a6e9e;
 }
 
 .hidden-file-input {
@@ -826,7 +893,9 @@ body {
 .design-quality-extreme .node-header,
 .design-quality-extreme .sidebar,
 .design-quality-extreme .top-bar,
-.design-quality-extreme .status-bar {
+.design-quality-extreme .status-bar,
+.design-quality-extreme .opt-panel,
+.design-quality-extreme .modal-content {
   background: #0a0c14 !important;
   backdrop-filter: none !important;
   box-shadow: none !important;
@@ -1188,4 +1257,117 @@ body {
 
 .design-quality-extreme .node-menu-subcard-icon {
   border-radius: 0px;
+}
+
+.calc-result, .data-table, .group-items {
+  background: transparent;
+}
+
+.calc-result {
+  background: #0f1222;
+  margin: 12px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-family: monospace;
+  font-size: 13px;
+  border-left: 3px solid #ffb347;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.data-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  background: #171c30;
+  border-radius: 12px;
+}
+
+.data-table th, .data-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #2c314a;
+  text-align: left;
+}
+
+.data-table input {
+  width: 100%;
+  background: #0f1222;
+  border: 1px solid #2e385c;
+  border-radius: 6px;
+  padding: 5px;
+  color: #fff;
+}
+
+.data-table input:disabled {
+  background: #1a1f30;
+  color: #8a9bc5;
+}
+
+.group-items {
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.group-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0f1222;
+  padding: 6px 10px;
+  border-radius: 12px;
+}
+
+.group-row-value {
+  flex: 1;
+  background: #191e32;
+  border: 1px solid #2e3a5e;
+  border-radius: 8px;
+  padding: 5px 8px;
+  color: #fff;
+  font-family: monospace;
+}
+
+.add-value-btn {
+  background: #2a3a5e;
+  border: none;
+  border-radius: 20px;
+  padding: 4px 12px;
+  color: #fff;
+  font-size: 11px;
+  cursor: pointer;
+  margin-top: 4px;
+  width: fit-content;
+}
+
+.map-mode-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #1a1f30, #151a2c);
+  border-radius: 40px;
+  margin: 12px 12px 8px 12px;
+  padding: 4px;
+  border: 1px solid #2e3a5e;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.map-mode-option {
+  flex: 1;
+  text-align: center;
+  padding: 8px 12px;
+  border-radius: 32px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #8a9bc5;
+  background: transparent;
+}
+
+.map-mode-option.active {
+  background: #2d3a5e;
+  color: #ffefcf;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
