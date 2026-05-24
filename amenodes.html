@@ -16,7 +16,7 @@
       <i class="fas fa-project-diagram"></i>
       <span>@Amenodes</span>
     </div>
-    <div class="splash-title"></div>
+    <div class="splash-title">Node Editor v2.0</div>
     <div class="splash-actions">
       <button id="newCanvasBtn" class="splash-btn primary"><i class="fas fa-plus-circle"></i> New Canvas</button>
       <button id="loadCanvasBtn" class="splash-btn secondary"><i class="fas fa-folder-open"></i> Load Canvas</button>
@@ -56,7 +56,7 @@
   </div>
 
   <div class="workspace">
-
+    
     <div class="sidebar left-sidebar" id="leftSidebar">
       <div class="sidebar-header">
         <i class="fas fa-cubes"></i>
@@ -64,7 +64,6 @@
         <button id="collapseLeftBtn" class="collapse-btn"><i class="fas fa-chevron-left"></i></button>
       </div>
       <div class="sidebar-content" id="nodesLibraryList">
-        <!-- Dynamic node categories will be injected here -->
         <div class="loading-nodes"><i class="fas fa-spinner fa-pulse"></i> Loading nodes...</div>
       </div>
     </div>
@@ -92,7 +91,7 @@
       </div>
     </div>
   </div>
-  
+
   <div class="status-bar">
     <div class="status-left">
       <span id="nodeCount">0 nodes</span>
@@ -170,6 +169,10 @@
   }
 }
 </script>
-<script type="module" src="./src/main.js"></script>
+<script type="module">
+  import('./src/main.js').catch(err => {
+    console.error('Failed to load main.js:', err);
+  });
+</script>
 </body>
 </html>
