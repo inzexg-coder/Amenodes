@@ -804,3 +804,22 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #ffb347;
 }
+
+.design-quality-extreme .node,
+.design-quality-extreme .node-header,
+.design-quality-extreme .sidebar,
+.design-quality-extreme .top-bar,
+.design-quality-extreme .status-bar {
+  background: #0a0c14 !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  border-radius: 0px !important;
+}
+
+.design-quality-1 .node {
+  border-radius: 4px;
+}
+
+.design-quality-2 .node {
+  border-radius: 8px;
+}
