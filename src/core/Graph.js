@@ -144,6 +144,39 @@ export class Graph {
     return values;
   }
 
+  getPairedForSqrt(nodeId) {
+    const incoming = this.getIncomingEdges(nodeId);
+    const pairs = [];
+    
+    for (let i = 0; i < incoming.length; i += 2) {
+      if (i + 1 < incoming.length) {
+        const edge1 = incoming[i];
+        const edge2 = incoming[i + 1];
+        const source1 = this.map.get(edge1.sourceId);
+        const source2 = this.map.get(edge2.sourceId);
+        
+        if (source1 && source2) {
+          const val1 = this.getSourceValue(source1, edge1.sourcePort, new Set());
+          const val2 = this.getSourceValue(source2, edge2.sourcePort, new Set());
+          
+          const num1 = Array.isArray(val1) && val1.length ? val1[0] : val1;
+          const num2 = Array.isArray(val2) && val2.length ? val2[0] : val2;
+          
+          if (typeof num1 === 'number' && typeof num2 === 'number' && !isNaN(num1) && !isNaN(num2)) {
+            pairs.push(Math.sqrt(num1 * num1 + num2 * num2));
+          } else {
+            pairs.push(null);
+          }
+        } else {
+          pairs.push(null);
+        }
+      }
+    }
+    
+    const valid = pairs.filter(v => v !== null);
+    return { ok: valid.length > 0, res: valid };
+  }
+
   reevaluateAll() {
     for (const node of this.nodes) {
       if (typeof node.reevaluate === 'function') {
