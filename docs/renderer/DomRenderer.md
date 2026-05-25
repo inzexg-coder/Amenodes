@@ -3,16 +3,17 @@
 ## ОПИСАНИЕ
 
 `DomRenderer` – основной рендерер приложения Amenodes, отвечающий за визуализацию графа в DOM. 
-Класс управляет отображением узлов, связей, обработкой перетаскивания, созданием временных линий при создании соединений, а также применяет оптимизации производительности (виртуализация, will-change, CSS containment).
+Класс управляет отображением узлов, связей, обработкой перетаскивания, созданием временных линий при создании соединений, а также применяет оптимизации производительности (виртуализация, will-change, CSS containment, прилипание к сетке).
 
 **Основные возможности:**
 - отрисовка узлов через вызов `node.createDOM()`;
 - отрисовка связей через `EdgeRenderer`;
-- перетаскивание узлов мышью;
+- перетаскивание узлов мышью с поддержкой прилипания к сетке;
 - создание новых связей через перетаскивание с хендлов;
 - кэширование DOM-элементов и высоты узлов;
 - виртуализация (отсечение невидимых узлов);
-- применение стилей оптимизации к каждому узлу.
+- применение стилей оптимизации к каждому узлу;
+- прилипание (snap) к сетке при перемещении узлов.
 
 ## ЗАВИСИМОСТИ
 
@@ -60,6 +61,8 @@ constructor(graph: Graph, layer: HTMLElement, viewportElement: HTMLElement, even
 | `virtual` | `boolean` | `false` | Флаг виртуализации. |
 | `heightCache` | `Map<number, number>` | `new Map()` | Кэш высоты узлов по ID. |
 | `elementCache` | `Map<number, HTMLElement>` | `new Map()` | Кэш DOM-элементов узлов по ID. |
+| `getSnapEnabled` | `(() => boolean) \| null` | `null` | Функция, возвращающая статус прилипания к сетке. |
+| `getGridSize` | `(() => number) \| null` | `null` | Функция, возвращающая текущий размер сетки. |
 | `opts` | `object` | `{ willChange: false, contain: false, pointerEvents: false }` | Флаги оптимизаций. |
 | `edgeRenderer` | `EdgeRenderer` | новый экземпляр | Рендерер связей. |
 | `contextMenu` | `ContextMenu \| null` | `null` | Контекстное меню. |
@@ -87,6 +90,26 @@ setHistory(history: History): void
 
 **Параметры:**
 - `history` – экземпляр класса `History`.
+
+## setSnapToGrid(getSnapEnabled, getGridSize)
+
+```javascript
+setSnapToGrid(getSnapEnabled: () => boolean, getGridSize: () => number): void
+```
+
+Устанавливает функции для получения текущего состояния прилипания к сетке и размера сетки. Эти функции вызываются при перетаскивании узлов для определения необходимости корректировки позиции.
+
+**Параметры:**
+- `getSnapEnabled` – функция, возвращающая `true`, если прилипание к сетке активно.
+- `getGridSize` – функция, возвращающая размер ячейки сетки в пикселях.
+
+**Пример:**
+```javascript
+renderer.setSnapToGrid(
+  () => this.snapToGrid,
+  () => this.gridSize
+);
+```
 
 ## save()
 
@@ -375,20 +398,27 @@ onNodeDown(event: MouseEvent): void
 onGlobalMove(event: MouseEvent): void
 ```
 
-Глобальный обработчик движения мыши при перетаскивании узла. Обновляет позицию перетаскиваемого узла.
+Глобальный обработчик движения мыши при перетаскивании узла. Обновляет позицию перетаскиваемого узла с учётом прилипания к сетке.
 
 **Параметры:**
 - `event` – событие мыши.
 
-**Формула смещения:**
-```
-deltaX = (clientX - dragStartX) / zoom
-deltaY = (clientY - dragStartY) / zoom
-node.x = dragNodeStartX + deltaX
-node.y = dragNodeStartY + deltaY
-```
-
-- Вызывает `this.render()` для обновления отображения (включая линии).
+**Алгоритм:**
+1. Вычисляет базовое смещение:
+   ```
+   deltaX = (clientX - dragStartX) / zoom
+   deltaY = (clientY - dragStartY) / zoom
+   newX = dragNodeStartX + deltaX
+   newY = dragNodeStartY + deltaY
+   ```
+2. Если прилипание к сетке включено (`getSnapEnabled` и `getSnapEnabled()` возвращают `true`):
+   ```
+   gridSize = getGridSize ? getGridSize() : 20
+   newX = Math.round(newX / gridSize) * gridSize
+   newY = Math.round(newY / gridSize) * gridSize
+   ```
+3. Обновляет координаты узла и его DOM-элемента.
+4. Вызывает `this.render()` для обновления отображения (включая линии).
 
 ## onGlobalUp()
 
@@ -437,6 +467,10 @@ const eventBus = new EventBus();
 const renderer = new DomRenderer(graph, nodesLayer, viewportEl, eventBus);
 const viewport = new Viewport(viewportEl, document.getElementById('canvasContainer'));
 renderer.setViewport(viewport);
+renderer.setSnapToGrid(
+  () => this.snapToGrid,
+  () => this.gridSize
+);
 renderer.render();
 ```
 
@@ -463,11 +497,12 @@ renderer.invalidateCache(nodeId); // Сбрасывает кэш высоты и
 renderer.render(); // Узел будет пересоздан
 ```
 
-## ЗАМЕЧАНИЯ
+# ЗАМЕЧАНИЯ
 
 - Метод `render()` может вызываться часто (каждый кадр анимации). В режиме виртуализации он выполняет минимальную работу – обновляет позиции и создаёт только новые узлы.
 - `elementCache` хранит ссылки на DOM-элементы узлов. При полной перерисовке (`renderAll()`) кэш очищается.
 - `heightCache` используется для быстрого доступа к высоте узлов при расчётах видимости и позиционировании линий.
-- Временные линии при создании ребёр создаются в отдельном SVG-слое с высоким `z-index` (100), чтобы быть поверх всех узлов.
+- Прилипание к сетке работает только при перетаскивании узлов, но не при программном изменении координат.
+- Временные линии при создании рёбер создаются в отдельном SVG-слое с высоким `z-index` (100), чтобы быть поверх всех узлов.
 - Глобальные обработчики событий (`onGlobalMove`, `onGlobalUp`, `onGlobalMoveEdge`, `onGlobalUpEdge`) должны быть привязаны на уровне `window` в родительском приложении.
 - Метод `applyOptStyles` переопределяется при применении оптимизаций через `OptimizationPanel`.
