@@ -41,8 +41,8 @@ export class CalcNode extends Node {
 
   reevaluate(graph) {
     if (this.calcType === 'sqrt_sum_sq') {
-      const paired = graph.getPairedForSqrt(this.id);
-      if (paired.ok && paired.res.length > 0) {
+      const paired = graph.getPairedForSqrt ? graph.getPairedForSqrt(this.id) : { ok: false, res: [] };
+      if (paired && paired.ok && paired.res.length > 0) {
         this.result = paired.res;
         this.resultStr = `[${paired.res.map(v => v.toFixed(6)).join(', ')}]`;
       } else {

@@ -22,6 +22,8 @@ export class DomRenderer {
     this.virtual = false;
     this.heightCache = new Map();
     this.elementCache = new Map();
+    this.getSnapEnabled = null;
+    this.getGridSize = null;
     this.opts = {
       willChange: false,
       contain: false,
@@ -47,6 +49,11 @@ export class DomRenderer {
   setHistory(history) {
     this.history = history;
     window._history = history;
+  }
+
+  setSnapToGrid(getSnapEnabled, getGridSize) {
+    this.getSnapEnabled = getSnapEnabled;
+    this.getGridSize = getGridSize;
   }
 
   save() {
@@ -364,8 +371,18 @@ export class DomRenderer {
     if (this.dragNode) {
       const deltaX = (event.clientX - this.dragStartX) / (window.currentZoom || 1);
       const deltaY = (event.clientY - this.dragStartY) / (window.currentZoom || 1);
-      this.dragNode.x = this.dragNodeStartX + deltaX;
-      this.dragNode.y = this.dragNodeStartY + deltaY;
+      
+      let newX = this.dragNodeStartX + deltaX;
+      let newY = this.dragNodeStartY + deltaY;
+      
+      if (this.getSnapEnabled && this.getSnapEnabled()) {
+        const gridSize = this.getGridSize ? this.getGridSize() : 20;
+        newX = Math.round(newX / gridSize) * gridSize;
+        newY = Math.round(newY / gridSize) * gridSize;
+      }
+      
+      this.dragNode.x = newX;
+      this.dragNode.y = newY;
       
       const element = document.querySelector(`.node[data-id='${this.dragNode.id}']`);
       if (element) {

@@ -7,34 +7,20 @@ export class NodeMenu {
     this.renderer = renderer;
     this.viewport = viewport;
     this.menuElement = null;
-    this.button = null;
     this.isOpen = false;
     this.unsubscribeI18n = null;
   }
 
   init() {
-    this.createButton();
+    const addNodeBtn = document.getElementById('addNodeBtn');
+    if (addNodeBtn) {
+      addNodeBtn.onclick = () => this.toggle();
+    }
     this.unsubscribeI18n = i18n.subscribe(() => {
       if (this.isOpen) {
         this.close();
         this.open();
       }
-    });
-  }
-
-  createButton() {
-    const toolbar = document.querySelector('.toolbar div:first-child');
-    if (!toolbar) return;
-    
-    this.button = document.createElement('button');
-    this.button.id = 'nodeMenuBtn';
-    this.button.innerHTML = '<i class="fas fa-plus"></i>';
-    this.button.title = t('toolbar.addNode');
-    this.button.onclick = () => this.toggle();
-    toolbar.appendChild(this.button);
-    
-    i18n.subscribe(() => {
-      if (this.button) this.button.title = t('toolbar.addNode');
     });
   }
 
@@ -278,6 +264,10 @@ export class NodeMenu {
     this.graph.updateAllOutputs();
     this.renderer.render();
     if (this.renderer.history) this.renderer.save();
+    const nodeCountEl = document.getElementById('nodeCount');
+    if (nodeCountEl) {
+      nodeCountEl.textContent = `${this.graph.nodes.length} nodes`;
+    }
   }
 
   close() {

@@ -10,6 +10,7 @@ export class Viewport {
     this.originX = 0;
     this.originY = 0;
     this.onChangeCallback = null;
+    this.attach();
   }
 
   attach() {
@@ -22,6 +23,7 @@ export class Viewport {
   onMouseDown(e) {
     if (e.button !== 2) return;
     e.preventDefault();
+    e.stopPropagation();
     this.isDragging = true;
     this.startX = e.clientX;
     this.startY = e.clientY;
@@ -51,7 +53,8 @@ export class Viewport {
   }
 
   update() {
-    this.canvasContainer.style.transform = `translate(${this.x}px, ${this.y}px) scale(${window.currentZoom || 1})`;
+    const zoom = window.currentZoom || 1;
+    this.canvasContainer.style.transform = `translate(${this.x}px, ${this.y}px) scale(${zoom})`;
   }
 
   getOffset() {

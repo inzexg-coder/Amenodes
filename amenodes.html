@@ -3,33 +3,101 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>@Amenodes</title>
+<title>@Amenodes - Node Editor</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
-<div class="toolbar">
-  <div>
-    <button id="undoBtn"><i class="fas fa-undo-alt"></i> Undo</button>
-    <button id="redoBtn"><i class="fas fa-redo-alt"></i> Redo</button>
-  </div>
-  <div class="file-group">
-    <button id="exportBtn"><i class="fas fa-download"></i> Export</button>
-    <button id="importBtn"><i class="fas fa-upload"></i> Import</button>
-    <button id="clearStorageBtn"><i class="fas fa-trash-alt"></i> Clear storage</button>
+
+<div id="splashOverlay" class="splash-overlay">
+  <div class="splash-card">
+    <div class="splash-logo">
+      <i class="fas fa-project-diagram"></i>
+      <span>@Amenodes</span>
+    </div>
+    <div class="splash-title">Node Editor v2.0</div>
+    <div class="splash-actions">
+      <button id="newCanvasBtn" class="splash-btn primary"><i class="fas fa-plus-circle"></i> New Canvas</button>
+      <button id="loadCanvasBtn" class="splash-btn secondary"><i class="fas fa-folder-open"></i> Load Canvas</button>
+      <button id="splashSettingsBtn" class="splash-btn secondary"><i class="fas fa-sliders-h"></i> Settings</button>
+    </div>
+    <div class="splash-footer">
+      <span><i class="fas fa-microchip"></i> 60 FPS Ready</span>
+      <span><i class="fas fa-palette"></i> GPU Acceleration</span>
+    </div>
   </div>
 </div>
 
-<div class="viewport" id="viewport">
-  <div class="canvas-container" id="canvasContainer">
-    <div class="nodes-layer" id="nodesLayer"></div>
+<div id="appContainer" class="app-container hidden">
+  <div class="top-bar">
+    <div class="logo-area">
+      <i class="fas fa-project-diagram"></i>
+      <span>@Amenodes</span>
+    </div>
+    <div class="canvas-controls">
+      <button id="canvasSettingsBtn" class="top-btn" title="Canvas Settings"><i class="fas fa-sliders-h"></i></button>
+      <button id="canvasExportBtn" class="top-btn" title="Export"><i class="fas fa-download"></i></button>
+      <button id="canvasImportBtn" class="top-btn" title="Import"><i class="fas fa-upload"></i></button>
+      <div class="divider"></div>
+      <button id="undoBtn" class="top-btn" title="Undo"><i class="fas fa-undo-alt"></i></button>
+      <button id="redoBtn" class="top-btn" title="Redo"><i class="fas fa-redo-alt"></i></button>
+    </div>
+    <div class="right-controls">
+      <div class="zoom-indicator" id="zoomIndicator">100%</div>
+      <button id="addNodeBtn" class="top-btn primary" title="Add Node"><i class="fas fa-plus"></i> Node</button>
+      <button id="optToggleBtn" class="top-btn" title="Optimizations"><i class="fas fa-tachometer-alt"></i></button>
+      <div class="divider"></div>
+      <button id="clearStorageBtn" class="top-btn danger" title="Clear Storage"><i class="fas fa-trash-alt"></i></button>
+    </div>
   </div>
-  <canvas id="webglCanvas" class="webgl-canvas" style="display:none;"></canvas>
+  <div class="workspace">
+    <div class="sidebar left-sidebar" id="leftSidebar">
+      <div class="sidebar-header">
+        <button id="collapseLeftBtn" class="collapse-btn"><i class="fas fa-chevron-left"></i></button>
+        <i class="fas fa-cubes"></i>
+        <span>Nodes Library</span>
+      </div>
+      <div class="sidebar-content" id="nodesLibraryList">
+        <div class="loading-nodes"><i class="fas fa-spinner fa-pulse"></i> Loading nodes...</div>
+      </div>
+    </div>
+    <div class="viewport-container">
+      <div class="viewport" id="viewport">
+        <div class="canvas-container" id="canvasContainer">
+          <div class="nodes-layer" id="nodesLayer"></div>
+        </div>
+        <canvas id="webglCanvas" class="webgl-canvas" style="display:none;"></canvas>
+      </div>
+    </div>
+    <div class="sidebar right-sidebar" id="rightSidebar">
+      <div class="sidebar-header">
+        <button id="collapseRightBtn" class="collapse-btn"><i class="fas fa-chevron-right"></i></button>
+        <i class="fas fa-info-circle"></i>
+        <span>Properties</span>
+      </div>
+      <div class="sidebar-content" id="propertiesPanel">
+        <div class="empty-property">
+          <i class="fas fa-hand-pointer"></i>
+          <p>Select a node to edit properties</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="status-bar">
+    <div class="status-left">
+      <span id="nodeCount">0 nodes</span>
+      <span id="edgeCount">0 connections</span>
+    </div>
+    <div class="status-center">
+      <div class="coord-indicator" id="coordIndicator">X: 0.00 | Y: 0.00</div>
+    </div>
+    <div class="status-right">
+      <div class="fps-meter" id="fpsMeter"><i class="fas fa-chart-line"></i> FPS: --</div>
+      <div class="autosave-status" id="autosaveStatus"><i class="fas fa-save"></i> Saved</div>
+    </div>
+  </div>
 </div>
-
-<input type="file" id="fileInput" class="hidden-file-input" accept=".amnk">
-<button class="opt-toggle-btn" id="optToggleBtn"><i class="fas fa-tachometer-alt"></i></button>
 
 <div id="optPanel" class="opt-panel hidden">
   <div class="opt-header">
@@ -41,8 +109,55 @@
   <button id="applyOptimizationsBtn" class="apply-btn"><i class="fas fa-check-circle"></i> APPLY SELECTED</button>
 </div>
 
-<div class="fps-meter" id="fpsMeter"><i class="fas fa-chart-line"></i> FPS: --</div>
-<div id="autosaveStatus" class="autosave-status"><i class="fas fa-save"></i> Saved</div>
+<div id="canvasSettingsModal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3><i class="fas fa-sliders-h"></i> Canvas Settings</h3>
+      <button class="modal-close" id="closeSettingsModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="setting-group">
+        <label>Grid Style</label>
+        <div class="grid-preview" id="gridPreview">
+          <div class="grid-preview-canvas" id="gridPreviewCanvas"></div>
+        </div>
+        <div class="grid-style-buttons">
+          <button class="grid-style-btn" data-grid="dots">● Dots</button>
+          <button class="grid-style-btn" data-grid="lines">⎯ Lines</button>
+          <button class="grid-style-btn" data-grid="cross">✚ Cross</button>
+          <button class="grid-style-btn" data-grid="none">◻ None</button>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label>Snap to Grid</label>
+        <div class="toggle-switch">
+          <input type="checkbox" id="snapToGrid">
+          <span class="toggle-slider"></span>
+          <span class="toggle-label">Enable snapping nodes to grid</span>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label>Grid Size: <span id="gridSizeValue">20</span> px</label>
+        <input type="range" id="gridSize" value="20" min="10" max="50" step="5">
+        <div class="grid-size-presets">
+          <span data-size="10">10px</span>
+          <span data-size="15">15px</span>
+          <span data-size="20" class="active">20px</span>
+          <span data-size="25">25px</span>
+          <span data-size="30">30px</span>
+          <span data-size="40">40px</span>
+          <span data-size="50">50px</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn secondary" id="cancelSettings">Cancel</button>
+      <button class="modal-btn primary" id="applySettings">Apply</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" class="hidden-file-input" accept=".amnk">
 <div id="benchmarkStatus" class="benchmark-status" style="display:none;"><i class="fas fa-flask"></i> Benchmarking optimizations...</div>
 
 <script type="importmap">
