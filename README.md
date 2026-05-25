@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <strong>1.3.0</strong><br>
+  <strong>1.4.0</strong><br>
   <sub>Visual Programming Language for Data Analysis</sub>
 </p>
 
