@@ -28,7 +28,6 @@ class Application {
     this.persistenceService = new PersistenceService(this.graph);
     this.gridStyle = localStorage.getItem('canvas_grid_style') || 'dots';
     this.gridSize = parseInt(localStorage.getItem('canvas_grid_size') || '20');
-    this.backgroundColor = 'radial-gradient(circle at 20% 30%, #1a1e2c, #0a0c14)';
     this.snapToGrid = localStorage.getItem('canvas_snap_to_grid') === 'true';
 
     this.initRenderer();
@@ -108,8 +107,6 @@ class Application {
     const viewport = document.getElementById('viewport');
     if (!viewport) return;
     
-    viewport.style.background = this.backgroundColor;
-    
     switch(this.gridStyle) {
       case 'dots':
         viewport.style.backgroundImage = `radial-gradient(circle, rgba(255, 179, 71, 0.15) 1px, transparent 1px)`;
@@ -137,10 +134,35 @@ class Application {
     const gridStyleSelect = document.getElementById('gridStyleSelect');
     const gridSizeInput = document.getElementById('gridSize');
     const snapToGridCheck = document.getElementById('snapToGrid');
+    const gridSizeValue = document.getElementById('gridSizeValue');
+    const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
     
     if (gridStyleSelect) gridStyleSelect.value = this.gridStyle;
     if (gridSizeInput) gridSizeInput.value = this.gridSize;
     if (snapToGridCheck) snapToGridCheck.checked = this.snapToGrid;
+    if (gridSizeValue) gridSizeValue.textContent = this.gridSize;
+    
+    const gridStyleBtns = document.querySelectorAll('.grid-style-btn');
+    gridStyleBtns.forEach(btn => {
+      if (btn.getAttribute('data-grid') === this.gridStyle) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+    
+    const sizePresets = document.querySelectorAll('.grid-size-presets span');
+    sizePresets.forEach(preset => {
+      if (parseInt(preset.getAttribute('data-size')) === this.gridSize) {
+        preset.classList.add('active');
+      } else {
+        preset.classList.remove('active');
+      }
+    });
+    
+    if (gridPreviewCanvas) {
+      gridPreviewCanvas.setAttribute('data-preview', this.gridStyle);
+    }
     
     modalEl.classList.remove('hidden');
   }
@@ -182,6 +204,7 @@ class Application {
     const optToggleBtn = document.getElementById('optToggleBtn');
     const fileInput = document.getElementById('fileInput');
     const collapseLeft = document.getElementById('collapseLeftBtn');
+    const collapseRight = document.getElementById('collapseRightBtn');
     const leftSidebar = document.getElementById('leftSidebar');
     const rightSidebar = document.getElementById('rightSidebar');
     const closeSettingsModal = document.getElementById('closeSettingsModal');
@@ -192,6 +215,11 @@ class Application {
     const splashSettingsBtn = document.getElementById('splashSettingsBtn');
     const splashOverlay = document.getElementById('splashOverlay');
     const appContainer = document.getElementById('appContainer');
+    const gridStyleSelect = document.getElementById('gridStyleSelect');
+    const gridSizeInput = document.getElementById('gridSize');
+    const snapToGridCheck = document.getElementById('snapToGrid');
+    const gridSizeValue = document.getElementById('gridSizeValue');
+    const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
     
     if (undoBtn) undoBtn.onclick = () => this.undo();
     if (redoBtn) redoBtn.onclick = () => this.redo();
@@ -211,31 +239,60 @@ class Application {
     if (collapseLeft && leftSidebar) {
       collapseLeft.onclick = () => leftSidebar.classList.toggle('collapsed');
     }
-    
-    const rightSidebarHeader = document.querySelector('#rightSidebar .sidebar-header');
-    if (rightSidebarHeader && !document.getElementById('propertiesToggleBtn')) {
-      const toggleBtn = document.createElement('button');
-      toggleBtn.id = 'propertiesToggleBtn';
-      toggleBtn.className = 'properties-toggle';
-      toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
-      toggleBtn.title = 'Toggle Properties Panel';
-      toggleBtn.onclick = () => {
-        if (rightSidebar) {
-          rightSidebar.classList.toggle('collapsed');
-          const icon = toggleBtn.querySelector('i');
-          if (rightSidebar.classList.contains('collapsed')) {
-            icon.className = 'fas fa-chevron-left';
-          } else {
-            icon.className = 'fas fa-chevron-right';
-          }
-        }
-      };
-      rightSidebarHeader.appendChild(toggleBtn);
+    if (collapseRight && rightSidebar) {
+      collapseRight.onclick = () => rightSidebar.classList.toggle('collapsed');
     }
     
     if (closeSettingsModal) closeSettingsModal.onclick = () => this.closeCanvasSettings();
     if (cancelSettings) cancelSettings.onclick = () => this.closeCanvasSettings();
     if (applySettings) applySettings.onclick = () => this.saveCanvasSettings();
+    
+    if (gridStyleSelect) {
+      gridStyleSelect.onchange = (e) => {
+        if (gridPreviewCanvas) {
+          gridPreviewCanvas.setAttribute('data-preview', e.target.value);
+        }
+      };
+    }
+    
+    if (gridSizeInput) {
+      gridSizeInput.oninput = (e) => {
+        const val = e.target.value;
+        if (gridSizeValue) gridSizeValue.textContent = val;
+        if (gridPreviewCanvas) {
+          const currentStyle = gridStyleSelect ? gridStyleSelect.value : 'dots';
+          gridPreviewCanvas.setAttribute('data-preview', currentStyle);
+          gridPreviewCanvas.style.backgroundSize = `${val}px ${val}px`;
+        }
+      };
+    }
+    
+    const gridStyleBtns = document.querySelectorAll('.grid-style-btn');
+    gridStyleBtns.forEach(btn => {
+      btn.onclick = () => {
+        const gridVal = btn.getAttribute('data-grid');
+        if (gridStyleSelect) gridStyleSelect.value = gridVal;
+        if (gridPreviewCanvas) gridPreviewCanvas.setAttribute('data-preview', gridVal);
+        gridStyleBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      };
+    });
+    
+    const sizePresets = document.querySelectorAll('.grid-size-presets span');
+    sizePresets.forEach(preset => {
+      preset.onclick = () => {
+        const size = parseInt(preset.getAttribute('data-size'));
+        if (gridSizeInput) gridSizeInput.value = size;
+        if (gridSizeValue) gridSizeValue.textContent = size;
+        if (gridPreviewCanvas) {
+          const currentStyle = gridStyleSelect ? gridStyleSelect.value : 'dots';
+          gridPreviewCanvas.setAttribute('data-preview', currentStyle);
+          gridPreviewCanvas.style.backgroundSize = `${size}px ${size}px`;
+        }
+        sizePresets.forEach(p => p.classList.remove('active'));
+        preset.classList.add('active');
+      };
+    });
     
     if (newCanvasBtn) {
       newCanvasBtn.onclick = () => {
@@ -268,7 +325,6 @@ class Application {
           setTimeout(() => {
             splashOverlay.style.display = 'none';
             appContainer.classList.remove('hidden');
-            this.applyCanvasSettings();
           }, 300);
         }
       };
@@ -295,7 +351,6 @@ class Application {
                   setTimeout(() => {
                     splashOverlay.style.display = 'none';
                     appContainer.classList.remove('hidden');
-                    this.applyCanvasSettings();
                   }, 300);
                 }
               }
@@ -315,7 +370,6 @@ class Application {
     } else if (splashOverlay && appContainer) {
       splashOverlay.style.display = 'none';
       appContainer.classList.remove('hidden');
-      this.applyCanvasSettings();
     }
   }
 
@@ -503,7 +557,6 @@ class Application {
       if (splashOverlay && appContainer) {
         splashOverlay.style.display = 'none';
         appContainer.classList.remove('hidden');
-        this.applyCanvasSettings();
       }
     }
   }
