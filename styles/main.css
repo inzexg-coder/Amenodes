@@ -393,7 +393,7 @@ body {
   font-size: 13px;
 }
 
-.sidebar-header i {
+.sidebar-header i:first-of-type {
   color: #ffb347;
 }
 
@@ -424,12 +424,28 @@ body {
   transform: rotate(180deg);
 }
 
-.left-sidebar .collapse-btn i {
-  transition: transform 0.2s;
+.left-sidebar .sidebar-header .collapse-btn {
+  order: 0;
 }
 
-.left-sidebar.collapsed .collapse-btn i {
-  transform: rotate(180deg);
+.left-sidebar .sidebar-header i.fa-cubes {
+  order: 1;
+}
+
+.left-sidebar .sidebar-header span {
+  order: 2;
+}
+
+.right-sidebar .sidebar-header .collapse-btn {
+  order: 0;
+}
+
+.right-sidebar .sidebar-header i.fa-info-circle {
+  order: 1;
+}
+
+.right-sidebar .sidebar-header span {
+  order: 2;
 }
 
 .sidebar.collapsed .sidebar-header span,
