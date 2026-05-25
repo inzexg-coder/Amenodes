@@ -7,41 +7,20 @@ export class NodeMenu {
     this.renderer = renderer;
     this.viewport = viewport;
     this.menuElement = null;
-    this.button = null;
     this.isOpen = false;
     this.unsubscribeI18n = null;
   }
 
   init() {
-    this.createButton();
+    const addNodeBtn = document.getElementById('addNodeBtn');
+    if (addNodeBtn) {
+      addNodeBtn.onclick = () => this.toggle();
+    }
     this.unsubscribeI18n = i18n.subscribe(() => {
       if (this.isOpen) {
         this.close();
         this.open();
       }
-    });
-  }
-
-  createButton() {
-    const toolbar = document.querySelector('.canvas-controls');
-    if (!toolbar) return;
-    
-    this.button = document.createElement('button');
-    this.button.id = 'nodeMenuBtn';
-    this.button.className = 'top-btn';
-    this.button.innerHTML = '<i class="fas fa-plus"></i> Add Node';
-    this.button.title = t('toolbar.addNode');
-    this.button.onclick = () => this.toggle();
-    
-    const addNodeBtn = document.getElementById('addNodeBtn');
-    if (addNodeBtn && addNodeBtn.parentNode) {
-      addNodeBtn.parentNode.insertBefore(this.button, addNodeBtn);
-    } else {
-      toolbar.appendChild(this.button);
-    }
-    
-    i18n.subscribe(() => {
-      if (this.button) this.button.title = t('toolbar.addNode');
     });
   }
 
