@@ -41,10 +41,38 @@ export class CalcNode extends Node {
 
   reevaluate(graph) {
     if (this.calcType === 'sqrt_sum_sq') {
-      const paired = graph.getPairedForSqrt ? graph.getPairedForSqrt(this.id) : { ok: false, res: [] };
-      if (paired && paired.ok && paired.res.length > 0) {
-        this.result = paired.res;
-        this.resultStr = `[${paired.res.map(v => v.toFixed(6)).join(', ')}]`;
+      const incoming = graph.getIncomingEdges(this.id);
+      const pairs = [];
+      
+      for (let i = 0; i < incoming.length; i += 2) {
+        if (i + 1 < incoming.length) {
+          const edge1 = incoming[i];
+          const edge2 = incoming[i + 1];
+          const source1 = graph.getNode(edge1.sourceId);
+          const source2 = graph.getNode(edge2.sourceId);
+          
+          if (source1 && source2) {
+            const val1 = graph.getSourceValue(source1, edge1.sourcePort, new Set());
+            const val2 = graph.getSourceValue(source2, edge2.sourcePort, new Set());
+            
+            const num1 = Array.isArray(val1) && val1.length ? val1[0] : val1;
+            const num2 = Array.isArray(val2) && val2.length ? val2[0] : val2;
+            
+            if (typeof num1 === 'number' && typeof num2 === 'number' && !isNaN(num1) && !isNaN(num2)) {
+              pairs.push(Math.sqrt(num1 * num1 + num2 * num2));
+            } else {
+              pairs.push(null);
+            }
+          } else {
+            pairs.push(null);
+          }
+        }
+      }
+      
+      const valid = pairs.filter(v => v !== null);
+      if (valid.length > 0) {
+        this.result = valid;
+        this.resultStr = `[${valid.map(v => v.toFixed(6)).join(', ')}]`;
       } else {
         this.result = null;
         this.resultStr = "--";
