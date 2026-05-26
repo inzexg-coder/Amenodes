@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <strong>1.4.0</strong><br>
+  <strong>1.4.1</strong><br>
   <sub>Visual Programming Language for Data Analysis</sub>
 </p>
 
@@ -107,23 +107,61 @@ Click the **speedometer icon** (bottom-right) to open the optimization panel. Yo
 
 ---
 
-## 🔧 Preview Environment (for Contributors)
+## 🌍 Preview Environment & Deployment Servers
 
-Every branch automatically gets a live preview at `https://amenoke.ru/preview/[branch-name]/amenodes.html` for 10 minutes after the last commit.
+### Geographic Server Distribution
+
+Amenodes uses a **two-server infrastructure** for preview deployments to ensure optimal performance and geographic distribution:
+
+| Server | Location | Path | URL Pattern |
+|--------|----------|------|-------------|
+| **RU Server** | Moscow, Russia | `/ru/preview/` | `https://amenoke.ru/ru/preview/[branch]/amenodes.html` |
+| **EN Server** | London, UK | `/en/preview/` | `https://amenoke.ru/en/preview/[branch]/amenodes.html` |
+
+### How Server Selection Works
+
+When you open a Pull Request:
+
+1. **Smart Detection** – The system checks if your branch already has a preview on either server
+2. **Existing Preview** – If found, the same server is reused (preserves your preview URL)
+3. **New Preview** – If no preview exists, the server with **fewer active previews** is automatically selected
+4. **Equal Load** – If both servers have the same number of previews, the RU server is chosen by default
 
 ### Preview Lifecycle
 
 ```
-Branch created → Preview deployed (lives 10 min)
+Branch created → Server selected → Preview deployed
        ↓
-Commit after 5 min → Timer resets (lives another 10 min)
+Each commit → Timer resets (preview lives 10 more minutes)
        ↓
 No activity for 10 min → Preview automatically deleted
+       ↓
+Oldest previews removed when limit (10 per server) is reached
 ```
+
+### Preview URLs
+
+- **RU Server Preview:** `https://amenoke.ru/ru/preview/[branch-name]/amenodes.html`
+- **EN Server Preview:** `https://amenoke.ru/en/preview/[branch-name]/amenodes.html`
+
+> **Note:** Old URL pattern `https://amenoke.ru/preview/[branch]/` is automatically redirected to the new structure via symlink for backward compatibility.
 
 ### Production Deployment
 
-Merges to `main` or `master` automatically deploy to: `https://amenoke.ru/amenodes.html`
+Merges to `main` automatically deploy to the **root** directory:
+- **Production URL:** `https://amenoke.ru/amenodes.html`
+- The following paths are **protected from deletion** during production deployment:
+  - `index.html` – Main landing page
+  - `index/` – Static site files
+  - `ru/` – RU server previews
+  - `en/` – EN server previews
+  - `preview/` – Legacy preview redirects
+
+### Automatic Cleanup
+
+- Each server maintains **maximum 10 most recent previews**
+- Oldest previews are automatically removed when limit exceeded
+- Inactive previews (no commits for 10+ minutes) are cleaned up
 
 ---
 
@@ -208,6 +246,19 @@ root/
 - Translations are merged via `deepMerge` – node translations override base translations.
 - Use `t('key')` in any component to get the current language's translation.
 
+### Important: Relative Imports for Preview Compatibility
+
+All dynamic imports **MUST** use relative paths (starting with `./` or `../`) to work correctly in preview environments:
+
+```javascript
+// ✅ CORRECT - works everywhere
+const module = await import(`./${nodeType}.js`);
+const locale = await import(`./locales/${lang}/${name}.js`);
+
+// ❌ WRONG - breaks in preview subfolders
+const module = await import(`/src/nodes/${nodeType}.js`);
+```
+
 ### Adding New Translations for Node Data Types
 
 To add a new data type (e.g., `'matrix'`), add to the node's translation file:
@@ -273,7 +324,7 @@ Format: `MAJOR.MINOR.PATCH[-PRERELEASE][-CODETYPE]`
 2. Create a feature branch: `git checkout -b feature/your-feature`
 3. Commit changes (see commit convention below)
 4. Push to the branch
-5. Open a Pull Request – CI will deploy a preview automatically
+5. Open a Pull Request – CI will deploy a preview automatically to RU or EN server
 
 ### Commit Convention
 
