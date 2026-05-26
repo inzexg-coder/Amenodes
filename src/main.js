@@ -695,7 +695,7 @@ class Application {
   }
 
   updateUITitles() {
-    document.title = `Amenodes - ${new Date().toISOString().slice(0, 10)}`;
+    document.title = `@Amenodes`;
     
     if (this.graph) {
       this.graph.reevaluateAll();
