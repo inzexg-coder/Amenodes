@@ -188,80 +188,63 @@
             background: #0f1222;
             border-radius: 16px;
             overflow: hidden;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
             margin-bottom: 16px;
             border: 1px solid #2e385c;
         }
 
         .template-card.regular {
-            border-color: #444;
-            box-shadow: 0 0 5px rgba(100, 100, 100, 0.2);
+            border-color: #4a4a5a;
+            box-shadow: 0 0 8px rgba(100, 100, 120, 0.15);
         }
         .template-card.regular:hover {
-            box-shadow: 0 0 12px rgba(100, 100, 100, 0.4);
-            border-color: #666;
+            box-shadow: 0 0 15px rgba(100, 100, 120, 0.3);
+            border-color: #6a6a7a;
         }
 
         .template-card.featured {
-            border-color: #ffaa00;
-            animation: fireYellow 1.5s ease-in-out infinite;
+            border-color: #ffaa33;
+            box-shadow: 0 0 10px rgba(255, 170, 51, 0.2);
+            animation: gentleGlowYellow 3s ease-in-out infinite;
         }
-        .template-card.featured:hover {
-            animation: fireYellow 0.8s ease-in-out infinite;
-        }
-        @keyframes fireYellow {
-            0% { box-shadow: 0 0 8px #ffaa00, 0 0 4px #ffcc44; border-color: #ffaa00; }
-            25% { box-shadow: 0 0 20px #ffcc44, 0 0 10px #ffdd66; border-color: #ffcc44; }
-            50% { box-shadow: 0 0 28px #ffdd66, 0 0 14px #ff9900; border-color: #ffdd66; }
-            75% { box-shadow: 0 0 20px #ffcc44, 0 0 10px #ffdd66; border-color: #ffcc44; }
-            100% { box-shadow: 0 0 8px #ffaa00, 0 0 4px #ffcc44; border-color: #ffaa00; }
+        @keyframes gentleGlowYellow {
+            0% { box-shadow: 0 0 5px rgba(255, 170, 51, 0.15); border-color: #ffaa33; }
+            50% { box-shadow: 0 0 18px rgba(255, 200, 80, 0.35); border-color: #ffcc55; }
+            100% { box-shadow: 0 0 5px rgba(255, 170, 51, 0.15); border-color: #ffaa33; }
         }
 
         .template-card.epic {
-            border-color: #ff44aa;
-            animation: firePink 1.2s ease-in-out infinite;
+            border-color: #ff55bb;
+            box-shadow: 0 0 10px rgba(255, 85, 187, 0.2);
+            animation: gentleGlowPink 3s ease-in-out infinite;
         }
-        .template-card.epic:hover {
-            animation: firePink 0.6s ease-in-out infinite;
-        }
-        @keyframes firePink {
-            0% { box-shadow: 0 0 8px #ff44aa, 0 0 4px #ff66cc; border-color: #ff44aa; }
-            25% { box-shadow: 0 0 22px #ff66cc, 0 0 10px #ff88dd; border-color: #ff66cc; }
-            50% { box-shadow: 0 0 30px #ff88dd, 0 0 14px #ff44aa; border-color: #ff88dd; }
-            75% { box-shadow: 0 0 22px #ff66cc, 0 0 10px #ff88dd; border-color: #ff66cc; }
-            100% { box-shadow: 0 0 8px #ff44aa, 0 0 4px #ff66cc; border-color: #ff44aa; }
+        @keyframes gentleGlowPink {
+            0% { box-shadow: 0 0 5px rgba(255, 85, 187, 0.15); border-color: #ff55bb; }
+            50% { box-shadow: 0 0 18px rgba(255, 120, 200, 0.35); border-color: #ff77cc; }
+            100% { box-shadow: 0 0 5px rgba(255, 85, 187, 0.15); border-color: #ff55bb; }
         }
 
         .template-card.legendary {
-            border-color: #0088ff;
-            animation: fireBlue 1.8s ease-in-out infinite;
+            border-color: #33aaff;
+            box-shadow: 0 0 10px rgba(51, 170, 255, 0.2);
+            animation: gentleGlowBlue 3s ease-in-out infinite;
         }
-        .template-card.legendary:hover {
-            animation: fireBlue 0.7s ease-in-out infinite;
-        }
-        @keyframes fireBlue {
-            0% { box-shadow: 0 0 10px #0088ff, 0 0 5px #33aaff; border-color: #0088ff; }
-            30% { box-shadow: 0 0 25px #33aaff, 0 0 12px #66ccff; border-color: #33aaff; }
-            60% { box-shadow: 0 0 32px #66ccff, 0 0 16px #0088ff; border-color: #66ccff; }
-            100% { box-shadow: 0 0 10px #0088ff, 0 0 5px #33aaff; border-color: #0088ff; }
+        @keyframes gentleGlowBlue {
+            0% { box-shadow: 0 0 5px rgba(51, 170, 255, 0.15); border-color: #33aaff; }
+            50% { box-shadow: 0 0 18px rgba(80, 180, 255, 0.35); border-color: #55bbff; }
+            100% { box-shadow: 0 0 5px rgba(51, 170, 255, 0.15); border-color: #33aaff; }
         }
 
         .template-card.godlike {
-            border-color: #aa55ff;
-            animation: firePurple 1.4s ease-in-out infinite;
+            border-color: #6a1b9a;
             border-width: 2px;
+            box-shadow: 0 0 10px rgba(106, 27, 154, 0.3);
+            animation: gentleGlowPurple 3s ease-in-out infinite;
         }
-        .template-card.godlike:hover {
-            animation: firePurple 0.5s ease-in-out infinite;
-            border-width: 2px;
-        }
-        @keyframes firePurple {
-            0% { box-shadow: 0 0 12px #aa55ff, 0 0 6px #cc77ff; border-color: #aa55ff; }
-            20% { box-shadow: 0 0 28px #cc77ff, 0 0 14px #dd88ff; border-color: #cc77ff; }
-            40% { box-shadow: 0 0 35px #dd88ff, 0 0 18px #ff99ff; border-color: #dd88ff; }
-            60% { box-shadow: 0 0 35px #cc77ff, 0 0 18px #ff99ff; border-color: #cc77ff; }
-            80% { box-shadow: 0 0 28px #dd88ff, 0 0 14px #cc77ff; border-color: #dd88ff; }
-            100% { box-shadow: 0 0 12px #aa55ff, 0 0 6px #cc77ff; border-color: #aa55ff; }
+        @keyframes gentleGlowPurple {
+            0% { box-shadow: 0 0 5px rgba(106, 27, 154, 0.2); border-color: #6a1b9a; }
+            50% { box-shadow: 0 0 18px rgba(156, 39, 176, 0.4); border-color: #9c27b0; }
+            100% { box-shadow: 0 0 5px rgba(106, 27, 154, 0.2); border-color: #6a1b9a; }
         }
 
         .card-content {
@@ -309,20 +292,6 @@
             gap: 6px;
         }
 
-        .card-stats {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 8px;
-            min-width: 140px;
-        }
-
-        .points {
-            color: #ffd700;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
         .view-btn {
             background: #2d3a5e;
             border: none;
@@ -349,8 +318,8 @@
         }
 
         .status-pending { background: #ff8c00; color: #1a1f30; }
-        .status-approved { background: #2e7d32; color: #fff; }
-        .status-rejected { background: #c62828; color: #fff; }
+        .status-approved { background: #1b5e20; color: #a5d6a7; }
+        .status-rejected { background: #c62828; color: #ffcdd2; }
 
         .mod-actions {
             display: flex;
@@ -471,7 +440,6 @@
         @media (max-width: 768px) {
             .container { padding: 16px; }
             .card-content { flex-direction: column; align-items: flex-start; }
-            .card-stats { align-items: flex-start; width: 100%; }
             .mod-actions { flex-direction: column; align-items: stretch; }
         }
     </style>
@@ -675,11 +643,9 @@ async function loadTemplates() {
                             <div class="card-meta">
                                 <span class="card-author"><i class="fas fa-user"></i> ${escapeHtml(tpl.username)}</span>
                                 <span><i class="fas fa-calendar"></i> ${new Date(tpl.created_at).toLocaleDateString()}</span>
-                                ${pointsAwarded > 0 ? `<span><i class="fas fa-star"></i> ${pointsAwarded} CP awarded</span>` : ''}
                             </div>
                         </div>
                         <div class="card-stats">
-                            <div class="points"><i class="fas fa-star"></i> ${pointsAwarded} CP</div>
                             <button class="view-btn" onclick="window.location.href='amenodes.html?template=${tpl.id}'">Open Template</button>
                         </div>
                     </div>
