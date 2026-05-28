@@ -242,4 +242,57 @@ export class Graph {
 
     if (data.designQuality !== undefined) window._designQualitySaved = data.designQuality;
   }
+  
+  exportGraph() {
+    return {
+      nodes: this.nodes.map(node => node.toJSON()),
+      edges: this.edges.map(edge => ({ 
+        id: edge.id, 
+        source: edge.sourceId, 
+        target: edge.targetId 
+      })),
+      nextId: this.nextId,
+      nextEdgeId: this.nextEdgeId
+    };
+  }
+
+  loadGraph(data) {
+    this.nodes = [];
+    this.edges = [];
+    this.map.clear();
+    this.nextId = data.nextId || 1;
+    this.nextEdgeId = data.nextEdgeId || 1;
+
+    for (const nodeData of data.nodes) {
+      try {
+        const node = NodeFactory.createNode(nodeData.type, {
+          id: nodeData.id,
+          x: nodeData.x,
+          y: nodeData.y,
+          title: nodeData.title,
+          ...nodeData
+        });
+        if (node) {
+          node.important = nodeData.important || false;
+          this.nodes.push(node);
+          this.map.set(node.id, node);
+        }
+      } catch (err) {
+        console.warn(`Failed to restore node type ${nodeData.type}:`, err);
+      }
+    }
+
+    for (const edgeData of data.edges) {
+      const edge = new Edge(edgeData.id, edgeData.source, edgeData.target, 'main');
+      this.edges.push(edge);
+      if (edgeData.id >= this.nextEdgeId) this.nextEdgeId = edgeData.id + 1;
+    }
+
+    for (const node of this.nodes) {
+      if (typeof node.onAttach === 'function') node.onAttach(this);
+    }
+
+    this.reevaluateAll();
+    this.updateAllOutputs();
+  }
 }
