@@ -16,6 +16,206 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <link rel="stylesheet" href="styles/main.css">
+<style>
+  /* Additional styles for auth UI */
+  .auth-modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+  }
+  .auth-modal-content {
+    background: linear-gradient(135deg, #1a1f30, #0f1222);
+    border-radius: 20px;
+    border: 1px solid #ffb347;
+    padding: 28px;
+    width: 400px;
+    max-width: 90%;
+    color: #eef2ff;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  }
+  .auth-modal-content h3 {
+    margin: 0 0 20px 0;
+    text-align: center;
+    color: #ffb347;
+  }
+  .auth-modal-close {
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+    color: #8899bb;
+    transition: color 0.2s;
+  }
+  .auth-modal-close:hover {
+    color: #ffb347;
+  }
+  .auth-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #2e385c;
+  }
+  .auth-tab {
+    background: none;
+    border: none;
+    color: #8899bb;
+    padding: 8px 20px;
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  .auth-tab.active {
+    color: #ffb347;
+    border-bottom: 2px solid #ffb347;
+  }
+  .auth-panel {
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .auth-panel.active {
+    display: flex;
+  }
+  .auth-panel input {
+    background: #0a0c14;
+    border: 1px solid #2e385c;
+    border-radius: 10px;
+    padding: 12px;
+    color: #eef2ff;
+    font-family: monospace;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .auth-panel input:focus {
+    border-color: #ffb347;
+  }
+  .auth-panel button {
+    background: #ffb347;
+    border: none;
+    border-radius: 30px;
+    padding: 12px;
+    color: #1a1f30;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  .auth-panel button:hover {
+    background: #ffcc66;
+    transform: scale(1.02);
+  }
+  .auth-error {
+    color: #ff6b6b;
+    font-size: 12px;
+    text-align: center;
+    margin-top: 8px;
+  }
+  .user-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #ffb347, #ff8c00);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+    color: #1a1f30;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .user-avatar:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 12px rgba(255, 179, 71, 0.5);
+  }
+  .user-menu {
+    position: absolute;
+    top: 55px;
+    right: 20px;
+    background: #0f1222;
+    border: 1px solid #2e385c;
+    border-radius: 12px;
+    padding: 8px 0;
+    min-width: 180px;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .user-menu-item {
+    padding: 10px 20px;
+    color: #eef2ff;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .user-menu-item:hover {
+    background: #1a1f30;
+    color: #ffb347;
+  }
+  .user-menu-item i {
+    width: 20px;
+    color: #8899bb;
+  }
+  .user-menu-item:hover i {
+    color: #ffb347;
+  }
+  .user-menu-divider {
+    height: 1px;
+    background: #2e385c;
+    margin: 6px 0;
+  }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #1a1f30;
+    border-left: 4px solid #ffb347;
+    color: #eef2ff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    z-index: 10001;
+    animation: slideIn 0.3s ease;
+    font-family: monospace;
+    font-size: 13px;
+  }
+  .toast-success { border-left-color: #2e7d32; background: #1a2a1a; }
+  .toast-error { border-left-color: #c62828; background: #2a1a1a; }
+  .toast-info { border-left-color: #1565c0; background: #1a2a3a; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(100%); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .save-template-modal input, .save-template-modal textarea {
+    background: #0a0c14;
+    border: 1px solid #2e385c;
+    border-radius: 10px;
+    padding: 12px;
+    color: #eef2ff;
+    font-family: monospace;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .save-template-modal button {
+    background: #ffb347;
+    border: none;
+    border-radius: 30px;
+    padding: 12px;
+    color: #1a1f30;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+  }
+</style>
 </head>
 <body>
 
@@ -52,7 +252,7 @@
       <button id="undoBtn" class="top-btn" title="Undo"><i class="fas fa-undo-alt"></i></button>
       <button id="redoBtn" class="top-btn" title="Redo"><i class="fas fa-redo-alt"></i></button>
     </div>
-    <div class="right-controls">
+    <div class="right-controls" id="rightControls">
       <div class="zoom-indicator" id="zoomIndicator">100%</div>
       <button id="addNodeBtn" class="top-btn primary" title="Add Node"><i class="fas fa-plus"></i> Node</button>
       <button id="optToggleBtn" class="top-btn" title="Optimizations"><i class="fas fa-tachometer-alt"></i></button>
@@ -178,6 +378,7 @@
 </script>
 <script type="module" src="./src/main.js"></script>
 
+<!-- API Client and Auth UI -->
 <script>
 const API_BASE = 'https://amenoke.ru/api';
 
@@ -254,33 +455,18 @@ class AmenodesAPI {
             body: JSON.stringify({ title, description, graph_data: graphData })
         });
     }
-
-    async getTemplate(id) {
-        return this.request(`/get_template.php?id=${id}`);
-    }
-
-    async searchTemplates(query, filter = 'approved', level = '', sort = 'newest', page = 1) {
-        const params = new URLSearchParams({ q: query, filter, level, sort, page, limit: 12 });
-        return this.request(`/search_templates.php?${params}`);
-    }
-
-    async getUserTemplates(userId, status = 'approved') {
-        return this.request(`/user_templates.php?user_id=${userId}&status=${status}`);
-    }
-
-    async deleteTemplate(templateId) {
-        return this.request('/delete_template.php', {
-            method: 'POST',
-            body: JSON.stringify({ template_id: templateId })
-        });
-    }
-
-    async getTopUsers(limit = 20) {
-        return this.request(`/top_users.php?limit=${limit}`);
-    }
 }
 
 const api = new AmenodesAPI();
+let currentUser = null;
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
 
 function showAuthModal() {
     const modal = document.createElement('div');
@@ -334,7 +520,8 @@ function showAuthModal() {
             const data = await api.login(login, password);
             if (data.success) {
                 modal.remove();
-                updateAuthUI(data.user);
+                currentUser = data.user;
+                updateAuthUI();
                 showToast(`Welcome, ${data.user.username}!`, 'success');
             }
         } catch (err) {
@@ -352,7 +539,9 @@ function showAuthModal() {
             if (data.success) {
                 await api.login(username, password);
                 modal.remove();
-                updateAuthUI(data.user);
+                const userData = await api.getCurrentUser();
+                currentUser = userData.user;
+                updateAuthUI();
                 showToast(`Registration successful! Welcome, ${username}!`, 'success');
             }
         } catch (err) {
@@ -361,57 +550,128 @@ function showAuthModal() {
     };
 }
 
-function updateAuthUI(user) {
-    const toolbar = document.querySelector('.right-controls');
-    if (!toolbar) return;
+function updateAuthUI() {
+    const rightControls = document.getElementById('rightControls');
+    if (!rightControls) return;
     
-    const oldAuthBtn = document.getElementById('auth-btn');
-    if (oldAuthBtn) oldAuthBtn.remove();
+    const existingAuth = document.getElementById('auth-container');
+    if (existingAuth) existingAuth.remove();
     
-    if (user) {
-        const userPanel = document.createElement('div');
-        userPanel.id = 'auth-btn';
-        userPanel.className = 'user-panel';
-        userPanel.innerHTML = `
-            <span class="user-name">${user.username}</span>
-            <span class="user-points">⭐ ${user.creator_points} CP</span>
-            <button id="logout-btn" class="toolbar-btn">Logout</button>
-            <button id="save-template-btn" class="toolbar-btn">Save Template</button>
-        `;
-        const addNodeBtn = toolbar.querySelector('#addNodeBtn');
-        if (addNodeBtn) {
-            toolbar.insertBefore(userPanel, addNodeBtn);
-        } else {
-            toolbar.appendChild(userPanel);
-        }
-        
-        document.getElementById('logout-btn').onclick = () => {
-            api.logout();
-            updateAuthUI(null);
-            showToast('Logged out', 'info');
+    const authContainer = document.createElement('div');
+    authContainer.id = 'auth-container';
+    authContainer.style.display = 'flex';
+    authContainer.style.alignItems = 'center';
+    authContainer.style.gap = '12px';
+    
+    if (currentUser) {
+        const saveBtn = document.createElement('button');
+        saveBtn.id = 'saveTemplateBtn';
+        saveBtn.className = 'top-btn';
+        saveBtn.style.background = '#2d3a5e';
+        saveBtn.style.color = '#ffb347';
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Template';
+        saveBtn.onclick = () => showSaveTemplateModal();
+
+        const avatar = document.createElement('div');
+        avatar.className = 'user-avatar';
+        avatar.textContent = currentUser.username.charAt(0).toUpperCase();
+        avatar.onclick = (e) => {
+            e.stopPropagation();
+            toggleUserMenu();
         };
         
-        document.getElementById('save-template-btn').onclick = () => showSaveTemplateModal();
+        authContainer.appendChild(saveBtn);
+        authContainer.appendChild(avatar);
+        
+        const zoomIndicator = rightControls.querySelector('#zoomIndicator');
+        if (zoomIndicator) {
+            rightControls.insertBefore(authContainer, zoomIndicator);
+        } else {
+            rightControls.insertBefore(authContainer, rightControls.firstChild);
+        }
     } else {
-        const authBtn = document.createElement('button');
-        authBtn.id = 'auth-btn';
-        authBtn.textContent = 'Login';
-        authBtn.className = 'top-btn';
-        authBtn.onclick = () => showAuthModal();
-        toolbar.appendChild(authBtn);
+        const loginBtn = document.createElement('button');
+        loginBtn.id = 'loginHeaderBtn';
+        loginBtn.className = 'top-btn';
+        loginBtn.style.background = '#ffb347';
+        loginBtn.style.color = '#1a1f30';
+        loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+        loginBtn.onclick = () => showAuthModal();
+        authContainer.appendChild(loginBtn);
+        
+        const zoomIndicator = rightControls.querySelector('#zoomIndicator');
+        if (zoomIndicator) {
+            rightControls.insertBefore(authContainer, zoomIndicator);
+        } else {
+            rightControls.appendChild(authContainer);
+        }
     }
 }
 
-function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+let userMenu = null;
+
+function toggleUserMenu() {
+    if (userMenu) {
+        userMenu.remove();
+        userMenu = null;
+        return;
+    }
+    
+    userMenu = document.createElement('div');
+    userMenu.className = 'user-menu';
+    userMenu.innerHTML = `
+        <div class="user-menu-item" id="menu-profile">
+            <i class="fas fa-user"></i> My Profile
+        </div>
+        <div class="user-menu-item" id="menu-templates">
+            <i class="fas fa-cubes"></i> My Templates
+        </div>
+        <div class="user-menu-divider"></div>
+        <div class="user-menu-item" id="menu-logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </div>
+    `;
+    
+    document.body.appendChild(userMenu);
+    
+    const rect = document.querySelector('.user-avatar').getBoundingClientRect();
+    userMenu.style.position = 'fixed';
+    userMenu.style.top = `${rect.bottom + 8}px`;
+    userMenu.style.right = `${window.innerWidth - rect.right}px`;
+    
+    document.getElementById('menu-profile').onclick = () => {
+        userMenu.remove();
+        userMenu = null;
+        window.location.href = 'profile.html';
+    };
+    
+    document.getElementById('menu-templates').onclick = () => {
+        userMenu.remove();
+        userMenu = null;
+        window.location.href = 'profile.html';
+    };
+    
+    document.getElementById('menu-logout').onclick = () => {
+        api.logout();
+        currentUser = null;
+        userMenu.remove();
+        userMenu = null;
+        updateAuthUI();
+        showToast('Logged out', 'info');
+    };
+    
+    const closeMenu = (e) => {
+        if (userMenu && !userMenu.contains(e.target) && !e.target.classList.contains('user-avatar')) {
+            userMenu.remove();
+            userMenu = null;
+            document.removeEventListener('click', closeMenu);
+        }
+    };
+    setTimeout(() => document.addEventListener('click', closeMenu), 100);
 }
 
 function showSaveTemplateModal() {
-    if (!api.token) {
+    if (!currentUser) {
         showToast('Please login first', 'error');
         showAuthModal();
         return;
@@ -420,14 +680,16 @@ function showSaveTemplateModal() {
     const modal = document.createElement('div');
     modal.className = 'auth-modal';
     modal.innerHTML = `
-        <div class="auth-modal-content" style="max-width: 500px;">
+        <div class="auth-modal-content save-template-modal">
             <span class="auth-modal-close">&times;</span>
-            <h3>Save Template</h3>
-            <input type="text" id="template-title" placeholder="Template title" style="width:100%; margin-bottom:10px;">
-            <textarea id="template-desc" placeholder="Description (optional)" rows="3" style="width:100%; margin-bottom:10px;"></textarea>
-            <button id="save-template-submit">Save</button>
+            <h3><i class="fas fa-save"></i> Save as Template</h3>
+            <input type="text" id="template-title" placeholder="Template title">
+            <textarea id="template-desc" placeholder="Description (optional)" rows="3"></textarea>
+            <button id="save-template-submit">Submit for Moderation</button>
             <div class="auth-error" id="save-error"></div>
-            <small style="display:block; margin-top:10px;">Template will be submitted for moderation. You'll receive Creator Points after approval.</small>
+            <small style="display:block; margin-top:12px; text-align:center; color:#8899bb;">
+                <i class="fas fa-info-circle"></i> You'll receive Creator Points after approval
+            </small>
         </div>
     `;
     
@@ -471,7 +733,8 @@ function loadTemplateFromURL() {
     const templateId = urlParams.get('template');
     if (templateId && window.app && window.app.graph && window.app.graph.loadGraph) {
         showToast('Loading template...', 'info');
-        api.getTemplate(templateId)
+        fetch(`${API_BASE}/get_template.php?id=${templateId}`)
+            .then(res => res.json())
             .then(data => {
                 if (data.success && data.template.graph_data) {
                     window.app.graph.loadGraph(data.template.graph_data);
@@ -486,138 +749,24 @@ function loadTemplateFromURL() {
     }
 }
 
-const style = document.createElement('style');
-style.textContent = `
-    .auth-modal {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: rgba(0,0,0,0.7);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 10000;
-    }
-    .auth-modal-content {
-        background: #1e1e2e;
-        border-radius: 12px;
-        padding: 24px;
-        width: 400px;
-        max-width: 90%;
-        color: #fff;
-        box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    }
-    .auth-modal-content h3 {
-        margin: 0 0 20px 0;
-        text-align: center;
-    }
-    .auth-modal-close {
-        float: right;
-        font-size: 24px;
-        cursor: pointer;
-        color: #888;
-    }
-    .auth-modal-close:hover {
-        color: #fff;
-    }
-    .auth-tabs {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 20px;
-        border-bottom: 1px solid #444;
-    }
-    .auth-tab {
-        background: none;
-        border: none;
-        color: #888;
-        padding: 8px 16px;
-        cursor: pointer;
-        font-size: 14px;
-    }
-    .auth-tab.active {
-        color: #ffd700;
-        border-bottom: 2px solid #ffd700;
-    }
-    .auth-panel {
-        display: none;
-        flex-direction: column;
-        gap: 12px;
-    }
-    .auth-panel.active {
-        display: flex;
-    }
-    .auth-panel input, .auth-panel textarea {
-        background: #2a2a3a;
-        border: 1px solid #444;
-        color: #fff;
-        padding: 10px;
-        border-radius: 6px;
-    }
-    .auth-panel button {
-        background: #ffd700;
-        border: none;
-        padding: 10px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: bold;
-    }
-    .auth-error {
-        color: #ff6b6b;
-        font-size: 12px;
-        text-align: center;
-    }
-    .user-panel {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        background: #2a2a3a;
-        padding: 5px 12px;
-        border-radius: 20px;
-        margin-right: 12px;
-    }
-    .user-name {
-        color: #ffd700;
-        font-weight: bold;
-    }
-    .user-points {
-        font-size: 12px;
-        color: #aaa;
-    }
-    .toast {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: #333;
-        color: #fff;
-        padding: 12px 20px;
-        border-radius: 8px;
-        z-index: 10001;
-        animation: fadeIn 0.3s;
-    }
-    .toast-success { background: #2e7d32; }
-    .toast-error { background: #c62828; }
-    .toast-info { background: #1565c0; }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-`;
-document.head.appendChild(style);
-
-document.addEventListener('DOMContentLoaded', () => {
-    api.getCurrentUser().then(data => {
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const data = await api.getCurrentUser();
         if (data && data.success) {
-            updateAuthUI(data.user);
+            currentUser = data.user;
+            updateAuthUI();
         } else {
-            updateAuthUI(null);
+            updateAuthUI();
         }
-    }).catch(() => updateAuthUI(null));
+    } catch (err) {
+        console.error(err);
+        updateAuthUI();
+    }
     
     setTimeout(() => {
         loadTemplateFromURL();
     }, 1500);
 });
 </script>
-
 </body>
 </html>
