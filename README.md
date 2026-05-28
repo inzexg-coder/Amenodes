@@ -1,15 +1,6 @@
 <h1 align="center">Amenodes</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/github/stars/inzexg-coder/Amenodes?style=for-the-badge&color=ffb347" alt="Stars">
-  <img src="https://img.shields.io/github/forks/inzexg-coder/Amenodes?style=for-the-badge&color=6d8ae0" alt="Forks">
-  <br>
-  <img src="https://img.shields.io/github/issues/inzexg-coder/Amenodes?style=for-the-badge&color=e74c3c" alt="Issues">
-  <img src="https://img.shields.io/github/issues-pr/inzexg-coder/Amenodes?style=for-the-badge&color=2ecc71" alt="Pull Requests">
-  <img src="https://img.shields.io/github/last-commit/inzexg-coder/Amenodes?style=for-the-badge&color=3498db" alt="Last Commit">
-</p>
-
-<p align="center">
   <strong>1.4.1</strong><br>
   <sub>Visual Programming Language for Data Analysis</sub>
 </p>
