@@ -24,20 +24,38 @@ jobs:
             echo "head_sha=${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
       
+      - name: Generate HMAC signature
+        id: sign
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg repo "${{ github.repository }}" \
+            --arg ref "${{ github.ref }}" \
+            --arg sha "${{ steps.pr.outputs.head_sha }}" \
+            --arg pr "${{ steps.pr.outputs.pr_number }}" \
+            --arg head "${{ steps.pr.outputs.head_ref }}" \
+            --arg actor "${{ github.actor }}" \
+            '{
+              event_type: "deploy",
+              client_payload: {
+                source_repo: $repo,
+                source_ref: $ref,
+                source_sha: $sha,
+                pr_number: $pr,
+                head_ref: $head,
+                actor: $actor
+              }
+            }')
+          echo "$PAYLOAD" > payload.json
+
+          SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.DISPATCH_SECRET }}" | cut -d ' ' -f2)
+          echo "signature=$SIGNATURE" >> $GITHUB_OUTPUT
+          echo "payload_path=$(pwd)/payload.json" >> $GITHUB_OUTPUT
+      
       - name: Trigger CI repository
         run: |
           curl -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.CI_TOKEN }}" \
+            -H "X-Hub-Signature-256: sha256=${{ steps.sign.outputs.signature }}" \
             https://api.github.com/repos/inzexg-coder/amenodes-ci/dispatches \
-            -d '{
-              "event_type": "deploy",
-              "client_payload": {
-                "source_repo": "${{ github.repository }}",
-                "source_ref": "${{ github.ref }}",
-                "source_sha": "${{ steps.pr.outputs.head_sha }}",
-                "pr_number": "${{ steps.pr.outputs.pr_number }}",
-                "head_ref": "${{ steps.pr.outputs.head_ref }}",
-                "actor": "${{ github.actor }}"
-              }
-            }'
+            --data @payload.json
