@@ -47,11 +47,9 @@ jobs:
             }')
           
           SIGNATURE=$(echo -n "$BASE_PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.DISPATCH_SECRET }}" | cut -d ' ' -f2)
-          
           FINAL_PAYLOAD=$(echo "$BASE_PAYLOAD" | jq --arg sig "$SIGNATURE" '.client_payload.signature = $sig')
           
           echo "$FINAL_PAYLOAD" > payload.json
-          echo "signature=$SIGNATURE" >> $GITHUB_OUTPUT
       
       - name: Trigger CI repository
         run: |
