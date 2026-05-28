@@ -119,11 +119,11 @@
             height: 100%;
             pointer-events: none;
             background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), 
-                                        rgba(255, 255, 255, 0.35) 0%, 
-                                        rgba(255, 255, 255, 0.15) 30%,
-                                        rgba(255, 255, 255, 0) 70%);
+                                        rgba(255, 255, 255, 0.4) 0%, 
+                                        rgba(255, 255, 255, 0.1) 40%,
+                                        rgba(255, 255, 255, 0) 80%);
             opacity: 0;
-            transition: opacity 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            transition: opacity 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
             border-radius: inherit;
             z-index: 1;
             mix-blend-mode: overlay;
@@ -131,6 +131,34 @@
 
         .profile-card:hover .card-gloss {
             opacity: 1;
+        }
+
+        .card-gradient-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            border-radius: inherit;
+            transition: background 0.3s ease;
+        }
+
+        .card-gradient-gloss {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), 
+                                        rgba(255, 255, 255, 0.25) 0%, 
+                                        rgba(255, 255, 255, 0.05) 50%,
+                                        transparent 80%);
+            border-radius: inherit;
+            z-index: 2;
+            mix-blend-mode: soft-light;
+            transition: opacity 0.2s;
         }
 
         .triangles-container {
@@ -149,19 +177,9 @@
             transition: all 0.5s ease;
         }
 
-        .card-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            border-radius: inherit;
-        }
-
         .card-content {
             position: relative;
-            z-index: 2;
+            z-index: 3;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -457,23 +475,23 @@ function getCardGradient(cp) {
         let base = colors[idx];
         let second = colors[Math.min(colors.length-1, idx+1)];
         let third = colors[Math.max(0, idx-1)];
-        return `linear-gradient(115deg, ${base}, ${second} 35%, ${third} 70%, ${base})`;
+        return `linear-gradient(115deg, ${base}, ${second} 30%, ${third} 60%, ${base} 90%)`;
     } else {
         let excess = stars - 8;
-        let blackFactor = Math.min(1, excess / 2);
-        let purpleFactor = Math.max(0, (excess - 2) / 3);
+        let purpleFactor = Math.max(0, (excess - 2) / 4);
         let darkBlue = '#102070';
+        let blackBase = '#0a0a14';
         if (purpleFactor > 0) {
-            let purple = `rgba(140, 70, 200, ${purpleFactor * 0.5})`;
-            let accent = `rgba(180, 110, 240, ${purpleFactor * 0.3})`;
-            return `linear-gradient(115deg, #0a0a14, ${purple} 30%, ${accent} 65%, #0a0a14)`;
+            let purple = `rgba(140, 70, 200, ${purpleFactor * 0.6})`;
+            let accent = `rgba(180, 110, 240, ${purpleFactor * 0.4})`;
+            return `linear-gradient(115deg, ${blackBase}, ${purple} 25%, ${accent} 55%, ${blackBase} 85%)`;
         } else {
-            let mix = blackFactor;
+            let mix = Math.min(1, (stars - 8) / 2);
             let r = 16 + (10 - 16) * mix;
             let g = 32 + (10 - 32) * mix;
             let b = 112 + (20 - 112) * mix;
             let transitionColor = `rgb(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)})`;
-            return `linear-gradient(115deg, ${darkBlue}, ${transitionColor} 50%, #0a0a14)`;
+            return `linear-gradient(115deg, ${darkBlue}, ${transitionColor} 40%, ${blackBase} 75%)`;
         }
     }
 }
@@ -546,16 +564,21 @@ function applyTriangles(card, cp) {
     }
 }
 
-function setupGlossEffect(card) {
+function setupGlossEffects(card) {
     const gloss = card.querySelector('.card-gloss');
-    if (!gloss) return;
+    const gradientGloss = card.querySelector('.card-gradient-gloss');
+    if (!gloss || !gradientGloss) return;
+    
     const onMove = (e) => {
         const rect = card.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width) * 100;
         const y = ((e.clientY - rect.top) / rect.height) * 100;
         gloss.style.setProperty('--x', `${x}%`);
         gloss.style.setProperty('--y', `${y}%`);
+        gradientGloss.style.setProperty('--gx', `${x}%`);
+        gradientGloss.style.setProperty('--gy', `${y}%`);
     };
+    
     card.addEventListener('mousemove', onMove);
 }
 
@@ -669,7 +692,8 @@ function renderProfileHeader() {
     const gradient = getCardGradient(cp);
     container.innerHTML = `
         <div class="profile-card">
-            <div class="card-bg" style="background: ${gradient};"></div>
+            <div class="card-gradient-layer" style="background: ${gradient};"></div>
+            <div class="card-gradient-gloss"></div>
             <div class="card-gloss"></div>
             <div class="triangles-container"></div>
             <div class="card-content">
@@ -689,7 +713,7 @@ function renderProfileHeader() {
     const card = document.querySelector('.profile-card');
     if (card) {
         applyTriangles(card, cp);
-        setupGlossEffect(card);
+        setupGlossEffects(card);
     }
     document.querySelectorAll('.tab').forEach(btn => {
         btn.onclick = () => {
