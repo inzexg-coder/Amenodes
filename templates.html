@@ -318,7 +318,7 @@
         }
 
         .status-pending { background: #ff8c00; color: #1a1f30; }
-        .status-approved { background: #1b5e20; color: #a5d6a7; }
+        .status-approved { display: none; }
         .status-rejected { background: #c62828; color: #ffcdd2; }
 
         .mod-actions {
@@ -625,7 +625,6 @@ async function loadTemplates() {
         const isModerator = currentUser && (currentUser.role === 'moderator' || currentUser.role === 'admin');
         
         container.innerHTML = data.templates.map(tpl => {
-            const pointsAwarded = tpl.creator_points_awarded || 0;
             const levelClass = getCardLevelClass(tpl.verification_level, tpl.status);
             const isApproved = tpl.status === 'approved';
             const isPending = tpl.status === 'pending';
@@ -637,7 +636,7 @@ async function loadTemplates() {
                         <div class="card-info">
                             <div class="card-title">
                                 <span>${escapeHtml(tpl.title)}</span>
-                                <span class="status-badge ${getStatusClass(tpl.status)}">${getStatusName(tpl.status)}</span>
+                                ${!isApproved ? `<span class="status-badge ${getStatusClass(tpl.status)}">${getStatusName(tpl.status)}</span>` : ''}
                             </div>
                             <div class="card-desc">${escapeHtml(tpl.description || 'No description')}</div>
                             <div class="card-meta">
