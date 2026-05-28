@@ -24,10 +24,10 @@ jobs:
             echo "head_sha=${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
       
-      - name: Generate HMAC signature
+      - name: Generate HMAC signature inside payload
         id: sign
         run: |
-          PAYLOAD=$(jq -n \
+          BASE_PAYLOAD=$(jq -n \
             --arg repo "${{ github.repository }}" \
             --arg ref "${{ github.ref }}" \
             --arg sha "${{ steps.pr.outputs.head_sha }}" \
@@ -45,17 +45,18 @@ jobs:
                 actor: $actor
               }
             }')
-          echo "$PAYLOAD" > payload.json
-
-          SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.DISPATCH_SECRET }}" | cut -d ' ' -f2)
+          
+          SIGNATURE=$(echo -n "$BASE_PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.DISPATCH_SECRET }}" | cut -d ' ' -f2)
+          
+          FINAL_PAYLOAD=$(echo "$BASE_PAYLOAD" | jq --arg sig "$SIGNATURE" '.client_payload.signature = $sig')
+          
+          echo "$FINAL_PAYLOAD" > payload.json
           echo "signature=$SIGNATURE" >> $GITHUB_OUTPUT
-          echo "payload_path=$(pwd)/payload.json" >> $GITHUB_OUTPUT
       
       - name: Trigger CI repository
         run: |
           curl -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.CI_TOKEN }}" \
-            -H "X-Hub-Signature-256: sha256=${{ steps.sign.outputs.signature }}" \
             https://api.github.com/repos/inzexg-coder/amenodes-ci/dispatches \
             --data @payload.json
