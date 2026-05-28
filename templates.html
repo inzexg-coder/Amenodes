@@ -190,55 +190,91 @@
             overflow: hidden;
             transition: all 0.3s;
             margin-bottom: 16px;
+            border: 1px solid #2e385c;
         }
 
         .template-card.regular {
-            border: 1px solid #444;
-            box-shadow: none;
+            border-color: #444;
+            box-shadow: 0 0 5px rgba(100, 100, 100, 0.2);
+        }
+        .template-card.regular:hover {
+            box-shadow: 0 0 12px rgba(100, 100, 100, 0.4);
+            border-color: #666;
         }
 
         .template-card.featured {
-            border: 1px solid #ffd700;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
-            background: linear-gradient(135deg, #0f1222, #1a1a2a);
+            border-color: #ffaa00;
+            box-shadow: 0 0 15px rgba(255, 170, 0, 0.4);
+            animation: featuredFlicker 1.5s ease-in-out infinite;
         }
         .template-card.featured:hover {
-            box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
-            border-color: #ffea00;
+            box-shadow: 0 0 30px rgba(255, 170, 0, 0.7);
+            border-color: #ffcc33;
+        }
+        @keyframes featuredFlicker {
+            0% { box-shadow: 0 0 10px rgba(255, 170, 0, 0.3); border-color: #ffaa00; }
+            50% { box-shadow: 0 0 25px rgba(255, 200, 50, 0.6); border-color: #ffcc44; }
+            100% { box-shadow: 0 0 10px rgba(255, 170, 0, 0.3); border-color: #ffaa00; }
         }
 
         .template-card.epic {
-            border: 1px solid #ff69b4;
-            box-shadow: 0 0 15px rgba(255, 105, 180, 0.4);
-            background: linear-gradient(135deg, #0f1222, #1a1528);
+            border-color: #ff44aa;
+            box-shadow: 0 0 15px rgba(255, 68, 170, 0.4);
+            animation: epicFlicker 1.2s ease-in-out infinite;
         }
         .template-card.epic:hover {
-            box-shadow: 0 0 30px rgba(255, 105, 180, 0.6);
-            border-color: #ff88cc;
+            box-shadow: 0 0 35px rgba(255, 80, 180, 0.7);
+            border-color: #ff66cc;
+        }
+        @keyframes epicFlicker {
+            0% { box-shadow: 0 0 10px rgba(255, 68, 170, 0.3); border-color: #ff44aa; }
+            50% { box-shadow: 0 0 28px rgba(255, 100, 200, 0.6); border-color: #ff66cc; }
+            100% { box-shadow: 0 0 10px rgba(255, 68, 170, 0.3); border-color: #ff44aa; }
         }
 
         .template-card.legendary {
-            border: 1px solid #00bfff;
-            box-shadow: 0 0 20px rgba(0, 191, 255, 0.4);
-            background: linear-gradient(135deg, #0f1222, #102030);
+            border-color: #0088ff;
+            box-shadow: 0 0 20px rgba(0, 136, 255, 0.4);
+            animation: legendaryGlow 1.8s ease-in-out infinite;
         }
         .template-card.legendary:hover {
-            box-shadow: 0 0 35px rgba(0, 191, 255, 0.6);
-            border-color: #44ddff;
+            box-shadow: 0 0 40px rgba(0, 150, 255, 0.7);
+            border-color: #33aaff;
+        }
+        @keyframes legendaryGlow {
+            0% { box-shadow: 0 0 12px rgba(0, 136, 255, 0.3); border-color: #0088ff; }
+            50% { box-shadow: 0 0 30px rgba(0, 160, 255, 0.6); border-color: #33aaff; }
+            100% { box-shadow: 0 0 12px rgba(0, 136, 255, 0.3); border-color: #0088ff; }
         }
 
         .template-card.godlike {
-            border: 1px solid #9b59b6;
-            animation: godlikePulse 2s ease-in-out infinite;
-            background: linear-gradient(135deg, #0f1222, #1a1030);
+            animation: godlikeRainbow 2s ease-in-out infinite;
+            border-width: 2px;
         }
         .template-card.godlike:hover {
-            border-color: #bb7bff;
+            animation: godlikeRainbow 0.8s ease-in-out infinite;
         }
-        @keyframes godlikePulse {
-            0% { box-shadow: 0 0 10px #9b59b6, 0 0 5px #ff69b4; }
-            50% { box-shadow: 0 0 30px #bb7bff, 0 0 15px #ff88cc; border-color: #ddaaff; }
-            100% { box-shadow: 0 0 10px #9b59b6, 0 0 5px #ff69b4; }
+        @keyframes godlikeRainbow {
+            0% { 
+                box-shadow: 0 0 15px #ff0055, 0 0 5px #ff00aa;
+                border-color: #ff0055;
+            }
+            25% {
+                box-shadow: 0 0 30px #ffaa00, 0 0 10px #ff44ff;
+                border-color: #ffaa00;
+            }
+            50% { 
+                box-shadow: 0 0 35px #00ffaa, 0 0 15px #44ffff;
+                border-color: #00ffaa;
+            }
+            75% {
+                box-shadow: 0 0 30px #5500ff, 0 0 10px #aa44ff;
+                border-color: #5500ff;
+            }
+            100% { 
+                box-shadow: 0 0 15px #ff0055, 0 0 5px #ff00aa;
+                border-color: #ff0055;
+            }
         }
 
         .card-content {
@@ -316,20 +352,6 @@
         .view-btn:hover {
             background: #3f4e7a;
         }
-
-        .level-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-        }
-
-        .level-regular { background: #555; color: #ccc; }
-        .level-featured { background: #ffd700; color: #1a1f30; }
-        .level-epic { background: #ff69b4; color: #1a1f30; }
-        .level-legendary { background: #00bfff; color: #1a1f30; }
-        .level-godlike { background: linear-gradient(135deg, #9b59b6, #ff69b4); color: #fff; }
 
         .status-badge {
             display: inline-block;
@@ -575,28 +597,6 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 3000);
 }
 
-function getLevelClass(level) {
-    const map = {
-        'regular': 'level-regular',
-        'featured': 'level-featured',
-        'epic': 'level-epic',
-        'legendary': 'level-legendary',
-        'godlike': 'level-godlike'
-    };
-    return map[level] || 'level-regular';
-}
-
-function getLevelName(level) {
-    const map = {
-        'regular': 'Regular',
-        'featured': 'Featured',
-        'epic': 'Epic',
-        'legendary': 'Legendary',
-        'godlike': 'Godlike'
-    };
-    return map[level] || 'Regular';
-}
-
 function getStatusClass(status) {
     const map = {
         'pending': 'status-pending',
@@ -682,10 +682,7 @@ async function loadTemplates() {
                         <div class="card-info">
                             <div class="card-title">
                                 <span>${escapeHtml(tpl.title)}</span>
-                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                    ${tpl.verification_level && isApproved ? `<span class="level-badge ${getLevelClass(tpl.verification_level)}">${getLevelName(tpl.verification_level)}</span>` : ''}
-                                    <span class="status-badge ${getStatusClass(tpl.status)}">${getStatusName(tpl.status)}</span>
-                                </div>
+                                <span class="status-badge ${getStatusClass(tpl.status)}">${getStatusName(tpl.status)}</span>
                             </div>
                             <div class="card-desc">${escapeHtml(tpl.description || 'No description')}</div>
                             <div class="card-meta">
