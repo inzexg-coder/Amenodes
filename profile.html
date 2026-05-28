@@ -110,7 +110,7 @@
             transform: translateY(-4px);
             box-shadow: 0 25px 40px -12px rgba(0,0,0,0.5);
         }
-        
+
         .card-gloss {
             position: absolute;
             top: 0;
@@ -176,7 +176,7 @@
             letter-spacing: 2px;
             line-height: 1;
             margin-bottom: 12px;
-            text-shadow: none; /* тень убрана */
+            text-shadow: none;
         }
 
         .cp-label {
@@ -239,7 +239,7 @@
             background: #121624;
         }
 
-        .card-content {
+        .template-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -248,12 +248,12 @@
             gap: 16px;
         }
 
-        .card-info {
+        .template-info {
             flex: 2;
             min-width: 200px;
         }
 
-        .card-title {
+        .template-title {
             font-size: 18px;
             font-weight: bold;
             margin-bottom: 8px;
@@ -263,13 +263,13 @@
             flex-wrap: wrap;
         }
 
-        .card-desc {
+        .template-desc {
             font-size: 13px;
             color: #8899bb;
             margin-bottom: 12px;
         }
 
-        .card-meta {
+        .template-meta {
             display: flex;
             gap: 20px;
             font-size: 12px;
@@ -288,7 +288,7 @@
         .status-approved { background: #2e7d32; color: #fff; }
         .status-rejected { background: #c62828; color: #ffcdd2; }
 
-        .card-footer {
+        .template-actions {
             padding: 12px 24px;
             background: #0a0c14;
             display: flex;
@@ -345,7 +345,8 @@
         @media (max-width: 768px) {
             .container { padding: 16px; }
             .cp-number { font-size: 52px; }
-            .card-content { flex-direction: column; align-items: flex-start; }
+            .template-content { flex-direction: column; align-items: flex-start; }
+            .template-actions { justify-content: flex-start; }
         }
     </style>
 </head>
@@ -637,22 +638,22 @@ async function loadTemplates() {
         }
         container.innerHTML = data.templates.map(tpl => `
             <div class="template-card">
-                <div class="card-content">
-                    <div class="card-info">
-                        <div class="card-title">
+                <div class="template-content">
+                    <div class="template-info">
+                        <div class="template-title">
                             <span>${escapeHtml(tpl.title)}</span>
                             <span class="status-badge ${getStatusClass(tpl.status)}">${getStatusName(tpl.status)}</span>
                         </div>
-                        <div class="card-desc">${escapeHtml(tpl.description || 'No description')}</div>
-                        <div class="card-meta">
+                        <div class="template-desc">${escapeHtml(tpl.description || 'No description')}</div>
+                        <div class="template-meta">
                             <span><i class="fas fa-calendar"></i> ${new Date(tpl.created_at).toLocaleDateString()}</span>
                             ${tpl.creator_points_awarded > 0 ? `<span><i class="fas fa-star"></i> ${tpl.creator_points_awarded} CP</span>` : ''}
                         </div>
                     </div>
-                    <div class="card-footer">
-                        <button class="btn btn-secondary" onclick="openTemplate(${tpl.id})">Open</button>
-                        <button class="btn btn-danger" onclick="deleteTemplate(${tpl.id})">Delete</button>
-                    </div>
+                </div>
+                <div class="template-actions">
+                    <button class="btn btn-secondary" onclick="openTemplate(${tpl.id})">Open</button>
+                    <button class="btn btn-danger" onclick="deleteTemplate(${tpl.id})">Delete</button>
                 </div>
             </div>
         `).join('');
