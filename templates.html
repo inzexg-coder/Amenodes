@@ -14,7 +14,7 @@
         }
 
         body {
-            font-family: monospace;
+            font-family: 'Segoe UI', 'Monaco', 'Monospace', system-ui;
             background: linear-gradient(135deg, #0a0c14 0%, #121624 100%);
             min-height: 100vh;
             color: #eef2ff;
@@ -24,7 +24,7 @@
             background: #0f1222cc;
             backdrop-filter: blur(10px);
             border-bottom: 1px solid #2e385c;
-            padding: 16px 24px;
+            padding: 16px 32px;
             position: sticky;
             top: 0;
             z-index: 100;
@@ -65,6 +65,7 @@
             color: #aabbdd;
             text-decoration: none;
             transition: color 0.2s;
+            font-size: 14px;
         }
 
         .nav-links a:hover {
@@ -75,7 +76,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            background: #2a2a3a;
+            background: #1a1f30;
             padding: 6px 16px;
             border-radius: 40px;
         }
@@ -83,6 +84,7 @@
         .user-name {
             color: #ffd700;
             font-weight: bold;
+            font-size: 13px;
         }
 
         .mod-badge {
@@ -94,11 +96,11 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 24px;
+            padding: 32px;
         }
-
+        
         .filter-tabs {
             display: flex;
             gap: 12px;
@@ -111,9 +113,9 @@
             background: none;
             border: none;
             color: #8899bb;
-            padding: 8px 24px;
+            padding: 8px 28px;
             cursor: pointer;
-            font-family: monospace;
+            font-family: inherit;
             font-size: 14px;
             border-radius: 30px;
             transition: all 0.2s;
@@ -160,7 +162,7 @@
             background: none;
             border: none;
             color: #fff;
-            font-family: monospace;
+            font-family: inherit;
             font-size: 14px;
             outline: none;
         }
@@ -177,15 +179,16 @@
             border-radius: 30px;
             padding: 8px 16px;
             color: #fff;
-            font-family: monospace;
+            font-family: inherit;
             cursor: pointer;
+            font-size: 13px;
         }
 
         .level-badge {
             display: inline-block;
             padding: 4px 12px;
             border-radius: 20px;
-            font-size: 10px;
+            font-size: 11px;
             font-weight: bold;
         }
 
@@ -199,7 +202,7 @@
             display: inline-block;
             padding: 4px 12px;
             border-radius: 20px;
-            font-size: 10px;
+            font-size: 11px;
             font-weight: bold;
         }
 
@@ -207,10 +210,10 @@
         .status-approved { background: #2e7d32; color: #fff; }
         .status-rejected { background: #c62828; color: #fff; }
 
-        .templates-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 24px;
+        .templates-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
 
         .template-card {
@@ -218,19 +221,26 @@
             border-radius: 16px;
             border: 1px solid #2e385c;
             overflow: hidden;
-            transition: all 0.3s;
-            cursor: pointer;
+            transition: all 0.2s;
         }
 
         .template-card:hover {
-            transform: translateY(-4px);
             border-color: #ffb347;
-            box-shadow: 0 8px 24px rgba(255, 179, 71, 0.15);
+            background: #121624;
         }
 
-        .card-header {
-            padding: 16px;
-            border-bottom: 1px solid #2e385c;
+        .card-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .card-info {
+            flex: 2;
+            min-width: 200px;
         }
 
         .card-title {
@@ -238,14 +248,13 @@
             font-weight: bold;
             margin-bottom: 8px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 12px;
             flex-wrap: wrap;
-            gap: 8px;
         }
 
         .card-desc {
-            font-size: 12px;
+            font-size: 13px;
             color: #8899bb;
             margin-bottom: 12px;
             line-height: 1.4;
@@ -253,9 +262,10 @@
 
         .card-meta {
             display: flex;
-            justify-content: space-between;
-            font-size: 11px;
+            gap: 20px;
+            font-size: 12px;
             color: #667799;
+            flex-wrap: wrap;
         }
 
         .card-author {
@@ -264,28 +274,31 @@
             gap: 6px;
         }
 
-        .card-footer {
-            padding: 12px 16px;
-            background: #0a0c14;
+        .card-stats {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+            min-width: 140px;
         }
 
         .points {
             color: #ffd700;
             font-weight: bold;
+            font-size: 14px;
         }
 
         .view-btn {
             background: #2d3a5e;
             border: none;
-            padding: 6px 16px;
-            border-radius: 20px;
+            padding: 8px 24px;
+            border-radius: 30px;
             color: #fff;
             cursor: pointer;
-            font-family: monospace;
-            font-size: 12px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.2s;
         }
 
         .view-btn:hover {
@@ -294,21 +307,34 @@
 
         .mod-actions {
             display: flex;
-            gap: 8px;
-            margin-top: 12px;
-            padding-top: 12px;
+            gap: 12px;
+            align-items: center;
+            padding: 16px 24px;
+            background: #0a0c14;
             border-top: 1px solid #2e385c;
+            flex-wrap: wrap;
+        }
+
+        .mod-select {
+            background: #1a1f30;
+            border: 1px solid #2e385c;
+            border-radius: 30px;
+            padding: 8px 16px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 13px;
+            cursor: pointer;
         }
 
         .mod-btn {
-            flex: 1;
-            padding: 6px;
-            border-radius: 8px;
+            padding: 8px 20px;
+            border-radius: 30px;
             border: none;
             cursor: pointer;
-            font-family: monospace;
-            font-size: 11px;
-            font-weight: bold;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
         }
 
         .mod-approve {
@@ -316,19 +342,26 @@
             color: #fff;
         }
 
+        .mod-approve:hover {
+            background: #3e9142;
+        }
+
         .mod-reject {
             background: #c62828;
             color: #fff;
         }
 
-        .level-select-small {
-            background: #1a1f30;
-            border: 1px solid #2e385c;
-            border-radius: 8px;
-            padding: 4px 8px;
-            color: #fff;
-            font-size: 10px;
-            font-family: monospace;
+        .mod-reject:hover {
+            background: #d83a3a;
+        }
+
+        .mod-revert {
+            background: #ff8c00;
+            color: #1a1f30;
+        }
+
+        .mod-revert:hover {
+            background: #ffa033;
         }
 
         .pagination {
@@ -346,6 +379,8 @@
             border-radius: 8px;
             color: #fff;
             cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
         }
 
         .page-btn.active {
@@ -354,16 +389,20 @@
             color: #1a1f30;
         }
 
-        .loading {
+        .page-btn:hover:not(.active) {
+            background: #2d3a5e;
+        }
+
+        .loading, .empty-state {
             text-align: center;
             padding: 60px;
-            font-size: 18px;
             color: #8899bb;
         }
 
-        .loading i {
-            animation: spin 1s linear infinite;
-            margin-right: 8px;
+        .loading i, .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            display: block;
         }
 
         @keyframes spin {
@@ -371,70 +410,32 @@
             to { transform: rotate(360deg); }
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 60px;
-            color: #667799;
-        }
-
-        .empty-state i {
-            font-size: 48px;
-            margin-bottom: 16px;
+        .fa-spinner {
+            animation: spin 1s linear infinite;
         }
 
         .toast {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background: #333;
-            color: #fff;
+            background: #1a1f30;
+            border-left: 4px solid #ffb347;
+            color: #eef2ff;
             padding: 12px 20px;
             border-radius: 8px;
             z-index: 1000;
-            animation: fadeIn 0.3s;
+            font-family: inherit;
+            font-size: 13px;
         }
 
-        .toast-success { background: #2e7d32; }
-        .toast-error { background: #c62828; }
-        .toast-info { background: #1565c0; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .auth-modal {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-        }
-
-        .auth-modal-content {
-            background: #1e1e2e;
-            border-radius: 12px;
-            padding: 24px;
-            width: 400px;
-            max-width: 90%;
-            color: #fff;
-        }
-
-        .auth-modal-close {
-            float: right;
-            font-size: 24px;
-            cursor: pointer;
-            color: #888;
-        }
+        .toast-success { border-left-color: #2e7d32; background: #1a2a1a; }
+        .toast-error { border-left-color: #c62828; background: #2a1a1a; }
 
         @media (max-width: 768px) {
             .container { padding: 16px; }
-            .templates-grid { grid-template-columns: 1fr; }
-            .search-section { flex-direction: column; border-radius: 20px; }
-            .search-input { width: 100%; }
+            .card-content { flex-direction: column; align-items: flex-start; }
+            .card-stats { align-items: flex-start; width: 100%; }
+            .mod-actions { flex-direction: column; align-items: stretch; }
         }
     </style>
 </head>
@@ -446,17 +447,17 @@
         <span>Amenodes</span>
     </div>
     <div class="nav-links">
-        <a href="amenodes.html"><i class="fas fa-edit"></i> Editor</a>
-        <a href="templates.html"><i class="fas fa-cubes"></i> Templates</a>
-        <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
+        <a href="amenodes.html">Editor</a>
+        <a href="templates.html">Templates</a>
+        <a href="profile.html">Profile</a>
     </div>
     <div id="authSection"></div>
 </div>
 
 <div class="container">
     <div class="filter-tabs">
-        <button class="filter-tab active" data-filter="approved">✓ Approved Templates</button>
-        <button class="filter-tab" data-filter="all">📋 All Templates</button>
+        <button class="filter-tab active" data-filter="approved">Approved Templates</button>
+        <button class="filter-tab" data-filter="all">All Templates</button>
     </div>
 
     <div class="search-section">
@@ -474,15 +475,14 @@
                 <option value="godlike">Godlike</option>
             </select>
             <select id="sortFilter" class="filter-select">
-                <option value="newest">Newest</option>
-                <option value="top_cp">Most CP</option>
-                <option value="popular">Most Popular</option>
+                <option value="newest">Newest First</option>
+                <option value="top_cp">Most Creator Points</option>
             </select>
         </div>
     </div>
 
-    <div id="templatesGrid" class="templates-grid">
-        <div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading templates...</div>
+    <div id="templatesList" class="templates-list">
+        <div class="loading"><i class="fas fa-spinner"></i> Loading templates...</div>
     </div>
 
     <div id="pagination" class="pagination"></div>
@@ -519,7 +519,7 @@ class API {
     }
 
     async searchTemplates(query, level, sort, status, page = 1) {
-        const params = new URLSearchParams({ q: query, level, sort, status, page, limit: 12 });
+        const params = new URLSearchParams({ q: query, level, sort, status, page, limit: 20 });
         return this.request(`/search_templates.php?${params}`);
     }
 
@@ -597,24 +597,10 @@ function escapeHtml(str) {
     });
 }
 
-async function approveTemplate(id, level) {
-    if (!confirm(`Approve this template as ${getLevelName(level)}?`)) return;
-    
+async function moderateTemplate(id, action, level = null) {
     try {
-        await api.moderateTemplate(id, 'approve', level);
-        showToast(`Template approved!`, 'success');
-        loadTemplates();
-    } catch (err) {
-        showToast(err.message, 'error');
-    }
-}
-
-async function rejectTemplate(id) {
-    if (!confirm('Reject this template?')) return;
-    
-    try {
-        await api.moderateTemplate(id, 'reject', null);
-        showToast('Template rejected', 'success');
+        await api.moderateTemplate(id, action, level);
+        showToast(`Template ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'updated'}`, 'success');
         loadTemplates();
     } catch (err) {
         showToast(err.message, 'error');
@@ -622,18 +608,18 @@ async function rejectTemplate(id) {
 }
 
 async function loadTemplates() {
-    const grid = document.getElementById('templatesGrid');
-    grid.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading templates...</div>';
+    const container = document.getElementById('templatesList');
+    container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> Loading templates...</div>';
     
     try {
         const data = await api.searchTemplates(currentQuery, currentLevel, currentSort, currentFilter, currentPage);
         
         if (!data.templates || data.templates.length === 0) {
-            grid.innerHTML = `
+            container.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-cubes"></i>
-                    <p>No templates found</p>
-                    <small>Try adjusting your search or filters</small>
+                    No templates found
+                    <div style="font-size: 12px; margin-top: 8px;">Try adjusting your search or filters</div>
                 </div>
             `;
             document.getElementById('pagination').innerHTML = '';
@@ -642,43 +628,57 @@ async function loadTemplates() {
         
         const isModerator = currentUser && (currentUser.role === 'moderator' || currentUser.role === 'admin');
         
-        grid.innerHTML = data.templates.map(tpl => `
-            <div class="template-card" onclick="if(!event.target.closest('.mod-actions')) window.location.href='amenodes.html?template=${tpl.id}'">
-                <div class="card-header">
-                    <div class="card-title">
-                        <span>${escapeHtml(tpl.title)}</span>
-                        <div style="display: flex; gap: 8px;">
-                            ${tpl.verification_level ? `<span class="level-badge ${getLevelClass(tpl.verification_level)}">${getLevelName(tpl.verification_level)}</span>` : ''}
-                            <span class="status-badge ${getStatusClass(tpl.status)}">${getStatusName(tpl.status)}</span>
+        container.innerHTML = data.templates.map(tpl => {
+            const pointsAwarded = tpl.creator_points_awarded || 0;
+            const isApproved = tpl.status === 'approved';
+            
+            return `
+                <div class="template-card">
+                    <div class="card-content">
+                        <div class="card-info">
+                            <div class="card-title">
+                                <span>${escapeHtml(tpl.title)}</span>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    ${tpl.verification_level ? `<span class="level-badge ${getLevelClass(tpl.verification_level)}">${getLevelName(tpl.verification_level)}</span>` : ''}
+                                    <span class="status-badge ${getStatusClass(tpl.status)}">${getStatusName(tpl.status)}</span>
+                                </div>
+                            </div>
+                            <div class="card-desc">${escapeHtml(tpl.description || 'No description')}</div>
+                            <div class="card-meta">
+                                <span class="card-author"><i class="fas fa-user"></i> ${escapeHtml(tpl.username)}</span>
+                                <span><i class="fas fa-calendar"></i> ${new Date(tpl.created_at).toLocaleDateString()}</span>
+                                ${pointsAwarded > 0 ? `<span><i class="fas fa-star"></i> ${pointsAwarded} CP awarded</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="card-stats">
+                            <div class="points"><i class="fas fa-star"></i> ${pointsAwarded} CP</div>
+                            <button class="view-btn" onclick="window.location.href='amenodes.html?template=${tpl.id}'">Open Template</button>
                         </div>
                     </div>
-                    <div class="card-desc">${escapeHtml(tpl.description || 'No description')}</div>
-                    <div class="card-meta">
-                        <span class="card-author"><i class="fas fa-user"></i> ${escapeHtml(tpl.username)}</span>
-                        <span><i class="fas fa-calendar"></i> ${new Date(tpl.created_at).toLocaleDateString()}</span>
-                    </div>
-                    ${tpl.creator_points_awarded > 0 ? `<div class="card-meta" style="margin-top: 8px;"><span><i class="fas fa-star"></i> ${tpl.creator_points_awarded} CP awarded</span></div>` : ''}
+                    ${isModerator ? `
+                        <div class="mod-actions">
+                            <select id="level-${tpl.id}" class="mod-select">
+                                <option value="regular" ${tpl.verification_level === 'regular' ? 'selected' : ''}>Regular (1 CP)</option>
+                                <option value="featured" ${tpl.verification_level === 'featured' ? 'selected' : ''}>Featured (2 CP)</option>
+                                <option value="epic" ${tpl.verification_level === 'epic' ? 'selected' : ''}>Epic (3 CP)</option>
+                                <option value="legendary" ${tpl.verification_level === 'legendary' ? 'selected' : ''}>Legendary (4 CP)</option>
+                                <option value="godlike" ${tpl.verification_level === 'godlike' ? 'selected' : ''}>Godlike (5 CP)</option>
+                            </select>
+                            ${tpl.status === 'pending' ? `
+                                <button class="mod-btn mod-approve" onclick="moderateTemplate(${tpl.id}, 'approve', document.getElementById('level-${tpl.id}').value)">Approve</button>
+                                <button class="mod-btn mod-reject" onclick="moderateTemplate(${tpl.id}, 'reject')">Reject</button>
+                            ` : tpl.status === 'approved' ? `
+                                <button class="mod-btn mod-approve" onclick="moderateTemplate(${tpl.id}, 'approve', document.getElementById('level-${tpl.id}').value)">Update Level</button>
+                                <button class="mod-btn mod-revert" onclick="moderateTemplate(${tpl.id}, 'reject')">Revert to Pending</button>
+                            ` : tpl.status === 'rejected' ? `
+                                <button class="mod-btn mod-approve" onclick="moderateTemplate(${tpl.id}, 'approve', document.getElementById('level-${tpl.id}').value)">Approve</button>
+                            ` : ''}
+                        </div>
+                    ` : ''}
                 </div>
-                <div class="card-footer">
-                    <span class="points"><i class="fas fa-star"></i> ${tpl.creator_points_awarded || 0} CP</span>
-                    <button class="view-btn" onclick="event.stopPropagation(); window.location.href='amenodes.html?template=${tpl.id}'">Open →</button>
-                </div>
-                ${isModerator && tpl.status === 'pending' ? `
-                    <div class="mod-actions">
-                        <select id="level-${tpl.id}" class="level-select-small">
-                            <option value="regular">Regular (1 CP)</option>
-                            <option value="featured">Featured (2 CP)</option>
-                            <option value="epic">Epic (3 CP)</option>
-                            <option value="legendary">Legendary (4 CP)</option>
-                            <option value="godlike">Godlike (5 CP)</option>
-                        </select>
-                        <button class="mod-btn mod-approve" onclick="event.stopPropagation(); approveTemplate(${tpl.id}, document.getElementById('level-${tpl.id}').value)">Approve</button>
-                        <button class="mod-btn mod-reject" onclick="event.stopPropagation(); rejectTemplate(${tpl.id})">Reject</button>
-                    </div>
-                ` : ''}
-            </div>
-        `).join('');
-        
+            `;
+        }).join('');
+
         const pagination = document.getElementById('pagination');
         const totalPages = data.pagination.pages;
         if (totalPages > 1) {
@@ -699,7 +699,7 @@ async function loadTemplates() {
         }
     } catch (err) {
         console.error(err);
-        grid.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Failed to load templates</p><small>${err.message}</small></div>`;
+        container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i> Failed to load templates<br><small>${err.message}</small></div>`;
     }
 }
 
@@ -712,7 +712,7 @@ function updateAuthUI() {
             <div class="user-panel">
                 <span class="user-name">${currentUser.username}</span>
                 ${currentUser.role === 'moderator' || currentUser.role === 'admin' ? '<span class="mod-badge">Mod</span>' : ''}
-                <span class="user-points">⭐ ${currentUser.creator_points} CP</span>
+                <span class="user-points">${currentUser.creator_points} CP</span>
                 <button id="logoutBtn" style="background: none; border: none; color: #ffb347; cursor: pointer; margin-left: 8px;">Logout</button>
             </div>
         `;
@@ -753,9 +753,8 @@ document.querySelectorAll('.filter-tab').forEach(tab => {
     };
 });
 
-window.approveTemplate = approveTemplate;
-window.rejectTemplate = rejectTemplate;
-    
+window.moderateTemplate = moderateTemplate;
+
 async function init() {
     try {
         const data = await api.getCurrentUser();
