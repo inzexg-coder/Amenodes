@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>My Profile</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -11,6 +11,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none; 
         }
 
         body {
@@ -92,7 +93,7 @@
             margin: 0 auto;
             padding: 32px;
         }
-
+        
         .profile-card {
             position: relative;
             border-radius: 32px;
@@ -141,7 +142,7 @@
         }
 
         .cp-number {
-            font-size: 72px;
+            font-size: 80px;
             font-weight: 800;
             color: white;
             text-shadow: 0 4px 20px rgba(0,0,0,0.5);
@@ -160,17 +161,14 @@
         }
 
         .username-badge {
-            font-size: 22px;
-            font-weight: bold;
+            font-size: 20px;
+            font-weight: 500;
             color: #ffffffcc;
-            background: rgba(0,0,0,0.3);
+            background: transparent;
             display: inline-block;
-            padding: 6px 24px;
-            border-radius: 60px;
-            backdrop-filter: blur(4px);
+            padding: 0;
         }
 
-        /* ========== TABS ========== */
         .tabs {
             display: flex;
             gap: 8px;
@@ -318,8 +316,7 @@
 
         @media (max-width: 768px) {
             .container { padding: 16px; }
-            .cp-number { font-size: 48px; }
-            .username-badge { font-size: 18px; }
+            .cp-number { font-size: 52px; }
             .card-content { flex-direction: column; align-items: flex-start; }
         }
     </style>
@@ -417,39 +414,46 @@ function escapeHtml(str) {
     });
 }
 
-function getCardGradientAndColors(cp) {
-    let stars = cp / 10; // 0..8+ (80 CP = 8)
-    let baseColor, secondColor, accentColor;
-    
-    if (stars >= 8.0) {
-        const intensity = Math.min(1, (stars - 8) / 4); 
-        baseColor = '#0a0a14';
-        secondColor = `rgba(160, 80, 200, ${0.3 + intensity * 0.4})`;
-        accentColor = `rgba(200, 120, 255, ${0.4 + intensity * 0.5})`;
-    } else {
+function getCardGradient(cp) {
+    let stars = cp / 10;
+    if (stars <= 8) {
         const colors = [
             '#2a5a8a', '#3a6a9a', '#4a7aaa', '#5a8aba', '#6a9aca',
             '#7abaaa', '#c8b84a', '#d0a03a', '#c8702a', '#b05020',
             '#a03050', '#903070', '#804090', '#6050a0', '#4060b0',
-            '#304090', '#202070'
+            '#304090', '#102070'
         ];
         let idx = Math.floor(stars * 2);
         idx = Math.min(colors.length - 1, Math.max(0, idx));
-        baseColor = colors[idx];
-        let idx2 = Math.min(colors.length - 1, idx + 1);
-        let idx3 = Math.max(0, idx - 1);
-        secondColor = colors[idx2];
-        accentColor = colors[idx3];
+        const baseColor = colors[idx];
+        return `linear-gradient(125deg, ${baseColor}, ${colors[Math.min(colors.length-1, idx+1)]} 40%, ${baseColor})`;
+    } else {
+        let excess = stars - 8; // 0 .. 
+        let blackFactor = Math.min(1, excess / 2); 
+        let purpleFactor = Math.max(0, (excess - 2) / 3);
+        
+        let baseColor = '#0a0a14';
+        let purpleColor = `rgba(160, 80, 220, ${purpleFactor * 0.6})`;
+        let accentColor = `rgba(200, 120, 255, ${purpleFactor * 0.4})`;
+        
+        if (purpleFactor > 0) {
+            return `linear-gradient(125deg, ${baseColor}, ${purpleColor} 30%, ${accentColor} 70%, ${baseColor})`;
+        } else {
+            let darkBlue = '#102070';
+            let mix = Math.min(1, blackFactor);
+            let r = 16 + (10 - 16) * mix;
+            let g = 32 + (10 - 32) * mix;
+            let b = 112 + (20 - 112) * mix;
+            let transitionColor = `rgb(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)})`;
+            return `linear-gradient(125deg, ${darkBlue}, ${transitionColor} 50%, #0a0a14)`;
+        }
     }
-    
-    const gradient = `linear-gradient(125deg, ${baseColor}, ${secondColor} 30%, ${accentColor} 70%, ${baseColor})`;
-    return { gradient, accentColor };
 }
 
 function generateTriangles(cp) {
     let stars = cp / 10;
     let tier = 0;
-    if (cp >= 80) tier = 5;
+    if (cp >= 100) tier = 5;
     else if (cp >= 60) tier = 4;
     else if (cp >= 30) tier = 3;
     else if (cp >= 10) tier = 2;
@@ -474,15 +478,12 @@ function generateTriangles(cp) {
         addTriangle(45, 45, '20%', '60%', 110, baseColor, 0.4);
         addTriangle(70, 70, '75%', '15%', -40, brightColor, 0.35);
     }
-    
     if (tier >= 3) {
-        // Tier 3 (30-59 CP): крупные треугольники, анимация движения
         addTriangle(120, 120, '-20%', '20%', 55, purpleColor, 0.5, 'drift 8s infinite');
         addTriangle(90, 90, '60%', '-15%', -25, brightColor, 0.45, 'driftSlow 10s infinite');
         addTriangle(70, 70, '30%', '70%', 85, baseColor, 0.5, 'float 7s infinite');
         addTriangle(100, 100, '80%', '50%', 15, purpleColor, 0.4, 'floatReverse 9s infinite');
     }
-    
     if (tier >= 4) {
         addTriangle(150, 150, '-30%', '70%', 40, purpleColor, 0.6, 'glowPulse 4s infinite');
         addTriangle(130, 130, '50%', '-20%', -10, brightColor, 0.55, 'glowPulse 5s infinite');
@@ -491,7 +492,6 @@ function generateTriangles(cp) {
         addTriangle(60, 60, '40%', '20%', 15, brightColor, 0.6, 'pulse 3s infinite');
         addTriangle(95, 95, '20%', '85%', 75, purpleColor, 0.45, 'glowPulse 6s infinite');
     }
-    
     if (tier >= 5) {
         addTriangle(200, 200, '-40%', '50%', 60, `rgba(200,100,255,0.7)`, 0.7, 'rotateSlow 12s infinite');
         addTriangle(180, 180, '30%', '-30%', -20, `rgba(255,150,200,0.65)`, 0.7, 'rotateFast 8s infinite');
@@ -509,8 +509,7 @@ function generateTriangles(cp) {
 function applyTriangles(cardElement, cp) {
     const container = cardElement.querySelector('.triangles-container');
     if (!container) return;
-    container.innerHTML = ''; 
-    
+    container.innerHTML = '';
     const triangles = generateTriangles(cp);
     for (const t of triangles) {
         const div = document.createElement('div');
@@ -529,7 +528,7 @@ function applyTriangles(cardElement, cp) {
         container.appendChild(div);
     }
 }
-    
+
 function addAnimationStyles() {
     if (document.getElementById('profile-animations')) return;
     const style = document.createElement('style');
@@ -648,7 +647,7 @@ function renderProfileHeader() {
     if (!container) return;
     
     const cp = currentUser.creator_points;
-    const { gradient, accentColor } = getCardGradientAndColors(cp);
+    const gradient = getCardGradient(cp);
     
     container.innerHTML = `
         <div class="profile-card">
