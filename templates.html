@@ -191,60 +191,26 @@
             transition: all 0.3s ease;
             margin-bottom: 16px;
             border: 1px solid #2e385c;
+            position: relative;
+        }
+        
+        .template-card.approved {
+            animation: gentleGlow 3s ease-in-out infinite;
+        }
+        @keyframes gentleGlow {
+            0% { box-shadow: 0 0 4px rgba(255,255,200,0.1); border-color: currentColor; opacity:0.95; }
+            50% { box-shadow: 0 0 14px rgba(255,255,200,0.25); border-color: currentColor; opacity:1; }
+            100% { box-shadow: 0 0 4px rgba(255,255,200,0.1); border-color: currentColor; opacity:0.95; }
         }
 
-        .template-card.regular {
-            border-color: #4a4a5a;
-            box-shadow: 0 0 8px rgba(100, 100, 120, 0.15);
+        .template-card.pending {
+            border-color: #ff8c00;
+            box-shadow: 0 0 8px rgba(255,140,0,0.2);
         }
-        .template-card.regular:hover {
-            box-shadow: 0 0 15px rgba(100, 100, 120, 0.3);
-            border-color: #6a6a7a;
-        }
-
-        .template-card.featured {
-            border-color: #ffaa33;
-            box-shadow: 0 0 10px rgba(255, 170, 51, 0.2);
-            animation: gentleGlowYellow 3s ease-in-out infinite;
-        }
-        @keyframes gentleGlowYellow {
-            0% { box-shadow: 0 0 5px rgba(255, 170, 51, 0.15); border-color: #ffaa33; }
-            50% { box-shadow: 0 0 18px rgba(255, 200, 80, 0.35); border-color: #ffcc55; }
-            100% { box-shadow: 0 0 5px rgba(255, 170, 51, 0.15); border-color: #ffaa33; }
-        }
-
-        .template-card.epic {
-            border-color: #ff55bb;
-            box-shadow: 0 0 10px rgba(255, 85, 187, 0.2);
-            animation: gentleGlowPink 3s ease-in-out infinite;
-        }
-        @keyframes gentleGlowPink {
-            0% { box-shadow: 0 0 5px rgba(255, 85, 187, 0.15); border-color: #ff55bb; }
-            50% { box-shadow: 0 0 18px rgba(255, 120, 200, 0.35); border-color: #ff77cc; }
-            100% { box-shadow: 0 0 5px rgba(255, 85, 187, 0.15); border-color: #ff55bb; }
-        }
-
-        .template-card.legendary {
-            border-color: #33aaff;
-            box-shadow: 0 0 10px rgba(51, 170, 255, 0.2);
-            animation: gentleGlowBlue 3s ease-in-out infinite;
-        }
-        @keyframes gentleGlowBlue {
-            0% { box-shadow: 0 0 5px rgba(51, 170, 255, 0.15); border-color: #33aaff; }
-            50% { box-shadow: 0 0 18px rgba(80, 180, 255, 0.35); border-color: #55bbff; }
-            100% { box-shadow: 0 0 5px rgba(51, 170, 255, 0.15); border-color: #33aaff; }
-        }
-
-        .template-card.godlike {
-            border-color: #6a1b9a;
-            border-width: 2px;
-            box-shadow: 0 0 10px rgba(106, 27, 154, 0.3);
-            animation: gentleGlowPurple 3s ease-in-out infinite;
-        }
-        @keyframes gentleGlowPurple {
-            0% { box-shadow: 0 0 5px rgba(106, 27, 154, 0.2); border-color: #6a1b9a; }
-            50% { box-shadow: 0 0 18px rgba(156, 39, 176, 0.4); border-color: #9c27b0; }
-            100% { box-shadow: 0 0 5px rgba(106, 27, 154, 0.2); border-color: #6a1b9a; }
+        .template-card.rejected {
+            border-color: #c62828;
+            box-shadow: 0 0 6px rgba(198,40,40,0.15);
+            opacity: 0.75;
         }
 
         .card-content {
@@ -318,7 +284,6 @@
         }
 
         .status-pending { background: #ff8c00; color: #1a1f30; }
-        .status-approved { display: none; }
         .status-rejected { background: #c62828; color: #ffcdd2; }
 
         .mod-actions {
@@ -329,17 +294,6 @@
             background: #0a0c14;
             border-top: 1px solid #2e385c;
             flex-wrap: wrap;
-        }
-
-        .mod-select {
-            background: #1a1f30;
-            border: 1px solid #2e385c;
-            border-radius: 30px;
-            padding: 8px 16px;
-            color: #fff;
-            font-family: inherit;
-            font-size: 13px;
-            cursor: pointer;
         }
 
         .mod-btn {
@@ -471,14 +425,6 @@
             <input type="text" id="searchInput" placeholder="Search templates by name, description, or author...">
         </div>
         <div class="filters">
-            <select id="levelFilter" class="filter-select">
-                <option value="">All Levels</option>
-                <option value="regular">Regular</option>
-                <option value="featured">Featured</option>
-                <option value="epic">Epic</option>
-                <option value="legendary">Legendary</option>
-                <option value="godlike">Godlike</option>
-            </select>
             <select id="sortFilter" class="filter-select">
                 <option value="newest">Newest First</option>
                 <option value="top_cp">Most Creator Points</option>
@@ -523,15 +469,15 @@ class API {
         catch { return null; }
     }
 
-    async searchTemplates(query, level, sort, status, page = 1) {
-        const params = new URLSearchParams({ q: query, level, sort, status, page, limit: 20 });
+    async searchTemplates(query, sort, status, page = 1) {
+        const params = new URLSearchParams({ q: query, sort, status, page, limit: 20 });
         return this.request(`/search_templates.php?${params}`);
     }
 
-    async moderateTemplate(templateId, action, level) {
+    async moderateTemplate(templateId, action) {
         return this.request('/moderate_template.php', {
             method: 'POST',
-            body: JSON.stringify({ template_id: templateId, action, level })
+            body: JSON.stringify({ template_id: templateId, action, level: 'regular' })
         });
     }
 }
@@ -541,7 +487,6 @@ let currentUser = null;
 let currentFilter = 'approved';
 let currentPage = 1;
 let currentQuery = '';
-let currentLevel = '';
 let currentSort = 'newest';
 
 function showToast(message, type = 'info') {
@@ -553,21 +498,15 @@ function showToast(message, type = 'info') {
 }
 
 function getStatusClass(status) {
-    const map = {
-        'pending': 'status-pending',
-        'approved': 'status-approved',
-        'rejected': 'status-rejected'
-    };
-    return map[status] || 'status-pending';
+    if (status === 'pending') return 'status-pending';
+    if (status === 'rejected') return 'status-rejected';
+    return '';
 }
 
 function getStatusName(status) {
-    const map = {
-        'pending': 'Pending',
-        'approved': 'Approved',
-        'rejected': 'Rejected'
-    };
-    return map[status] || status;
+    if (status === 'pending') return 'Pending';
+    if (status === 'rejected') return 'Rejected';
+    return '';
 }
 
 function escapeHtml(str) {
@@ -580,23 +519,66 @@ function escapeHtml(str) {
     });
 }
 
-function getCardLevelClass(level, status) {
-    if (status !== 'approved') return '';
-    const map = {
-        'regular': 'regular',
-        'featured': 'featured',
-        'epic': 'epic',
-        'legendary': 'legendary',
-        'godlike': 'godlike'
+// Функция получения цвета и эффекта по CP автора
+function getAuthorColorStyle(cp) {
+    // Нормализуем: 0 CP → 0, 80 CP → 8
+    let stars = Math.min(12, cp / 10);
+    if (stars > 8) {
+        // Для > 8 CP ( >80 CP ) — переливающийся сиреневый
+        return {
+            borderColor: '#b77ae4',
+            boxShadow: '0 0 15px rgba(183,122,228,0.4)',
+            animation: 'gentleGlow 2s ease-in-out infinite',
+            borderWidth: '2px'
+        };
+    }
+    
+    const colors = [
+        '#0a2a4a', 
+        '#1a4a7a',
+        '#2a6a9a',
+        '#3a8aba',
+        '#4aaada', 
+        '#7accaa',
+        '#e8c84a',
+        '#f0a03a',
+        '#e8702a', 
+        '#d04020', 
+        '#c02050', 
+        '#b03080', 
+        '#a040b0',
+        '#8050c0',
+        '#5060d0', 
+        '#3040a0', 
+        '#102070'  
+    ];
+    
+    let idx = Math.floor(stars * 2);
+    idx = Math.min(colors.length - 1, Math.max(0, idx));
+    const baseColor = colors[idx];
+    
+    return {
+        borderColor: baseColor,
+        boxShadow: `0 0 12px ${baseColor}88`,
+        animation: 'gentleGlow 3s ease-in-out infinite',
+        borderWidth: '2px'
     };
-    return map[level] || '';
 }
 
-async function moderateTemplate(id, action, level = null) {
+function applyCardStyles(card, cp) {
+    const style = getAuthorColorStyle(cp);
+    card.style.borderColor = style.borderColor;
+    card.style.boxShadow = style.boxShadow;
+    if (style.animation) {
+        card.style.animation = style.animation;
+    }
+    card.style.borderWidth = style.borderWidth || '1px';
+}
+
+async function moderateTemplate(id, action) {
     try {
-        await api.moderateTemplate(id, action, level);
-        const actionText = action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'updated';
-        showToast(`Template ${actionText}`, 'success');
+        await api.moderateTemplate(id, action);
+        showToast(`Template ${action === 'approve' ? 'approved' : 'rejected'}`, 'success');
         loadTemplates();
     } catch (err) {
         showToast(err.message, 'error');
@@ -608,7 +590,7 @@ async function loadTemplates() {
     container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> Loading templates...</div>';
     
     try {
-        const data = await api.searchTemplates(currentQuery, currentLevel, currentSort, currentFilter, currentPage);
+        const data = await api.searchTemplates(currentQuery, currentSort, currentFilter, currentPage);
         
         if (!data.templates || data.templates.length === 0) {
             container.innerHTML = `
@@ -624,53 +606,54 @@ async function loadTemplates() {
         
         const isModerator = currentUser && (currentUser.role === 'moderator' || currentUser.role === 'admin');
         
-        container.innerHTML = data.templates.map(tpl => {
-            const levelClass = getCardLevelClass(tpl.verification_level, tpl.status);
+        container.innerHTML = '';
+        for (const tpl of data.templates) {
             const isApproved = tpl.status === 'approved';
             const isPending = tpl.status === 'pending';
             const isRejected = tpl.status === 'rejected';
+            const authorCp = tpl.user_creator_points || 0;
             
-            return `
-                <div class="template-card ${levelClass}">
-                    <div class="card-content">
-                        <div class="card-info">
-                            <div class="card-title">
-                                <span>${escapeHtml(tpl.title)}</span>
-                                ${!isApproved ? `<span class="status-badge ${getStatusClass(tpl.status)}">${getStatusName(tpl.status)}</span>` : ''}
-                            </div>
-                            <div class="card-desc">${escapeHtml(tpl.description || 'No description')}</div>
-                            <div class="card-meta">
-                                <span class="card-author"><i class="fas fa-user"></i> ${escapeHtml(tpl.username)}</span>
-                                <span><i class="fas fa-calendar"></i> ${new Date(tpl.created_at).toLocaleDateString()}</span>
-                            </div>
+            const cardDiv = document.createElement('div');
+            cardDiv.className = `template-card ${isApproved ? 'approved' : (isPending ? 'pending' : 'rejected')}`;
+            
+            cardDiv.innerHTML = `
+                <div class="card-content">
+                    <div class="card-info">
+                        <div class="card-title">
+                            <span>${escapeHtml(tpl.title)}</span>
+                            ${!isApproved ? `<span class="status-badge ${getStatusClass(tpl.status)}">${getStatusName(tpl.status)}</span>` : ''}
                         </div>
-                        <div class="card-stats">
-                            <button class="view-btn" onclick="window.location.href='amenodes.html?template=${tpl.id}'">Open Template</button>
+                        <div class="card-desc">${escapeHtml(tpl.description || 'No description')}</div>
+                        <div class="card-meta">
+                            <span class="card-author"><i class="fas fa-user"></i> ${escapeHtml(tpl.username)}</span>
+                            <span><i class="fas fa-calendar"></i> ${new Date(tpl.created_at).toLocaleDateString()}</span>
+                            <span><i class="fas fa-star"></i> ${authorCp} CP</span>
                         </div>
                     </div>
-                    ${isModerator ? `
-                        <div class="mod-actions">
-                            <select id="level-${tpl.id}" class="mod-select">
-                                <option value="regular" ${tpl.verification_level === 'regular' ? 'selected' : ''}>Regular (1 CP)</option>
-                                <option value="featured" ${tpl.verification_level === 'featured' ? 'selected' : ''}>Featured (2 CP)</option>
-                                <option value="epic" ${tpl.verification_level === 'epic' ? 'selected' : ''}>Epic (3 CP)</option>
-                                <option value="legendary" ${tpl.verification_level === 'legendary' ? 'selected' : ''}>Legendary (4 CP)</option>
-                                <option value="godlike" ${tpl.verification_level === 'godlike' ? 'selected' : ''}>Godlike (5 CP)</option>
-                            </select>
-                            ${isPending ? `
-                                <button class="mod-btn mod-approve" onclick="moderateTemplate(${tpl.id}, 'approve', document.getElementById('level-${tpl.id}').value)">Approve</button>
-                                <button class="mod-btn mod-reject" onclick="moderateTemplate(${tpl.id}, 'reject')">Reject</button>
-                            ` : isApproved ? `
-                                <button class="mod-btn mod-approve" onclick="moderateTemplate(${tpl.id}, 'approve', document.getElementById('level-${tpl.id}').value)">Update Level</button>
-                                <button class="mod-btn mod-revert" onclick="moderateTemplate(${tpl.id}, 'reject')">Revert to Pending</button>
-                            ` : isRejected ? `
-                                <button class="mod-btn mod-approve" onclick="moderateTemplate(${tpl.id}, 'approve', document.getElementById('level-${tpl.id}').value)">Approve</button>
-                            ` : ''}
-                        </div>
-                    ` : ''}
+                    <div class="card-stats">
+                        <button class="view-btn" onclick="window.location.href='amenodes.html?template=${tpl.id}'">Open Template</button>
+                    </div>
                 </div>
+                ${isModerator ? `
+                    <div class="mod-actions">
+                        ${isPending ? `
+                            <button class="mod-btn mod-approve" onclick="moderateTemplate(${tpl.id}, 'approve')">Approve (1 CP)</button>
+                            <button class="mod-btn mod-reject" onclick="moderateTemplate(${tpl.id}, 'reject')">Reject</button>
+                        ` : isApproved ? `
+                            <button class="mod-btn mod-revert" onclick="moderateTemplate(${tpl.id}, 'reject')">Revert to Pending</button>
+                        ` : isRejected ? `
+                            <button class="mod-btn mod-approve" onclick="moderateTemplate(${tpl.id}, 'approve')">Approve (1 CP)</button>
+                        ` : ''}
+                    </div>
+                ` : ''}
             `;
-        }).join('');
+            
+            if (isApproved) {
+                applyCardStyles(cardDiv, authorCp);
+            }
+            
+            container.appendChild(cardDiv);
+        }
         
         const pagination = document.getElementById('pagination');
         const totalPages = data.pagination.pages;
@@ -720,12 +703,6 @@ function updateAuthUI() {
 
 document.getElementById('searchInput').addEventListener('input', (e) => {
     currentQuery = e.target.value;
-    currentPage = 1;
-    loadTemplates();
-});
-
-document.getElementById('levelFilter').addEventListener('change', (e) => {
-    currentLevel = e.target.value;
     currentPage = 1;
     loadTemplates();
 });
