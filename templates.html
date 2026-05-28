@@ -193,14 +193,14 @@
             border: 1px solid #2e385c;
             position: relative;
         }
-        
+
         .template-card.approved {
             animation: gentleGlow 3s ease-in-out infinite;
         }
         @keyframes gentleGlow {
-            0% { box-shadow: 0 0 4px rgba(255,255,200,0.1); border-color: currentColor; opacity:0.95; }
-            50% { box-shadow: 0 0 14px rgba(255,255,200,0.25); border-color: currentColor; opacity:1; }
-            100% { box-shadow: 0 0 4px rgba(255,255,200,0.1); border-color: currentColor; opacity:0.95; }
+            0% { box-shadow: 0 0 4px currentColor; opacity: 0.95; }
+            50% { box-shadow: 0 0 14px currentColor; opacity: 1; }
+            100% { box-shadow: 0 0 4px currentColor; opacity: 0.95; }
         }
 
         .template-card.pending {
@@ -519,38 +519,36 @@ function escapeHtml(str) {
     });
 }
 
-// Функция получения цвета и эффекта по CP автора
 function getAuthorColorStyle(cp) {
-    // Нормализуем: 0 CP → 0, 80 CP → 8
-    let stars = Math.min(12, cp / 10);
-    if (stars > 8) {
-        // Для > 8 CP ( >80 CP ) — переливающийся сиреневый
+    let stars = cp / 10;
+    
+    if (stars >= 8.1) {
         return {
-            borderColor: '#b77ae4',
-            boxShadow: '0 0 15px rgba(183,122,228,0.4)',
-            animation: 'gentleGlow 2s ease-in-out infinite',
+            borderColor: '#c97eff',
+            boxShadow: '0 0 18px rgba(201,126,255,0.6)',
+            animation: 'gentleGlow 1.8s ease-in-out infinite',
             borderWidth: '2px'
         };
     }
     
     const colors = [
-        '#0a2a4a', 
-        '#1a4a7a',
-        '#2a6a9a',
-        '#3a8aba',
-        '#4aaada', 
-        '#7accaa',
-        '#e8c84a',
-        '#f0a03a',
-        '#e8702a', 
-        '#d04020', 
-        '#c02050', 
-        '#b03080', 
-        '#a040b0',
-        '#8050c0',
-        '#5060d0', 
-        '#3040a0', 
-        '#102070'  
+        '#5a9cff', // 0 - тёмно-голубой (светло-синий)
+        '#6aaaff', // 0.5
+        '#7ab8ff', // 1
+        '#8ac6ff', // 1.5
+        '#9ad4ff', // 2
+        '#aae2aa', // 2.5 салатовый
+        '#e8c84a', // 3 жёлтый
+        '#f0a03a', // 3.5 светло-оранжевый
+        '#e8702a', // 4 оранжево-красный
+        '#d04020', // 4.5 красно-алый
+        '#c02050', // 5 ало-сиреневый
+        '#b03080', // 5.5 розово-сиреневый
+        '#a040b0', // 6 сиреневый
+        '#8050c0', // 6.5 сиренево-фиолетовый
+        '#5060d0', // 7 фиолетово-темно-синий
+        '#3040a0', // 7.5 темно-синий
+        '#102070'  // 8 очень тёмно-синий
     ];
     
     let idx = Math.floor(stars * 2);
@@ -559,7 +557,7 @@ function getAuthorColorStyle(cp) {
     
     return {
         borderColor: baseColor,
-        boxShadow: `0 0 12px ${baseColor}88`,
+        boxShadow: `0 0 12px ${baseColor}aa`,
         animation: 'gentleGlow 3s ease-in-out infinite',
         borderWidth: '2px'
     };
@@ -569,10 +567,7 @@ function applyCardStyles(card, cp) {
     const style = getAuthorColorStyle(cp);
     card.style.borderColor = style.borderColor;
     card.style.boxShadow = style.boxShadow;
-    if (style.animation) {
-        card.style.animation = style.animation;
-    }
-    card.style.borderWidth = style.borderWidth || '1px';
+    card.style.borderWidth = style.borderWidth;
 }
 
 async function moderateTemplate(id, action) {
