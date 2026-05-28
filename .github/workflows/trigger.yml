@@ -24,32 +24,33 @@ jobs:
             echo "head_sha=${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
       
-      - name: Generate HMAC signature inside payload
+      - name: Generate HMAC signature
         id: sign
         run: |
-          BASE_PAYLOAD=$(jq -n \
+          CLIENT_PAYLOAD=$(jq -c --sort-keys -n \
             --arg repo "${{ github.repository }}" \
             --arg ref "${{ github.ref }}" \
             --arg sha "${{ steps.pr.outputs.head_sha }}" \
             --arg pr "${{ steps.pr.outputs.pr_number }}" \
             --arg head "${{ steps.pr.outputs.head_ref }}" \
             --arg actor "${{ github.actor }}" \
-            '{
-              event_type: "deploy",
-              client_payload: {
-                source_repo: $repo,
-                source_ref: $ref,
-                source_sha: $sha,
-                pr_number: $pr,
-                head_ref: $head,
-                actor: $actor
-              }
-            }')
+            '{source_repo: $repo, source_ref: $ref, source_sha: $sha, pr_number: $pr, head_ref: $head, actor: $actor}')
+          
+          BASE_PAYLOAD=$(jq -c --sort-keys -n \
+            --arg event_type "deploy" \
+            --argjson client_payload "$CLIENT_PAYLOAD" \
+            '{event_type: $event_type, client_payload: $client_payload}')
           
           SIGNATURE=$(echo -n "$BASE_PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.DISPATCH_SECRET }}" | cut -d ' ' -f2)
-          FINAL_PAYLOAD=$(echo "$BASE_PAYLOAD" | jq --arg sig "$SIGNATURE" '.client_payload.signature = $sig')
+          
+          FINAL_PAYLOAD=$(jq -c -n \
+            --arg event_type "deploy" \
+            --argjson client_payload "$CLIENT_PAYLOAD" \
+            --arg signature "$SIGNATURE" \
+            '{event_type: $event_type, client_payload: $client_payload, signature: $signature}')
           
           echo "$FINAL_PAYLOAD" > payload.json
+          cat payload.json
       
       - name: Trigger CI repository
         run: |
