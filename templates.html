@@ -14,7 +14,7 @@
         }
 
         body {
-            font-family: 'Segoe UI', 'Monaco', 'Monospace', system-ui;
+            font-family: 'Segoe UI', 'Monaco', monospace;
             background: linear-gradient(135deg, #0a0c14 0%, #121624 100%);
             min-height: 100vh;
             color: #eef2ff;
@@ -100,7 +100,7 @@
             margin: 0 auto;
             padding: 32px;
         }
-        
+
         .filter-tabs {
             display: flex;
             gap: 12px;
@@ -184,49 +184,61 @@
             font-size: 13px;
         }
 
-        .level-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-        }
-
-        .level-regular { background: #555; color: #ccc; }
-        .level-featured { background: #ffd700; color: #1a1f30; }
-        .level-epic { background: #ff69b4; color: #1a1f30; }
-        .level-legendary { background: #00bfff; color: #1a1f30; }
-        .level-godlike { background: linear-gradient(135deg, #9b59b6, #ff69b4); color: #fff; }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-        }
-
-        .status-pending { background: #ff8c00; color: #1a1f30; }
-        .status-approved { background: #2e7d32; color: #fff; }
-        .status-rejected { background: #c62828; color: #fff; }
-
-        .templates-list {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
         .template-card {
             background: #0f1222;
             border-radius: 16px;
-            border: 1px solid #2e385c;
             overflow: hidden;
-            transition: all 0.2s;
+            transition: all 0.3s;
+            margin-bottom: 16px;
         }
 
-        .template-card:hover {
-            border-color: #ffb347;
-            background: #121624;
+        .template-card.regular {
+            border: 1px solid #444;
+            box-shadow: none;
+        }
+
+        .template-card.featured {
+            border: 1px solid #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            background: linear-gradient(135deg, #0f1222, #1a1a2a);
+        }
+        .template-card.featured:hover {
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
+            border-color: #ffea00;
+        }
+
+        .template-card.epic {
+            border: 1px solid #ff69b4;
+            box-shadow: 0 0 15px rgba(255, 105, 180, 0.4);
+            background: linear-gradient(135deg, #0f1222, #1a1528);
+        }
+        .template-card.epic:hover {
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.6);
+            border-color: #ff88cc;
+        }
+
+        .template-card.legendary {
+            border: 1px solid #00bfff;
+            box-shadow: 0 0 20px rgba(0, 191, 255, 0.4);
+            background: linear-gradient(135deg, #0f1222, #102030);
+        }
+        .template-card.legendary:hover {
+            box-shadow: 0 0 35px rgba(0, 191, 255, 0.6);
+            border-color: #44ddff;
+        }
+
+        .template-card.godlike {
+            border: 1px solid #9b59b6;
+            animation: godlikePulse 2s ease-in-out infinite;
+            background: linear-gradient(135deg, #0f1222, #1a1030);
+        }
+        .template-card.godlike:hover {
+            border-color: #bb7bff;
+        }
+        @keyframes godlikePulse {
+            0% { box-shadow: 0 0 10px #9b59b6, 0 0 5px #ff69b4; }
+            50% { box-shadow: 0 0 30px #bb7bff, 0 0 15px #ff88cc; border-color: #ddaaff; }
+            100% { box-shadow: 0 0 10px #9b59b6, 0 0 5px #ff69b4; }
         }
 
         .card-content {
@@ -305,6 +317,32 @@
             background: #3f4e7a;
         }
 
+        .level-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .level-regular { background: #555; color: #ccc; }
+        .level-featured { background: #ffd700; color: #1a1f30; }
+        .level-epic { background: #ff69b4; color: #1a1f30; }
+        .level-legendary { background: #00bfff; color: #1a1f30; }
+        .level-godlike { background: linear-gradient(135deg, #9b59b6, #ff69b4); color: #fff; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .status-pending { background: #ff8c00; color: #1a1f30; }
+        .status-approved { background: #2e7d32; color: #fff; }
+        .status-rejected { background: #c62828; color: #fff; }
+
         .mod-actions {
             display: flex;
             gap: 12px;
@@ -341,28 +379,19 @@
             background: #2e7d32;
             color: #fff;
         }
-
-        .mod-approve:hover {
-            background: #3e9142;
-        }
+        .mod-approve:hover { background: #3e9142; }
 
         .mod-reject {
             background: #c62828;
             color: #fff;
         }
-
-        .mod-reject:hover {
-            background: #d83a3a;
-        }
+        .mod-reject:hover { background: #d83a3a; }
 
         .mod-revert {
             background: #ff8c00;
             color: #1a1f30;
         }
-
-        .mod-revert:hover {
-            background: #ffa033;
-        }
+        .mod-revert:hover { background: #ffa033; }
 
         .pagination {
             display: flex;
@@ -379,7 +408,6 @@
             border-radius: 8px;
             color: #fff;
             cursor: pointer;
-            font-family: inherit;
             transition: all 0.2s;
         }
 
@@ -405,15 +433,6 @@
             display: block;
         }
 
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .fa-spinner {
-            animation: spin 1s linear infinite;
-        }
-
         .toast {
             position: fixed;
             bottom: 20px;
@@ -430,6 +449,15 @@
 
         .toast-success { border-left-color: #2e7d32; background: #1a2a1a; }
         .toast-error { border-left-color: #c62828; background: #2a1a1a; }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .fa-spinner {
+            animation: spin 1s linear infinite;
+        }
 
         @media (max-width: 768px) {
             .container { padding: 16px; }
@@ -597,10 +625,23 @@ function escapeHtml(str) {
     });
 }
 
+function getCardLevelClass(level, status) {
+    if (status !== 'approved') return '';
+    const map = {
+        'regular': 'regular',
+        'featured': 'featured',
+        'epic': 'epic',
+        'legendary': 'legendary',
+        'godlike': 'godlike'
+    };
+    return map[level] || '';
+}
+
 async function moderateTemplate(id, action, level = null) {
     try {
         await api.moderateTemplate(id, action, level);
-        showToast(`Template ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'updated'}`, 'success');
+        const actionText = action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'updated';
+        showToast(`Template ${actionText}`, 'success');
         loadTemplates();
     } catch (err) {
         showToast(err.message, 'error');
@@ -630,16 +671,19 @@ async function loadTemplates() {
         
         container.innerHTML = data.templates.map(tpl => {
             const pointsAwarded = tpl.creator_points_awarded || 0;
+            const levelClass = getCardLevelClass(tpl.verification_level, tpl.status);
             const isApproved = tpl.status === 'approved';
+            const isPending = tpl.status === 'pending';
+            const isRejected = tpl.status === 'rejected';
             
             return `
-                <div class="template-card">
+                <div class="template-card ${levelClass}">
                     <div class="card-content">
                         <div class="card-info">
                             <div class="card-title">
                                 <span>${escapeHtml(tpl.title)}</span>
                                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                    ${tpl.verification_level ? `<span class="level-badge ${getLevelClass(tpl.verification_level)}">${getLevelName(tpl.verification_level)}</span>` : ''}
+                                    ${tpl.verification_level && isApproved ? `<span class="level-badge ${getLevelClass(tpl.verification_level)}">${getLevelName(tpl.verification_level)}</span>` : ''}
                                     <span class="status-badge ${getStatusClass(tpl.status)}">${getStatusName(tpl.status)}</span>
                                 </div>
                             </div>
@@ -664,13 +708,13 @@ async function loadTemplates() {
                                 <option value="legendary" ${tpl.verification_level === 'legendary' ? 'selected' : ''}>Legendary (4 CP)</option>
                                 <option value="godlike" ${tpl.verification_level === 'godlike' ? 'selected' : ''}>Godlike (5 CP)</option>
                             </select>
-                            ${tpl.status === 'pending' ? `
+                            ${isPending ? `
                                 <button class="mod-btn mod-approve" onclick="moderateTemplate(${tpl.id}, 'approve', document.getElementById('level-${tpl.id}').value)">Approve</button>
                                 <button class="mod-btn mod-reject" onclick="moderateTemplate(${tpl.id}, 'reject')">Reject</button>
-                            ` : tpl.status === 'approved' ? `
+                            ` : isApproved ? `
                                 <button class="mod-btn mod-approve" onclick="moderateTemplate(${tpl.id}, 'approve', document.getElementById('level-${tpl.id}').value)">Update Level</button>
                                 <button class="mod-btn mod-revert" onclick="moderateTemplate(${tpl.id}, 'reject')">Revert to Pending</button>
-                            ` : tpl.status === 'rejected' ? `
+                            ` : isRejected ? `
                                 <button class="mod-btn mod-approve" onclick="moderateTemplate(${tpl.id}, 'approve', document.getElementById('level-${tpl.id}').value)">Approve</button>
                             ` : ''}
                         </div>
@@ -678,7 +722,7 @@ async function loadTemplates() {
                 </div>
             `;
         }).join('');
-
+        
         const pagination = document.getElementById('pagination');
         const totalPages = data.pagination.pages;
         if (totalPages > 1) {
