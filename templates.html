@@ -71,51 +71,6 @@
             color: #ffb347;
         }
 
-        .auth-section {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-
-        .btn {
-            padding: 8px 20px;
-            border-radius: 30px;
-            border: none;
-            cursor: pointer;
-            font-family: monospace;
-            font-weight: bold;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background: #ffb347;
-            color: #1a1f30;
-        }
-
-        .btn-primary:hover {
-            background: #ffcc66;
-            transform: scale(1.02);
-        }
-
-        .btn-secondary {
-            background: #2d3a5e;
-            color: #eef2ff;
-        }
-
-        .btn-secondary:hover {
-            background: #3f4e7a;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid #ffb347;
-            color: #ffb347;
-        }
-
-        .btn-outline:hover {
-            background: #ffb34720;
-        }
-
         .user-panel {
             display: flex;
             align-items: center;
@@ -130,15 +85,48 @@
             font-weight: bold;
         }
 
-        .user-points {
-            font-size: 12px;
-            color: #aaa;
+        .mod-badge {
+            background: #ff4444;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 24px;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #2e385c;
+            padding-bottom: 12px;
+        }
+
+        .filter-tab {
+            background: none;
+            border: none;
+            color: #8899bb;
+            padding: 8px 24px;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 14px;
+            border-radius: 30px;
+            transition: all 0.2s;
+        }
+
+        .filter-tab.active {
+            background: #ffb347;
+            color: #1a1f30;
+        }
+
+        .filter-tab:hover:not(.active) {
+            background: #2d3a5e;
+            color: #fff;
         }
 
         .search-section {
@@ -201,30 +189,23 @@
             font-weight: bold;
         }
 
-        .level-regular {
-            background: #555;
-            color: #ccc;
+        .level-regular { background: #555; color: #ccc; }
+        .level-featured { background: #ffd700; color: #1a1f30; }
+        .level-epic { background: #ff69b4; color: #1a1f30; }
+        .level-legendary { background: #00bfff; color: #1a1f30; }
+        .level-godlike { background: linear-gradient(135deg, #9b59b6, #ff69b4); color: #fff; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
         }
 
-        .level-featured {
-            background: #ffd700;
-            color: #1a1f30;
-        }
-
-        .level-epic {
-            background: #ff69b4;
-            color: #1a1f30;
-        }
-
-        .level-legendary {
-            background: #00bfff;
-            color: #1a1f30;
-        }
-
-        .level-godlike {
-            background: linear-gradient(135deg, #9b59b6, #ff69b4);
-            color: #fff;
-        }
+        .status-pending { background: #ff8c00; color: #1a1f30; }
+        .status-approved { background: #2e7d32; color: #fff; }
+        .status-rejected { background: #c62828; color: #fff; }
 
         .templates-grid {
             display: grid;
@@ -247,12 +228,6 @@
             box-shadow: 0 8px 24px rgba(255, 179, 71, 0.15);
         }
 
-        .template-card.regular:hover { border-color: #888; }
-        .template-card.featured:hover { border-color: #ffd700; box-shadow: 0 8px 24px rgba(255, 215, 0, 0.2); }
-        .template-card.epic:hover { border-color: #ff69b4; box-shadow: 0 8px 24px rgba(255, 105, 180, 0.2); }
-        .template-card.legendary:hover { border-color: #00bfff; box-shadow: 0 8px 24px rgba(0, 191, 255, 0.2); }
-        .template-card.godlike:hover { border-color: #9b59b6; box-shadow: 0 8px 24px rgba(155, 89, 182, 0.3); }
-
         .card-header {
             padding: 16px;
             border-bottom: 1px solid #2e385c;
@@ -265,6 +240,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .card-desc {
@@ -285,10 +262,6 @@
             display: flex;
             align-items: center;
             gap: 6px;
-        }
-
-        .card-author i {
-            font-size: 10px;
         }
 
         .card-footer {
@@ -318,7 +291,46 @@
         .view-btn:hover {
             background: #3f4e7a;
         }
-      
+
+        .mod-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #2e385c;
+        }
+
+        .mod-btn {
+            flex: 1;
+            padding: 6px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .mod-approve {
+            background: #2e7d32;
+            color: #fff;
+        }
+
+        .mod-reject {
+            background: #c62828;
+            color: #fff;
+        }
+
+        .level-select-small {
+            background: #1a1f30;
+            border: 1px solid #2e385c;
+            border-radius: 8px;
+            padding: 4px 8px;
+            color: #fff;
+            font-size: 10px;
+            font-family: monospace;
+        }
+
         .pagination {
             display: flex;
             justify-content: center;
@@ -340,10 +352,6 @@
             background: #ffb347;
             border-color: #ffb347;
             color: #1a1f30;
-        }
-
-        .page-btn:hover:not(.active) {
-            background: #2d3a5e;
         }
 
         .loading {
@@ -405,6 +413,7 @@
             align-items: center;
             z-index: 10000;
         }
+
         .auth-modal-content {
             background: #1e1e2e;
             border-radius: 12px;
@@ -413,56 +422,12 @@
             max-width: 90%;
             color: #fff;
         }
+
         .auth-modal-close {
             float: right;
             font-size: 24px;
             cursor: pointer;
             color: #888;
-        }
-        .auth-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #444;
-        }
-        .auth-tab {
-            background: none;
-            border: none;
-            color: #888;
-            padding: 8px 16px;
-            cursor: pointer;
-        }
-        .auth-tab.active {
-            color: #ffd700;
-            border-bottom: 2px solid #ffd700;
-        }
-        .auth-panel {
-            display: none;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .auth-panel.active {
-            display: flex;
-        }
-        .auth-panel input {
-            background: #2a2a3a;
-            border: 1px solid #444;
-            color: #fff;
-            padding: 10px;
-            border-radius: 6px;
-        }
-        .auth-panel button {
-            background: #ffd700;
-            border: none;
-            padding: 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .auth-error {
-            color: #ff6b6b;
-            font-size: 12px;
-            text-align: center;
         }
 
         @media (max-width: 768px) {
@@ -483,14 +448,17 @@
     <div class="nav-links">
         <a href="amenodes.html"><i class="fas fa-edit"></i> Editor</a>
         <a href="templates.html"><i class="fas fa-cubes"></i> Templates</a>
-        <a href="#" id="topUsersLink"><i class="fas fa-trophy"></i> Top Creators</a>
+        <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
     </div>
-    <div class="auth-section" id="authSection">
-        <button id="loginBtnHeader" class="btn btn-outline">Login</button>
-    </div>
+    <div id="authSection"></div>
 </div>
 
 <div class="container">
+    <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="approved">✓ Approved Templates</button>
+        <button class="filter-tab" data-filter="all">📋 All Templates</button>
+    </div>
+
     <div class="search-section">
         <div class="search-input">
             <i class="fas fa-search"></i>
@@ -544,144 +512,32 @@ class API {
         return data;
     }
 
-    async login(login, password) {
-        const data = await this.request('/login.php', {
-            method: 'POST',
-            body: JSON.stringify({ login, password })
-        });
-        if (data.token) this.setToken(data.token);
-        return data;
-    }
-
-    async register(username, email, password) {
-        return this.request('/register.php', {
-            method: 'POST',
-            body: JSON.stringify({ username, email, password })
-        });
-    }
-
-    logout() { this.setToken(null); }
-
     async getCurrentUser() {
         if (!this.token) return null;
         try { return await this.request('/me.php'); }
         catch { return null; }
     }
 
-    async searchTemplates(query, level, sort, page = 1) {
-        const params = new URLSearchParams({ q: query, filter: 'approved', level, sort, page, limit: 12 });
+    async searchTemplates(query, level, sort, status, page = 1) {
+        const params = new URLSearchParams({ q: query, level, sort, status, page, limit: 12 });
         return this.request(`/search_templates.php?${params}`);
     }
 
-    async getTopUsers(limit = 20) {
-        return this.request(`/top_users.php?limit=${limit}`);
+    async moderateTemplate(templateId, action, level) {
+        return this.request('/moderate_template.php', {
+            method: 'POST',
+            body: JSON.stringify({ template_id: templateId, action, level })
+        });
     }
 }
 
 const api = new API();
+let currentUser = null;
+let currentFilter = 'approved';
 let currentPage = 1;
 let currentQuery = '';
 let currentLevel = '';
 let currentSort = 'newest';
-let currentUser = null;
-function showAuthModal() {
-    const modal = document.createElement('div');
-    modal.className = 'auth-modal';
-    modal.innerHTML = `
-        <div class="auth-modal-content">
-            <span class="auth-modal-close">&times;</span>
-            <div class="auth-tabs">
-                <button class="auth-tab active" data-tab="login">Login</button>
-                <button class="auth-tab" data-tab="register">Register</button>
-            </div>
-            <div class="auth-panel active" id="login-panel">
-                <input type="text" id="login-username" placeholder="Username or Email">
-                <input type="password" id="login-password" placeholder="Password">
-                <button id="login-btn">Login</button>
-                <div class="auth-error" id="login-error"></div>
-            </div>
-            <div class="auth-panel" id="register-panel">
-                <input type="text" id="reg-username" placeholder="Username">
-                <input type="email" id="reg-email" placeholder="Email">
-                <input type="password" id="reg-password" placeholder="Password (min 6 chars)">
-                <button id="register-btn">Register</button>
-                <div class="auth-error" id="register-error"></div>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    
-    modal.querySelector('.auth-modal-close').onclick = () => modal.remove();
-    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-    
-    modal.querySelectorAll('.auth-tab').forEach(tab => {
-        tab.onclick = () => {
-            modal.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            modal.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
-            tab.classList.add('active');
-            document.getElementById(`${tab.dataset.tab}-panel`).classList.add('active');
-        };
-    });
-    
-    document.getElementById('login-btn').onclick = async () => {
-        const login = document.getElementById('login-username').value;
-        const password = document.getElementById('login-password').value;
-        try {
-            const data = await api.login(login, password);
-            if (data.success) {
-                modal.remove();
-                currentUser = data.user;
-                updateAuthUI();
-                showToast(`Welcome, ${data.user.username}!`, 'success');
-            }
-        } catch (err) {
-            document.getElementById('login-error').textContent = err.message;
-        }
-    };
-    
-    document.getElementById('register-btn').onclick = async () => {
-        const username = document.getElementById('reg-username').value;
-        const email = document.getElementById('reg-email').value;
-        const password = document.getElementById('reg-password').value;
-        try {
-            const data = await api.register(username, email, password);
-            if (data.success) {
-                await api.login(username, password);
-                modal.remove();
-                const userData = await api.getCurrentUser();
-                currentUser = userData.user;
-                updateAuthUI();
-                showToast(`Welcome, ${username}!`, 'success');
-            }
-        } catch (err) {
-            document.getElementById('register-error').textContent = err.message;
-        }
-    };
-}
-
-function updateAuthUI() {
-    const authSection = document.getElementById('authSection');
-    if (!authSection) return;
-    
-    if (currentUser) {
-        authSection.innerHTML = `
-            <div class="user-panel">
-                <span class="user-name">${currentUser.username}</span>
-                <span class="user-points">⭐ ${currentUser.creator_points} CP</span>
-                <button id="logoutBtn" class="btn btn-secondary" style="padding: 4px 12px;">Logout</button>
-            </div>
-        `;
-        document.getElementById('logoutBtn').onclick = () => {
-            api.logout();
-            currentUser = null;
-            updateAuthUI();
-            showToast('Logged out', 'info');
-        };
-    } else {
-        authSection.innerHTML = '<button id="loginBtnHeader" class="btn btn-outline">Login</button>';
-        document.getElementById('loginBtnHeader').onclick = () => showAuthModal();
-    }
-}
 
 function showToast(message, type = 'info') {
     const toast = document.createElement('div');
@@ -713,12 +569,64 @@ function getLevelName(level) {
     return map[level] || 'Regular';
 }
 
+function getStatusClass(status) {
+    const map = {
+        'pending': 'status-pending',
+        'approved': 'status-approved',
+        'rejected': 'status-rejected'
+    };
+    return map[status] || 'status-pending';
+}
+
+function getStatusName(status) {
+    const map = {
+        'pending': 'Pending',
+        'approved': 'Approved',
+        'rejected': 'Rejected'
+    };
+    return map[status] || status;
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+async function approveTemplate(id, level) {
+    if (!confirm(`Approve this template as ${getLevelName(level)}?`)) return;
+    
+    try {
+        await api.moderateTemplate(id, 'approve', level);
+        showToast(`Template approved!`, 'success');
+        loadTemplates();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function rejectTemplate(id) {
+    if (!confirm('Reject this template?')) return;
+    
+    try {
+        await api.moderateTemplate(id, 'reject', null);
+        showToast('Template rejected', 'success');
+        loadTemplates();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
 async function loadTemplates() {
     const grid = document.getElementById('templatesGrid');
     grid.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading templates...</div>';
     
     try {
-        const data = await api.searchTemplates(currentQuery, currentLevel, currentSort, currentPage);
+        const data = await api.searchTemplates(currentQuery, currentLevel, currentSort, currentFilter, currentPage);
         
         if (!data.templates || data.templates.length === 0) {
             grid.innerHTML = `
@@ -732,23 +640,42 @@ async function loadTemplates() {
             return;
         }
         
+        const isModerator = currentUser && (currentUser.role === 'moderator' || currentUser.role === 'admin');
+        
         grid.innerHTML = data.templates.map(tpl => `
-            <div class="template-card ${tpl.verification_level}" onclick="window.location.href='amenodes.html?template=${tpl.id}'">
+            <div class="template-card" onclick="if(!event.target.closest('.mod-actions')) window.location.href='amenodes.html?template=${tpl.id}'">
                 <div class="card-header">
                     <div class="card-title">
                         <span>${escapeHtml(tpl.title)}</span>
-                        <span class="level-badge ${getLevelClass(tpl.verification_level)}">${getLevelName(tpl.verification_level)}</span>
+                        <div style="display: flex; gap: 8px;">
+                            ${tpl.verification_level ? `<span class="level-badge ${getLevelClass(tpl.verification_level)}">${getLevelName(tpl.verification_level)}</span>` : ''}
+                            <span class="status-badge ${getStatusClass(tpl.status)}">${getStatusName(tpl.status)}</span>
+                        </div>
                     </div>
                     <div class="card-desc">${escapeHtml(tpl.description || 'No description')}</div>
                     <div class="card-meta">
                         <span class="card-author"><i class="fas fa-user"></i> ${escapeHtml(tpl.username)}</span>
                         <span><i class="fas fa-calendar"></i> ${new Date(tpl.created_at).toLocaleDateString()}</span>
                     </div>
+                    ${tpl.creator_points_awarded > 0 ? `<div class="card-meta" style="margin-top: 8px;"><span><i class="fas fa-star"></i> ${tpl.creator_points_awarded} CP awarded</span></div>` : ''}
                 </div>
                 <div class="card-footer">
-                    <span class="points"><i class="fas fa-star"></i> ${tpl.creator_points_awarded} CP</span>
+                    <span class="points"><i class="fas fa-star"></i> ${tpl.creator_points_awarded || 0} CP</span>
                     <button class="view-btn" onclick="event.stopPropagation(); window.location.href='amenodes.html?template=${tpl.id}'">Open →</button>
                 </div>
+                ${isModerator && tpl.status === 'pending' ? `
+                    <div class="mod-actions">
+                        <select id="level-${tpl.id}" class="level-select-small">
+                            <option value="regular">Regular (1 CP)</option>
+                            <option value="featured">Featured (2 CP)</option>
+                            <option value="epic">Epic (3 CP)</option>
+                            <option value="legendary">Legendary (4 CP)</option>
+                            <option value="godlike">Godlike (5 CP)</option>
+                        </select>
+                        <button class="mod-btn mod-approve" onclick="event.stopPropagation(); approveTemplate(${tpl.id}, document.getElementById('level-${tpl.id}').value)">Approve</button>
+                        <button class="mod-btn mod-reject" onclick="event.stopPropagation(); rejectTemplate(${tpl.id})">Reject</button>
+                    </div>
+                ` : ''}
             </div>
         `).join('');
         
@@ -772,18 +699,30 @@ async function loadTemplates() {
         }
     } catch (err) {
         console.error(err);
-        grid.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Failed to load templates</p></div>`;
+        grid.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Failed to load templates</p><small>${err.message}</small></div>`;
     }
 }
 
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
+function updateAuthUI() {
+    const authSection = document.getElementById('authSection');
+    if (!authSection) return;
+    
+    if (currentUser) {
+        authSection.innerHTML = `
+            <div class="user-panel">
+                <span class="user-name">${currentUser.username}</span>
+                ${currentUser.role === 'moderator' || currentUser.role === 'admin' ? '<span class="mod-badge">Mod</span>' : ''}
+                <span class="user-points">⭐ ${currentUser.creator_points} CP</span>
+                <button id="logoutBtn" style="background: none; border: none; color: #ffb347; cursor: pointer; margin-left: 8px;">Logout</button>
+            </div>
+        `;
+        document.getElementById('logoutBtn').onclick = () => {
+            api.logout();
+            window.location.reload();
+        };
+    } else {
+        authSection.innerHTML = '<a href="amenodes.html" style="background:#ffb347; color:#1a1f30; padding:6px 16px; border-radius:30px; text-decoration:none;">Login</a>';
+    }
 }
 
 document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -804,62 +743,37 @@ document.getElementById('sortFilter').addEventListener('change', (e) => {
     loadTemplates();
 });
 
-document.getElementById('topUsersLink').addEventListener('click', (e) => {
-    e.preventDefault();
-    showTopUsersModal();
+document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.onclick = () => {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentFilter = tab.dataset.filter;
+        currentPage = 1;
+        loadTemplates();
+    };
 });
 
-async function showTopUsersModal() {
+window.approveTemplate = approveTemplate;
+window.rejectTemplate = rejectTemplate;
+    
+async function init() {
     try {
-        const data = await api.getTopUsers(50);
-        if (!data.users || data.users.length === 0) {
-            showToast('No users found', 'info');
-            return;
+        const data = await api.getCurrentUser();
+        if (data && data.success) {
+            currentUser = data.user;
+            updateAuthUI();
+        } else {
+            updateAuthUI();
         }
-        
-        const modal = document.createElement('div');
-        modal.className = 'auth-modal';
-        modal.innerHTML = `
-            <div class="auth-modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
-                <span class="auth-modal-close">&times;</span>
-                <h3 style="text-align:center; margin-bottom:20px;"><i class="fas fa-trophy"></i> Top Creators</h3>
-                <div style="display: flex; flex-direction: column; gap: 12px;">
-                    ${data.users.map((user, idx) => `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #1a1f30; border-radius: 12px; border-left: 4px solid ${user.glow_color || '#ffb347'};">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <span style="font-size: 20px; font-weight: bold; width: 40px;">#${idx + 1}</span>
-                                <div>
-                                    <div style="font-weight: bold;">${escapeHtml(user.username)}</div>
-                                    <div style="font-size: 11px; color: ${user.bg_color};">${user.rank_name}</div>
-                                </div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <i class="fas fa-star" style="color: #ffd700;"></i>
-                                <span style="font-weight: bold;">${user.creator_points} CP</span>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-        modal.querySelector('.auth-modal-close').onclick = () => modal.remove();
-        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+        loadTemplates();
     } catch (err) {
-        showToast('Failed to load top users', 'error');
+        console.error(err);
+        updateAuthUI();
+        loadTemplates();
     }
 }
 
-api.getCurrentUser().then(data => {
-    if (data && data.success) {
-        currentUser = data.user;
-        updateAuthUI();
-    } else {
-        updateAuthUI();
-    }
-}).catch(() => updateAuthUI());
-
-loadTemplates();
+init();
 </script>
 </body>
 </html>
