@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderation Panel</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: monospace;
+            background: linear-gradient(135deg, #0a0c14 0%, #121624 100%);
+            min-height: 100vh;
+            color: #eef2ff;
+        }
+
+        .header {
+            background: #0f1222cc;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #2e385c;
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .logo i {
+            color: #ffb347;
+            font-size: 28px;
+        }
+
+        .logo span {
+            background: linear-gradient(135deg, #ffb347, #ff8c00);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #aabbdd;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: #ffb347;
+        }
+
+        .user-panel {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #2a2a3a;
+            padding: 6px 16px;
+            border-radius: 40px;
+        }
+
+        .user-name {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .mod-badge {
+            background: #ff4444;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: #0f1222;
+            border: 1px solid #2e385c;
+            border-radius: 16px;
+            padding: 20px 32px;
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ffb347;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #8899bb;
+            margin-top: 8px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid #2e385c;
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            color: #8899bb;
+            cursor: pointer;
+            font-family: monospace;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: #ffb347;
+            border-bottom: 2px solid #ffb347;
+        }
+
+        .templates-table {
+            background: #0f1222;
+            border-radius: 16px;
+            border: 1px solid #2e385c;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid #2e385c;
+        }
+
+        th {
+            background: #0a0c14;
+            color: #ffb347;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background: #1a1f30;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .status-pending {
+            background: #ff8c00;
+            color: #1a1f30;
+        }
+
+        .level-select {
+            background: #1a1f30;
+            border: 1px solid #2e385c;
+            border-radius: 8px;
+            padding: 6px 12px;
+            color: #fff;
+            font-family: monospace;
+        }
+
+        .action-btn {
+            padding: 6px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-family: monospace;
+            font-weight: bold;
+            margin: 0 4px;
+        }
+
+        .btn-approve {
+            background: #2e7d32;
+            color: #fff;
+        }
+
+        .btn-approve:hover {
+            background: #3e9142;
+        }
+
+        .btn-reject {
+            background: #c62828;
+            color: #fff;
+        }
+
+        .btn-reject:hover {
+            background: #d83a3a;
+        }
+
+        .btn-view {
+            background: #2d3a5e;
+            color: #fff;
+        }
+
+        .btn-view:hover {
+            background: #3f4e7a;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #667799;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #8899bb;
+        }
+
+        .loading i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            animation: fadeIn 0.3s;
+        }
+
+        .toast-success { background: #2e7d32; }
+        .toast-error { background: #c62828; }
+        .toast-info { background: #1565c0; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .preview-modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .preview-content {
+            background: #0f1222;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow: auto;
+            padding: 24px;
+        }
+
+        .preview-content h3 {
+            margin-bottom: 16px;
+        }
+
+        .preview-close {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+            color: #888;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 16px; }
+            th, td { padding: 12px 8px; font-size: 12px; }
+            .stats-bar { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="logo">
+        <i class="fas fa-project-diagram"></i>
+        <span>Amenodes</span>
+    </div>
+    <div class="nav-links">
+        <a href="amenodes.html"><i class="fas fa-edit"></i> Editor</a>
+        <a href="templates.html"><i class="fas fa-cubes"></i> Templates</a>
+        <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
+        <a href="moderate.html" class="active"><i class="fas fa-gavel"></i> Moderate</a>
+    </div>
+    <div id="authSection"></div>
+</div>
+
+<div class="container" id="container">
+    <div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading moderation panel...</div>
+</div>
+
+<script>
+const API_BASE = 'https://amenoke.ru/api';
+
+class API {
+    constructor() {
+        this.token = localStorage.getItem('auth_token');
+    }
+
+    setToken(token) {
+        this.token = token;
+        if (token) localStorage.setItem('auth_token', token);
+        else localStorage.removeItem('auth_token');
+    }
+
+    async request(endpoint, options = {}) {
+        const headers = { 'Content-Type': 'application/json' };
+        if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+        
+        const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Request failed');
+        return data;
+    }
+
+    async getCurrentUser() {
+        if (!this.token) return null;
+        try { return await this.request('/me.php'); }
+        catch { return null; }
+    }
+
+    async getPendingTemplates() {
+        return this.request('/search_templates.php?filter=all&status=pending&limit=100');
+    }
+
+    async moderateTemplate(templateId, action, level) {
+        return this.request('/moderate_template.php', {
+            method: 'POST',
+            body: JSON.stringify({ template_id: templateId, action, level })
+        });
+    }
+
+    async getTemplate(id) {
+        return this.request(`/get_template.php?id=${id}`);
+    }
+}
+
+const api = new API();
+let currentUser = null;
+let pendingTemplates = [];
+let currentFilter = 'pending';
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function getLevelName(level) {
+    const map = {
+        'regular': 'Regular (1 CP)',
+        'featured': 'Featured (2 CP)',
+        'epic': 'Epic (3 CP)',
+        'legendary': 'Legendary (4 CP)',
+        'godlike': 'Godlike (5 CP)'
+    };
+    return map[level] || 'Regular (1 CP)';
+}
+
+function getLevelColor(level) {
+    const map = {
+        'regular': '#555',
+        'featured': '#ffd700',
+        'epic': '#ff69b4',
+        'legendary': '#00bfff',
+        'godlike': '#9b59b6'
+    };
+    return map[level] || '#555';
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+async function showPreview(templateId) {
+    try {
+        const data = await api.getTemplate(templateId);
+        if (!data.success || !data.template) {
+            showToast('Failed to load template preview', 'error');
+            return;
+        }
+        
+        const tpl = data.template;
+        const modal = document.createElement('div');
+        modal.className = 'preview-modal';
+        modal.innerHTML = `
+            <div class="preview-content">
+                <span class="preview-close">&times;</span>
+                <h3>${escapeHtml(tpl.title)}</h3>
+                <p><strong>Author:</strong> ${escapeHtml(tpl.username)}</p>
+                <p><strong>Created:</strong> ${new Date(tpl.created_at).toLocaleString()}</p>
+                <p><strong>Description:</strong><br>${escapeHtml(tpl.description || 'No description')}</p>
+                <hr style="margin: 16px 0; border-color: #2e385c;">
+                <button class="action-btn btn-view" onclick="window.open('amenodes.html?template=${tpl.id}', '_blank')" style="width:100%;">Open in Editor →</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.querySelector('.preview-close').onclick = () => modal.remove();
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    } catch (err) {
+        showToast('Failed to load preview', 'error');
+    }
+}
+
+async function approveTemplate(id, level) {
+    if (!confirm(`Approve this template as ${getLevelName(level)}?`)) return;
+    
+    try {
+        await api.moderateTemplate(id, 'approve', level);
+        showToast(`Template approved! Awarded ${getLevelName(level)}`, 'success');
+        loadPendingTemplates();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function rejectTemplate(id) {
+    if (!confirm('Reject this template? The author will be notified.')) return;
+    
+    try {
+        await api.moderateTemplate(id, 'reject', null);
+        showToast('Template rejected', 'success');
+        loadPendingTemplates();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function loadPendingTemplates() {
+    const container = document.getElementById('templatesContainer');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading templates...</div>';
+    
+    try {
+        const data = await api.getPendingTemplates();
+        pendingTemplates = data.templates || [];
+        
+        const stats = {
+            pending: pendingTemplates.filter(t => t.status === 'pending').length,
+            total: pendingTemplates.length
+        };
+        
+        const statsHtml = `
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div class="stat-value">${stats.pending}</div>
+                    <div class="stat-label">Pending Review</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.total}</div>
+                    <div class="stat-label">Total</div>
+                </div>
+            </div>
+        `;
+        
+        if (pendingTemplates.length === 0) {
+            container.innerHTML = statsHtml + `
+                <div class="empty-state">
+                    <i class="fas fa-check-circle"></i>
+                    <p>No pending templates</p>
+                    <small>All templates have been reviewed</small>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = statsHtml + `
+            <div class="templates-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Author</th>
+                            <th>Created</th>
+                            <th>Level</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${pendingTemplates.filter(t => t.status === 'pending').map(tpl => `
+                            <tr>
+                                <td>${tpl.id}</td>
+                                <td><strong>${escapeHtml(tpl.title)}</strong><br><small>${escapeHtml((tpl.description || '').substring(0, 50))}${tpl.description && tpl.description.length > 50 ? '...' : ''}</small></td>
+                                <td>${escapeHtml(tpl.username)}</td>
+                                <td>${new Date(tpl.created_at).toLocaleDateString()}</td>
+                                <td>
+                                    <select id="level-${tpl.id}" class="level-select" style="background: ${getLevelColor('regular')}20;">
+                                        <option value="regular">Regular (1 CP)</option>
+                                        <option value="featured">Featured (2 CP)</option>
+                                        <option value="epic">Epic (3 CP)</option>
+                                        <option value="legendary">Legendary (4 CP)</option>
+                                        <option value="godlike">Godlike (5 CP)</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <button class="action-btn btn-view" onclick="showPreview(${tpl.id})">Preview</button>
+                                    <button class="action-btn btn-approve" onclick="approveTemplate(${tpl.id}, document.getElementById('level-${tpl.id}').value)">Approve</button>
+                                    <button class="action-btn btn-reject" onclick="rejectTemplate(${tpl.id})">Reject</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    } catch (err) {
+        console.error(err);
+        container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Failed to load templates</p><small>${err.message}</small></div>`;
+    }
+}
+
+function updateAuthUI() {
+    const authSection = document.getElementById('authSection');
+    if (!authSection) return;
+    
+    if (currentUser) {
+        authSection.innerHTML = `
+            <div class="user-panel">
+                <span class="user-name">${currentUser.username}</span>
+                <span class="mod-badge">Moderator</span>
+                <span class="user-points">⭐ ${currentUser.creator_points} CP</span>
+                <button id="logoutBtn" style="background: none; border: none; color: #ffb347; cursor: pointer; margin-left: 8px;">Logout</button>
+            </div>
+        `;
+        document.getElementById('logoutBtn').onclick = () => {
+            api.logout();
+            window.location.reload();
+        };
+    } else {
+        authSection.innerHTML = '<a href="amenodes.html" class="btn" style="background:#ffb347; color:#1a1f30; padding:6px 16px; border-radius:30px; text-decoration:none;">Login</a>';
+    }
+}
+
+async function init() {
+    try {
+        const data = await api.getCurrentUser();
+        if (data && data.success) {
+            currentUser = data.user;
+
+            const userData = await api.request('/me.php');
+            if (userData.user && userData.user.role !== 'moderator' && userData.user.role !== 'admin') {
+                const container = document.getElementById('container');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-ban"></i>
+                            <p>Access Denied</p>
+                            <small>You don't have moderator permissions</small>
+                            <br><br>
+                            <a href="amenodes.html" class="action-btn btn-view">Back to Editor</a>
+                        </div>
+                    `;
+                }
+                updateAuthUI();
+                return;
+            }
+            
+            updateAuthUI();
+            loadPendingTemplates();
+        } else {
+            const container = document.getElementById('container');
+            if (container) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-lock"></i>
+                        <p>Please login as moderator</p>
+                        <a href="amenodes.html" class="action-btn btn-view">Go to Editor</a>
+                    </div>
+                `;
+            }
+            updateAuthUI();
+        }
+    } catch (err) {
+        console.error(err);
+        updateAuthUI();
+    }
+}
+
+init();
+
+window.showPreview = showPreview;
+window.approveTemplate = approveTemplate;
+window.rejectTemplate = rejectTemplate;
+</script>
+</body>
+</html>
