@@ -104,21 +104,12 @@
             transition: transform 0.2s ease, box-shadow 0.3s ease;
             box-shadow: 0 15px 35px -10px rgba(0,0,0,0.3);
             cursor: default;
+            background: #0a0c14;
         }
 
         .profile-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 25px 40px -12px rgba(0,0,0,0.5);
-        }
-
-        .card-gradient-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            border-radius: inherit;
         }
 
         .card-gloss {
@@ -129,13 +120,13 @@
             height: 100%;
             pointer-events: none;
             background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), 
-                                        var(--gloss-color, rgba(255,255,255,0.2)) 0%, 
-                                        var(--gloss-color, rgba(255,255,255,0.05)) 40%,
-                                        transparent 70%);
+                                        rgba(255, 255, 255, 0.25) 0%, 
+                                        rgba(255, 255, 255, 0.08) 40%,
+                                        rgba(255, 255, 255, 0) 80%);
             opacity: 0;
-            transition: opacity 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            transition: opacity 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
             border-radius: inherit;
-            z-index: 2;
+            z-index: 1;
             mix-blend-mode: overlay;
         }
 
@@ -155,12 +146,13 @@
 
         .triangle {
             position: absolute;
+            opacity: 0.3;
             transition: all 0.5s ease;
         }
 
         .card-content {
             position: relative;
-            z-index: 3;
+            z-index: 2;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -175,14 +167,14 @@
             letter-spacing: 2px;
             line-height: 1;
             margin-bottom: 12px;
-            text-shadow: none;
+            text-shadow: 0 0 20px rgba(0,0,0,0.3);
         }
 
         .cp-label {
             font-size: 16px;
             letter-spacing: 2px;
             font-weight: 500;
-            color: rgba(255,255,255,0.85);
+            color: rgba(255,255,255,0.7);
             text-transform: uppercase;
             margin-bottom: 16px;
         }
@@ -442,102 +434,49 @@ function escapeHtml(str) {
     });
 }
 
-function getCardGradientAndGlossColor(cp) {
-    let t = Math.min(1, cp / 80);
-    
-    const colors = [
-        { r: 42, g: 90, b: 138 },   // 0
-        { r: 58, g: 106, b: 154 },  // 10
-        { r: 74, g: 122, b: 170 },  // 20
-        { r: 90, g: 138, b: 186 },  // 30
-        { r: 106, g: 154, b: 202 }, // 40
-        { r: 122, g: 170, b: 218 }, // 50
-        { r: 168, g: 184, b: 74 },  // 55
-        { r: 200, g: 180, b: 58 },  // 60
-        { r: 208, g: 160, b: 42 },  // 65
-        { r: 200, g: 112, b: 32 },  // 70
-        { r: 176, g: 80, b: 32 },   // 75
-        { r: 160, g: 48, b: 80 },   // 80
-        { r: 144, g: 48, b: 112 },  // 85
-        { r: 128, g: 64, b: 144 },  // 90
-        { r: 96, g: 80, b: 160 },   // 95
-        { r: 64, g: 96, b: 176 },   // 100
-        { r: 32, g: 64, b: 128 }    // 100+
-    ];
-    
-    let index = t * (colors.length - 1);
-    let idx1 = Math.floor(index);
-    let idx2 = Math.min(idx1 + 1, colors.length - 1);
-    let frac = index - idx1;
-    
-    let c1 = colors[idx1];
-    let c2 = colors[idx2];
-    
-    let r = Math.floor(c1.r + (c2.r - c1.r) * frac);
-    let g = Math.floor(c1.g + (c2.g - c1.g) * frac);
-    let b = Math.floor(c1.b + (c2.b - c1.b) * frac);
-    
-    let baseColor = `rgb(${r}, ${g}, ${b})`;
-    
-    let nextColor = colors[Math.min(idx2 + 1, colors.length - 1)];
-    let prevColor = colors[Math.max(idx1 - 1, 0)];
-    
-    let gradient = `linear-gradient(115deg, ${baseColor} 0%, rgb(${prevColor.r}, ${prevColor.g}, ${prevColor.b}) 25%, ${baseColor} 50%, rgb(${nextColor.r}, ${nextColor.g}, ${nextColor.b}) 75%, ${baseColor} 100%)`;
-    
-    let glossColor = `rgba(255, 240, 200, 0.18)`;
-    
-    return { gradient, glossColor };
-}
-
 function generateTriangles(cp) {
     let tier = cp >= 100 ? 5 : cp >= 60 ? 4 : cp >= 30 ? 3 : cp >= 10 ? 2 : 1;
     const triangles = [];
-    
-    if (cp >= 100) {
-        const addOutline = (w, h, top, left, rot, anim) => {
-            triangles.push({ w, h, top, left, rot, isOutline: true, anim, opacity: 0.6 });
-        };
-        addOutline(200, 200, '-40%', '50%', 60, 'rotateSlow 12s infinite');
-        addOutline(180, 180, '30%', '-30%', -20, 'rotateFast 8s infinite');
-        addOutline(140, 140, '60%', '80%', 45, 'glowPulse 5s infinite');
-        addOutline(120, 120, '80%', '10%', -55, 'drift 10s infinite');
-        addOutline(100, 100, '10%', '60%', 25, 'float 7s infinite');
-        addOutline(160, 160, '50%', '120%', 85, 'driftSlow 9s infinite');
-        addOutline(75, 75, '85%', '45%', -15, 'pulse 4s infinite');
-        addOutline(130, 130, '-10%', '-10%', 110, 'rotateSlow 14s infinite');
-        return triangles;
-    }
-    
     const baseColor = `rgba(255,255,255,0.12)`;
-    const brightColor = `rgba(255,200,255,0.3)`;
-    const purpleColor = `rgba(180,100,220,0.4)`;
+    const brightColor = `rgba(255,200,255,0.25)`;
+    const purpleColor = `rgba(180,100,220,0.3)`;
     
     const add = (w, h, top, left, rot, color, op, anim) => {
-        triangles.push({ w, h, top, left, rot, color, op, anim, isOutline: false });
+        triangles.push({ w, h, top, left, rot, color, op, anim });
     };
     
-    add(60, 60, '10%', '-20%', 45, baseColor, 0.35);
-    add(40, 40, '70%', '90%', -20, baseColor, 0.3);
+    add(60, 60, '10%', '-20%', 45, baseColor, 0.3);
+    add(40, 40, '70%', '90%', -20, baseColor, 0.25);
     add(50, 50, '85%', '5%', 70, baseColor, 0.3);
     if (tier >= 2) {
-        add(80, 80, '-10%', '40%', 30, brightColor, 0.45);
-        add(55, 55, '50%', '85%', -15, baseColor, 0.4, 'float 6s infinite');
-        add(45, 45, '20%', '60%', 110, baseColor, 0.35);
-        add(70, 70, '75%', '15%', -40, brightColor, 0.3);
+        add(80, 80, '-10%', '40%', 30, brightColor, 0.35);
+        add(55, 55, '50%', '85%', -15, baseColor, 0.3, 'float 6s infinite');
+        add(45, 45, '20%', '60%', 110, baseColor, 0.3);
+        add(70, 70, '75%', '15%', -40, brightColor, 0.25);
     }
     if (tier >= 3) {
-        add(120, 120, '-20%', '20%', 55, purpleColor, 0.45, 'drift 8s infinite');
-        add(90, 90, '60%', '-15%', -25, brightColor, 0.4, 'driftSlow 10s infinite');
-        add(70, 70, '30%', '70%', 85, baseColor, 0.45, 'float 7s infinite');
-        add(100, 100, '80%', '50%', 15, purpleColor, 0.35, 'floatReverse 9s infinite');
+        add(120, 120, '-20%', '20%', 55, purpleColor, 0.35, 'drift 8s infinite');
+        add(90, 90, '60%', '-15%', -25, brightColor, 0.3, 'driftSlow 10s infinite');
+        add(70, 70, '30%', '70%', 85, baseColor, 0.35, 'float 7s infinite');
+        add(100, 100, '80%', '50%', 15, purpleColor, 0.3, 'floatReverse 9s infinite');
     }
     if (tier >= 4) {
-        add(150, 150, '-30%', '70%', 40, purpleColor, 0.55, 'glowPulse 4s infinite');
-        add(130, 130, '50%', '-20%', -10, brightColor, 0.5, 'glowPulse 5s infinite');
-        add(80, 80, '10%', '40%', 110, `rgba(200,130,255,0.4)`, 0.55, 'float 6s infinite');
-        add(110, 110, '70%', '60%', -35, `rgba(180,100,220,0.45)`, 0.45, 'drift 7s infinite');
-        add(60, 60, '40%', '20%', 15, brightColor, 0.55, 'pulse 3s infinite');
-        add(95, 95, '20%', '85%', 75, purpleColor, 0.4, 'glowPulse 6s infinite');
+        add(150, 150, '-30%', '70%', 40, purpleColor, 0.4, 'glowPulse 4s infinite');
+        add(130, 130, '50%', '-20%', -10, brightColor, 0.35, 'glowPulse 5s infinite');
+        add(80, 80, '10%', '40%', 110, `rgba(200,130,255,0.3)`, 0.4, 'float 6s infinite');
+        add(110, 110, '70%', '60%', -35, `rgba(180,100,220,0.35)`, 0.35, 'drift 7s infinite');
+        add(60, 60, '40%', '20%', 15, brightColor, 0.4, 'pulse 3s infinite');
+        add(95, 95, '20%', '85%', 75, purpleColor, 0.3, 'glowPulse 6s infinite');
+    }
+    if (tier >= 5) {
+        add(200, 200, '-40%', '50%', 60, `rgba(200,100,255,0.45)`, 0.5, 'rotateSlow 12s infinite');
+        add(180, 180, '30%', '-30%', -20, `rgba(255,150,200,0.4)`, 0.5, 'rotateFast 8s infinite');
+        add(140, 140, '60%', '80%', 45, `rgba(180,80,220,0.4)`, 0.5, 'glowPulse 5s infinite');
+        add(120, 120, '80%', '10%', -55, `rgba(220,120,255,0.4)`, 0.5, 'drift 10s infinite');
+        add(100, 100, '10%', '60%', 25, `rgba(200,100,200,0.45)`, 0.5, 'float 7s infinite');
+        add(160, 160, '50%', '120%', 85, `rgba(180,70,220,0.35)`, 0.5, 'driftSlow 9s infinite');
+        add(75, 75, '85%', '45%', -15, `rgba(255,150,255,0.5)`, 0.5, 'pulse 4s infinite');
+        add(130, 130, '-10%', '-10%', 110, `rgba(220,100,255,0.4)`, 0.5, 'rotateSlow 14s infinite');
     }
     return triangles;
 }
@@ -550,32 +489,22 @@ function applyTriangles(card, cp) {
     for (const t of tris) {
         const div = document.createElement('div');
         div.className = 'triangle';
-        div.style.position = 'absolute';
         div.style.width = `${t.w}px`;
         div.style.height = `${t.h}px`;
         div.style.top = t.top;
         div.style.left = t.left;
         div.style.transform = `rotate(${t.rot}deg)`;
-        if (t.isOutline) {
-            div.style.background = 'transparent';
-            div.style.border = `2px solid rgba(180, 120, 220, 0.7)`;
-            div.style.boxShadow = `0 0 8px rgba(180, 120, 220, 0.5)`;
-            div.style.opacity = t.opacity || 0.6;
-        } else {
-            div.style.background = `linear-gradient(135deg, ${t.color}, transparent)`;
-            div.style.opacity = t.op;
-        }
+        div.style.background = `linear-gradient(135deg, ${t.color}, transparent)`;
+        div.style.opacity = t.op;
         div.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
         if (t.anim) div.style.animation = t.anim;
         container.appendChild(div);
     }
 }
 
-function setupGlossEffect(card, glossColor) {
+function setupGlossEffect(card) {
     const gloss = card.querySelector('.card-gloss');
     if (!gloss) return;
-    gloss.style.setProperty('--gloss-color', glossColor);
-    
     const onMove = (e) => {
         const rect = card.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width) * 100;
@@ -583,7 +512,6 @@ function setupGlossEffect(card, glossColor) {
         gloss.style.setProperty('--x', `${x}%`);
         gloss.style.setProperty('--y', `${y}%`);
     };
-    
     card.addEventListener('mousemove', onMove);
 }
 
@@ -594,33 +522,33 @@ function addAnimationStyles() {
     style.textContent = `
         @keyframes float {
             0% { transform: rotate(45deg) translateY(0px); }
-            50% { transform: rotate(50deg) translateY(-12px); }
+            50% { transform: rotate(50deg) translateY(-15px); }
             100% { transform: rotate(45deg) translateY(0px); }
         }
         @keyframes floatReverse {
             0% { transform: rotate(-35deg) translateY(0px); }
-            50% { transform: rotate(-40deg) translateY(12px); }
+            50% { transform: rotate(-40deg) translateY(15px); }
             100% { transform: rotate(-35deg) translateY(0px); }
         }
         @keyframes drift {
             0% { transform: rotate(30deg) translateX(0px) translateY(0px); }
-            50% { transform: rotate(35deg) translateX(15px) translateY(-8px); }
+            50% { transform: rotate(35deg) translateX(20px) translateY(-10px); }
             100% { transform: rotate(30deg) translateX(0px) translateY(0px); }
         }
         @keyframes driftSlow {
             0% { transform: rotate(-20deg) translateX(0px) translateY(0px); }
-            50% { transform: rotate(-25deg) translateX(-12px) translateY(8px); }
+            50% { transform: rotate(-25deg) translateX(-15px) translateY(10px); }
             100% { transform: rotate(-20deg) translateX(0px) translateY(0px); }
         }
         @keyframes glowPulse {
-            0% { opacity: 0.4; }
-            50% { opacity: 0.7; }
-            100% { opacity: 0.4; }
+            0% { opacity: 0.3; filter: blur(0px); }
+            50% { opacity: 0.6; filter: blur(3px); }
+            100% { opacity: 0.3; filter: blur(0px); }
         }
         @keyframes pulse {
-            0% { transform: rotate(15deg) scale(1); opacity: 0.5; }
-            50% { transform: rotate(20deg) scale(1.04); opacity: 0.75; }
-            100% { transform: rotate(15deg) scale(1); opacity: 0.5; }
+            0% { transform: rotate(15deg) scale(1); opacity: 0.4; }
+            50% { transform: rotate(20deg) scale(1.05); opacity: 0.7; }
+            100% { transform: rotate(15deg) scale(1); opacity: 0.4; }
         }
         @keyframes rotateSlow {
             from { transform: rotate(0deg); }
@@ -694,11 +622,9 @@ function renderProfileHeader() {
     const container = document.getElementById('container');
     if (!container) return;
     const cp = currentUser.creator_points;
-    const { gradient, glossColor } = getCardGradientAndGlossColor(cp);
     
     container.innerHTML = `
         <div class="profile-card">
-            <div class="card-gradient-layer" style="background: ${gradient};"></div>
             <div class="card-gloss"></div>
             <div class="triangles-container"></div>
             <div class="card-content">
@@ -715,13 +641,11 @@ function renderProfileHeader() {
         </div>
         <div id="templatesContainer"><div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading templates...</div></div>
     `;
-    
     const card = document.querySelector('.profile-card');
     if (card) {
         applyTriangles(card, cp);
-        setupGlossEffect(card, glossColor);
+        setupGlossEffect(card);
     }
-    
     document.querySelectorAll('.tab').forEach(btn => {
         btn.onclick = () => {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
