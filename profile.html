@@ -104,7 +104,6 @@
             transition: transform 0.2s ease, box-shadow 0.3s ease;
             box-shadow: 0 15px 35px -10px rgba(0,0,0,0.3);
             cursor: default;
-            background: #0a0c14;
         }
 
         .profile-card:hover {
@@ -134,6 +133,16 @@
             opacity: 1;
         }
 
+        .card-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            border-radius: inherit;
+        }
+
         .triangles-container {
             position: absolute;
             top: 0;
@@ -146,7 +155,6 @@
 
         .triangle {
             position: absolute;
-            opacity: 0.3;
             transition: all 0.5s ease;
         }
 
@@ -434,50 +442,81 @@ function escapeHtml(str) {
     });
 }
 
+function getCardColor(cp) {
+    let stars = cp / 10;
+    if (stars >= 10) stars = 10;
+    
+    const colors = [
+        '#5a9cff', 
+        '#6aaaff', 
+        '#7ab8ff',
+        '#8ac6ff', 
+        '#9ad4ff', 
+        '#aae2aa', 
+        '#e8c84a',
+        '#f0a03a', 
+        '#e8702a', 
+        '#d04020', 
+        '#c02050', 
+        '#b03080',
+        '#a040b0', 
+        '#8050c0', 
+        '#5060d0', 
+        '#3040a0',
+        '#102070',
+        '#0a0a14', 
+        '#0a0a14'  
+    ];
+    
+    let idx = Math.floor(stars * 2);
+    idx = Math.min(colors.length - 1, Math.max(0, idx));
+    return colors[idx];
+}
+
 function generateTriangles(cp) {
-    let tier = cp >= 100 ? 5 : cp >= 60 ? 4 : cp >= 30 ? 3 : cp >= 10 ? 2 : 1;
+    let purpleIntensity = 0;
+    if (cp >= 100) {
+        purpleIntensity = Math.min(1, (cp - 100) / 50);
+    }
+    
     const triangles = [];
-    const baseColor = `rgba(255,255,255,0.12)`;
-    const brightColor = `rgba(255,200,255,0.25)`;
-    const purpleColor = `rgba(180,100,220,0.3)`;
+    const baseWhite = `rgba(255,255,255,0.12)`;
+    const purpleColor = `rgba(180,100,220,${0.2 + purpleIntensity * 0.3})`;
+    const brightPurple = `rgba(200,130,255,${0.15 + purpleIntensity * 0.25})`;
     
     const add = (w, h, top, left, rot, color, op, anim) => {
         triangles.push({ w, h, top, left, rot, color, op, anim });
     };
     
-    add(60, 60, '10%', '-20%', 45, baseColor, 0.3);
-    add(40, 40, '70%', '90%', -20, baseColor, 0.25);
-    add(50, 50, '85%', '5%', 70, baseColor, 0.3);
-    if (tier >= 2) {
-        add(80, 80, '-10%', '40%', 30, brightColor, 0.35);
-        add(55, 55, '50%', '85%', -15, baseColor, 0.3, 'float 6s infinite');
-        add(45, 45, '20%', '60%', 110, baseColor, 0.3);
-        add(70, 70, '75%', '15%', -40, brightColor, 0.25);
+    add(60, 60, '10%', '-20%', 45, baseWhite, 0.3);
+    add(40, 40, '70%', '90%', -20, baseWhite, 0.25);
+    add(50, 50, '85%', '5%', 70, baseWhite, 0.3);
+    add(80, 80, '-10%', '40%', 30, baseWhite, 0.25);
+    add(55, 55, '50%', '85%', -15, baseWhite, 0.25, 'float 6s infinite');
+    add(45, 45, '20%', '60%', 110, baseWhite, 0.25);
+    add(70, 70, '75%', '15%', -40, baseWhite, 0.2);
+    add(120, 120, '-20%', '20%', 55, baseWhite, 0.2, 'drift 8s infinite');
+    add(90, 90, '60%', '-15%', -25, baseWhite, 0.2, 'driftSlow 10s infinite');
+    add(70, 70, '30%', '70%', 85, baseWhite, 0.25, 'float 7s infinite');
+    add(100, 100, '80%', '50%', 15, baseWhite, 0.2, 'floatReverse 9s infinite');
+    
+    if (purpleIntensity > 0) {
+        add(150, 150, '-30%', '70%', 40, purpleColor, 0.3 + purpleIntensity * 0.2, 'glowPulse 4s infinite');
+        add(130, 130, '50%', '-20%', -10, brightPurple, 0.25 + purpleIntensity * 0.2, 'glowPulse 5s infinite');
+        add(80, 80, '10%', '40%', 110, purpleColor, 0.3 + purpleIntensity * 0.15, 'float 6s infinite');
+        add(110, 110, '70%', '60%', -35, brightPurple, 0.25 + purpleIntensity * 0.15, 'drift 7s infinite');
+        add(60, 60, '40%', '20%', 15, purpleColor, 0.35 + purpleIntensity * 0.2, 'pulse 3s infinite');
+        add(95, 95, '20%', '85%', 75, brightPurple, 0.25 + purpleIntensity * 0.15, 'glowPulse 6s infinite');
+        add(200, 200, '-40%', '50%', 60, purpleColor, 0.3 + purpleIntensity * 0.25, 'rotateSlow 12s infinite');
+        add(180, 180, '30%', '-30%', -20, brightPurple, 0.25 + purpleIntensity * 0.2, 'rotateFast 8s infinite');
+        add(140, 140, '60%', '80%', 45, purpleColor, 0.3 + purpleIntensity * 0.2, 'glowPulse 5s infinite');
+        add(120, 120, '80%', '10%', -55, brightPurple, 0.25 + purpleIntensity * 0.2, 'drift 10s infinite');
+        add(100, 100, '10%', '60%', 25, purpleColor, 0.35 + purpleIntensity * 0.2, 'float 7s infinite');
+        add(160, 160, '50%', '120%', 85, brightPurple, 0.25 + purpleIntensity * 0.15, 'driftSlow 9s infinite');
+        add(75, 75, '85%', '45%', -15, purpleColor, 0.4 + purpleIntensity * 0.2, 'pulse 4s infinite');
+        add(130, 130, '-10%', '-10%', 110, brightPurple, 0.3 + purpleIntensity * 0.2, 'rotateSlow 14s infinite');
     }
-    if (tier >= 3) {
-        add(120, 120, '-20%', '20%', 55, purpleColor, 0.35, 'drift 8s infinite');
-        add(90, 90, '60%', '-15%', -25, brightColor, 0.3, 'driftSlow 10s infinite');
-        add(70, 70, '30%', '70%', 85, baseColor, 0.35, 'float 7s infinite');
-        add(100, 100, '80%', '50%', 15, purpleColor, 0.3, 'floatReverse 9s infinite');
-    }
-    if (tier >= 4) {
-        add(150, 150, '-30%', '70%', 40, purpleColor, 0.4, 'glowPulse 4s infinite');
-        add(130, 130, '50%', '-20%', -10, brightColor, 0.35, 'glowPulse 5s infinite');
-        add(80, 80, '10%', '40%', 110, `rgba(200,130,255,0.3)`, 0.4, 'float 6s infinite');
-        add(110, 110, '70%', '60%', -35, `rgba(180,100,220,0.35)`, 0.35, 'drift 7s infinite');
-        add(60, 60, '40%', '20%', 15, brightColor, 0.4, 'pulse 3s infinite');
-        add(95, 95, '20%', '85%', 75, purpleColor, 0.3, 'glowPulse 6s infinite');
-    }
-    if (tier >= 5) {
-        add(200, 200, '-40%', '50%', 60, `rgba(200,100,255,0.45)`, 0.5, 'rotateSlow 12s infinite');
-        add(180, 180, '30%', '-30%', -20, `rgba(255,150,200,0.4)`, 0.5, 'rotateFast 8s infinite');
-        add(140, 140, '60%', '80%', 45, `rgba(180,80,220,0.4)`, 0.5, 'glowPulse 5s infinite');
-        add(120, 120, '80%', '10%', -55, `rgba(220,120,255,0.4)`, 0.5, 'drift 10s infinite');
-        add(100, 100, '10%', '60%', 25, `rgba(200,100,200,0.45)`, 0.5, 'float 7s infinite');
-        add(160, 160, '50%', '120%', 85, `rgba(180,70,220,0.35)`, 0.5, 'driftSlow 9s infinite');
-        add(75, 75, '85%', '45%', -15, `rgba(255,150,255,0.5)`, 0.5, 'pulse 4s infinite');
-        add(130, 130, '-10%', '-10%', 110, `rgba(220,100,255,0.4)`, 0.5, 'rotateSlow 14s infinite');
-    }
+    
     return triangles;
 }
 
@@ -622,9 +661,11 @@ function renderProfileHeader() {
     const container = document.getElementById('container');
     if (!container) return;
     const cp = currentUser.creator_points;
+    const bgColor = getCardColor(cp);
     
     container.innerHTML = `
         <div class="profile-card">
+            <div class="card-bg" style="background: ${bgColor};"></div>
             <div class="card-gloss"></div>
             <div class="triangles-container"></div>
             <div class="card-content">
