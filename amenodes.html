@@ -177,5 +177,447 @@
 }
 </script>
 <script type="module" src="./src/main.js"></script>
+
+<script>
+const API_BASE = 'https://amenoke.ru/api';
+
+class AmenodesAPI {
+    constructor() {
+        this.token = localStorage.getItem('auth_token');
+    }
+
+    setToken(token) {
+        this.token = token;
+        if (token) {
+            localStorage.setItem('auth_token', token);
+        } else {
+            localStorage.removeItem('auth_token');
+        }
+    }
+
+    async request(endpoint, options = {}) {
+        const headers = {
+            'Content-Type': 'application/json',
+            ...options.headers
+        };
+        
+        if (this.token) {
+            headers['Authorization'] = `Bearer ${this.token}`;
+        }
+        
+        const response = await fetch(`${API_BASE}${endpoint}`, {
+            ...options,
+            headers
+        });
+        
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Request failed');
+        }
+        return data;
+    }
+
+    async register(username, email, password) {
+        return this.request('/register.php', {
+            method: 'POST',
+            body: JSON.stringify({ username, email, password })
+        });
+    }
+
+    async login(login, password) {
+        const data = await this.request('/login.php', {
+            method: 'POST',
+            body: JSON.stringify({ login, password })
+        });
+        if (data.token) {
+            this.setToken(data.token);
+        }
+        return data;
+    }
+
+    logout() {
+        this.setToken(null);
+    }
+
+    async getCurrentUser() {
+        if (!this.token) return null;
+        try {
+            return await this.request('/me.php');
+        } catch {
+            return null;
+        }
+    }
+
+    async createTemplate(title, description, graphData) {
+        return this.request('/create_template.php', {
+            method: 'POST',
+            body: JSON.stringify({ title, description, graph_data: graphData })
+        });
+    }
+
+    async getTemplate(id) {
+        return this.request(`/get_template.php?id=${id}`);
+    }
+
+    async searchTemplates(query, filter = 'approved', level = '', sort = 'newest', page = 1) {
+        const params = new URLSearchParams({ q: query, filter, level, sort, page, limit: 12 });
+        return this.request(`/search_templates.php?${params}`);
+    }
+
+    async getUserTemplates(userId, status = 'approved') {
+        return this.request(`/user_templates.php?user_id=${userId}&status=${status}`);
+    }
+
+    async deleteTemplate(templateId) {
+        return this.request('/delete_template.php', {
+            method: 'POST',
+            body: JSON.stringify({ template_id: templateId })
+        });
+    }
+
+    async getTopUsers(limit = 20) {
+        return this.request(`/top_users.php?limit=${limit}`);
+    }
+}
+
+const api = new AmenodesAPI();
+
+function showAuthModal() {
+    const modal = document.createElement('div');
+    modal.className = 'auth-modal';
+    modal.innerHTML = `
+        <div class="auth-modal-content">
+            <span class="auth-modal-close">&times;</span>
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login">Login</button>
+                <button class="auth-tab" data-tab="register">Register</button>
+            </div>
+            <div class="auth-panel active" id="login-panel">
+                <input type="text" id="login-username" placeholder="Username or Email">
+                <input type="password" id="login-password" placeholder="Password">
+                <button id="login-btn">Login</button>
+                <div class="auth-error" id="login-error"></div>
+            </div>
+            <div class="auth-panel" id="register-panel">
+                <input type="text" id="reg-username" placeholder="Username">
+                <input type="email" id="reg-email" placeholder="Email">
+                <input type="password" id="reg-password" placeholder="Password (min 6 chars)">
+                <button id="register-btn">Register</button>
+                <div class="auth-error" id="register-error"></div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    const closeBtn = modal.querySelector('.auth-modal-close');
+    const tabs = modal.querySelectorAll('.auth-tab');
+    const panels = modal.querySelectorAll('.auth-panel');
+    
+    closeBtn.onclick = () => modal.remove();
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    
+    tabs.forEach(tab => {
+        tab.onclick = () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            panels.forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(`${tab.dataset.tab}-panel`).classList.add('active');
+        };
+    });
+    
+    document.getElementById('login-btn').onclick = async () => {
+        const login = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+        const errorDiv = document.getElementById('login-error');
+        try {
+            const data = await api.login(login, password);
+            if (data.success) {
+                modal.remove();
+                updateAuthUI(data.user);
+                showToast(`Welcome, ${data.user.username}!`, 'success');
+            }
+        } catch (err) {
+            errorDiv.textContent = err.message;
+        }
+    };
+    
+    document.getElementById('register-btn').onclick = async () => {
+        const username = document.getElementById('reg-username').value;
+        const email = document.getElementById('reg-email').value;
+        const password = document.getElementById('reg-password').value;
+        const errorDiv = document.getElementById('register-error');
+        try {
+            const data = await api.register(username, email, password);
+            if (data.success) {
+                await api.login(username, password);
+                modal.remove();
+                updateAuthUI(data.user);
+                showToast(`Registration successful! Welcome, ${username}!`, 'success');
+            }
+        } catch (err) {
+            errorDiv.textContent = err.message;
+        }
+    };
+}
+
+function updateAuthUI(user) {
+    const toolbar = document.querySelector('.right-controls');
+    if (!toolbar) return;
+    
+    const oldAuthBtn = document.getElementById('auth-btn');
+    if (oldAuthBtn) oldAuthBtn.remove();
+    
+    if (user) {
+        const userPanel = document.createElement('div');
+        userPanel.id = 'auth-btn';
+        userPanel.className = 'user-panel';
+        userPanel.innerHTML = `
+            <span class="user-name">${user.username}</span>
+            <span class="user-points">⭐ ${user.creator_points} CP</span>
+            <button id="logout-btn" class="toolbar-btn">Logout</button>
+            <button id="save-template-btn" class="toolbar-btn">Save Template</button>
+        `;
+        const addNodeBtn = toolbar.querySelector('#addNodeBtn');
+        if (addNodeBtn) {
+            toolbar.insertBefore(userPanel, addNodeBtn);
+        } else {
+            toolbar.appendChild(userPanel);
+        }
+        
+        document.getElementById('logout-btn').onclick = () => {
+            api.logout();
+            updateAuthUI(null);
+            showToast('Logged out', 'info');
+        };
+        
+        document.getElementById('save-template-btn').onclick = () => showSaveTemplateModal();
+    } else {
+        const authBtn = document.createElement('button');
+        authBtn.id = 'auth-btn';
+        authBtn.textContent = 'Login';
+        authBtn.className = 'top-btn';
+        authBtn.onclick = () => showAuthModal();
+        toolbar.appendChild(authBtn);
+    }
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function showSaveTemplateModal() {
+    if (!api.token) {
+        showToast('Please login first', 'error');
+        showAuthModal();
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'auth-modal';
+    modal.innerHTML = `
+        <div class="auth-modal-content" style="max-width: 500px;">
+            <span class="auth-modal-close">&times;</span>
+            <h3>Save Template</h3>
+            <input type="text" id="template-title" placeholder="Template title" style="width:100%; margin-bottom:10px;">
+            <textarea id="template-desc" placeholder="Description (optional)" rows="3" style="width:100%; margin-bottom:10px;"></textarea>
+            <button id="save-template-submit">Save</button>
+            <div class="auth-error" id="save-error"></div>
+            <small style="display:block; margin-top:10px;">Template will be submitted for moderation. You'll receive Creator Points after approval.</small>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    const closeBtn = modal.querySelector('.auth-modal-close');
+    closeBtn.onclick = () => modal.remove();
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    
+    document.getElementById('save-template-submit').onclick = async () => {
+        const title = document.getElementById('template-title').value.trim();
+        const description = document.getElementById('template-desc').value.trim();
+        const errorDiv = document.getElementById('save-error');
+        
+        if (!title) {
+            errorDiv.textContent = 'Title is required';
+            return;
+        }
+        
+        if (!window.app || !window.app.graph || !window.app.graph.exportGraph) {
+            errorDiv.textContent = 'Graph not available';
+            return;
+        }
+        
+        const graphData = window.app.graph.exportGraph();
+        
+        try {
+            const data = await api.createTemplate(title, description, graphData);
+            if (data.success) {
+                modal.remove();
+                showToast('Template submitted for moderation!', 'success');
+            }
+        } catch (err) {
+            errorDiv.textContent = err.message;
+        }
+    };
+}
+
+function loadTemplateFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const templateId = urlParams.get('template');
+    if (templateId && window.app && window.app.graph && window.app.graph.loadGraph) {
+        showToast('Loading template...', 'info');
+        api.getTemplate(templateId)
+            .then(data => {
+                if (data.success && data.template.graph_data) {
+                    window.app.graph.loadGraph(data.template.graph_data);
+                    if (window.app.renderer) window.app.renderer.render();
+                    showToast(`Template "${data.template.title}" loaded`, 'success');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('Failed to load template', 'error');
+            });
+    }
+}
+
+const style = document.createElement('style');
+style.textContent = `
+    .auth-modal {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    }
+    .auth-modal-content {
+        background: #1e1e2e;
+        border-radius: 12px;
+        padding: 24px;
+        width: 400px;
+        max-width: 90%;
+        color: #fff;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    .auth-modal-content h3 {
+        margin: 0 0 20px 0;
+        text-align: center;
+    }
+    .auth-modal-close {
+        float: right;
+        font-size: 24px;
+        cursor: pointer;
+        color: #888;
+    }
+    .auth-modal-close:hover {
+        color: #fff;
+    }
+    .auth-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #444;
+    }
+    .auth-tab {
+        background: none;
+        border: none;
+        color: #888;
+        padding: 8px 16px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    .auth-tab.active {
+        color: #ffd700;
+        border-bottom: 2px solid #ffd700;
+    }
+    .auth-panel {
+        display: none;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .auth-panel.active {
+        display: flex;
+    }
+    .auth-panel input, .auth-panel textarea {
+        background: #2a2a3a;
+        border: 1px solid #444;
+        color: #fff;
+        padding: 10px;
+        border-radius: 6px;
+    }
+    .auth-panel button {
+        background: #ffd700;
+        border: none;
+        padding: 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .auth-error {
+        color: #ff6b6b;
+        font-size: 12px;
+        text-align: center;
+    }
+    .user-panel {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #2a2a3a;
+        padding: 5px 12px;
+        border-radius: 20px;
+        margin-right: 12px;
+    }
+    .user-name {
+        color: #ffd700;
+        font-weight: bold;
+    }
+    .user-points {
+        font-size: 12px;
+        color: #aaa;
+    }
+    .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #333;
+        color: #fff;
+        padding: 12px 20px;
+        border-radius: 8px;
+        z-index: 10001;
+        animation: fadeIn 0.3s;
+    }
+    .toast-success { background: #2e7d32; }
+    .toast-error { background: #c62828; }
+    .toast-info { background: #1565c0; }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+`;
+document.head.appendChild(style);
+
+document.addEventListener('DOMContentLoaded', () => {
+    api.getCurrentUser().then(data => {
+        if (data && data.success) {
+            updateAuthUI(data.user);
+        } else {
+            updateAuthUI(null);
+        }
+    }).catch(() => updateAuthUI(null));
+    
+    setTimeout(() => {
+        loadTemplateFromURL();
+    }, 1500);
+});
+</script>
+
 </body>
 </html>
