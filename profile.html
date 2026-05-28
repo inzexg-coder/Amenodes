@@ -14,7 +14,7 @@
         }
 
         body {
-            font-family: monospace;
+            font-family: 'Segoe UI', 'Monaco', monospace;
             background: linear-gradient(135deg, #0a0c14 0%, #121624 100%);
             min-height: 100vh;
             color: #eef2ff;
@@ -24,7 +24,7 @@
             background: #0f1222cc;
             backdrop-filter: blur(10px);
             border-bottom: 1px solid #2e385c;
-            padding: 16px 24px;
+            padding: 16px 32px;
             position: sticky;
             top: 0;
             z-index: 100;
@@ -65,55 +65,18 @@
             color: #aabbdd;
             text-decoration: none;
             transition: color 0.2s;
+            font-size: 14px;
         }
 
         .nav-links a:hover, .nav-links a.active {
             color: #ffb347;
         }
 
-        .btn {
-            padding: 8px 20px;
-            border-radius: 30px;
-            border: none;
-            cursor: pointer;
-            font-family: monospace;
-            font-weight: bold;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background: #ffb347;
-            color: #1a1f30;
-        }
-
-        .btn-primary:hover {
-            background: #ffcc66;
-            transform: scale(1.02);
-        }
-
-        .btn-secondary {
-            background: #2d3a5e;
-            color: #eef2ff;
-        }
-
-        .btn-secondary:hover {
-            background: #3f4e7a;
-        }
-
-        .btn-danger {
-            background: #8b3a3a;
-            color: #ffcccc;
-        }
-
-        .btn-danger:hover {
-            background: #aa4a4a;
-        }
-
         .user-panel {
             display: flex;
             align-items: center;
             gap: 12px;
-            background: #2a2a3a;
+            background: #1a1f30;
             padding: 6px 16px;
             border-radius: 40px;
         }
@@ -121,80 +84,116 @@
         .user-name {
             color: #ffd700;
             font-weight: bold;
-        }
-
-        .user-points {
-            font-size: 12px;
-            color: #aaa;
+            font-size: 13px;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 32px 24px;
-        }
-      
-        .profile-header {
-            background: #0f1222;
-            border-radius: 24px;
-            border: 1px solid #2e385c;
             padding: 32px;
+        }
+
+        .profile-wing-card {
+            background: #0f1222;
+            border-radius: 48px;
+            padding: 40px 24px;
             margin-bottom: 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 24px;
+            text-align: center;
+            border: 1px solid #2e385c;
+            transition: all 0.3s ease;
         }
 
-        .profile-info {
-            display: flex;
-            align-items: center;
-            gap: 24px;
-            flex-wrap: wrap;
-        }
-
-        .avatar {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #ffb347, #ff8c00);
-            border-radius: 50%;
+        .wing-container {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 36px;
-            font-weight: bold;
-            color: #1a1f30;
+            gap: 30px;
+            flex-wrap: wrap;
         }
 
-        .stats {
-            display: flex;
-            gap: 32px;
+        .wing-left, .wing-right {
+            font-size: 48px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .stat {
+        .wing-left i, .wing-right i {
+            transition: all 0.3s ease;
+        }
+
+        .cp-center {
             text-align: center;
+            min-width: 200px;
         }
 
-        .stat-value {
-            font-size: 28px;
+        .cp-number {
+            font-size: 56px;
             font-weight: bold;
-            color: #ffb347;
+            background: linear-gradient(135deg, #ffb347, #ff8c00);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 2px;
         }
 
-        .stat-label {
-            font-size: 12px;
-            color: #8899bb;
-        }
-
-        .rank-badge {
-            display: inline-block;
-            padding: 8px 20px;
-            border-radius: 40px;
-            font-weight: bold;
+        .cp-label {
             font-size: 14px;
+            color: #8899bb;
+            margin-top: 8px;
         }
 
+        .username-badge {
+            margin-top: 16px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .wings-tier-1 .wing-left i, .wings-tier-1 .wing-right i {
+            font-size: 32px;
+            opacity: 0.6;
+            filter: drop-shadow(0 0 2px currentColor);
+        }
+        .wings-tier-2 .wing-left i, .wings-tier-2 .wing-right i {
+            font-size: 42px;
+            opacity: 0.8;
+            filter: drop-shadow(0 0 4px currentColor);
+        }
+        .wings-tier-3 .wing-left i, .wings-tier-3 .wing-right i {
+            font-size: 52px;
+            opacity: 1;
+            filter: drop-shadow(0 0 8px currentColor);
+            animation: gentleWingGlow 3s infinite;
+        }
+        .wings-tier-4 .wing-left i, .wings-tier-4 .wing-right i {
+            font-size: 64px;
+            opacity: 1;
+            filter: drop-shadow(0 0 15px currentColor);
+            animation: wingPulse 2s infinite;
+        }
+        .wings-tier-5 .wing-left i, .wings-tier-5 .wing-right i {
+            font-size: 80px;
+            opacity: 1;
+            filter: drop-shadow(0 0 25px currentColor);
+            animation: wingFlap 1.5s infinite alternate;
+        }
+        @keyframes gentleWingGlow {
+            0% { filter: drop-shadow(0 0 4px currentColor); }
+            50% { filter: drop-shadow(0 0 12px currentColor); }
+            100% { filter: drop-shadow(0 0 4px currentColor); }
+        }
+        @keyframes wingPulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 10px currentColor); }
+            50% { transform: scale(1.05); filter: drop-shadow(0 0 20px currentColor); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 10px currentColor); }
+        }
+        @keyframes wingFlap {
+            0% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 15px currentColor); }
+            100% { transform: scale(1.1) rotate(3deg); filter: drop-shadow(0 0 30px currentColor); }
+        }
+        
         .tabs {
             display: flex;
             gap: 8px;
@@ -208,7 +207,8 @@
             border: none;
             color: #8899bb;
             cursor: pointer;
-            font-family: monospace;
+            font-family: inherit;
+            font-size: 14px;
             transition: all 0.2s;
         }
 
@@ -216,11 +216,11 @@
             color: #ffb347;
             border-bottom: 2px solid #ffb347;
         }
-      
+
         .templates-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
 
         .template-card {
@@ -228,167 +228,122 @@
             border-radius: 16px;
             border: 1px solid #2e385c;
             overflow: hidden;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
         .template-card:hover {
-            transform: translateY(-2px);
             border-color: #ffb347;
+            background: #121624;
         }
 
-        .card-header {
-            padding: 16px;
-            border-bottom: 1px solid #2e385c;
-        }
-
-        .card-title {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 8px;
+        .card-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 20px 24px;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 16px;
+        }
+
+        .card-info {
+            flex: 2;
+            min-width: 200px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .card-desc {
-            font-size: 12px;
+            font-size: 13px;
             color: #8899bb;
             margin-bottom: 12px;
         }
 
         .card-meta {
             display: flex;
-            justify-content: space-between;
-            font-size: 11px;
+            gap: 20px;
+            font-size: 12px;
             color: #667799;
-        }
-
-        .card-footer {
-            padding: 12px 16px;
-            background: #0a0c14;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
         .status-badge {
             display: inline-block;
             padding: 4px 12px;
             border-radius: 20px;
-            font-size: 10px;
+            font-size: 11px;
             font-weight: bold;
         }
 
-        .status-pending {
-            background: #ff8c00;
-            color: #1a1f30;
+        .status-pending { background: #ff8c00; color: #1a1f30; }
+        .status-approved { background: #2e7d32; color: #fff; }
+        .status-rejected { background: #c62828; color: #ffcdd2; }
+
+        .card-footer {
+            padding: 12px 24px;
+            background: #0a0c14;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            border-top: 1px solid #2e385c;
         }
 
-        .status-approved {
-            background: #2e7d32;
+        .btn {
+            padding: 6px 16px;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary {
+            background: #2d3a5e;
             color: #fff;
         }
+        .btn-secondary:hover { background: #3f4e7a; }
 
-        .status-rejected {
-            background: #c62828;
-            color: #fff;
+        .btn-danger {
+            background: #8b3a3a;
+            color: #ffcccc;
         }
+        .btn-danger:hover { background: #aa4a4a; }
 
-        .level-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: bold;
-        }
-
-        .level-regular { background: #555; color: #ccc; }
-        .level-featured { background: #ffd700; color: #1a1f30; }
-        .level-epic { background: #ff69b4; color: #1a1f30; }
-        .level-legendary { background: #00bfff; color: #1a1f30; }
-        .level-godlike { background: linear-gradient(135deg, #9b59b6, #ff69b4); color: #fff; }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px;
-            color: #667799;
-        }
-
-        .empty-state i {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-
-        .loading {
+        .empty-state, .loading {
             text-align: center;
             padding: 60px;
             color: #8899bb;
-        }
-
-        .loading i {
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
         }
 
         .toast {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background: #333;
-            color: #fff;
+            background: #1a1f30;
+            border-left: 4px solid #ffb347;
+            color: #eef2ff;
             padding: 12px 20px;
             border-radius: 8px;
             z-index: 1000;
-            animation: fadeIn 0.3s;
+            font-family: inherit;
+            font-size: 13px;
         }
-
-        .toast-success { background: #2e7d32; }
-        .toast-error { background: #c62828; }
-        .toast-info { background: #1565c0; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .auth-modal {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-        }
-
-        .auth-modal-content {
-            background: #1e1e2e;
-            border-radius: 12px;
-            padding: 24px;
-            width: 400px;
-            max-width: 90%;
-            color: #fff;
-        }
-
-        .auth-modal-close {
-            float: right;
-            font-size: 24px;
-            cursor: pointer;
-            color: #888;
-        }
+        .toast-success { border-left-color: #2e7d32; background: #1a2a1a; }
+        .toast-error { border-left-color: #c62828; background: #2a1a1a; }
 
         @media (max-width: 768px) {
             .container { padding: 16px; }
-            .profile-header { flex-direction: column; text-align: center; }
-            .profile-info { justify-content: center; }
-            .templates-grid { grid-template-columns: 1fr; }
+            .wing-left i, .wing-right i { font-size: 36px !important; }
+            .cp-number { font-size: 36px; }
+            .card-content { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
@@ -400,11 +355,11 @@
         <span>Amenodes</span>
     </div>
     <div class="nav-links">
-        <a href="amenodes.html"><i class="fas fa-edit"></i> Editor</a>
-        <a href="templates.html"><i class="fas fa-cubes"></i> Templates</a>
-        <a href="profile.html" class="active"><i class="fas fa-user"></i> Profile</a>
+        <a href="amenodes.html">Editor</a>
+        <a href="templates.html">Templates</a>
+        <a href="profile.html" class="active">Profile</a>
     </div>
-    <div class="auth-section" id="authSection"></div>
+    <div id="authSection"></div>
 </div>
 
 <div class="container" id="container">
@@ -434,24 +389,6 @@ class API {
         if (!response.ok) throw new Error(data.error || 'Request failed');
         return data;
     }
-
-    async login(login, password) {
-        const data = await this.request('/login.php', {
-            method: 'POST',
-            body: JSON.stringify({ login, password })
-        });
-        if (data.token) this.setToken(data.token);
-        return data;
-    }
-
-    async register(username, email, password) {
-        return this.request('/register.php', {
-            method: 'POST',
-            body: JSON.stringify({ username, email, password })
-        });
-    }
-
-    logout() { this.setToken(null); }
 
     async getCurrentUser() {
         if (!this.token) return null;
@@ -483,110 +420,61 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 3000);
 }
 
-function showAuthModal() {
-    const modal = document.createElement('div');
-    modal.className = 'auth-modal';
-    modal.innerHTML = `
-        <div class="auth-modal-content">
-            <span class="auth-modal-close">&times;</span>
-            <h3 style="text-align:center;">Login Required</h3>
-            <p style="margin: 16px 0; text-align:center;">Please login to view your profile</p>
-            <button id="gotoLoginBtn" class="btn btn-primary" style="width:100%;">Go to Login</button>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    modal.querySelector('.auth-modal-close').onclick = () => modal.remove();
-    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-    document.getElementById('gotoLoginBtn').onclick = () => {
-        modal.remove();
-        window.location.href = 'amenodes.html';
-    };
+function getStatusClass(status) {
+    const map = { 'pending': 'status-pending', 'approved': 'status-approved', 'rejected': 'status-rejected' };
+    return map[status] || 'status-pending';
 }
 
-function getRankInfo(points) {
-    if (points >= 2500) return { name: 'Legend', bg: '#9b59b6', glow: '#bb8fce' };
-    if (points >= 1000) return { name: 'Champion', bg: '#ff4444', glow: '#ff8888' };
-    if (points >= 500) return { name: 'Diamond', bg: '#b9f2ff', glow: '#00ffff' };
-    if (points >= 200) return { name: 'Platinum', bg: '#e5e4e2', glow: '#ffffff' };
-    if (points >= 50) return { name: 'Gold', bg: '#ffd700', glow: '#ffec80' };
-    if (points >= 10) return { name: 'Silver', bg: '#c0c0c0', glow: '#e0e0e0' };
-    return { name: 'Bronze', bg: '#cd7f32', glow: 'none' };
-}
-
-function getStatusText(status) {
+function getStatusName(status) {
     const map = { 'pending': 'Pending', 'approved': 'Approved', 'rejected': 'Rejected' };
     return map[status] || status;
 }
 
-function getLevelName(level) {
-    const map = {
-        'regular': 'Regular',
-        'featured': 'Featured',
-        'epic': 'Epic',
-        'legendary': 'Legendary',
-        'godlike': 'Godlike'
-    };
-    return map[level] || 'Regular';
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
 }
 
-function getLevelClass(level) {
-    const map = {
-        'regular': 'level-regular',
-        'featured': 'level-featured',
-        'epic': 'level-epic',
-        'legendary': 'level-legendary',
-        'godlike': 'level-godlike'
-    };
-    return map[level] || 'level-regular';
+function getWingColor(cp) {
+    let stars = cp / 10;
+    if (stars >= 8.1) return '#c97eff';
+    const colors = [
+        '#5a9cff', '#6aaaff', '#7ab8ff', '#8ac6ff', '#9ad4ff',
+        '#aae2aa', '#e8c84a', '#f0a03a', '#e8702a', '#d04020',
+        '#c02050', '#b03080', '#a040b0', '#8050c0', '#5060d0',
+        '#3040a0', '#102070'
+    ];
+    let idx = Math.floor(stars * 2);
+    idx = Math.min(colors.length - 1, Math.max(0, idx));
+    return colors[idx];
 }
 
-async function loadTemplates() {
-    if (!currentUser) return;
-    
-    const container = document.getElementById('templatesContainer');
-    if (!container) return;
-    
-    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading templates...</div>';
-    
+function getWingsTier(cp) {
+    if (cp >= 100) return 5;
+    if (cp >= 60) return 4;
+    if (cp >= 30) return 3;
+    if (cp >= 10) return 2;
+    return 1;
+}
+
+async function deleteTemplate(id) {
+    if (!confirm('Delete this template? This cannot be undone.')) return;
     try {
-        const data = await api.getUserTemplates(currentUser.id, currentTab);
-        
-        if (!data.templates || data.templates.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-cubes"></i>
-                    <p>No templates found</p>
-                    <small>Create your first template in the Editor!</small>
-                </div>
-            `;
-            return;
+        await api.deleteTemplate(id);
+        showToast('Template deleted', 'success');
+        if (currentUser) {
+            const updated = await api.getCurrentUser();
+            if (updated && updated.user) currentUser = updated.user;
+            renderProfileHeader();
+            loadTemplates();
         }
-        
-        container.innerHTML = data.templates.map(tpl => `
-            <div class="template-card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <span>${escapeHtml(tpl.title)}</span>
-                        <div style="display: flex; gap: 8px;">
-                            ${tpl.status === 'approved' ? `<span class="level-badge ${getLevelClass(tpl.verification_level)}">${getLevelName(tpl.verification_level)}</span>` : ''}
-                            <span class="status-badge status-${tpl.status}">${getStatusText(tpl.status)}</span>
-                        </div>
-                    </div>
-                    <div class="card-desc">${escapeHtml(tpl.description || 'No description')}</div>
-                    <div class="card-meta">
-                        <span><i class="fas fa-calendar"></i> ${new Date(tpl.created_at).toLocaleDateString()}</span>
-                        ${tpl.creator_points_awarded > 0 ? `<span><i class="fas fa-star"></i> ${tpl.creator_points_awarded} CP</span>` : ''}
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <button class="btn btn-secondary" onclick="openTemplate(${tpl.id})" style="padding: 6px 16px;">Open</button>
-                    <button class="btn btn-danger" onclick="deleteTemplate(${tpl.id})" style="padding: 6px 16px;">Delete</button>
-                </div>
-            </div>
-        `).join('');
     } catch (err) {
-        console.error(err);
-        container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Failed to load templates</p></div>`;
+        showToast(err.message, 'error');
     }
 }
 
@@ -594,22 +482,49 @@ function openTemplate(id) {
     window.location.href = `amenodes.html?template=${id}`;
 }
 
-async function deleteTemplate(id) {
-    if (!confirm('Are you sure you want to delete this template? This action cannot be undone.')) return;
+async function loadTemplates() {
+    const container = document.getElementById('templatesContainer');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading templates...</div>';
     
     try {
-        await api.deleteTemplate(id);
-        showToast('Template deleted', 'success');
-        loadTemplates();
-        if (currentUser) {
-            const userData = await api.getCurrentUser();
-            if (userData && userData.user) {
-                currentUser = userData.user;
-                renderProfileHeader();
-            }
+        const data = await api.getUserTemplates(currentUser.id, currentTab);
+        if (!data.templates || data.templates.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-cubes"></i>
+                    No templates found
+                    <div style="font-size: 12px; margin-top: 8px;">Create your first template in the Editor</div>
+                </div>
+            `;
+            return;
         }
+        
+        container.innerHTML = data.templates.map(tpl => `
+            <div class="template-card">
+                <div class="card-content">
+                    <div class="card-info">
+                        <div class="card-title">
+                            <span>${escapeHtml(tpl.title)}</span>
+                            <span class="status-badge ${getStatusClass(tpl.status)}">${getStatusName(tpl.status)}</span>
+                        </div>
+                        <div class="card-desc">${escapeHtml(tpl.description || 'No description')}</div>
+                        <div class="card-meta">
+                            <span><i class="fas fa-calendar"></i> ${new Date(tpl.created_at).toLocaleDateString()}</span>
+                            ${tpl.creator_points_awarded > 0 ? `<span><i class="fas fa-star"></i> ${tpl.creator_points_awarded} CP</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn-secondary" onclick="openTemplate(${tpl.id})">Open</button>
+                        <button class="btn btn-danger" onclick="deleteTemplate(${tpl.id})">Delete</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
     } catch (err) {
-        showToast(err.message, 'error');
+        console.error(err);
+        container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i> Failed to load templates</div>`;
     }
 }
 
@@ -617,21 +532,23 @@ function renderProfileHeader() {
     const container = document.getElementById('container');
     if (!container) return;
     
-    const rank = getRankInfo(currentUser.creator_points);
+    const cp = currentUser.creator_points;
+    const wingColor = getWingColor(cp);
+    const tier = getWingsTier(cp);
     
     container.innerHTML = `
-        <div class="profile-header">
-            <div class="profile-info">
-                <div class="avatar">${currentUser.username.charAt(0).toUpperCase()}</div>
-                <div>
-                    <h2>${escapeHtml(currentUser.username)}</h2>
-                    <div class="rank-badge" style="background: ${rank.bg}; color: ${rank.name === 'Bronze' ? '#fff' : '#1a1f30'}; margin-top: 8px;">${rank.name}</div>
+        <div class="profile-wing-card wings-tier-${tier}">
+            <div class="wing-container">
+                <div class="wing-left" style="color: ${wingColor};">
+                    <i class="fas fa-feather-alt"></i>
                 </div>
-            </div>
-            <div class="stats">
-                <div class="stat">
-                    <div class="stat-value">${currentUser.creator_points}</div>
-                    <div class="stat-label">Creator Points</div>
+                <div class="cp-center">
+                    <div class="cp-number">${cp}</div>
+                    <div class="cp-label">Creator Points</div>
+                    <div class="username-badge">${escapeHtml(currentUser.username)}</div>
+                </div>
+                <div class="wing-right" style="color: ${wingColor};">
+                    <i class="fas fa-feather-alt"></i>
                 </div>
             </div>
         </div>
@@ -650,6 +567,8 @@ function renderProfileHeader() {
     
     document.querySelectorAll('.tab').forEach(btn => {
         btn.onclick = () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
             currentTab = btn.dataset.tab;
             renderProfileHeader();
             loadTemplates();
@@ -657,16 +576,6 @@ function renderProfileHeader() {
     });
     
     loadTemplates();
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
 }
 
 function updateAuthUI() {
@@ -677,8 +586,8 @@ function updateAuthUI() {
         authSection.innerHTML = `
             <div class="user-panel">
                 <span class="user-name">${currentUser.username}</span>
-                <span class="user-points">⭐ ${currentUser.creator_points} CP</span>
-                <button id="logoutBtn" class="btn btn-secondary" style="padding: 4px 12px;">Logout</button>
+                <span class="user-points">${currentUser.creator_points} CP</span>
+                <button id="logoutBtn" style="background: none; border: none; color: #ffb347; cursor: pointer;">Logout</button>
             </div>
         `;
         document.getElementById('logoutBtn').onclick = () => {
@@ -686,9 +595,7 @@ function updateAuthUI() {
             window.location.reload();
         };
     } else {
-        authSection.innerHTML = '<button id="loginBtnHeader" class="btn btn-outline" style="background:transparent; border:1px solid #ffb347; color:#ffb347; padding:6px 16px; border-radius:30px;">Login</button>';
-        const loginBtn = document.getElementById('loginBtnHeader');
-        if (loginBtn) loginBtn.onclick = () => window.location.href = 'amenodes.html';
+        authSection.innerHTML = '<a href="amenodes.html" style="background:#ffb347; color:#1a1f30; padding:6px 16px; border-radius:30px; text-decoration:none;">Login</a>';
     }
 }
 
@@ -707,7 +614,7 @@ async function init() {
                     <div class="empty-state">
                         <i class="fas fa-lock"></i>
                         <p>Please login to view your profile</p>
-                        <button class="btn btn-primary" onclick="window.location.href='amenodes.html'">Go to Editor</button>
+                        <button class="btn btn-secondary" onclick="window.location.href='amenodes.html'">Go to Editor</button>
                     </div>
                 `;
             }
@@ -718,6 +625,8 @@ async function init() {
     }
 }
 
+window.openTemplate = openTemplate;
+window.deleteTemplate = deleteTemplate;
 init();
 </script>
 </body>
