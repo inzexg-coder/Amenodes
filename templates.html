@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template Library</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: monospace;
+            background: linear-gradient(135deg, #0a0c14 0%, #121624 100%);
+            min-height: 100vh;
+            color: #eef2ff;
+        }
+
+        .header {
+            background: #0f1222cc;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #2e385c;
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .logo i {
+            color: #ffb347;
+            font-size: 28px;
+        }
+
+        .logo span {
+            background: linear-gradient(135deg, #ffb347, #ff8c00);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #aabbdd;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: #ffb347;
+        }
+
+        .auth-section {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            font-family: monospace;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #ffb347;
+            color: #1a1f30;
+        }
+
+        .btn-primary:hover {
+            background: #ffcc66;
+            transform: scale(1.02);
+        }
+
+        .btn-secondary {
+            background: #2d3a5e;
+            color: #eef2ff;
+        }
+
+        .btn-secondary:hover {
+            background: #3f4e7a;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #ffb347;
+            color: #ffb347;
+        }
+
+        .btn-outline:hover {
+            background: #ffb34720;
+        }
+
+        .user-panel {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #2a2a3a;
+            padding: 6px 16px;
+            border-radius: 40px;
+        }
+
+        .user-name {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .user-points {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .search-section {
+            background: #0f1222cc;
+            border-radius: 60px;
+            padding: 8px 20px;
+            margin-bottom: 32px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+            border: 1px solid #2e385c;
+        }
+
+        .search-input {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #1a1f30;
+            border-radius: 40px;
+            padding: 10px 20px;
+        }
+
+        .search-input i {
+            color: #ffb347;
+        }
+
+        .search-input input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #fff;
+            font-family: monospace;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            background: #1a1f30;
+            border: 1px solid #2e385c;
+            border-radius: 30px;
+            padding: 8px 16px;
+            color: #fff;
+            font-family: monospace;
+            cursor: pointer;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .level-regular {
+            background: #555;
+            color: #ccc;
+        }
+
+        .level-featured {
+            background: #ffd700;
+            color: #1a1f30;
+        }
+
+        .level-epic {
+            background: #ff69b4;
+            color: #1a1f30;
+        }
+
+        .level-legendary {
+            background: #00bfff;
+            color: #1a1f30;
+        }
+
+        .level-godlike {
+            background: linear-gradient(135deg, #9b59b6, #ff69b4);
+            color: #fff;
+        }
+
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .template-card {
+            background: #0f1222;
+            border-radius: 16px;
+            border: 1px solid #2e385c;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .template-card:hover {
+            transform: translateY(-4px);
+            border-color: #ffb347;
+            box-shadow: 0 8px 24px rgba(255, 179, 71, 0.15);
+        }
+
+        .template-card.regular:hover { border-color: #888; }
+        .template-card.featured:hover { border-color: #ffd700; box-shadow: 0 8px 24px rgba(255, 215, 0, 0.2); }
+        .template-card.epic:hover { border-color: #ff69b4; box-shadow: 0 8px 24px rgba(255, 105, 180, 0.2); }
+        .template-card.legendary:hover { border-color: #00bfff; box-shadow: 0 8px 24px rgba(0, 191, 255, 0.2); }
+        .template-card.godlike:hover { border-color: #9b59b6; box-shadow: 0 8px 24px rgba(155, 89, 182, 0.3); }
+
+        .card-header {
+            padding: 16px;
+            border-bottom: 1px solid #2e385c;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-desc {
+            font-size: 12px;
+            color: #8899bb;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #667799;
+        }
+
+        .card-author {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-author i {
+            font-size: 10px;
+        }
+
+        .card-footer {
+            padding: 12px 16px;
+            background: #0a0c14;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .points {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .view-btn {
+            background: #2d3a5e;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            color: #fff;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .view-btn:hover {
+            background: #3f4e7a;
+        }
+      
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .page-btn {
+            background: #1a1f30;
+            border: 1px solid #2e385c;
+            padding: 8px 14px;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .page-btn.active {
+            background: #ffb347;
+            border-color: #ffb347;
+            color: #1a1f30;
+        }
+
+        .page-btn:hover:not(.active) {
+            background: #2d3a5e;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            font-size: 18px;
+            color: #8899bb;
+        }
+
+        .loading i {
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #667799;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            animation: fadeIn 0.3s;
+        }
+
+        .toast-success { background: #2e7d32; }
+        .toast-error { background: #c62828; }
+        .toast-info { background: #1565c0; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .auth-modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        .auth-modal-content {
+            background: #1e1e2e;
+            border-radius: 12px;
+            padding: 24px;
+            width: 400px;
+            max-width: 90%;
+            color: #fff;
+        }
+        .auth-modal-close {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+            color: #888;
+        }
+        .auth-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #444;
+        }
+        .auth-tab {
+            background: none;
+            border: none;
+            color: #888;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+        .auth-tab.active {
+            color: #ffd700;
+            border-bottom: 2px solid #ffd700;
+        }
+        .auth-panel {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .auth-panel.active {
+            display: flex;
+        }
+        .auth-panel input {
+            background: #2a2a3a;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .auth-panel button {
+            background: #ffd700;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .auth-error {
+            color: #ff6b6b;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 16px; }
+            .templates-grid { grid-template-columns: 1fr; }
+            .search-section { flex-direction: column; border-radius: 20px; }
+            .search-input { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="logo">
+        <i class="fas fa-project-diagram"></i>
+        <span>Amenodes</span>
+    </div>
+    <div class="nav-links">
+        <a href="amenodes.html"><i class="fas fa-edit"></i> Editor</a>
+        <a href="templates.html"><i class="fas fa-cubes"></i> Templates</a>
+        <a href="#" id="topUsersLink"><i class="fas fa-trophy"></i> Top Creators</a>
+    </div>
+    <div class="auth-section" id="authSection">
+        <button id="loginBtnHeader" class="btn btn-outline">Login</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="search-section">
+        <div class="search-input">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search templates by name, description, or author...">
+        </div>
+        <div class="filters">
+            <select id="levelFilter" class="filter-select">
+                <option value="">All Levels</option>
+                <option value="regular">Regular</option>
+                <option value="featured">Featured</option>
+                <option value="epic">Epic</option>
+                <option value="legendary">Legendary</option>
+                <option value="godlike">Godlike</option>
+            </select>
+            <select id="sortFilter" class="filter-select">
+                <option value="newest">Newest</option>
+                <option value="top_cp">Most CP</option>
+                <option value="popular">Most Popular</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="templatesGrid" class="templates-grid">
+        <div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading templates...</div>
+    </div>
+
+    <div id="pagination" class="pagination"></div>
+</div>
+
+<script>
+const API_BASE = 'https://amenoke.ru/api';
+
+class API {
+    constructor() {
+        this.token = localStorage.getItem('auth_token');
+    }
+
+    setToken(token) {
+        this.token = token;
+        if (token) localStorage.setItem('auth_token', token);
+        else localStorage.removeItem('auth_token');
+    }
+
+    async request(endpoint, options = {}) {
+        const headers = { 'Content-Type': 'application/json' };
+        if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+        
+        const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Request failed');
+        return data;
+    }
+
+    async login(login, password) {
+        const data = await this.request('/login.php', {
+            method: 'POST',
+            body: JSON.stringify({ login, password })
+        });
+        if (data.token) this.setToken(data.token);
+        return data;
+    }
+
+    async register(username, email, password) {
+        return this.request('/register.php', {
+            method: 'POST',
+            body: JSON.stringify({ username, email, password })
+        });
+    }
+
+    logout() { this.setToken(null); }
+
+    async getCurrentUser() {
+        if (!this.token) return null;
+        try { return await this.request('/me.php'); }
+        catch { return null; }
+    }
+
+    async searchTemplates(query, level, sort, page = 1) {
+        const params = new URLSearchParams({ q: query, filter: 'approved', level, sort, page, limit: 12 });
+        return this.request(`/search_templates.php?${params}`);
+    }
+
+    async getTopUsers(limit = 20) {
+        return this.request(`/top_users.php?limit=${limit}`);
+    }
+}
+
+const api = new API();
+let currentPage = 1;
+let currentQuery = '';
+let currentLevel = '';
+let currentSort = 'newest';
+let currentUser = null;
+function showAuthModal() {
+    const modal = document.createElement('div');
+    modal.className = 'auth-modal';
+    modal.innerHTML = `
+        <div class="auth-modal-content">
+            <span class="auth-modal-close">&times;</span>
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login">Login</button>
+                <button class="auth-tab" data-tab="register">Register</button>
+            </div>
+            <div class="auth-panel active" id="login-panel">
+                <input type="text" id="login-username" placeholder="Username or Email">
+                <input type="password" id="login-password" placeholder="Password">
+                <button id="login-btn">Login</button>
+                <div class="auth-error" id="login-error"></div>
+            </div>
+            <div class="auth-panel" id="register-panel">
+                <input type="text" id="reg-username" placeholder="Username">
+                <input type="email" id="reg-email" placeholder="Email">
+                <input type="password" id="reg-password" placeholder="Password (min 6 chars)">
+                <button id="register-btn">Register</button>
+                <div class="auth-error" id="register-error"></div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    modal.querySelector('.auth-modal-close').onclick = () => modal.remove();
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    
+    modal.querySelectorAll('.auth-tab').forEach(tab => {
+        tab.onclick = () => {
+            modal.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            modal.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(`${tab.dataset.tab}-panel`).classList.add('active');
+        };
+    });
+    
+    document.getElementById('login-btn').onclick = async () => {
+        const login = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+        try {
+            const data = await api.login(login, password);
+            if (data.success) {
+                modal.remove();
+                currentUser = data.user;
+                updateAuthUI();
+                showToast(`Welcome, ${data.user.username}!`, 'success');
+            }
+        } catch (err) {
+            document.getElementById('login-error').textContent = err.message;
+        }
+    };
+    
+    document.getElementById('register-btn').onclick = async () => {
+        const username = document.getElementById('reg-username').value;
+        const email = document.getElementById('reg-email').value;
+        const password = document.getElementById('reg-password').value;
+        try {
+            const data = await api.register(username, email, password);
+            if (data.success) {
+                await api.login(username, password);
+                modal.remove();
+                const userData = await api.getCurrentUser();
+                currentUser = userData.user;
+                updateAuthUI();
+                showToast(`Welcome, ${username}!`, 'success');
+            }
+        } catch (err) {
+            document.getElementById('register-error').textContent = err.message;
+        }
+    };
+}
+
+function updateAuthUI() {
+    const authSection = document.getElementById('authSection');
+    if (!authSection) return;
+    
+    if (currentUser) {
+        authSection.innerHTML = `
+            <div class="user-panel">
+                <span class="user-name">${currentUser.username}</span>
+                <span class="user-points">⭐ ${currentUser.creator_points} CP</span>
+                <button id="logoutBtn" class="btn btn-secondary" style="padding: 4px 12px;">Logout</button>
+            </div>
+        `;
+        document.getElementById('logoutBtn').onclick = () => {
+            api.logout();
+            currentUser = null;
+            updateAuthUI();
+            showToast('Logged out', 'info');
+        };
+    } else {
+        authSection.innerHTML = '<button id="loginBtnHeader" class="btn btn-outline">Login</button>';
+        document.getElementById('loginBtnHeader').onclick = () => showAuthModal();
+    }
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function getLevelClass(level) {
+    const map = {
+        'regular': 'level-regular',
+        'featured': 'level-featured',
+        'epic': 'level-epic',
+        'legendary': 'level-legendary',
+        'godlike': 'level-godlike'
+    };
+    return map[level] || 'level-regular';
+}
+
+function getLevelName(level) {
+    const map = {
+        'regular': 'Regular',
+        'featured': 'Featured',
+        'epic': 'Epic',
+        'legendary': 'Legendary',
+        'godlike': 'Godlike'
+    };
+    return map[level] || 'Regular';
+}
+
+async function loadTemplates() {
+    const grid = document.getElementById('templatesGrid');
+    grid.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading templates...</div>';
+    
+    try {
+        const data = await api.searchTemplates(currentQuery, currentLevel, currentSort, currentPage);
+        
+        if (!data.templates || data.templates.length === 0) {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-cubes"></i>
+                    <p>No templates found</p>
+                    <small>Try adjusting your search or filters</small>
+                </div>
+            `;
+            document.getElementById('pagination').innerHTML = '';
+            return;
+        }
+        
+        grid.innerHTML = data.templates.map(tpl => `
+            <div class="template-card ${tpl.verification_level}" onclick="window.location.href='amenodes.html?template=${tpl.id}'">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>${escapeHtml(tpl.title)}</span>
+                        <span class="level-badge ${getLevelClass(tpl.verification_level)}">${getLevelName(tpl.verification_level)}</span>
+                    </div>
+                    <div class="card-desc">${escapeHtml(tpl.description || 'No description')}</div>
+                    <div class="card-meta">
+                        <span class="card-author"><i class="fas fa-user"></i> ${escapeHtml(tpl.username)}</span>
+                        <span><i class="fas fa-calendar"></i> ${new Date(tpl.created_at).toLocaleDateString()}</span>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <span class="points"><i class="fas fa-star"></i> ${tpl.creator_points_awarded} CP</span>
+                    <button class="view-btn" onclick="event.stopPropagation(); window.location.href='amenodes.html?template=${tpl.id}'">Open →</button>
+                </div>
+            </div>
+        `).join('');
+        
+        const pagination = document.getElementById('pagination');
+        const totalPages = data.pagination.pages;
+        if (totalPages > 1) {
+            let pagesHtml = '';
+            for (let i = 1; i <= Math.min(totalPages, 10); i++) {
+                pagesHtml += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+            }
+            pagination.innerHTML = pagesHtml;
+            pagination.querySelectorAll('.page-btn').forEach(btn => {
+                btn.onclick = () => {
+                    currentPage = parseInt(btn.dataset.page);
+                    loadTemplates();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                };
+            });
+        } else {
+            pagination.innerHTML = '';
+        }
+    } catch (err) {
+        console.error(err);
+        grid.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Failed to load templates</p></div>`;
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    currentQuery = e.target.value;
+    currentPage = 1;
+    loadTemplates();
+});
+
+document.getElementById('levelFilter').addEventListener('change', (e) => {
+    currentLevel = e.target.value;
+    currentPage = 1;
+    loadTemplates();
+});
+
+document.getElementById('sortFilter').addEventListener('change', (e) => {
+    currentSort = e.target.value;
+    currentPage = 1;
+    loadTemplates();
+});
+
+document.getElementById('topUsersLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    showTopUsersModal();
+});
+
+async function showTopUsersModal() {
+    try {
+        const data = await api.getTopUsers(50);
+        if (!data.users || data.users.length === 0) {
+            showToast('No users found', 'info');
+            return;
+        }
+        
+        const modal = document.createElement('div');
+        modal.className = 'auth-modal';
+        modal.innerHTML = `
+            <div class="auth-modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+                <span class="auth-modal-close">&times;</span>
+                <h3 style="text-align:center; margin-bottom:20px;"><i class="fas fa-trophy"></i> Top Creators</h3>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${data.users.map((user, idx) => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #1a1f30; border-radius: 12px; border-left: 4px solid ${user.glow_color || '#ffb347'};">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: 20px; font-weight: bold; width: 40px;">#${idx + 1}</span>
+                                <div>
+                                    <div style="font-weight: bold;">${escapeHtml(user.username)}</div>
+                                    <div style="font-size: 11px; color: ${user.bg_color};">${user.rank_name}</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-star" style="color: #ffd700;"></i>
+                                <span style="font-weight: bold;">${user.creator_points} CP</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.querySelector('.auth-modal-close').onclick = () => modal.remove();
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    } catch (err) {
+        showToast('Failed to load top users', 'error');
+    }
+}
+
+api.getCurrentUser().then(data => {
+    if (data && data.success) {
+        currentUser = data.user;
+        updateAuthUI();
+    } else {
+        updateAuthUI();
+    }
+}).catch(() => updateAuthUI());
+
+loadTemplates();
+</script>
+</body>
+</html>
