@@ -128,28 +128,6 @@
             margin-top: 8px;
         }
 
-        .tabs {
-            display: flex;
-            gap: 8px;
-            border-bottom: 1px solid #2e385c;
-            margin-bottom: 24px;
-        }
-
-        .tab {
-            padding: 12px 24px;
-            background: none;
-            border: none;
-            color: #8899bb;
-            cursor: pointer;
-            font-family: monospace;
-            transition: all 0.2s;
-        }
-
-        .tab.active {
-            color: #ffb347;
-            border-bottom: 2px solid #ffb347;
-        }
-
         .templates-table {
             background: #0f1222;
             border-radius: 16px;
@@ -374,7 +352,7 @@ class API {
     }
 
     async getPendingTemplates() {
-        return this.request('/search_templates.php?filter=all&status=pending&limit=100');
+        return this.request('/search_templates.php?filter=all&limit=100');
     }
 
     async moderateTemplate(templateId, action, level) {
@@ -392,7 +370,6 @@ class API {
 const api = new API();
 let currentUser = null;
 let pendingTemplates = [];
-let currentFilter = 'pending';
 
 function showToast(message, type = 'info') {
     const toast = document.createElement('div');
@@ -498,8 +475,10 @@ async function loadPendingTemplates() {
         const data = await api.getPendingTemplates();
         pendingTemplates = data.templates || [];
         
+        const pendingOnly = pendingTemplates.filter(t => t.status === 'pending');
+        
         const stats = {
-            pending: pendingTemplates.filter(t => t.status === 'pending').length,
+            pending: pendingOnly.length,
             total: pendingTemplates.length
         };
         
@@ -511,12 +490,12 @@ async function loadPendingTemplates() {
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${stats.total}</div>
-                    <div class="stat-label">Total</div>
+                    <div class="stat-label">Total Templates</div>
                 </div>
             </div>
         `;
         
-        if (pendingTemplates.length === 0) {
+        if (pendingOnly.length === 0) {
             container.innerHTML = statsHtml + `
                 <div class="empty-state">
                     <i class="fas fa-check-circle"></i>
@@ -541,7 +520,7 @@ async function loadPendingTemplates() {
                         </tr>
                     </thead>
                     <tbody>
-                        ${pendingTemplates.filter(t => t.status === 'pending').map(tpl => `
+                        ${pendingOnly.map(tpl => `
                             <tr>
                                 <td>${tpl.id}</td>
                                 <td><strong>${escapeHtml(tpl.title)}</strong><br><small>${escapeHtml((tpl.description || '').substring(0, 50))}${tpl.description && tpl.description.length > 50 ? '...' : ''}</small></td>
@@ -581,7 +560,7 @@ function updateAuthUI() {
         authSection.innerHTML = `
             <div class="user-panel">
                 <span class="user-name">${currentUser.username}</span>
-                <span class="mod-badge">Moderator</span>
+                <span class="mod-badge">${currentUser.role === 'admin' ? 'Admin' : 'Moderator'}</span>
                 <span class="user-points">⭐ ${currentUser.creator_points} CP</span>
                 <button id="logoutBtn" style="background: none; border: none; color: #ffb347; cursor: pointer; margin-left: 8px;">Logout</button>
             </div>
@@ -596,55 +575,61 @@ function updateAuthUI() {
 }
 
 async function init() {
+    const container = document.getElementById('container');
+    
     try {
         const data = await api.getCurrentUser();
-        if (data && data.success) {
+        
+        if (data && data.success && data.user) {
             currentUser = data.user;
+            console.log('Current user:', currentUser);
+            console.log('User role:', currentUser.role);
 
-            const userData = await api.request('/me.php');
-            if (userData.user && userData.user.role !== 'moderator' && userData.user.role !== 'admin') {
-                const container = document.getElementById('container');
-                if (container) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-ban"></i>
-                            <p>Access Denied</p>
-                            <small>You don't have moderator permissions</small>
-                            <br><br>
-                            <a href="amenodes.html" class="action-btn btn-view">Back to Editor</a>
-                        </div>
-                    `;
-                }
+            if (currentUser.role === 'moderator' || currentUser.role === 'admin') {
                 updateAuthUI();
-                return;
-            }
-            
-            updateAuthUI();
-            loadPendingTemplates();
-        } else {
-            const container = document.getElementById('container');
-            if (container) {
+                await loadPendingTemplates();
+            } else {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <i class="fas fa-lock"></i>
-                        <p>Please login as moderator</p>
-                        <a href="amenodes.html" class="action-btn btn-view">Go to Editor</a>
+                        <i class="fas fa-ban"></i>
+                        <p>Access Denied</p>
+                        <small>You don't have moderator permissions. Your role: ${currentUser.role || 'user'}</small>
+                        <br><br>
+                        <a href="amenodes.html" class="action-btn btn-view">Back to Editor</a>
                     </div>
                 `;
+                updateAuthUI();
             }
+        } else {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-lock"></i>
+                    <p>Please login as moderator</p>
+                    <a href="amenodes.html" class="action-btn btn-view">Go to Editor</a>
+                </div>
+            `;
             updateAuthUI();
         }
     } catch (err) {
-        console.error(err);
+        console.error('Init error:', err);
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Error loading moderation panel</p>
+                <small>${err.message}</small>
+                <br><br>
+                <a href="amenodes.html" class="action-btn btn-view">Back to Editor</a>
+            </div>
+        `;
         updateAuthUI();
     }
 }
 
-init();
-
 window.showPreview = showPreview;
 window.approveTemplate = approveTemplate;
 window.rejectTemplate = rejectTemplate;
+
+init();
 </script>
 </body>
 </html>
