@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>My Profile - Amenodes</title>
+    <title>My Profile</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -129,9 +129,9 @@
             height: 100%;
             pointer-events: none;
             background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), 
-                                        var(--gloss-color, rgba(255,255,255,0.25)) 0%, 
-                                        var(--gloss-color, rgba(255,255,255,0.08)) 40%,
-                                        transparent 75%);
+                                        var(--gloss-color, rgba(255,255,255,0.2)) 0%, 
+                                        var(--gloss-color, rgba(255,255,255,0.05)) 40%,
+                                        transparent 70%);
             opacity: 0;
             transition: opacity 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
             border-radius: inherit;
@@ -155,7 +155,6 @@
 
         .triangle {
             position: absolute;
-            opacity: 0.5;
             transition: all 0.5s ease;
         }
 
@@ -444,60 +443,77 @@ function escapeHtml(str) {
 }
 
 function getCardGradientAndGlossColor(cp) {
-    let stars = cp / 10;
-    let baseColor, glossColor;
+    let t = Math.min(1, cp / 80);
     
-    if (stars <= 8) {
-        const colors = [
-            '#2a5a8a', '#3a6a9a', '#4a7aaa', '#5a8aba', '#6a9aca',
-            '#7a9aba', '#a8b84a', '#b8a03a', '#a8702a', '#905020',
-            '#803050', '#703070', '#604080', '#5050a0', '#4060b0',
-            '#304090', '#202070'
-        ];
-        let idx = Math.floor(stars * 2);
-        idx = Math.min(colors.length - 1, Math.max(0, idx));
-        baseColor = colors[idx];
-        let nextColor = colors[Math.min(colors.length-1, idx+1)];
-        let prevColor = colors[Math.max(0, idx-1)];
-        baseColor = `${baseColor}`;
-        glossColor = `rgba(255, 240, 200, 0.25)`;
-        if (idx > 8) {
-            glossColor = `rgba(255, 220, 150, 0.28)`;
-        }
-        const gradient = `linear-gradient(115deg, ${baseColor} 0%, ${prevColor} 25%, ${baseColor} 50%, ${nextColor} 75%, ${baseColor} 100%)`;
-        return { gradient, glossColor };
-    } else {
-        let excess = stars - 8;
-        let purpleFactor = Math.max(0, (excess - 2) / 4);
-        let darkBlue = '#102070';
-        let blackBase = '#0a0a14';
-        let purpleColor = `rgba(140, 70, 200, ${0.3 + purpleFactor * 0.3})`;
-        let accentColor = `rgba(180, 110, 240, ${0.2 + purpleFactor * 0.3})`;
-        baseColor = blackBase;
-        glossColor = `rgba(200, 150, 255, ${0.3 + purpleFactor * 0.3})`;
-        let gradient = `linear-gradient(115deg, ${blackBase} 0%, ${purpleColor} 30%, ${accentColor} 60%, ${blackBase} 100%)`;
-        if (purpleFactor < 0.1) {
-            let mix = Math.min(1, (stars - 8) / 2);
-            let r = 16 + (10 - 16) * mix;
-            let g = 32 + (10 - 32) * mix;
-            let b = 112 + (20 - 112) * mix;
-            let transitionColor = `rgb(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)})`;
-            gradient = `linear-gradient(115deg, ${darkBlue} 0%, ${transitionColor} 40%, ${blackBase} 80%)`;
-            glossColor = `rgba(180, 200, 255, ${0.2 + mix * 0.15})`;
-        }
-        return { gradient, glossColor };
-    }
+    const colors = [
+        { r: 42, g: 90, b: 138 },   // 0
+        { r: 58, g: 106, b: 154 },  // 10
+        { r: 74, g: 122, b: 170 },  // 20
+        { r: 90, g: 138, b: 186 },  // 30
+        { r: 106, g: 154, b: 202 }, // 40
+        { r: 122, g: 170, b: 218 }, // 50
+        { r: 168, g: 184, b: 74 },  // 55
+        { r: 200, g: 180, b: 58 },  // 60
+        { r: 208, g: 160, b: 42 },  // 65
+        { r: 200, g: 112, b: 32 },  // 70
+        { r: 176, g: 80, b: 32 },   // 75
+        { r: 160, g: 48, b: 80 },   // 80
+        { r: 144, g: 48, b: 112 },  // 85
+        { r: 128, g: 64, b: 144 },  // 90
+        { r: 96, g: 80, b: 160 },   // 95
+        { r: 64, g: 96, b: 176 },   // 100
+        { r: 32, g: 64, b: 128 }    // 100+
+    ];
+    
+    let index = t * (colors.length - 1);
+    let idx1 = Math.floor(index);
+    let idx2 = Math.min(idx1 + 1, colors.length - 1);
+    let frac = index - idx1;
+    
+    let c1 = colors[idx1];
+    let c2 = colors[idx2];
+    
+    let r = Math.floor(c1.r + (c2.r - c1.r) * frac);
+    let g = Math.floor(c1.g + (c2.g - c1.g) * frac);
+    let b = Math.floor(c1.b + (c2.b - c1.b) * frac);
+    
+    let baseColor = `rgb(${r}, ${g}, ${b})`;
+    
+    let nextColor = colors[Math.min(idx2 + 1, colors.length - 1)];
+    let prevColor = colors[Math.max(idx1 - 1, 0)];
+    
+    let gradient = `linear-gradient(115deg, ${baseColor} 0%, rgb(${prevColor.r}, ${prevColor.g}, ${prevColor.b}) 25%, ${baseColor} 50%, rgb(${nextColor.r}, ${nextColor.g}, ${nextColor.b}) 75%, ${baseColor} 100%)`;
+    
+    let glossColor = `rgba(255, 240, 200, 0.18)`;
+    
+    return { gradient, glossColor };
 }
 
 function generateTriangles(cp) {
     let tier = cp >= 100 ? 5 : cp >= 60 ? 4 : cp >= 30 ? 3 : cp >= 10 ? 2 : 1;
     const triangles = [];
+    
+    if (cp >= 100) {
+        const addOutline = (w, h, top, left, rot, anim) => {
+            triangles.push({ w, h, top, left, rot, isOutline: true, anim, opacity: 0.6 });
+        };
+        addOutline(200, 200, '-40%', '50%', 60, 'rotateSlow 12s infinite');
+        addOutline(180, 180, '30%', '-30%', -20, 'rotateFast 8s infinite');
+        addOutline(140, 140, '60%', '80%', 45, 'glowPulse 5s infinite');
+        addOutline(120, 120, '80%', '10%', -55, 'drift 10s infinite');
+        addOutline(100, 100, '10%', '60%', 25, 'float 7s infinite');
+        addOutline(160, 160, '50%', '120%', 85, 'driftSlow 9s infinite');
+        addOutline(75, 75, '85%', '45%', -15, 'pulse 4s infinite');
+        addOutline(130, 130, '-10%', '-10%', 110, 'rotateSlow 14s infinite');
+        return triangles;
+    }
+    
     const baseColor = `rgba(255,255,255,0.12)`;
-    const brightColor = `rgba(255,200,255,0.35)`;
-    const purpleColor = `rgba(180,100,220,0.45)`;
+    const brightColor = `rgba(255,200,255,0.3)`;
+    const purpleColor = `rgba(180,100,220,0.4)`;
     
     const add = (w, h, top, left, rot, color, op, anim) => {
-        triangles.push({ w, h, top, left, rot, color, op, anim });
+        triangles.push({ w, h, top, left, rot, color, op, anim, isOutline: false });
     };
     
     add(60, 60, '10%', '-20%', 45, baseColor, 0.35);
@@ -523,16 +539,6 @@ function generateTriangles(cp) {
         add(60, 60, '40%', '20%', 15, brightColor, 0.55, 'pulse 3s infinite');
         add(95, 95, '20%', '85%', 75, purpleColor, 0.4, 'glowPulse 6s infinite');
     }
-    if (tier >= 5) {
-        add(200, 200, '-40%', '50%', 60, `rgba(200,100,255,0.65)`, 0.7, 'rotateSlow 12s infinite');
-        add(180, 180, '30%', '-30%', -20, `rgba(255,150,200,0.6)`, 0.65, 'rotateFast 8s infinite');
-        add(140, 140, '60%', '80%', 45, `rgba(180,80,220,0.55)`, 0.65, 'glowPulse 5s infinite');
-        add(120, 120, '80%', '10%', -55, `rgba(220,120,255,0.55)`, 0.65, 'drift 10s infinite');
-        add(100, 100, '10%', '60%', 25, `rgba(200,100,200,0.6)`, 0.65, 'float 7s infinite');
-        add(160, 160, '50%', '120%', 85, `rgba(180,70,220,0.5)`, 0.65, 'driftSlow 9s infinite');
-        add(75, 75, '85%', '45%', -15, `rgba(255,150,255,0.75)`, 0.7, 'pulse 4s infinite');
-        add(130, 130, '-10%', '-10%', 110, `rgba(220,100,255,0.55)`, 0.65, 'rotateSlow 14s infinite');
-    }
     return triangles;
 }
 
@@ -544,13 +550,21 @@ function applyTriangles(card, cp) {
     for (const t of tris) {
         const div = document.createElement('div');
         div.className = 'triangle';
+        div.style.position = 'absolute';
         div.style.width = `${t.w}px`;
         div.style.height = `${t.h}px`;
         div.style.top = t.top;
         div.style.left = t.left;
         div.style.transform = `rotate(${t.rot}deg)`;
-        div.style.background = `linear-gradient(135deg, ${t.color}, transparent)`;
-        div.style.opacity = t.op;
+        if (t.isOutline) {
+            div.style.background = 'transparent';
+            div.style.border = `2px solid rgba(180, 120, 220, 0.7)`;
+            div.style.boxShadow = `0 0 8px rgba(180, 120, 220, 0.5)`;
+            div.style.opacity = t.opacity || 0.6;
+        } else {
+            div.style.background = `linear-gradient(135deg, ${t.color}, transparent)`;
+            div.style.opacity = t.op;
+        }
         div.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
         if (t.anim) div.style.animation = t.anim;
         container.appendChild(div);
@@ -580,32 +594,32 @@ function addAnimationStyles() {
     style.textContent = `
         @keyframes float {
             0% { transform: rotate(45deg) translateY(0px); }
-            50% { transform: rotate(50deg) translateY(-15px); }
+            50% { transform: rotate(50deg) translateY(-12px); }
             100% { transform: rotate(45deg) translateY(0px); }
         }
         @keyframes floatReverse {
             0% { transform: rotate(-35deg) translateY(0px); }
-            50% { transform: rotate(-40deg) translateY(15px); }
+            50% { transform: rotate(-40deg) translateY(12px); }
             100% { transform: rotate(-35deg) translateY(0px); }
         }
         @keyframes drift {
             0% { transform: rotate(30deg) translateX(0px) translateY(0px); }
-            50% { transform: rotate(35deg) translateX(20px) translateY(-10px); }
+            50% { transform: rotate(35deg) translateX(15px) translateY(-8px); }
             100% { transform: rotate(30deg) translateX(0px) translateY(0px); }
         }
         @keyframes driftSlow {
             0% { transform: rotate(-20deg) translateX(0px) translateY(0px); }
-            50% { transform: rotate(-25deg) translateX(-15px) translateY(10px); }
+            50% { transform: rotate(-25deg) translateX(-12px) translateY(8px); }
             100% { transform: rotate(-20deg) translateX(0px) translateY(0px); }
         }
         @keyframes glowPulse {
-            0% { opacity: 0.4; filter: blur(0px); }
-            50% { opacity: 0.7; filter: blur(2px); }
-            100% { opacity: 0.4; filter: blur(0px); }
+            0% { opacity: 0.4; }
+            50% { opacity: 0.7; }
+            100% { opacity: 0.4; }
         }
         @keyframes pulse {
             0% { transform: rotate(15deg) scale(1); opacity: 0.5; }
-            50% { transform: rotate(20deg) scale(1.05); opacity: 0.75; }
+            50% { transform: rotate(20deg) scale(1.04); opacity: 0.75; }
             100% { transform: rotate(15deg) scale(1); opacity: 0.5; }
         }
         @keyframes rotateSlow {
