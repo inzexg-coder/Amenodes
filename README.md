@@ -1,7 +1,7 @@
 <h1 align="center">Amenodes</h1>
 
 <p align="center">
-  <strong>1.4.1</strong><br>
+  <strong>2.0.0</strong><br>
   <sub>Visual Programming Language for Data Analysis</sub>
 </p>
 
@@ -32,6 +32,15 @@
 - **Pan & Zoom** – Right-click drag to pan, scroll to zoom.
 - **Customizable UI** – Design quality slider to trade off visual effects for performance (up to +300% FPS).
 
+### Social & Templates
+
+- **User Accounts** – Register and login to save your schemas as templates
+- **Template Library** – Publish, browse and search community-created node schemas
+- **Moderation System** – Moderators approve templates and award Creator Points
+- **Creator Points (CP)** – Earn points for approved templates, unlock visual upgrades
+- **Dynamic Color Scale** – Profile and template cards glow based on author's CP
+- **User Profiles** – Track your CP and manage your published templates
+
 ---
 
 ## 🚀 Quick Start
@@ -39,6 +48,10 @@
 ### Live Demo
 
 Try Amenodes online: **[https://amenoke.ru/amenodes.html](https://amenoke.ru/amenodes.html)**
+
+### Template Library
+
+Browse community templates: **[https://amenoke.ru/templates.html](https://amenoke.ru/templates.html)**
 
 ### Local Development
 
@@ -78,6 +91,24 @@ Click the **+** button in the toolbar or right-click on an existing node's handl
 - **Delete nodes** – Click the ✕ button in the node header.
 - **Drag nodes** – Click and drag the header to move nodes around.
 
+### User Account & Templates
+
+1. **Register/Login** – Click the login button in the top-right corner
+2. **Save Template** – After creating a schema, click "Save Template" (appears when logged in)
+3. **Wait for Moderation** – Templates are reviewed by moderators
+4. **Earn Creator Points** – Approved templates award CP (1 CP per template)
+5. **Browse Templates** – Visit the Template Library to discover community schemas
+
+### Template Library Features
+
+| Feature | Description |
+|---------|-------------|
+| **Search** | Find templates by title, description, or author |
+| **Filter** | Show all templates or only approved ones |
+| **Sort** | Newest first, most CP, or most popular |
+| **Visual Levels** | Templates glow with colors based on verification level |
+| **One-Click Load** | Click any template to load it directly into the editor |
+
 ### Toolbar
 
 | Button | Action |
@@ -86,8 +117,9 @@ Click the **+** button in the toolbar or right-click on an existing node's handl
 | **Redo** | Re-apply a reverted action |
 | **Export** | Save your graph as a `.amnk` file |
 | **Import** | Load a previously saved `.amnk` file |
+| **Save Template** | Publish current schema to template library (logged in only) |
 | **Clear storage** | Delete the auto-saved graph from localStorage |
-| **Language** | Switch between English and Russian |
+| **Moderate** | Open moderation panel (moderators only) |
 
 ### Performance Panel
 
@@ -141,12 +173,15 @@ Oldest previews removed when limit (10 per server) is reached
 
 Merges to `main` automatically deploy to the **root** directory:
 - **Production URL:** `https://amenoke.ru/amenodes.html`
-- The following paths are **protected from deletion** during production deployment:
-  - `index.html` – Main landing page
-  - `index/` – Static site files
-  - `ru/` – RU server previews
-  - `en/` – EN server previews
-  - `preview/` – Legacy preview redirects
+- **Template Library:** `https://amenoke.ru/templates.html`
+- **User Profiles:** `https://amenoke.ru/profile.html`
+- **Moderation Panel:** `https://amenoke.ru/moderate.html` (moderators only)
+
+The following paths are **protected from deletion** during production deployment:
+- `api/` – Backend API endpoints
+- `ru/` – RU server previews
+- `en/` – EN server previews
+- `preview/` – Legacy preview redirects
 
 ### Automatic Cleanup
 
@@ -163,6 +198,9 @@ Merges to `main` automatically deploy to the **root** directory:
 ```
 root/
 ├── amenodes.html                 # Main application entry point
+├── templates.html                # Template library browser
+├── profile.html                  # User profile page
+├── moderate.html                 # Moderation panel (moderators only)
 ├── src/
 │   ├── main.js                   # Application entry point, orchestrates all modules
 │   ├── core/
@@ -200,8 +238,74 @@ root/
 │   │   └── FPSCounter.js         # Real-time FPS measurement utility
 │   └── config/
 │       └── Optimizations.js      # Performance optimization definitions
-└── styles/
-    └── main.css                  # All application styles
+├── styles/
+│   └── main.css                  # All application styles
+└── api/                          # Backend API endpoints (PHP)
+    ├── register.php
+    ├── login.php
+    ├── me.php
+    ├── create_template.php
+    ├── moderate_template.php
+    ├── search_templates.php
+    ├── get_template.php
+    ├── user_templates.php
+    ├── delete_template.php
+    └── top_users.php
+```
+
+### Backend API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/register.php` | POST | User registration |
+| `/api/login.php` | POST | User login (returns token) |
+| `/api/me.php` | GET | Get current user info |
+| `/api/create_template.php` | POST | Save a template (pending moderation) |
+| `/api/moderate_template.php` | POST | Approve/reject template (moderators only) |
+| `/api/search_templates.php` | GET | Search templates with filters |
+| `/api/get_template.php` | GET | Get single template by ID |
+| `/api/user_templates.php` | GET | Get user's templates |
+| `/api/delete_template.php` | POST | Delete a template |
+| `/api/top_users.php` | GET | Leaderboard by Creator Points |
+
+### Database Schema
+
+```sql
+-- Users table
+CREATE TABLE users (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    role ENUM('user', 'moderator', 'admin') DEFAULT 'user',
+    creator_points INT UNSIGNED DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Templates table
+CREATE TABLE templates (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNSIGNED NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    graph_data JSON NOT NULL,
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    verification_level ENUM('regular', 'featured', 'epic', 'legendary', 'godlike') DEFAULT NULL,
+    creator_points_awarded INT UNSIGNED DEFAULT 0,
+    moderator_id INT UNSIGNED DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- User tokens table (authentication)
+CREATE TABLE user_tokens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
 ```
 
 ### Adding a New Node Type
@@ -232,10 +336,11 @@ root/
 
 ### Internationalization System
 
-- **Base translations** (`src/i18n/locales/en.js`, `ru.js`) – contain UI strings (`common`, `toolbar`, `modal`, `errors`, etc.)
-- **Node translations** (`src/nodes/locales/`) – contain `nodes`, `nodeDescriptions`, and node-specific UI sections (`calcTypes`, `output`, `group`, `map`, `confidence`, `dataTypes`).
-- Translations are merged via `deepMerge` – node translations override base translations.
-- Use `t('key')` in any component to get the current language's translation.
+- **Base translations** (`src/i18n/locales/en.js`, `ru.js`) – contain UI strings (`common`, `toolbar`, `modal`, `errors`, `editor`, `templates`, `profile`, `moderate`)
+- **Node translations** (`src/nodes/locales/`) – contain `nodes`, `nodeDescriptions`, and node-specific UI sections
+- Translations are merged via `deepMerge` – node translations override base translations
+- Use `t('key')` in any component to get the current language's translation
+- Language preference saved to `localStorage`
 
 ### Important: Relative Imports for Preview Compatibility
 
@@ -248,27 +353,6 @@ const locale = await import(`./locales/${lang}/${name}.js`);
 
 // ❌ WRONG - breaks in preview subfolders
 const module = await import(`/src/nodes/${nodeType}.js`);
-```
-
-### Adding New Translations for Node Data Types
-
-To add a new data type (e.g., `'matrix'`), add to the node's translation file:
-```javascript
-export default {
-  // ... existing translations
-  dataTypes: {
-    matrix: 'Matrix'  // English
-  }
-};
-```
-
-And in the Russian file:
-```javascript
-export default {
-  dataTypes: {
-    matrix: 'Матрица'
-  }
-};
 ```
 
 ### Type System
@@ -309,14 +393,6 @@ Format: `MAJOR.MINOR.PATCH[-PRERELEASE][-CODETYPE]`
 
 ---
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Commit changes (see commit convention below)
-4. Push to the branch
-5. Open a Pull Request – CI will deploy a preview automatically to RU or EN server
-
 ### Commit Convention
 
 | Prefix | Purpose |
@@ -350,4 +426,5 @@ Format: `MAJOR.MINOR.PATCH[-PRERELEASE][-CODETYPE]`
 
 **Repository:** https://github.com/inzexg-coder/Amenodes  
 **Live Demo:** https://amenoke.ru/amenodes.html  
+**Template Library:** https://amenoke.ru/templates.html  
 **Wiki:** https://github.com/inzexg-coder/Amenodes/wiki
