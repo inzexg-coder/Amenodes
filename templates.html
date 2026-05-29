@@ -61,8 +61,6 @@
 <script type="module">
     import { i18n, t } from './src/i18n/LanguageManager.js';
     
-    i18n.setNodeTranslations(templatesLocales);
-    
     function updateAllTexts() {
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
@@ -213,6 +211,7 @@
         try { await moderateTemplate(id, 'approve', level); showToast(t('templates.templateApproved'), 'success'); loadTemplates(); } 
         catch (err) { showToast(err.message, 'error'); }
     };
+    
     window.rejectTemplate = async (id) => {
         try { await moderateTemplate(id, 'reject'); showToast(t('templates.templateRejected'), 'success'); loadTemplates(); } 
         catch (err) { showToast(err.message, 'error'); }
@@ -221,10 +220,14 @@
     document.getElementById('searchInput').addEventListener('input', (e) => { currentQuery = e.target.value; currentPage = 1; loadTemplates(); });
     document.getElementById('levelFilter').addEventListener('change', (e) => { currentLevel = e.target.value; currentPage = 1; loadTemplates(); });
     document.getElementById('sortFilter').addEventListener('change', (e) => { currentSort = e.target.value; currentPage = 1; loadTemplates(); });
+    
     document.querySelectorAll('.filter-tab').forEach(tab => {
         tab.onclick = () => {
             document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active'); currentFilter = tab.dataset.filter; currentPage = 1; loadTemplates();
+            tab.classList.add('active');
+            currentFilter = tab.dataset.filter;
+            currentPage = 1;
+            loadTemplates();
         };
     });
     
