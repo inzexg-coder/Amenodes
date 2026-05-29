@@ -289,7 +289,7 @@ export const ru = {
     export: 'Экспорт',
     import: 'Импорт',
     clearStorage: 'Очистить',
-    addNode: 'Добавить узел',
+    addNode: 'Добавить',
     optimize: 'Оптимизации',
     canvasSettings: 'Настройки холста',
     gridStyle: 'Стиль сетки',
