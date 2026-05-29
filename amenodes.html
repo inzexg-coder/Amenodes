@@ -16,205 +16,6 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <link rel="stylesheet" href="styles/main.css">
-<style>
-  .auth-modal {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(8px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10000;
-  }
-  .auth-modal-content {
-    background: linear-gradient(135deg, #1a1f30, #0f1222);
-    border-radius: 20px;
-    border: 1px solid #ffb347;
-    padding: 28px;
-    width: 400px;
-    max-width: 90%;
-    color: #eef2ff;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-  }
-  .auth-modal-content h3 {
-    margin: 0 0 20px 0;
-    text-align: center;
-    color: #ffb347;
-  }
-  .auth-modal-close {
-    float: right;
-    font-size: 24px;
-    cursor: pointer;
-    color: #8899bb;
-    transition: color 0.2s;
-  }
-  .auth-modal-close:hover {
-    color: #ffb347;
-  }
-  .auth-tabs {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 24px;
-    border-bottom: 1px solid #2e385c;
-  }
-  .auth-tab {
-    background: none;
-    border: none;
-    color: #8899bb;
-    padding: 8px 20px;
-    cursor: pointer;
-    font-family: monospace;
-    font-size: 14px;
-    transition: all 0.2s;
-  }
-  .auth-tab.active {
-    color: #ffb347;
-    border-bottom: 2px solid #ffb347;
-  }
-  .auth-panel {
-    display: none;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .auth-panel.active {
-    display: flex;
-  }
-  .auth-panel input {
-    background: #0a0c14;
-    border: 1px solid #2e385c;
-    border-radius: 10px;
-    padding: 12px;
-    color: #eef2ff;
-    font-family: monospace;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .auth-panel input:focus {
-    border-color: #ffb347;
-  }
-  .auth-panel button {
-    background: #ffb347;
-    border: none;
-    border-radius: 30px;
-    padding: 12px;
-    color: #1a1f30;
-    font-weight: bold;
-    cursor: pointer;
-    font-family: monospace;
-    font-size: 14px;
-    transition: all 0.2s;
-  }
-  .auth-panel button:hover {
-    background: #ffcc66;
-    transform: scale(1.02);
-  }
-  .auth-error {
-    color: #ff6b6b;
-    font-size: 12px;
-    text-align: center;
-    margin-top: 8px;
-  }
-  .user-avatar {
-    width: 36px;
-    height: 36px;
-    background: linear-gradient(135deg, #ffb347, #ff8c00);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 16px;
-    color: #1a1f30;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-  .user-avatar:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 12px rgba(255, 179, 71, 0.5);
-  }
-  .user-menu {
-    position: absolute;
-    top: 55px;
-    right: 20px;
-    background: #0f1222;
-    border: 1px solid #2e385c;
-    border-radius: 12px;
-    padding: 8px 0;
-    min-width: 180px;
-    z-index: 1000;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-  }
-  .user-menu-item {
-    padding: 10px 20px;
-    color: #eef2ff;
-    cursor: pointer;
-    transition: background 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-  }
-  .user-menu-item:hover {
-    background: #1a1f30;
-    color: #ffb347;
-  }
-  .user-menu-item i {
-    width: 20px;
-    color: #8899bb;
-  }
-  .user-menu-item:hover i {
-    color: #ffb347;
-  }
-  .user-menu-divider {
-    height: 1px;
-    background: #2e385c;
-    margin: 6px 0;
-  }
-  .toast {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #1a1f30;
-    border-left: 4px solid #ffb347;
-    color: #eef2ff;
-    padding: 12px 20px;
-    border-radius: 8px;
-    z-index: 10001;
-    animation: slideIn 0.3s ease;
-    font-family: monospace;
-    font-size: 13px;
-  }
-  .toast-success { border-left-color: #2e7d32; background: #1a2a1a; }
-  .toast-error { border-left-color: #c62828; background: #2a1a1a; }
-  .toast-info { border-left-color: #1565c0; background: #1a2a3a; }
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateX(100%); }
-    to { opacity: 1; transform: translateX(0); }
-  }
-  .save-template-modal input, .save-template-modal textarea {
-    background: #0a0c14;
-    border: 1px solid #2e385c;
-    border-radius: 10px;
-    padding: 12px;
-    color: #eef2ff;
-    font-family: monospace;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  .save-template-modal button {
-    background: #ffb347;
-    border: none;
-    border-radius: 30px;
-    padding: 12px;
-    color: #1a1f30;
-    font-weight: bold;
-    cursor: pointer;
-    width: 100%;
-  }
-</style>
 </head>
 <body>
 
@@ -357,6 +158,19 @@
           <span data-size="50">50px</span>
         </div>
       </div>
+      <div class="setting-group">
+        <label>Language</label>
+        <div class="language-selector" id="canvasLanguageSelector">
+          <div class="language-option" data-lang="en">
+            <span>English</span>
+            <span id="lang-en-check" style="display:none;">✓</span>
+          </div>
+          <div class="language-option" data-lang="ru">
+            <span>Русский</span>
+            <span id="lang-ru-check" style="display:none;">✓</span>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="modal-btn secondary" id="cancelSettings">Cancel</button>
@@ -379,6 +193,8 @@
 
 <script>
 const API_BASE = 'https://amenoke.ru/api';
+let currentUser = null;
+let userMenu = null;
 
 class AmenodesAPI {
     constructor() {
@@ -387,32 +203,16 @@ class AmenodesAPI {
 
     setToken(token) {
         this.token = token;
-        if (token) {
-            localStorage.setItem('auth_token', token);
-        } else {
-            localStorage.removeItem('auth_token');
-        }
+        if (token) localStorage.setItem('auth_token', token);
+        else localStorage.removeItem('auth_token');
     }
 
     async request(endpoint, options = {}) {
-        const headers = {
-            'Content-Type': 'application/json',
-            ...options.headers
-        };
-        
-        if (this.token) {
-            headers['Authorization'] = `Bearer ${this.token}`;
-        }
-        
-        const response = await fetch(`${API_BASE}${endpoint}`, {
-            ...options,
-            headers
-        });
-        
+        const headers = { 'Content-Type': 'application/json' };
+        if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+        const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
         const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.error || 'Request failed');
-        }
+        if (!response.ok) throw new Error(data.error || 'Request failed');
         return data;
     }
 
@@ -428,23 +228,16 @@ class AmenodesAPI {
             method: 'POST',
             body: JSON.stringify({ login, password })
         });
-        if (data.token) {
-            this.setToken(data.token);
-        }
+        if (data.token) this.setToken(data.token);
         return data;
     }
 
-    logout() {
-        this.setToken(null);
-    }
+    logout() { this.setToken(null); }
 
     async getCurrentUser() {
         if (!this.token) return null;
-        try {
-            return await this.request('/me.php');
-        } catch {
-            return null;
-        }
+        try { return await this.request('/me.php'); }
+        catch { return null; }
     }
 
     async createTemplate(title, description, graphData) {
@@ -456,7 +249,6 @@ class AmenodesAPI {
 }
 
 const api = new AmenodesAPI();
-let currentUser = null;
 
 function showToast(message, type = 'info') {
     const toast = document.createElement('div');
@@ -491,16 +283,12 @@ function showAuthModal() {
             </div>
         </div>
     `;
-    
     document.body.appendChild(modal);
-    
     const closeBtn = modal.querySelector('.auth-modal-close');
     const tabs = modal.querySelectorAll('.auth-tab');
     const panels = modal.querySelectorAll('.auth-panel');
-    
     closeBtn.onclick = () => modal.remove();
     modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-    
     tabs.forEach(tab => {
         tab.onclick = () => {
             tabs.forEach(t => t.classList.remove('active'));
@@ -509,7 +297,6 @@ function showAuthModal() {
             document.getElementById(`${tab.dataset.tab}-panel`).classList.add('active');
         };
     });
-    
     document.getElementById('login-btn').onclick = async () => {
         const login = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
@@ -526,7 +313,6 @@ function showAuthModal() {
             errorDiv.textContent = err.message;
         }
     };
-    
     document.getElementById('register-btn').onclick = async () => {
         const username = document.getElementById('reg-username').value;
         const email = document.getElementById('reg-email').value;
@@ -540,7 +326,7 @@ function showAuthModal() {
                 const userData = await api.getCurrentUser();
                 currentUser = userData.user;
                 updateAuthUI();
-                showToast(`Registration successful! Welcome, ${username}!`, 'success');
+                showToast(`Welcome, ${username}!`, 'success');
             }
         } catch (err) {
             errorDiv.textContent = err.message;
@@ -551,16 +337,13 @@ function showAuthModal() {
 function updateAuthUI() {
     const rightControls = document.getElementById('rightControls');
     if (!rightControls) return;
-    
     const existingAuth = document.getElementById('auth-container');
     if (existingAuth) existingAuth.remove();
-    
     const authContainer = document.createElement('div');
     authContainer.id = 'auth-container';
     authContainer.style.display = 'flex';
     authContainer.style.alignItems = 'center';
     authContainer.style.gap = '12px';
-    
     if (currentUser) {
         const saveBtn = document.createElement('button');
         saveBtn.id = 'saveTemplateBtn';
@@ -569,7 +352,6 @@ function updateAuthUI() {
         saveBtn.style.color = '#ffb347';
         saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Template';
         saveBtn.onclick = () => showSaveTemplateModal();
-
         const avatar = document.createElement('div');
         avatar.className = 'user-avatar';
         avatar.textContent = currentUser.username.charAt(0).toUpperCase();
@@ -577,10 +359,18 @@ function updateAuthUI() {
             e.stopPropagation();
             toggleUserMenu();
         };
-        
         authContainer.appendChild(saveBtn);
+        if (currentUser.role === 'moderator' || currentUser.role === 'admin') {
+            const modBtn = document.createElement('button');
+            modBtn.id = 'moderateBtn';
+            modBtn.className = 'top-btn';
+            modBtn.style.background = '#8b3a3a';
+            modBtn.style.color = '#fff';
+            modBtn.innerHTML = '<i class="fas fa-gavel"></i> Moderate';
+            modBtn.onclick = () => window.open('moderate.html', '_blank');
+            authContainer.appendChild(modBtn);
+        }
         authContainer.appendChild(avatar);
-        
         const zoomIndicator = rightControls.querySelector('#zoomIndicator');
         if (zoomIndicator) {
             rightControls.insertBefore(authContainer, zoomIndicator);
@@ -596,7 +386,6 @@ function updateAuthUI() {
         loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
         loginBtn.onclick = () => showAuthModal();
         authContainer.appendChild(loginBtn);
-        
         const zoomIndicator = rightControls.querySelector('#zoomIndicator');
         if (zoomIndicator) {
             rightControls.insertBefore(authContainer, zoomIndicator);
@@ -606,15 +395,12 @@ function updateAuthUI() {
     }
 }
 
-let userMenu = null;
-
 function toggleUserMenu() {
     if (userMenu) {
         userMenu.remove();
         userMenu = null;
         return;
     }
-    
     userMenu = document.createElement('div');
     userMenu.className = 'user-menu';
     userMenu.innerHTML = `
@@ -629,26 +415,21 @@ function toggleUserMenu() {
             <i class="fas fa-sign-out-alt"></i> Logout
         </div>
     `;
-    
     document.body.appendChild(userMenu);
-    
     const rect = document.querySelector('.user-avatar').getBoundingClientRect();
     userMenu.style.position = 'fixed';
     userMenu.style.top = `${rect.bottom + 8}px`;
     userMenu.style.right = `${window.innerWidth - rect.right}px`;
-    
     document.getElementById('menu-profile').onclick = () => {
         userMenu.remove();
         userMenu = null;
         window.location.href = 'profile.html';
     };
-    
     document.getElementById('menu-templates').onclick = () => {
         userMenu.remove();
         userMenu = null;
         window.location.href = 'profile.html';
     };
-    
     document.getElementById('menu-logout').onclick = () => {
         api.logout();
         currentUser = null;
@@ -657,7 +438,6 @@ function toggleUserMenu() {
         updateAuthUI();
         showToast('Logged out', 'info');
     };
-    
     const closeMenu = (e) => {
         if (userMenu && !userMenu.contains(e.target) && !e.target.classList.contains('user-avatar')) {
             userMenu.remove();
@@ -674,13 +454,12 @@ function showSaveTemplateModal() {
         showAuthModal();
         return;
     }
-    
     const modal = document.createElement('div');
     modal.className = 'auth-modal';
     modal.innerHTML = `
         <div class="auth-modal-content save-template-modal">
             <span class="auth-modal-close">&times;</span>
-            <h3><i class="fas fa-save"></i> Save as Template</h3>
+            <h3><i class="fas fa-save"></i> Save Template</h3>
             <input type="text" id="template-title" placeholder="Template title">
             <textarea id="template-desc" placeholder="Description (optional)" rows="3"></textarea>
             <button id="save-template-submit">Submit for Moderation</button>
@@ -690,30 +469,23 @@ function showSaveTemplateModal() {
             </small>
         </div>
     `;
-    
     document.body.appendChild(modal);
-    
     const closeBtn = modal.querySelector('.auth-modal-close');
     closeBtn.onclick = () => modal.remove();
     modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-    
     document.getElementById('save-template-submit').onclick = async () => {
         const title = document.getElementById('template-title').value.trim();
         const description = document.getElementById('template-desc').value.trim();
         const errorDiv = document.getElementById('save-error');
-        
         if (!title) {
             errorDiv.textContent = 'Title is required';
             return;
         }
-        
         if (!window.app || !window.app.graph || !window.app.graph.exportGraph) {
             errorDiv.textContent = 'Graph not available';
             return;
         }
-        
         const graphData = window.app.graph.exportGraph();
-        
         try {
             const data = await api.createTemplate(title, description, graphData);
             if (data.success) {
@@ -747,7 +519,35 @@ function loadTemplateFromURL() {
     }
 }
 
+function initLanguageSettings() {
+    const canvasSettingsBtn = document.getElementById('canvasSettingsBtn');
+    if (!canvasSettingsBtn) return;
+    const originalClick = canvasSettingsBtn.onclick;
+    canvasSettingsBtn.onclick = () => {
+        const modal = document.getElementById('canvasSettingsModal');
+        if (modal) {
+            const currentLang = localStorage.getItem('amenodes_language') || 'en';
+            document.getElementById('lang-en-check').style.display = currentLang === 'en' ? 'inline' : 'none';
+            document.getElementById('lang-ru-check').style.display = currentLang === 'ru' ? 'inline' : 'none';
+            modal.classList.remove('hidden');
+        }
+    };
+    const langOptions = document.querySelectorAll('#canvasLanguageSelector .language-option');
+    langOptions.forEach(opt => {
+        opt.onclick = (e) => {
+            e.stopPropagation();
+            const lang = opt.getAttribute('data-lang');
+            localStorage.setItem('amenodes_language', lang);
+            document.getElementById('lang-en-check').style.display = lang === 'en' ? 'inline' : 'none';
+            document.getElementById('lang-ru-check').style.display = lang === 'ru' ? 'inline' : 'none';
+            showToast(`Language changed to ${lang === 'en' ? 'English' : 'Русский'}`, 'success');
+            setTimeout(() => window.location.reload(), 500);
+        };
+    });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+    initLanguageSettings();
     try {
         const data = await api.getCurrentUser();
         if (data && data.success) {
@@ -760,7 +560,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error(err);
         updateAuthUI();
     }
-    
     setTimeout(() => {
         loadTemplateFromURL();
     }, 1500);
