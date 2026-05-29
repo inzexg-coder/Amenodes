@@ -192,23 +192,54 @@
 <script type="module" src="./src/main.js"></script>
 
 <script>
-import { i18n, t } from './src/i18n/LanguageManager.js';
-
-function updateAllTexts() {
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    if (key) el.textContent = t(key);
-  });
-  document.title = t('editor.title');
-  if (window.app && window.app.updateUITitles) window.app.updateUITitles();
-}
-
-i18n.subscribe(() => updateAllTexts());
-updateAllTexts();
-
 const API_BASE = 'https://amenoke.ru/api';
 let currentUser = null;
 let userMenu = null;
+
+function t(key, params = {}) {
+    const translations = window._translations || {};
+    const keys = key.split('.');
+    let value = translations;
+    for (const k of keys) {
+        if (value && typeof value === 'object' && k in value) {
+            value = value[k];
+        } else {
+            return key;
+        }
+    }
+    if (typeof value === 'string') {
+        return value.replace(/\{(\w+)\}/g, (_, param) => params[param] ?? `{${param}}`);
+    }
+    return key;
+}
+
+function updateUITexts() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (key) el.textContent = t(key);
+    });
+    document.title = t('editor.title');
+}
+
+function loadTranslations() {
+    const savedLang = localStorage.getItem('amenodes_language') || 'en';
+    fetch(`./src/i18n/locales/${savedLang}.js`)
+        .then(res => res.text())
+        .then(text => {
+            const match = text.match(/export const \w+ = ({[\s\S]*?});/);
+            if (match) {
+                const translationsObj = eval('(' + match[1] + ')');
+                window._translations = translationsObj;
+                updateUITexts();
+                if (window.i18n && window.i18n.notifyListeners) {
+                    window.i18n.notifyListeners();
+                }
+            }
+        })
+        .catch(err => console.error('Failed to load translations:', err));
+}
+
+loadTranslations();
 
 class AmenodesAPI {
     constructor() {
@@ -523,7 +554,6 @@ function loadTemplateFromURL() {
 function initLanguageSettings() {
     const canvasSettingsBtn = document.getElementById('canvasSettingsBtn');
     if (!canvasSettingsBtn) return;
-    const originalClick = canvasSettingsBtn.onclick;
     canvasSettingsBtn.onclick = () => {
         const modal = document.getElementById('canvasSettingsModal');
         if (modal) {
