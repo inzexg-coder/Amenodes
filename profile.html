@@ -3,351 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>My Profile</title>
+    <title data-i18n="profile.title">My Profile</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-        }
-
-        body {
-            font-family: 'Segoe UI', 'Monaco', monospace;
-            background: linear-gradient(135deg, #0a0c14 0%, #121624 100%);
-            min-height: 100vh;
-            color: #eef2ff;
-        }
-
-        .header {
-            background: #0f1222cc;
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #2e385c;
-            padding: 16px 32px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .logo i {
-            color: #ffb347;
-            font-size: 28px;
-        }
-
-        .logo span {
-            background: linear-gradient(135deg, #ffb347, #ff8c00);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 24px;
-            align-items: center;
-        }
-
-        .nav-links a {
-            color: #aabbdd;
-            text-decoration: none;
-            transition: color 0.2s;
-            font-size: 14px;
-        }
-
-        .nav-links a:hover, .nav-links a.active {
-            color: #ffb347;
-        }
-
-        .user-panel {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: #1a1f30;
-            padding: 6px 16px;
-            border-radius: 40px;
-        }
-
-        .user-name {
-            color: #ffd700;
-            font-weight: bold;
-            font-size: 13px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 32px;
-        }
-
-        .profile-card {
-            position: relative;
-            border-radius: 32px;
-            padding: 48px 32px;
-            margin-bottom: 48px;
-            text-align: center;
-            overflow: hidden;
-            transition: transform 0.2s ease, box-shadow 0.3s ease;
-            box-shadow: 0 15px 35px -10px rgba(0,0,0,0.3);
-            cursor: default;
-        }
-
-        .profile-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 25px 40px -12px rgba(0,0,0,0.5);
-        }
-
-        .card-gloss {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), 
-                                        rgba(255, 255, 255, 0.25) 0%, 
-                                        rgba(255, 255, 255, 0.08) 40%,
-                                        rgba(255, 255, 255, 0) 80%);
-            opacity: 0;
-            transition: opacity 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-            border-radius: inherit;
-            z-index: 1;
-            mix-blend-mode: overlay;
-        }
-
-        .profile-card:hover .card-gloss {
-            opacity: 1;
-        }
-
-        .card-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            border-radius: inherit;
-        }
-
-        .triangles-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .triangle {
-            position: absolute;
-            transition: all 0.5s ease;
-        }
-
-        .card-content {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-        }
-
-        .cp-number {
-            font-size: 80px;
-            font-weight: 800;
-            color: white;
-            letter-spacing: 2px;
-            line-height: 1;
-            margin-bottom: 12px;
-            text-shadow: 0 0 20px rgba(0,0,0,0.3);
-        }
-
-        .cp-label {
-            font-size: 16px;
-            letter-spacing: 2px;
-            font-weight: 500;
-            color: rgba(255,255,255,0.7);
-            text-transform: uppercase;
-            margin-bottom: 16px;
-        }
-
-        .username-badge {
-            font-size: 20px;
-            font-weight: 500;
-            color: #ffffffcc;
-            background: transparent;
-            display: inline-block;
-            padding: 0;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 8px;
-            border-bottom: 1px solid #2e385c;
-            margin-bottom: 24px;
-        }
-
-        .tab {
-            padding: 12px 24px;
-            background: none;
-            border: none;
-            color: #8899bb;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-
-        .tab.active {
-            color: #ffb347;
-            border-bottom: 2px solid #ffb347;
-        }
-
-        .templates-list {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .template-card {
-            background: #0f1222;
-            border-radius: 16px;
-            border: 1px solid #2e385c;
-            overflow: hidden;
-            transition: all 0.2s;
-        }
-
-        .template-card:hover {
-            border-color: #ffb347;
-            background: #121624;
-        }
-
-        .template-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 24px;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .template-info {
-            flex: 2;
-            min-width: 200px;
-        }
-
-        .template-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .template-desc {
-            font-size: 13px;
-            color: #8899bb;
-            margin-bottom: 12px;
-        }
-
-        .template-meta {
-            display: flex;
-            gap: 20px;
-            font-size: 12px;
-            color: #667799;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-        }
-
-        .status-pending { background: #ff8c00; color: #1a1f30; }
-        .status-approved { background: #2e7d32; color: #fff; }
-        .status-rejected { background: #c62828; color: #ffcdd2; }
-
-        .template-actions {
-            padding: 12px 24px;
-            background: #0a0c14;
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            border-top: 1px solid #2e385c;
-        }
-
-        .btn {
-            padding: 6px 16px;
-            border-radius: 30px;
-            border: none;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 12px;
-            font-weight: 500;
-            transition: background 0.2s;
-        }
-
-        .btn-secondary {
-            background: #2d3a5e;
-            color: #fff;
-        }
-        .btn-secondary:hover { background: #3f4e7a; }
-
-        .btn-danger {
-            background: #8b3a3a;
-            color: #ffcccc;
-        }
-        .btn-danger:hover { background: #aa4a4a; }
-
-        .empty-state, .loading {
-            text-align: center;
-            padding: 60px;
-            color: #8899bb;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #1a1f30;
-            border-left: 4px solid #ffb347;
-            color: #eef2ff;
-            padding: 12px 20px;
-            border-radius: 8px;
-            z-index: 1000;
-            font-family: inherit;
-            font-size: 13px;
-        }
-        .toast-success { border-left-color: #2e7d32; background: #1a2a1a; }
-        .toast-error { border-left-color: #c62828; background: #2a1a1a; }
-
-        @media (max-width: 768px) {
-            .container { padding: 16px; }
-            .cp-number { font-size: 52px; }
-            .template-content { flex-direction: column; align-items: flex-start; }
-            .template-actions { justify-content: flex-start; }
-        }
-    </style>
+    <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
 
@@ -357,391 +16,239 @@
         <span>Amenodes</span>
     </div>
     <div class="nav-links">
-        <a href="amenodes.html">Editor</a>
-        <a href="templates.html">Templates</a>
-        <a href="profile.html" class="active">Profile</a>
+        <a href="amenodes.html" data-i18n="profile.editorLink">Editor</a>
+        <a href="templates.html" data-i18n="profile.templatesLink">Templates</a>
+        <a href="profile.html" class="active" data-i18n="profile.profileLink">Profile</a>
     </div>
     <div id="authSection"></div>
 </div>
 
-<div class="container" id="container">
-    <div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading profile...</div>
+<div class="profile-container" id="container">
+    <div class="loading"><i class="fas fa-spinner"></i> <span data-i18n="profile.loading">Loading profile...</span></div>
 </div>
 
-<script>
-const API_BASE = 'https://amenoke.ru/api';
-
-class API {
-    constructor() {
-        this.token = localStorage.getItem('auth_token');
+<script type="module">
+    import { i18n, t } from './src/i18n/LanguageManager.js';
+    
+    function updateAllTexts() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (key) el.textContent = t(key);
+        });
+        document.title = t('profile.title');
     }
-
-    setToken(token) {
-        this.token = token;
-        if (token) localStorage.setItem('auth_token', token);
-        else localStorage.removeItem('auth_token');
-    }
-
-    async request(endpoint, options = {}) {
+    
+    i18n.subscribe(() => updateAllTexts());
+    updateAllTexts();
+    
+    const API_BASE = 'https://amenoke.ru/api';
+    let currentUser = null;
+    let currentTab = 'all';
+    
+    function getToken() { return localStorage.getItem('auth_token'); }
+    
+    async function apiRequest(endpoint, options = {}) {
         const headers = { 'Content-Type': 'application/json' };
-        if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
-        
+        const token = getToken();
+        if (token) headers['Authorization'] = `Bearer ${token}`;
         const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Request failed');
         return data;
     }
-
-    async getCurrentUser() {
-        if (!this.token) return null;
-        try { return await this.request('/me.php'); }
+    
+    async function getCurrentUser() {
+        const token = getToken();
+        if (!token) return null;
+        try { return await apiRequest('/me.php'); }
         catch { return null; }
     }
-
-    async getUserTemplates(userId, status = 'all') {
-        return this.request(`/user_templates.php?user_id=${userId}&status=${status}`);
+    
+    async function getUserTemplates(userId, status = 'all') {
+        return apiRequest(`/user_templates.php?user_id=${userId}&status=${status}`);
     }
-
-    async deleteTemplate(templateId) {
-        return this.request('/delete_template.php', {
-            method: 'POST',
-            body: JSON.stringify({ template_id: templateId })
+    
+    async function deleteTemplate(id) {
+        return apiRequest('/delete_template.php', { 
+            method: 'POST', 
+            body: JSON.stringify({ template_id: id }) 
         });
     }
-}
-
-const api = new API();
-let currentUser = null;
-let currentTab = 'all';
-
-function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
-
-function getStatusClass(status) {
-    const map = { 'pending': 'status-pending', 'approved': 'status-approved', 'rejected': 'status-rejected' };
-    return map[status] || 'status-pending';
-}
-
-function getStatusName(status) {
-    const map = { 'pending': 'Pending', 'approved': 'Approved', 'rejected': 'Rejected' };
-    return map[status] || status;
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
-}
-
-function getCardColor(cp) {
-    let stars = cp / 10;
-    if (stars >= 10) stars = 10;
     
-    const colors = [
-        '#5a9cff', 
-        '#6aaaff', 
-        '#7ab8ff',
-        '#8ac6ff', 
-        '#9ad4ff', 
-        '#aae2aa', 
-        '#e8c84a',
-        '#f0a03a', 
-        '#e8702a', 
-        '#d04020', 
-        '#c02050', 
-        '#b03080',
-        '#a040b0', 
-        '#8050c0', 
-        '#5060d0', 
-        '#3040a0',
-        '#102070',
-        '#0a0a14', 
-        '#0a0a14'  
-    ];
-    
-    let idx = Math.floor(stars * 2);
-    idx = Math.min(colors.length - 1, Math.max(0, idx));
-    return colors[idx];
-}
-
-function generateTriangles(cp) {
-    let purpleIntensity = 0;
-    if (cp >= 100) {
-        purpleIntensity = Math.min(1, (cp - 100) / 50);
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
     }
     
-    const triangles = [];
-    const baseWhite = `rgba(255,255,255,0.12)`;
-    const purpleColor = `rgba(180,100,220,${0.2 + purpleIntensity * 0.3})`;
-    const brightPurple = `rgba(200,130,255,${0.15 + purpleIntensity * 0.25})`;
-    
-    const add = (w, h, top, left, rot, color, op, anim) => {
-        triangles.push({ w, h, top, left, rot, color, op, anim });
-    };
-    
-    add(60, 60, '10%', '-20%', 45, baseWhite, 0.3);
-    add(40, 40, '70%', '90%', -20, baseWhite, 0.25);
-    add(50, 50, '85%', '5%', 70, baseWhite, 0.3);
-    add(80, 80, '-10%', '40%', 30, baseWhite, 0.25);
-    add(55, 55, '50%', '85%', -15, baseWhite, 0.25, 'float 6s infinite');
-    add(45, 45, '20%', '60%', 110, baseWhite, 0.25);
-    add(70, 70, '75%', '15%', -40, baseWhite, 0.2);
-    add(120, 120, '-20%', '20%', 55, baseWhite, 0.2, 'drift 8s infinite');
-    add(90, 90, '60%', '-15%', -25, baseWhite, 0.2, 'driftSlow 10s infinite');
-    add(70, 70, '30%', '70%', 85, baseWhite, 0.25, 'float 7s infinite');
-    add(100, 100, '80%', '50%', 15, baseWhite, 0.2, 'floatReverse 9s infinite');
-    
-    if (purpleIntensity > 0) {
-        add(150, 150, '-30%', '70%', 40, purpleColor, 0.3 + purpleIntensity * 0.2, 'glowPulse 4s infinite');
-        add(130, 130, '50%', '-20%', -10, brightPurple, 0.25 + purpleIntensity * 0.2, 'glowPulse 5s infinite');
-        add(80, 80, '10%', '40%', 110, purpleColor, 0.3 + purpleIntensity * 0.15, 'float 6s infinite');
-        add(110, 110, '70%', '60%', -35, brightPurple, 0.25 + purpleIntensity * 0.15, 'drift 7s infinite');
-        add(60, 60, '40%', '20%', 15, purpleColor, 0.35 + purpleIntensity * 0.2, 'pulse 3s infinite');
-        add(95, 95, '20%', '85%', 75, brightPurple, 0.25 + purpleIntensity * 0.15, 'glowPulse 6s infinite');
-        add(200, 200, '-40%', '50%', 60, purpleColor, 0.3 + purpleIntensity * 0.25, 'rotateSlow 12s infinite');
-        add(180, 180, '30%', '-30%', -20, brightPurple, 0.25 + purpleIntensity * 0.2, 'rotateFast 8s infinite');
-        add(140, 140, '60%', '80%', 45, purpleColor, 0.3 + purpleIntensity * 0.2, 'glowPulse 5s infinite');
-        add(120, 120, '80%', '10%', -55, brightPurple, 0.25 + purpleIntensity * 0.2, 'drift 10s infinite');
-        add(100, 100, '10%', '60%', 25, purpleColor, 0.35 + purpleIntensity * 0.2, 'float 7s infinite');
-        add(160, 160, '50%', '120%', 85, brightPurple, 0.25 + purpleIntensity * 0.15, 'driftSlow 9s infinite');
-        add(75, 75, '85%', '45%', -15, purpleColor, 0.4 + purpleIntensity * 0.2, 'pulse 4s infinite');
-        add(130, 130, '-10%', '-10%', 110, brightPurple, 0.3 + purpleIntensity * 0.2, 'rotateSlow 14s infinite');
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
     }
     
-    return triangles;
-}
-
-function applyTriangles(card, cp) {
-    const container = card.querySelector('.triangles-container');
-    if (!container) return;
-    container.innerHTML = '';
-    const tris = generateTriangles(cp);
-    for (const t of tris) {
-        const div = document.createElement('div');
-        div.className = 'triangle';
-        div.style.width = `${t.w}px`;
-        div.style.height = `${t.h}px`;
-        div.style.top = t.top;
-        div.style.left = t.left;
-        div.style.transform = `rotate(${t.rot}deg)`;
-        div.style.background = `linear-gradient(135deg, ${t.color}, transparent)`;
-        div.style.opacity = t.op;
-        div.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
-        if (t.anim) div.style.animation = t.anim;
-        container.appendChild(div);
+    function getStatusClass(status) { return `status-${status}`; }
+    function getStatusName(status) { return t(`profile.${status}Tab`); }
+    
+    function getCardColor(cp) {
+        let stars = cp / 10;
+        const colors = ['#5a9cff','#6aaaff','#7ab8ff','#8ac6ff','#9ad4ff','#aae2aa','#e8c84a','#f0a03a','#e8702a','#d04020','#c02050','#b03080','#a040b0','#8050c0','#5060d0','#3040a0','#102070','#0a0a14','#0a0a14'];
+        let idx = Math.min(colors.length - 1, Math.max(0, Math.floor(stars * 2)));
+        return colors[idx];
     }
-}
-
-function setupGlossEffect(card) {
-    const gloss = card.querySelector('.card-gloss');
-    if (!gloss) return;
-    const onMove = (e) => {
-        const rect = card.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-        gloss.style.setProperty('--x', `${x}%`);
-        gloss.style.setProperty('--y', `${y}%`);
-    };
-    card.addEventListener('mousemove', onMove);
-}
-
-function addAnimationStyles() {
-    if (document.getElementById('profile-anims')) return;
-    const style = document.createElement('style');
-    style.id = 'profile-anims';
-    style.textContent = `
-        @keyframes float {
-            0% { transform: rotate(45deg) translateY(0px); }
-            50% { transform: rotate(50deg) translateY(-15px); }
-            100% { transform: rotate(45deg) translateY(0px); }
+    
+    function generateTriangles(cp) {
+        let intensity = Math.min(1, Math.max(0, (cp - 100) / 50));
+        let triangles = [];
+        let count = 6 + Math.floor(intensity * 10);
+        for (let i = 0; i < count; i++) {
+            triangles.push({ 
+                size: 30 + Math.random() * 120, 
+                top: Math.random() * 100 + '%', 
+                left: Math.random() * 100 + '%', 
+                rot: Math.random() * 360, 
+                opacity: 0.15 + intensity * 0.35 
+            });
         }
-        @keyframes floatReverse {
-            0% { transform: rotate(-35deg) translateY(0px); }
-            50% { transform: rotate(-40deg) translateY(15px); }
-            100% { transform: rotate(-35deg) translateY(0px); }
-        }
-        @keyframes drift {
-            0% { transform: rotate(30deg) translateX(0px) translateY(0px); }
-            50% { transform: rotate(35deg) translateX(20px) translateY(-10px); }
-            100% { transform: rotate(30deg) translateX(0px) translateY(0px); }
-        }
-        @keyframes driftSlow {
-            0% { transform: rotate(-20deg) translateX(0px) translateY(0px); }
-            50% { transform: rotate(-25deg) translateX(-15px) translateY(10px); }
-            100% { transform: rotate(-20deg) translateX(0px) translateY(0px); }
-        }
-        @keyframes glowPulse {
-            0% { opacity: 0.3; filter: blur(0px); }
-            50% { opacity: 0.6; filter: blur(3px); }
-            100% { opacity: 0.3; filter: blur(0px); }
-        }
-        @keyframes pulse {
-            0% { transform: rotate(15deg) scale(1); opacity: 0.4; }
-            50% { transform: rotate(20deg) scale(1.05); opacity: 0.7; }
-            100% { transform: rotate(15deg) scale(1); opacity: 0.4; }
-        }
-        @keyframes rotateSlow {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        @keyframes rotateFast {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-async function deleteTemplate(id) {
-    if (!confirm('Delete this template? This cannot be undone.')) return;
-    try {
-        await api.deleteTemplate(id);
-        showToast('Template deleted', 'success');
-        if (currentUser) {
-            const updated = await api.getCurrentUser();
-            if (updated && updated.user) currentUser = updated.user;
-            renderProfileHeader();
-            loadTemplates();
-        }
-    } catch (err) {
-        showToast(err.message, 'error');
+        return triangles;
     }
-}
-
-function openTemplate(id) {
-    window.location.href = `amenodes.html?template=${id}`;
-}
-
-async function loadTemplates() {
-    const container = document.getElementById('templatesContainer');
-    if (!container) return;
-    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading templates...</div>';
-    try {
-        const data = await api.getUserTemplates(currentUser.id, currentTab);
-        if (!data.templates || data.templates.length === 0) {
-            container.innerHTML = `<div class="empty-state"><i class="fas fa-cubes"></i> No templates found<div style="font-size:12px;margin-top:8px;">Create your first template in the Editor</div></div>`;
-            return;
-        }
-        container.innerHTML = data.templates.map(tpl => `
-            <div class="template-card">
-                <div class="template-content">
-                    <div class="template-info">
-                        <div class="template-title">
-                            <span>${escapeHtml(tpl.title)}</span>
-                            <span class="status-badge ${getStatusClass(tpl.status)}">${getStatusName(tpl.status)}</span>
+    
+    function applyTriangles(card, cp) {
+        const container = card.querySelector('.triangles-container');
+        if (!container) return;
+        container.innerHTML = '';
+        generateTriangles(cp).forEach(t => {
+            const div = document.createElement('div');
+            div.className = 'triangle';
+            div.style.cssText = `width:${t.size}px;height:${t.size}px;top:${t.top};left:${t.left};transform:rotate(${t.rot}deg);background:linear-gradient(135deg,rgba(180,100,220,${t.opacity}),transparent);clip-path:polygon(50% 0%,0% 100%,100% 100%);`;
+            container.appendChild(div);
+        });
+    }
+    
+    function setupGlossEffect(card) {
+        const gloss = card.querySelector('.card-gloss');
+        if (!gloss) return;
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            gloss.style.setProperty('--x', `${((e.clientX - rect.left) / rect.width) * 100}%`);
+            gloss.style.setProperty('--y', `${((e.clientY - rect.top) / rect.height) * 100}%`);
+        });
+    }
+    
+    async function loadTemplates() {
+        const container = document.getElementById('templatesContainer');
+        if (!container) return;
+        container.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> ${t('common.loading')}</div>`;
+        try {
+            const data = await getUserTemplates(currentUser.id, currentTab);
+            if (!data.templates || data.templates.length === 0) {
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-cubes"></i> ${t('profile.noTemplates')}<div style="font-size:12px;margin-top:8px;">${t('profile.createFirst')}</div></div>`;
+                return;
+            }
+            container.innerHTML = data.templates.map(tpl => `
+                <div class="template-card">
+                    <div class="template-content">
+                        <div class="template-info">
+                            <div class="template-title">
+                                <span>${escapeHtml(tpl.title)}</span>
+                                <span class="status-badge ${getStatusClass(tpl.status)}">${getStatusName(tpl.status)}</span>
+                            </div>
+                            <div class="template-desc">${escapeHtml(tpl.description || t('common.noDescription'))}</div>
+                            <div class="template-meta">
+                                <span><i class="fas fa-calendar"></i> ${new Date(tpl.created_at).toLocaleDateString()}</span>
+                                ${tpl.creator_points_awarded > 0 ? `<span><i class="fas fa-star"></i> ${tpl.creator_points_awarded} CP</span>` : ''}
+                            </div>
                         </div>
-                        <div class="template-desc">${escapeHtml(tpl.description || 'No description')}</div>
-                        <div class="template-meta">
-                            <span><i class="fas fa-calendar"></i> ${new Date(tpl.created_at).toLocaleDateString()}</span>
-                            ${tpl.creator_points_awarded > 0 ? `<span><i class="fas fa-star"></i> ${tpl.creator_points_awarded} CP</span>` : ''}
+                        <div class="template-actions">
+                            <button class="btn btn-secondary" onclick="window.openTemplate(${tpl.id})">${t('profile.open')}</button>
+                            <button class="btn btn-danger" onclick="window.deleteTemplate(${tpl.id})">${t('profile.delete')}</button>
                         </div>
                     </div>
                 </div>
-                <div class="template-actions">
-                    <button class="btn btn-secondary" onclick="openTemplate(${tpl.id})">Open</button>
-                    <button class="btn btn-danger" onclick="deleteTemplate(${tpl.id})">Delete</button>
-                </div>
-            </div>
-        `).join('');
-    } catch (err) {
-        container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i> Failed to load templates</div>`;
-    }
-}
-
-function renderProfileHeader() {
-    const container = document.getElementById('container');
-    if (!container) return;
-    const cp = currentUser.creator_points;
-    const bgColor = getCardColor(cp);
-    
-    container.innerHTML = `
-        <div class="profile-card">
-            <div class="card-bg" style="background: ${bgColor};"></div>
-            <div class="card-gloss"></div>
-            <div class="triangles-container"></div>
-            <div class="card-content">
-                <div class="cp-number">${cp}</div>
-                <div class="cp-label">Creator Points</div>
-                <div class="username-badge">${escapeHtml(currentUser.username)}</div>
-            </div>
-        </div>
-        <div class="tabs">
-            <button class="tab ${currentTab === 'all' ? 'active' : ''}" data-tab="all">All</button>
-            <button class="tab ${currentTab === 'approved' ? 'active' : ''}" data-tab="approved">Approved</button>
-            <button class="tab ${currentTab === 'pending' ? 'active' : ''}" data-tab="pending">Pending</button>
-            <button class="tab ${currentTab === 'rejected' ? 'active' : ''}" data-tab="rejected">Rejected</button>
-        </div>
-        <div id="templatesContainer"><div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading templates...</div></div>
-    `;
-    const card = document.querySelector('.profile-card');
-    if (card) {
-        applyTriangles(card, cp);
-        setupGlossEffect(card);
-    }
-    document.querySelectorAll('.tab').forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            btn.classList.add('active');
-            currentTab = btn.dataset.tab;
-            renderProfileHeader();
-            loadTemplates();
-        };
-    });
-    loadTemplates();
-}
-
-function updateAuthUI() {
-    const authSection = document.getElementById('authSection');
-    if (!authSection) return;
-    if (currentUser) {
-        authSection.innerHTML = `
-            <div class="user-panel">
-                <span class="user-name">${currentUser.username}</span>
-                <span class="user-points">${currentUser.creator_points} CP</span>
-                <button id="logoutBtn" style="background: none; border: none; color: #ffb347; cursor: pointer;">Logout</button>
-            </div>
-        `;
-        document.getElementById('logoutBtn').onclick = () => { api.logout(); window.location.reload(); };
-    } else {
-        authSection.innerHTML = '<a href="amenodes.html" style="background:#ffb347; color:#1a1f30; padding:6px 16px; border-radius:30px; text-decoration:none;">Login</a>';
-    }
-}
-
-async function init() {
-    addAnimationStyles();
-    try {
-        const data = await api.getCurrentUser();
-        if (data && data.success) {
-            currentUser = data.user;
-            updateAuthUI();
-            renderProfileHeader();
-        } else {
-            updateAuthUI();
-            document.getElementById('container').innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-lock"></i>
-                    <p>Please login to view your profile</p>
-                    <button class="btn btn-secondary" onclick="window.location.href='amenodes.html'">Go to Editor</button>
-                </div>
-            `;
+            `).join('');
+        } catch (err) { 
+            container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i> ${t('common.error')}</div>`;
         }
-    } catch (err) {
-        updateAuthUI();
     }
-}
-
-window.openTemplate = openTemplate;
-window.deleteTemplate = deleteTemplate;
-init();
+    
+    window.openTemplate = (id) => window.location.href = `amenodes.html?template=${id}`;
+    
+    window.deleteTemplate = async (id) => {
+        if (confirm(t('profile.deleteConfirm'))) {
+            try { 
+                await deleteTemplate(id); 
+                showToast(t('profile.templateDeleted'), 'success'); 
+                const updated = await getCurrentUser(); 
+                if (updated?.user) currentUser = updated.user; 
+                renderProfileHeader(); 
+            } catch (err) { 
+                showToast(err.message, 'error'); 
+            }
+        }
+    };
+    
+    function renderProfileHeader() {
+        const container = document.getElementById('container');
+        const cp = currentUser.creator_points;
+        const bgColor = getCardColor(cp);
+        container.innerHTML = `
+            <div class="profile-card">
+                <div class="card-bg" style="background: ${bgColor};"></div>
+                <div class="card-gloss"></div>
+                <div class="triangles-container"></div>
+                <div class="card-content">
+                    <div class="cp-number">${cp}</div>
+                    <div class="cp-label">${t('profile.creatorPoints')}</div>
+                    <div class="username-badge">${escapeHtml(currentUser.username)}</div>
+                </div>
+            </div>
+            <div class="tabs">
+                <button class="tab ${currentTab === 'all' ? 'active' : ''}" data-tab="all">${t('profile.allTab')}</button>
+                <button class="tab ${currentTab === 'approved' ? 'active' : ''}" data-tab="approved">${t('profile.approvedTab')}</button>
+                <button class="tab ${currentTab === 'pending' ? 'active' : ''}" data-tab="pending">${t('profile.pendingTab')}</button>
+                <button class="tab ${currentTab === 'rejected' ? 'active' : ''}" data-tab="rejected">${t('profile.rejectedTab')}</button>
+            </div>
+            <div id="templatesContainer"><div class="loading"><i class="fas fa-spinner"></i> ${t('common.loading')}</div></div>
+        `;
+        const card = document.querySelector('.profile-card');
+        if (card) { 
+            applyTriangles(card, cp); 
+            setupGlossEffect(card); 
+        }
+        document.querySelectorAll('.tab').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                btn.classList.add('active');
+                currentTab = btn.dataset.tab;
+                renderProfileHeader();
+                loadTemplates();
+            };
+        });
+        loadTemplates();
+    }
+    
+    function updateAuthUI() {
+        const authSection = document.getElementById('authSection');
+        if (currentUser) {
+            authSection.innerHTML = `<div class="user-panel"><span class="user-name">${escapeHtml(currentUser.username)}</span><span class="user-points">${currentUser.creator_points} CP</span><button id="logoutBtn" style="background:none;border:none;color:#ffb347;cursor:pointer;">${t('profile.logout')}</button></div>`;
+            document.getElementById('logoutBtn').onclick = () => { localStorage.removeItem('auth_token'); window.location.reload(); };
+        } else {
+            authSection.innerHTML = `<a href="amenodes.html" style="background:#ffb347;color:#1a1f30;padding:6px 16px;border-radius:30px;text-decoration:none;">${t('profile.login')}</a>`;
+        }
+    }
+    
+    (async () => {
+        const data = await getCurrentUser();
+        if (data?.success) { 
+            currentUser = data.user; 
+            updateAuthUI(); 
+            renderProfileHeader(); 
+        } else { 
+            updateAuthUI(); 
+            document.getElementById('container').innerHTML = `<div class="empty-state"><i class="fas fa-lock"></i><p>${t('profile.loginRequired')}</p><button class="btn btn-secondary" onclick="window.location.href='amenodes.html'">${t('profile.goToEditor')}</button></div>`;
+        }
+    })();
 </script>
 </body>
 </html>
