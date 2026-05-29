@@ -1,410 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-    
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Template Library</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title data-i18n="templates.title">Template Library</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', 'Monaco', monospace;
-            background: linear-gradient(135deg, #0a0c14 0%, #121624 100%);
-            min-height: 100vh;
-            color: #eef2ff;
-        }
-
-        .header {
-            background: #0f1222cc;
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #2e385c;
-            padding: 16px 32px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .logo i {
-            color: #ffb347;
-            font-size: 28px;
-        }
-
-        .logo span {
-            background: linear-gradient(135deg, #ffb347, #ff8c00);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 24px;
-            align-items: center;
-        }
-
-        .nav-links a {
-            color: #aabbdd;
-            text-decoration: none;
-            transition: color 0.2s;
-            font-size: 14px;
-        }
-
-        .nav-links a:hover {
-            color: #ffb347;
-        }
-
-        .user-panel {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: #1a1f30;
-            padding: 6px 16px;
-            border-radius: 40px;
-        }
-
-        .user-name {
-            color: #ffd700;
-            font-weight: bold;
-            font-size: 13px;
-        }
-
-        .mod-badge {
-            background: #ff4444;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: bold;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 32px;
-        }
-
-        .filter-tabs {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 24px;
-            border-bottom: 1px solid #2e385c;
-            padding-bottom: 12px;
-        }
-
-        .filter-tab {
-            background: none;
-            border: none;
-            color: #8899bb;
-            padding: 8px 28px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 14px;
-            border-radius: 30px;
-            transition: all 0.2s;
-        }
-
-        .filter-tab.active {
-            background: #ffb347;
-            color: #1a1f30;
-        }
-
-        .filter-tab:hover:not(.active) {
-            background: #2d3a5e;
-            color: #fff;
-        }
-
-        .search-section {
-            background: #0f1222cc;
-            border-radius: 60px;
-            padding: 8px 20px;
-            margin-bottom: 32px;
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            align-items: center;
-            border: 1px solid #2e385c;
-        }
-
-        .search-input {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: #1a1f30;
-            border-radius: 40px;
-            padding: 10px 20px;
-        }
-
-        .search-input i {
-            color: #ffb347;
-        }
-
-        .search-input input {
-            flex: 1;
-            background: none;
-            border: none;
-            color: #fff;
-            font-family: inherit;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .filters {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .filter-select {
-            background: #1a1f30;
-            border: 1px solid #2e385c;
-            border-radius: 30px;
-            padding: 8px 16px;
-            color: #fff;
-            font-family: inherit;
-            cursor: pointer;
-            font-size: 13px;
-        }
-
-        .template-card {
-            background: #0f1222;
-            border-radius: 16px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            margin-bottom: 16px;
-            border: 2px solid #2e385c;
-            position: relative;
-        }
-
-        .template-card.approved {
-            transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
-        }
-
-        .template-card.approved:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-        }
-
-        .template-card.pending {
-            border-color: #ff8c00;
-        }
-        .template-card.pending:hover {
-            border-color: #ffaa33;
-            box-shadow: 0 8px 24px rgba(255,140,0,0.15);
-        }
-
-        .template-card.rejected {
-            border-color: #c62828;
-            opacity: 0.7;
-        }
-        .template-card.rejected:hover {
-            opacity: 0.85;
-            border-color: #d83a3a;
-        }
-
-        .card-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 24px;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .card-info {
-            flex: 2;
-            min-width: 200px;
-        }
-
-        .card-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .card-desc {
-            font-size: 13px;
-            color: #8899bb;
-            margin-bottom: 12px;
-            line-height: 1.4;
-        }
-
-        .card-meta {
-            display: flex;
-            gap: 20px;
-            font-size: 12px;
-            color: #667799;
-            flex-wrap: wrap;
-        }
-
-        .card-author {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .view-btn {
-            background: #2d3a5e;
-            border: none;
-            padding: 8px 24px;
-            border-radius: 30px;
-            color: #fff;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 13px;
-            font-weight: 500;
-            transition: background 0.2s;
-        }
-
-        .view-btn:hover {
-            background: #3f4e7a;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-        }
-
-        .status-pending { background: #ff8c00; color: #1a1f30; }
-        .status-rejected { background: #c62828; color: #ffcdd2; }
-
-        .mod-actions {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            padding: 16px 24px;
-            background: #0a0c14;
-            border-top: 1px solid #2e385c;
-            flex-wrap: wrap;
-        }
-
-        .mod-btn {
-            padding: 8px 20px;
-            border-radius: 30px;
-            border: none;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .mod-approve {
-            background: #2e7d32;
-            color: #fff;
-        }
-        .mod-approve:hover { background: #3e9142; }
-
-        .mod-reject {
-            background: #c62828;
-            color: #fff;
-        }
-        .mod-reject:hover { background: #d83a3a; }
-
-        .mod-revert {
-            background: #ff8c00;
-            color: #1a1f30;
-        }
-        .mod-revert:hover { background: #ffa033; }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 40px;
-            flex-wrap: wrap;
-        }
-
-        .page-btn {
-            background: #1a1f30;
-            border: 1px solid #2e385c;
-            padding: 8px 14px;
-            border-radius: 8px;
-            color: #fff;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .page-btn.active {
-            background: #ffb347;
-            border-color: #ffb347;
-            color: #1a1f30;
-        }
-
-        .page-btn:hover:not(.active) {
-            background: #2d3a5e;
-        }
-
-        .loading, .empty-state {
-            text-align: center;
-            padding: 60px;
-            color: #8899bb;
-        }
-
-        .loading i, .empty-state i {
-            font-size: 48px;
-            margin-bottom: 16px;
-            display: block;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #1a1f30;
-            border-left: 4px solid #ffb347;
-            color: #eef2ff;
-            padding: 12px 20px;
-            border-radius: 8px;
-            z-index: 1000;
-            font-family: inherit;
-            font-size: 13px;
-        }
-
-        .toast-success { border-left-color: #2e7d32; background: #1a2a1a; }
-        .toast-error { border-left-color: #c62828; background: #2a1a1a; }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .fa-spinner {
-            animation: spin 1s linear infinite;
-        }
-
-        @media (max-width: 768px) {
-            .container { padding: 16px; }
-            .card-content { flex-direction: column; align-items: flex-start; }
-            .mod-actions { flex-direction: column; align-items: stretch; }
-        }
-    </style>
+    <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
 
@@ -414,320 +16,235 @@
         <span>Amenodes</span>
     </div>
     <div class="nav-links">
-        <a href="amenodes.html">Editor</a>
-        <a href="templates.html">Templates</a>
-        <a href="profile.html">Profile</a>
+        <a href="amenodes.html" data-i18n="templates.editorLink">Editor</a>
+        <a href="templates.html" class="active" data-i18n="templates.templatesLink">Templates</a>
+        <a href="profile.html" data-i18n="templates.profileLink">Profile</a>
     </div>
     <div id="authSection"></div>
 </div>
 
-<div class="container">
+<div class="templates-container">
     <div class="filter-tabs">
-        <button class="filter-tab active" data-filter="approved">Approved Templates</button>
-        <button class="filter-tab" data-filter="all">All Templates</button>
+        <button class="filter-tab active" data-filter="approved" data-i18n="templates.approvedTab">Approved Templates</button>
+        <button class="filter-tab" data-filter="all" data-i18n="templates.allTab">All Templates</button>
     </div>
 
     <div class="search-section">
         <div class="search-input">
             <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Search templates by name, description, or author...">
+            <input type="text" id="searchInput" data-i18n-placeholder="templates.searchPlaceholder" placeholder="Search templates...">
         </div>
         <div class="filters">
+            <select id="levelFilter" class="filter-select">
+                <option value="" data-i18n="templates.allLevels">All Levels</option>
+                <option value="regular" data-i18n="templates.levelRegular">Regular</option>
+                <option value="featured" data-i18n="templates.levelFeatured">Featured</option>
+                <option value="epic" data-i18n="templates.levelEpic">Epic</option>
+                <option value="legendary" data-i18n="templates.levelLegendary">Legendary</option>
+                <option value="godlike" data-i18n="templates.levelGodlike">Godlike</option>
+            </select>
             <select id="sortFilter" class="filter-select">
-                <option value="newest">Newest First</option>
-                <option value="top_cp">Most Creator Points</option>
+                <option value="newest" data-i18n="templates.sortNewest">Newest First</option>
+                <option value="top_cp" data-i18n="templates.sortTopCP">Most Creator Points</option>
+                <option value="popular" data-i18n="templates.sortPopular">Most Popular</option>
             </select>
         </div>
     </div>
 
     <div id="templatesList" class="templates-list">
-        <div class="loading"><i class="fas fa-spinner"></i> Loading templates...</div>
+        <div class="loading"><i class="fas fa-spinner"></i> <span data-i18n="templates.loading">Loading templates...</span></div>
     </div>
 
     <div id="pagination" class="pagination"></div>
 </div>
 
-<script>
-const API_BASE = 'https://amenoke.ru/api';
-
-class API {
-    constructor() {
-        this.token = localStorage.getItem('auth_token');
+<script type="module">
+    import { i18n, t } from './src/i18n/LanguageManager.js';
+    import { templatesLocales } from './js/templates-locales.js';
+    
+    i18n.setNodeTranslations(templatesLocales);
+    
+    function updateAllTexts() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (key) el.textContent = t(key);
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            if (key) el.placeholder = t(key);
+        });
+        document.title = t('templates.title');
     }
-
-    setToken(token) {
-        this.token = token;
-        if (token) localStorage.setItem('auth_token', token);
-        else localStorage.removeItem('auth_token');
-    }
-
-    async request(endpoint, options = {}) {
+    
+    i18n.subscribe(() => updateAllTexts());
+    updateAllTexts();
+    
+    const API_BASE = 'https://amenoke.ru/api';
+    let currentUser = null;
+    let currentFilter = 'approved';
+    let currentPage = 1;
+    let currentQuery = '';
+    let currentLevel = '';
+    let currentSort = 'newest';
+    
+    function getToken() { return localStorage.getItem('auth_token'); }
+    
+    async function apiRequest(endpoint, options = {}) {
         const headers = { 'Content-Type': 'application/json' };
-        if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
-        
+        const token = getToken();
+        if (token) headers['Authorization'] = `Bearer ${token}`;
         const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Request failed');
         return data;
     }
-
-    async getCurrentUser() {
-        if (!this.token) return null;
-        try { return await this.request('/me.php'); }
+    
+    async function getCurrentUser() {
+        const token = getToken();
+        if (!token) return null;
+        try { return await apiRequest('/me.php'); }
         catch { return null; }
     }
-
-    async searchTemplates(query, sort, status, page = 1) {
-        const params = new URLSearchParams({ q: query, sort, status, page, limit: 20 });
-        return this.request(`/search_templates.php?${params}`);
+    
+    async function searchTemplates() {
+        const params = new URLSearchParams({ 
+            q: currentQuery, level: currentLevel, sort: currentSort, 
+            status: currentFilter, page: currentPage, limit: 20 
+        });
+        return apiRequest(`/search_templates.php?${params}`);
     }
-
-    async moderateTemplate(templateId, action) {
-        return this.request('/moderate_template.php', {
+    
+    async function moderateTemplate(id, action, level) {
+        return apiRequest('/moderate_template.php', {
             method: 'POST',
-            body: JSON.stringify({ template_id: templateId, action, level: 'regular' })
+            body: JSON.stringify({ template_id: id, action, level: level || 'regular' })
         });
     }
-}
-
-const api = new API();
-let currentUser = null;
-let currentFilter = 'approved';
-let currentPage = 1;
-let currentQuery = '';
-let currentSort = 'newest';
-
-function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
-
-function getStatusClass(status) {
-    if (status === 'pending') return 'status-pending';
-    if (status === 'rejected') return 'status-rejected';
-    return '';
-}
-
-function getStatusName(status) {
-    if (status === 'pending') return 'Pending';
-    if (status === 'rejected') return 'Rejected';
-    return '';
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
-}
-
-function getAuthorBorderColor(cp) {
-    let stars = cp / 10;
     
-    if (stars >= 8.1) {
-        return '#c97eff';
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
     }
     
-    const colors = [
-        '#5a9cff',
-        '#6aaaff',
-        '#7ab8ff',
-        '#8ac6ff',
-        '#9ad4ff',
-        '#aae2aa',
-        '#e8c84a',
-        '#f0a03a',
-        '#e8702a',
-        '#d04020',
-        '#c02050',
-        '#b03080',
-        '#a040b0',
-        '#8050c0',
-        '#5060d0',
-        '#3040a0',
-        '#102070'
-    ];
-    
-    let idx = Math.floor(stars * 2);
-    idx = Math.min(colors.length - 1, Math.max(0, idx));
-    return colors[idx];
-}
-
-async function moderateTemplate(id, action) {
-    try {
-        await api.moderateTemplate(id, action);
-        showToast(`Template ${action === 'approve' ? 'approved' : 'rejected'}`, 'success');
-        loadTemplates();
-    } catch (err) {
-        showToast(err.message, 'error');
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
     }
-}
-
-async function loadTemplates() {
-    const container = document.getElementById('templatesList');
-    container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> Loading templates...</div>';
     
-    try {
-        const data = await api.searchTemplates(currentQuery, currentSort, currentFilter, currentPage);
-        
-        if (!data.templates || data.templates.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-cubes"></i>
-                    No templates found
-                    <div style="font-size: 12px; margin-top: 8px;">Try adjusting your search or filters</div>
-                </div>
-            `;
-            document.getElementById('pagination').innerHTML = '';
-            return;
-        }
-        
-        const isModerator = currentUser && (currentUser.role === 'moderator' || currentUser.role === 'admin');
-        
-        container.innerHTML = '';
-        for (const tpl of data.templates) {
-            const isApproved = tpl.status === 'approved';
-            const isPending = tpl.status === 'pending';
-            const isRejected = tpl.status === 'rejected';
-            const authorCp = tpl.user_creator_points || 0;
-            const borderColor = isApproved ? getAuthorBorderColor(authorCp) : '';
-            
-            const cardDiv = document.createElement('div');
-            cardDiv.className = `template-card ${isApproved ? 'approved' : (isPending ? 'pending' : 'rejected')}`;
-            
-            if (isApproved && borderColor) {
-                cardDiv.style.borderColor = borderColor;
+    function getLevelClass(level) {
+        const map = { 'regular': 'level-regular', 'featured': 'level-featured', 'epic': 'level-epic', 'legendary': 'level-legendary', 'godlike': 'level-godlike' };
+        return map[level] || 'level-regular';
+    }
+    
+    function getLevelName(level) { return t(`templates.level${level.charAt(0).toUpperCase() + level.slice(1)}`); }
+    function getStatusName(status) { return t(`templates.status${status.charAt(0).toUpperCase() + status.slice(1)}`); }
+    function getStatusClass(status) { return `status-${status}`; }
+    
+    async function loadTemplates() {
+        const container = document.getElementById('templatesList');
+        container.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> ${t('templates.loading')}</div>`;
+        try {
+            const data = await searchTemplates();
+            if (!data.templates || data.templates.length === 0) {
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-cubes"></i> ${t('templates.noTemplates')}<div style="font-size:12px;margin-top:8px;">${t('templates.adjustSearch')}</div></div>`;
+                document.getElementById('pagination').innerHTML = '';
+                return;
             }
-            
-            cardDiv.innerHTML = `
-                <div class="card-content">
-                    <div class="card-info">
-                        <div class="card-title">
-                            <span>${escapeHtml(tpl.title)}</span>
-                            ${!isApproved ? `<span class="status-badge ${getStatusClass(tpl.status)}">${getStatusName(tpl.status)}</span>` : ''}
+            const isModerator = currentUser && (currentUser.role === 'moderator' || currentUser.role === 'admin');
+            container.innerHTML = data.templates.map(tpl => {
+                const isApproved = tpl.status === 'approved';
+                const isPending = tpl.status === 'pending';
+                const isRejected = tpl.status === 'rejected';
+                const levelClass = isApproved ? getLevelClass(tpl.verification_level) : '';
+                return `
+                    <div class="template-card ${levelClass}">
+                        <div class="template-content">
+                            <div class="template-info">
+                                <div class="template-title">
+                                    <span>${escapeHtml(tpl.title)}</span>
+                                    ${!isApproved ? `<span class="status-badge ${getStatusClass(tpl.status)}">${getStatusName(tpl.status)}</span>` : ''}
+                                </div>
+                                <div class="template-desc">${escapeHtml(tpl.description || t('common.noDescription'))}</div>
+                                <div class="template-meta">
+                                    <span><i class="fas fa-user"></i> ${escapeHtml(tpl.username)}</span>
+                                    <span><i class="fas fa-calendar"></i> ${new Date(tpl.created_at).toLocaleDateString()}</span>
+                                    ${tpl.creator_points_awarded > 0 ? `<span><i class="fas fa-star"></i> ${tpl.creator_points_awarded} ${t('templates.cpAwarded')}</span>` : ''}
+                                </div>
+                            </div>
+                            <button class="btn btn-secondary" onclick="window.location.href='amenodes.html?template=${tpl.id}'">${t('templates.openTemplate')}</button>
                         </div>
-                        <div class="card-desc">${escapeHtml(tpl.description || 'No description')}</div>
-                        <div class="card-meta">
-                            <span class="card-author"><i class="fas fa-user"></i> ${escapeHtml(tpl.username)}</span>
-                            <span><i class="fas fa-calendar"></i> ${new Date(tpl.created_at).toLocaleDateString()}</span>
-                            <span><i class="fas fa-star"></i> ${authorCp} CP</span>
-                        </div>
-                    </div>
-                    <div class="card-stats">
-                        <button class="view-btn" onclick="window.location.href='amenodes.html?template=${tpl.id}'">Open Template</button>
-                    </div>
-                </div>
-                ${isModerator ? `
-                    <div class="mod-actions">
-                        ${isPending ? `
-                            <button class="mod-btn mod-approve" onclick="moderateTemplate(${tpl.id}, 'approve')">Approve (1 CP)</button>
-                            <button class="mod-btn mod-reject" onclick="moderateTemplate(${tpl.id}, 'reject')">Reject</button>
-                        ` : isApproved ? `
-                            <button class="mod-btn mod-revert" onclick="moderateTemplate(${tpl.id}, 'reject')">Revert to Pending</button>
-                        ` : isRejected ? `
-                            <button class="mod-btn mod-approve" onclick="moderateTemplate(${tpl.id}, 'approve')">Approve (1 CP)</button>
+                        ${isModerator && isPending ? `
+                            <div class="template-actions">
+                                <select id="level-${tpl.id}" class="mod-select">
+                                    <option value="regular">${t('templates.regularCP')}</option>
+                                    <option value="featured">${t('templates.featuredCP')}</option>
+                                    <option value="epic">${t('templates.epicCP')}</option>
+                                    <option value="legendary">${t('templates.legendaryCP')}</option>
+                                    <option value="godlike">${t('templates.godlikeCP')}</option>
+                                </select>
+                                <button class="mod-btn mod-approve" onclick="window.approveTemplate(${tpl.id})">${t('templates.approve')}</button>
+                                <button class="mod-btn mod-reject" onclick="window.rejectTemplate(${tpl.id})">${t('templates.reject')}</button>
+                            </div>
+                        ` : ''}
+                        ${isModerator && isApproved ? `
+                            <div class="template-actions">
+                                <button class="mod-btn mod-revert" onclick="window.rejectTemplate(${tpl.id})">${t('templates.revertToPending')}</button>
+                            </div>
                         ` : ''}
                     </div>
-                ` : ''}
-            `;
-            
-            container.appendChild(cardDiv);
-        }
-        
-        const pagination = document.getElementById('pagination');
-        const totalPages = data.pagination.pages;
-        if (totalPages > 1) {
-            let pagesHtml = '';
-            for (let i = 1; i <= Math.min(totalPages, 10); i++) {
-                pagesHtml += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
-            }
-            pagination.innerHTML = pagesHtml;
-            pagination.querySelectorAll('.page-btn').forEach(btn => {
-                btn.onclick = () => {
-                    currentPage = parseInt(btn.dataset.page);
-                    loadTemplates();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                };
-            });
-        } else {
-            pagination.innerHTML = '';
-        }
-    } catch (err) {
-        console.error(err);
-        container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i> Failed to load templates<br><small>${err.message}</small></div>`;
+                `;
+            }).join('');
+            const pages = data.pagination.pages;
+            if (pages > 1) {
+                let html = '';
+                for (let i = 1; i <= Math.min(pages, 10); i++) {
+                    html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+                }
+                document.getElementById('pagination').innerHTML = html;
+                document.querySelectorAll('.page-btn').forEach(btn => btn.onclick = () => { currentPage = parseInt(btn.dataset.page); loadTemplates(); window.scrollTo({ top: 0 }); });
+            } else { document.getElementById('pagination').innerHTML = ''; }
+        } catch (err) { container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i> ${t('common.error')}<br><small>${err.message}</small></div>`; }
     }
-}
-
-function updateAuthUI() {
-    const authSection = document.getElementById('authSection');
-    if (!authSection) return;
     
-    if (currentUser) {
-        authSection.innerHTML = `
-            <div class="user-panel">
-                <span class="user-name">${currentUser.username}</span>
-                ${currentUser.role === 'moderator' || currentUser.role === 'admin' ? '<span class="mod-badge">Mod</span>' : ''}
-                <span class="user-points">${currentUser.creator_points} CP</span>
-                <button id="logoutBtn" style="background: none; border: none; color: #ffb347; cursor: pointer; margin-left: 8px;">Logout</button>
-            </div>
-        `;
-        document.getElementById('logoutBtn').onclick = () => {
-            api.logout();
-            window.location.reload();
-        };
-    } else {
-        authSection.innerHTML = '<a href="amenodes.html" style="background:#ffb347; color:#1a1f30; padding:6px 16px; border-radius:30px; text-decoration:none;">Login</a>';
-    }
-}
-
-document.getElementById('searchInput').addEventListener('input', (e) => {
-    currentQuery = e.target.value;
-    currentPage = 1;
-    loadTemplates();
-});
-
-document.getElementById('sortFilter').addEventListener('change', (e) => {
-    currentSort = e.target.value;
-    currentPage = 1;
-    loadTemplates();
-});
-
-document.querySelectorAll('.filter-tab').forEach(tab => {
-    tab.onclick = () => {
-        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        currentFilter = tab.dataset.filter;
-        currentPage = 1;
-        loadTemplates();
+    window.approveTemplate = async (id) => {
+        const level = document.getElementById(`level-${id}`)?.value || 'regular';
+        try { await moderateTemplate(id, 'approve', level); showToast(t('templates.templateApproved'), 'success'); loadTemplates(); } 
+        catch (err) { showToast(err.message, 'error'); }
     };
-});
-
-window.moderateTemplate = moderateTemplate;
-
-async function init() {
-    try {
-        const data = await api.getCurrentUser();
-        if (data && data.success) {
-            currentUser = data.user;
-            updateAuthUI();
+    window.rejectTemplate = async (id) => {
+        try { await moderateTemplate(id, 'reject'); showToast(t('templates.templateRejected'), 'success'); loadTemplates(); } 
+        catch (err) { showToast(err.message, 'error'); }
+    };
+    
+    document.getElementById('searchInput').addEventListener('input', (e) => { currentQuery = e.target.value; currentPage = 1; loadTemplates(); });
+    document.getElementById('levelFilter').addEventListener('change', (e) => { currentLevel = e.target.value; currentPage = 1; loadTemplates(); });
+    document.getElementById('sortFilter').addEventListener('change', (e) => { currentSort = e.target.value; currentPage = 1; loadTemplates(); });
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.onclick = () => {
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active'); currentFilter = tab.dataset.filter; currentPage = 1; loadTemplates();
+        };
+    });
+    
+    function updateAuthUI() {
+        const authSection = document.getElementById('authSection');
+        if (currentUser) {
+            authSection.innerHTML = `<div class="user-panel"><span class="user-name">${escapeHtml(currentUser.username)}</span>${currentUser.role === 'moderator' || currentUser.role === 'admin' ? '<span class="mod-badge">Mod</span>' : ''}<span class="user-points">${currentUser.creator_points} CP</span><button id="logoutBtn" style="background:none;border:none;color:#ffb347;cursor:pointer;">${t('templates.logout')}</button></div>`;
+            document.getElementById('logoutBtn').onclick = () => { localStorage.removeItem('auth_token'); window.location.reload(); };
         } else {
-            updateAuthUI();
+            authSection.innerHTML = `<a href="amenodes.html" style="background:#ffb347;color:#1a1f30;padding:6px 16px;border-radius:30px;text-decoration:none;">${t('templates.login')}</a>`;
         }
-        loadTemplates();
-    } catch (err) {
-        console.error(err);
+    }
+    
+    (async () => {
+        const data = await getCurrentUser();
+        if (data?.success) currentUser = data.user;
         updateAuthUI();
         loadTemplates();
-    }
-}
-
-init();
+    })();
 </script>
 </body>
 </html>
