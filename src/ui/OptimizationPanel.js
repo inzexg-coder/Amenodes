@@ -120,7 +120,7 @@ export class OptimizationPanel {
 
   createSwitchItem(container, opt, idx) {
     const item = document.createElement('div');
-    item.className = `opt-item ${this.optState[idx] ? 'opt-item-enabled' : ''}`;
+    item.className = 'opt-item';
     
     const info = document.createElement('div');
     info.className = 'opt-info';
@@ -152,8 +152,8 @@ export class OptimizationPanel {
       if (!opt.impl) return;
       this.optState[idx] = !this.optState[idx];
       switchEl.classList.toggle('active');
-      item.classList.toggle('opt-item-enabled');
       this.applyOptimizationImmediately(idx, this.optState[idx]);
+      if (this.panel) this.panel.classList.add('hidden');
     };
     
     item.appendChild(info);
@@ -163,7 +163,7 @@ export class OptimizationPanel {
 
   createSliderItem(container, opt, currentValue) {
     const item = document.createElement('div');
-    item.className = 'opt-item opt-item-enabled';
+    item.className = 'opt-item';
     
     const info = document.createElement('div');
     info.className = 'opt-info';
@@ -222,6 +222,7 @@ export class OptimizationPanel {
       if (this.onQualityChangeCallback) this.onQualityChangeCallback(newValue);
       window._designQualitySaved = newValue;
       if (this.renderer && this.renderer.render) this.renderer.render();
+      if (this.panel) this.panel.classList.add('hidden');
     };
     
     sliderDiv.appendChild(slider);
