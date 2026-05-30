@@ -1,7 +1,7 @@
 <h1 align="center">Amenodes</h1>
 
 <p align="center">
-  <strong>2.0.0</strong><br>
+  <strong>2.1.0</strong><br>
   <sub>Visual Programming Language for Data Analysis</sub>
 </p>
 
@@ -26,7 +26,7 @@
 - **Real-time Computation** – Automatic reevaluation when connections or values change.
 - **Type System** – Smart connection validation prevents invalid links (e.g., connecting text to a number input).
 - **Internationalization (i18n)** – Full support for English and Russian with an easy-to-extend translation system.
-- **Performance Optimizations** – Built-in benchmarking and optimization panel to tune rendering (virtualization, GPU transforms, caching, and more).
+- **Performance Optimizations** – Built-in benchmarking and optimization panel with toggle switches and real-time FPS gain display.
 - **Undo/Redo** – Full history with auto-save to localStorage.
 - **Import/Export** – Save your graphs to `.amnk` files and load them back.
 - **Pan & Zoom** – Right-click drag to pan, scroll to zoom.
@@ -124,9 +124,15 @@ Click the **+** button in the toolbar or right-click on an existing node's handl
 ### Performance Panel
 
 Click the **speedometer icon** (bottom-right) to open the optimization panel. You can:
-- Enable/disable individual optimizations (virtualization, GPU transforms, will-change, etc.)
+- Enable/disable individual optimizations using **toggle switches** (apply immediately)
 - Run benchmarks to measure FPS gains
-- Adjust the **Design Quality** slider – lower quality dramatically improves performance (up to +300% FPS) at the cost of visual polish.
+- Adjust the **Design Quality** slider – displays real-time FPS gain:
+  - **Extreme (≤20%)** → +300% FPS
+  - **Low (21-50%)** → +150% FPS
+  - **Medium (51-80%)** → +50% FPS
+  - **High (81-100%)** → shows actual benchmark result
+
+> **Note:** The panel auto-closes after applying optimizations (except Design Quality slider). All benchmark messages are fully localized (English/Russian).
 
 ---
 
@@ -219,7 +225,7 @@ root/
 │   │   └── EdgeRenderer.js       # SVG edge rendering with arrows
 │   ├── ui/
 │   │   ├── EditableTitle.js      # Inline editable title component
-│   │   ├── OptimizationPanel.js  # Performance tuning panel UI with benchmarking
+│   │   ├── OptimizationPanel.js  # Performance tuning panel with toggle switches
 │   │   ├── ContextMenu.js        # Right-click context menu for nodes
 │   │   ├── CustomModal.js        # Custom modal dialogs (alert/confirm/prompt)
 │   │   ├── LanguageSwitcher.js   # Language toggle button with dropdown menu
@@ -230,7 +236,7 @@ root/
 │   │       ├── en.js             # Base English translations
 │   │       └── ru.js             # Base Russian translations
 │   ├── services/
-│   │   ├── BenchmarkService.js   # Performance benchmarking for optimizations
+│   │   ├── BenchmarkService.js   # Performance benchmarking with i18n
 │   │   ├── PersistenceService.js # Save/load to localStorage and files
 │   │   └── EventBus.js           # Event pub/sub system
 │   ├── utils/
@@ -336,11 +342,12 @@ CREATE TABLE user_tokens (
 
 ### Internationalization System
 
-- **Base translations** (`src/i18n/locales/en.js`, `ru.js`) – contain UI strings (`common`, `toolbar`, `modal`, `errors`, `editor`, `templates`, `profile`, `moderate`)
+- **Base translations** (`src/i18n/locales/en.js`, `ru.js`) – contain UI strings (`common`, `toolbar`, `modal`, `errors`, `editor`, `templates`, `profile`, `moderate`, `optimizations`)
 - **Node translations** (`src/nodes/locales/`) – contain `nodes`, `nodeDescriptions`, and node-specific UI sections
 - Translations are merged via `deepMerge` – node translations override base translations
 - Use `t('key')` in any component to get the current language's translation
 - Language preference saved to `localStorage`
+- **Benchmark messages are fully localized** (English/Russian)
 
 ### Important: Relative Imports for Preview Compatibility
 
@@ -375,7 +382,8 @@ The type system validates connections:
 | `DomRenderer` | `renderer/DomRenderer.js` | DOM rendering, drag handling |
 | `EdgeRenderer` | `renderer/EdgeRenderer.js` | SVG edge rendering |
 | `LanguageManager` | `i18n/LanguageManager.js` | i18n with subscriptions |
-| `BenchmarkService` | `services/BenchmarkService.js` | Performance benchmarking |
+| `BenchmarkService` | `services/BenchmarkService.js` | Performance benchmarking with i18n |
+| `OptimizationPanel` | `ui/OptimizationPanel.js` | Optimization UI with toggle switches |
 
 ---
 
