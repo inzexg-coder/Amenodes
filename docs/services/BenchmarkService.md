@@ -10,13 +10,17 @@
 - измерение базовой производительности графа без включённых оптимизаций;
 - последовательное включение каждой оптимизации и измерение FPS;
 - вычисление процентного прироста FPS для каждой оптимизации;
-- восстановление исходного состояния после завершения тестирования.
+- восстановление исходного состояния после завершения тестирования;
 
 **Важно:** бенчмаркинг является деструктивной операцией – он временно изменяет состояние рендерера и графа. Перед запуском тестирования сохраняется полный снимок состояния, который восстанавливается по завершении.
 
 ## ЗАВИСИМОСТИ
 
-Класс не импортирует внешние модули, но взаимодействует со следующими глобальными объектами и свойствами:
+```javascript
+import { i18n, t } from '../i18n/LanguageManager.js';
+```
+
+Класс взаимодействует со следующими глобальными объектами и свойствами:
 
 | Глобальный объект | Назначение |
 |------------------|------------|
@@ -80,7 +84,18 @@ async runBenchmark(notify: boolean = true): Promise<Object>
 
 **Параметры:**
 
-- `notify` – если `true`, отображает статус в элементе `#benchmarkStatus` и обновляет его содержимое.
+- `notify` – если `true`, отображает статус в элементе `#benchmarkStatus` и обновляет его содержимое с использованием локализованных сообщений.
+
+**Локализованные сообщения:**
+
+| Ситуация | Ключ перевода | Пример (EN) | Пример (RU) |
+|----------|---------------|-------------|-------------|
+| Начало бенчмаркинга | `optimizations.benchmarking` | "Benchmarking optimizations..." | "Тестирование оптимизаций..." |
+| Измерение базовой производительности | `optimizations.measuringBaseline` | "Measuring baseline performance..." | "Измерение базовой производительности..." |
+| Базовый FPS | `optimizations.baselineFPS` | "Baseline FPS: 60" | "Базовый FPS: 60" |
+| Тестирование оптимизации | `optimizations.testing` | "Testing: Virtualization... (1/18)" | "Тест: Виртуализация... (1/18)" |
+| Завершение бенчмаркинга | `optimizations.completed` | "Benchmark completed" | "Тест завершён" |
+| Метка FPS | `optimizations.fpsLabel` | "FPS" | "FPS" |
 
 **Возвращает:** `Promise<Object>` с объектом:
 
@@ -98,7 +113,7 @@ async runBenchmark(notify: boolean = true): Promise<Object>
 ```javascript
 const benchmarkService = new BenchmarkService(graph, fpsCounter, OPTIMIZATIONS);
 const { gains, baseline } = await benchmarkService.runBenchmark(true);
-console.log(`Базовый FPS: ${baseline}`);
+console.log(`Базовая производительность: ${baseline} FPS`);
 console.log(`Прирост от виртуализации: +${gains[0]}%`);
 ```
 
@@ -120,7 +135,6 @@ captureState(): Object
   pointerEvents: boolean,     // состояние pointer-events (window._rendererPointerEvents)
   historyMax: number,         // размер истории (window._historyMaxSize)
   transform: string           // CSS transform контейнера canvasContainer
-// другие
 }
 ```
 
@@ -131,6 +145,14 @@ resetToBaseline(): void
 ```
 
 Сбрасывает все оптимизации в состояние "выключено", соответствующее базовой линии производительности:
+
+- `setVirtual(false)`
+- `setGpuTransform(false)`
+- `setWillChange(false)`
+- `setContain(false)`
+- `setPointerEvents(false)`
+- `setHistoryMax(50)`
+- Очищает CSS-трансформацию контейнера
 
 ## restoreState(state)
 
@@ -146,8 +168,8 @@ restoreState(state: Object): void
 
 **Действия:**
 
-- Восстанавливает шаблоны оптимизации через соответствующие методы `set*`.
-- Восстанавливает CSS transform контейнера.
+- Восстанавливает флаги оптимизаций через соответствующие методы `set*`.
+- Восстанавливает CSS-трансформацию контейнера.
 - Вызывает `window._renderer.render()` для применения изменений.
 
 ## applyOptimizationByIndex(index, enable)
@@ -162,6 +184,17 @@ applyOptimizationByIndex(index: number, enable: boolean): void
 
 - `index` – индекс оптимизации в массиве `this.optimizations`.
 - `enable` – `true` для включения, `false` для выключения.
+
+**Сопоставление индексов:**
+
+| Индекс | Оптимизация | Метод |
+|--------|-------------|-------|
+| 0 | Виртуализация | `setVirtual()` |
+| 1 | GPU-трансформации | `setGpuTransform()` |
+| 5 | will-change | `setWillChange()` |
+| 9 | CSS containment | `setContain()` |
+| 12 | Pointer-events линий | `setPointerEvents()` |
+| 15 | Ограничение истории | `setHistoryMax()` |
 
 ## setVirtual(enabled)
 
@@ -298,7 +331,7 @@ getGains(): Array<number>
 
 # ПРИМЕРЫ ИСПОЛЬЗОВАНИЯ
 
-### Запуск бенчмаркинга с отображением статуса
+### Запуск бенчмаркинга с отображением статуса (локализованного)
 
 ```javascript
 import { OPTIMIZATIONS } from './config/Optimizations.js';
@@ -308,7 +341,7 @@ import { FPSCounter } from './utils/FPSCounter.js';
 const fpsCounter = new FPSCounter('fpsMeter');
 const benchmarkService = new BenchmarkService(graph, fpsCounter, OPTIMIZATIONS);
 
-// Запуск с уведомлениями
+// Запуск с уведомлениями (сообщения будут на текущем языке интерфейса)
 const result = await benchmarkService.runBenchmark(true);
 console.log(`Базовая производительность: ${result.baseline} FPS`);
 console.log(`Лучший прирост: +${Math.max(...result.gains)}%`);
@@ -337,10 +370,22 @@ const fpsAfterVirtual = await fpsCounter.measure(1000);
 benchmarkService.resetToBaseline();
 ```
 
+### Проверка прироста от качества дизайна
+
+```javascript
+// Установка экстремального качества
+window.applyDesignQuality(20);
+await benchmarkService.runBenchmark(true);
+const extremeGain = benchmarkService.getGains()[OPTIMIZATIONS.length - 1];
+console.log(`Экстремальное качество даёт +${extremeGain}% FPS`);
+```
+
 # ЗАМЕЧАНИЯ
 
+- **Локализация:** все сообщения, отображаемые в элементе `#benchmarkStatus`, используют систему i18n. При смене языка интерфейса статусные сообщения автоматически переводятся.
 - **Деструктивность:** бенчмаркинг временно изменяет состояние приложения.
 - **Длительность:** полный цикл бенчмаркинга для всех оптимизаций занимает значительное время (примерно `(оптимизаций + 1) * 1500 мс`). При 18 оптимизациях это около 28 секунд.
 - **Слайдеры:** оптимизации с типом `slider` (например, "Качество дизайна") пропускаются при бенчмаркинге, так как они не имеют двоичного состояния.
 - **Глобальные зависимости:** сервис полагается на глобальные объекты `window._renderer` и `window._history`. При их отсутствии вызовы методов игнорируются.
 - **Одновременный запуск:** флаг `this.benchmarking` предотвращает параллельный запуск бенчмаркинга. При повторном вызове `runBenchmark()` возвращаются предыдущие результаты.
+- **Качество дизайна:** при изменении слайдера качества дизайна автоматически запускается пересчёт бенчмаркинга для отображения актуального прироста FPS.
