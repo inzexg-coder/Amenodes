@@ -15,7 +15,7 @@
 
 `FPSCounter` не импортирует другие модули и не имеет внешних зависимостей.
 
-# КЛАСС `FPSCounter`
+# КЛАСС FPSCounter
 
 ## Конструктор
 
@@ -203,3 +203,49 @@ measureHeavyOperation();
 - Непрерывный мониторинг добавляет крайне незначительную нагрузку – один вызов `requestAnimationFrame` и несколько арифметических операций в секунду.
 - Параллельные вызовы `measure` и непрерывный мониторинг используют отдельные циклы `requestAnimationFrame`, что корректно, но создаёт два независимых колбэка на каждый кадр.
 - Для высокоточных измерений (например, сравнения оптимизаций) рекомендуется использовать `measure` с длительностью не менее 1000 мс для усреднения пульсаций.
+
+# ИСПОЛЬЗОВАНИЕ В БЕНЧМАРКИНГЕ
+
+В приложении Amenodes `FPSCounter` используется классом `BenchmarkService` для оценки производительности оптимизаций.
+
+### Измерение прироста FPS от оптимизаций
+
+```javascript
+// Внутри BenchmarkService.runBenchmark()
+const fps = await this.fpsCounter.measure(1000);
+const gain = Math.round(((fps - this.baselineFPS) / this.baselineFPS) * 100);
+this.realGains[i] = Math.max(0, gain);
+```
+
+### Измерение прироста от качества дизайна
+
+При изменении слайдера качества дизайна в панели оптимизации автоматически запускается пересчёт бенчмаркинга:
+
+```javascript
+// В OptimizationPanel.createSliderItem()
+slider.onchange = async (e) => {
+  const newValue = parseInt(e.target.value);
+  // ... применение качества дизайна ...
+  
+  setTimeout(async () => {
+    const result = await this.benchmarkService.runBenchmark(true);
+    if (result && result.gains) {
+      this.currentGains = result.gains;
+      updateWithBenchmark(newValue);
+    }
+  }, 500);
+};
+```
+
+### Отображение результатов
+
+Результаты измерений отображаются в панели оптимизации в локализованном формате:
+
+| Качество | Диапазон | Отображаемый FPS Gain |
+|----------|----------|----------------------|
+| Extreme | ≤ 20% | `FPS: +300%` |
+| Low | 21-50% | `FPS: +150%` |
+| Medium | 51-80% | `FPS: +50%` |
+| High | 81-100% | `FPS: +X%` (результат бенчмаркинга) |
+
+**Примечание:** для качества High отображается реальное измеренное значение прироста FPS, полученное через `FPSCounter.measure()`.

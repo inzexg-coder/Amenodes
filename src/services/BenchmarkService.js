@@ -1,3 +1,5 @@
+import { i18n, t } from '../i18n/LanguageManager.js';
+
 export class BenchmarkService {
   constructor(graph, fpsCounter, optimizations) {
     this.graph = graph;
@@ -13,22 +15,31 @@ export class BenchmarkService {
     this.benchmarking = true;
     
     const statusEl = document.getElementById('benchmarkStatus');
-    if (notify && statusEl) statusEl.style.display = 'block';
+    if (notify && statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.innerHTML = `<i class="fas fa-flask"></i> ${t('optimizations.benchmarking')}`;
+    }
     
     const savedState = this.captureState();
     
     this.resetToBaseline();
     
-    if (notify && statusEl) statusEl.innerHTML = 'Измерение базовой...';
+    if (notify && statusEl) {
+      statusEl.innerHTML = `<i class="fas fa-flask"></i> ${t('optimizations.measuringBaseline')}`;
+    }
     await this.sleep(500);
     this.baselineFPS = await this.fpsCounter.measure(1500);
-    if (notify && statusEl) statusEl.innerHTML = `Базовый FPS: ${this.baselineFPS}`;
+    if (notify && statusEl) {
+      statusEl.innerHTML = `${t('optimizations.baselineFPS')}: ${this.baselineFPS}`;
+    }
     await this.sleep(800);
     
     for (let i = 0; i < this.optimizations.length; i++) {
       const opt = this.optimizations[i];
       if (opt.type === 'slider') continue;
-      if (notify && statusEl) statusEl.innerHTML = `Тест: ${opt.name}... (${i + 1}/${this.optimizations.length})`;
+      if (notify && statusEl) {
+        statusEl.innerHTML = `${t('optimizations.testing')}: ${opt.name}... (${i + 1}/${this.optimizations.length})`;
+      }
       
       if (!opt.impl) {
         this.realGains[i] = 0;
@@ -40,7 +51,9 @@ export class BenchmarkService {
       const fps = await this.fpsCounter.measure(1000);
       const gain = Math.round(((fps - this.baselineFPS) / this.baselineFPS) * 100);
       this.realGains[i] = Math.max(0, gain);
-      if (notify && statusEl) statusEl.innerHTML = `${opt.name}: +${this.realGains[i]}% -> ${fps} FPS`;
+      if (notify && statusEl) {
+        statusEl.innerHTML = `${opt.name}: +${this.realGains[i]}% -> ${fps} ${t('optimizations.fpsLabel')}`;
+      }
       
       this.applyOptimizationByIndex(i, false);
       await this.sleep(100);
@@ -49,7 +62,7 @@ export class BenchmarkService {
     this.restoreState(savedState);
     
     if (notify && statusEl) {
-      statusEl.innerHTML = `Тест завершён. Базовый FPS: ${this.baselineFPS}`;
+      statusEl.innerHTML = `${t('optimizations.completed')} ${t('optimizations.baselineFPS')}: ${this.baselineFPS}`;
       setTimeout(() => { if (statusEl) statusEl.style.display = 'none'; }, 3000);
     }
     
