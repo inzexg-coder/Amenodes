@@ -32,6 +32,10 @@
 - **Pan & Zoom** – Right-click drag to pan, scroll to zoom.
 - **Customizable UI** – Design quality slider to trade off visual effects for performance (up to +300% FPS).
 
+<div align="center">
+  <img src="images/canvas.png" alt="Visual Node Editor" style="width: 100%; max-width: 100%; height: auto;">
+</div>
+
 ### Social & Templates
 
 - **User Accounts** – Register and login to save your schemas as templates
@@ -41,6 +45,9 @@
 - **Dynamic Color Scale** – Profile and template cards glow based on author's CP
 - **User Profiles** – Track your CP and manage your published templates
 
+<div align="center">
+  <img src="images/profile.png" alt="Visual Node Editor" style="width: 100%; max-width: 100%; height: auto;">
+</div>
 ---
 
 ## 🚀 Quick Start
