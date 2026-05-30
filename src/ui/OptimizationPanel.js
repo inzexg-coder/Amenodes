@@ -138,7 +138,7 @@ export class OptimizationPanel {
       <div class="opt-desc">${optDesc}</div>
       <div class="opt-pros">${optPros}</div>
       <div class="opt-cons">${optCons}</div>
-      <div class="opt-fps">FPS: ${gainText}</div>
+      <div class="opt-fps">${t('optimizations.fpsLabel')}: ${gainText}</div>
     `;
     
     const switchEl = document.createElement('div');
@@ -203,13 +203,6 @@ export class OptimizationPanel {
     const modeSpan = document.createElement('div');
     modeSpan.className = 'opt-quality-mode';
     
-    const calculateFPSGain = (value) => {
-      if (value <= 20) return 300;
-      if (value <= 50) return 150;
-      if (value <= 80) return 50;
-      return 0;
-    };
-    
     const updateQuality = (value) => {
       valueSpan.textContent = value + '%';
       let modeMsg = '';
@@ -217,16 +210,17 @@ export class OptimizationPanel {
       
       if (value <= 20) {
         modeMsg = t('optimizations.extreme');
-        fpsGainMsg = `+300% FPS`;
+        fpsGainMsg = '+300% FPS';
       } else if (value <= 50) {
         modeMsg = t('optimizations.low');
-        fpsGainMsg = `+150% FPS`;
+        fpsGainMsg = '+150% FPS';
       } else if (value <= 80) {
         modeMsg = t('optimizations.medium');
-        fpsGainMsg = `+50% FPS`;
+        fpsGainMsg = '+50% FPS';
       } else {
         modeMsg = t('optimizations.high');
-        fpsGainMsg = `0% FPS`;
+        const gain = this.currentGains[OPTIMIZATIONS.length - 1] || 0;
+        fpsGainMsg = gain > 0 ? `+${gain}% FPS` : '0% FPS';
       }
       
       modeSpan.textContent = modeMsg;
@@ -235,7 +229,42 @@ export class OptimizationPanel {
       if (this.onQualityChangeCallback) this.onQualityChangeCallback(value);
     };
     
-    updateQuality(currentValue);
+    const updateWithBenchmark = (value) => {
+      valueSpan.textContent = value + '%';
+      let modeMsg = '';
+      
+      if (value <= 20) modeMsg = t('optimizations.extreme');
+      else if (value <= 50) modeMsg = t('optimizations.low');
+      else if (value <= 80) modeMsg = t('optimizations.medium');
+      else modeMsg = t('optimizations.high');
+      
+      modeSpan.textContent = modeMsg;
+      
+      const gain = this.currentGains[OPTIMIZATIONS.length - 1] || 0;
+      const fpsGainMsg = gain > 0 ? `+${gain}% FPS` : '0% FPS';
+      fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: ${fpsGainMsg}`;
+      
+      if (this.onQualityChangeCallback) this.onQualityChangeCallback(value);
+    };
+    
+    const initialGain = this.currentGains[OPTIMIZATIONS.length - 1] || 0;
+    const initialFpsMsg = initialGain > 0 ? `+${initialGain}% FPS` : '0% FPS';
+    
+    if (currentValue > 80) {
+      fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: ${initialFpsMsg}`;
+    } else {
+      if (currentValue <= 20) fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: +300% FPS`;
+      else if (currentValue <= 50) fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: +150% FPS`;
+      else if (currentValue <= 80) fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: +50% FPS`;
+      else fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: ${initialFpsMsg}`;
+    }
+    
+    let modeMsg = '';
+    if (currentValue <= 20) modeMsg = t('optimizations.extreme');
+    else if (currentValue <= 50) modeMsg = t('optimizations.low');
+    else if (currentValue <= 80) modeMsg = t('optimizations.medium');
+    else modeMsg = t('optimizations.high');
+    modeSpan.textContent = modeMsg;
     
     slider.oninput = (e) => {
       const newValue = parseInt(e.target.value);
@@ -247,6 +276,15 @@ export class OptimizationPanel {
       if (this.onQualityChangeCallback) this.onQualityChangeCallback(newValue);
       window._designQualitySaved = newValue;
       if (this.renderer && this.renderer.render) this.renderer.render();
+      
+      setTimeout(async () => {
+        const result = await this.benchmarkService.runBenchmark(true);
+        if (result && result.gains) {
+          this.currentGains = result.gains;
+          updateWithBenchmark(newValue);
+        }
+      }, 500);
+      
       if (this.panel) this.panel.classList.add('hidden');
     };
     
