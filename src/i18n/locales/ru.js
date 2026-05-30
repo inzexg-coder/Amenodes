@@ -11,7 +11,13 @@ export const ru = {
     warning: 'Предупреждение',
     info: 'Информация',
     value: 'Значение',
-    parameter: 'Параметр'
+    parameter: 'Параметр',
+    benchmarking: 'Тестирование оптимизаций...',
+    measuringBaseline: 'Измерение базовой производительности...',
+    baselineFPS: 'Базовый FPS',
+    testing: 'Тест',
+    completed: 'Тест завершён',
+    fpsLabel: 'FPS'
   },
 
   toolbar: {
