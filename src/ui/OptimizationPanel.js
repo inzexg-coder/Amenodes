@@ -29,13 +29,8 @@ const getOptKey = (name) => {
 export class OptimizationPanel {
   constructor(panelId, toggleBtnId, closeBtnId, applyBtnId, rebenchBtnId, benchmarkService, renderer, history) {
     this.panel = document.getElementById(panelId);
-    this.toggleBtn = null;
-    if (toggleBtnId) {
-      this.toggleBtn = document.getElementById(toggleBtnId);
-    }
-    if (!this.toggleBtn) {
-      this.toggleBtn = document.getElementById('optToggleBtn');
-    }
+    this.toggleBtn = document.getElementById(toggleBtnId);
+    if (!this.toggleBtn) this.toggleBtn = document.getElementById('optToggleBtn');
     this.closeBtn = document.getElementById(closeBtnId);
     this.applyBtn = document.getElementById(applyBtnId);
     this.rebenchBtn = document.getElementById(rebenchBtnId);
@@ -45,7 +40,6 @@ export class OptimizationPanel {
     this.optState = new Array(OPTIMIZATIONS.length).fill(false);
     this.currentGains = new Array(OPTIMIZATIONS.length).fill(0);
     this.onQualityChangeCallback = null;
-    
     this.init();
   }
 
@@ -55,17 +49,11 @@ export class OptimizationPanel {
         if (this.panel) this.panel.classList.toggle('hidden');
       };
     }
-    
     if (this.closeBtn) {
       this.closeBtn.onclick = () => {
         if (this.panel) this.panel.classList.add('hidden');
       };
     }
-    
-    if (this.applyBtn) {
-      this.applyBtn.onclick = () => this.apply();
-    }
-    
     if (this.rebenchBtn) {
       this.rebenchBtn.onclick = async () => {
         if (this.panel) this.panel.classList.add('hidden');
@@ -75,7 +63,6 @@ export class OptimizationPanel {
         if (this.panel) this.panel.classList.remove('hidden');
       };
     }
-    
     i18n.subscribe(() => {
       this.buildPanel(window.currentQualityValue || 100);
     });
@@ -89,41 +76,95 @@ export class OptimizationPanel {
     const container = document.getElementById('optListContainer');
     if (!container) return;
     container.innerHTML = '';
-    
-    OPTIMIZATIONS.forEach((opt, idx) => {
-      const item = document.createElement('div');
-      item.className = 'opt-item';
-      const disabled = opt.type !== 'slider' && !opt.impl;
-      if (disabled) item.classList.add('opt-item-disabled');
-      else item.classList.add('opt-item-enabled');
-      
+
+    const implementedOpts = [];
+    const pendingOpts = [];
+
+    for (let idx = 0; idx < OPTIMIZATIONS.length; idx++) {
+      const opt = OPTIMIZATIONS[idx];
       if (opt.type === 'slider') {
-        const info = this.createSliderInfo(opt, currentQualityValue);
-        item.appendChild(info);
+        implementedOpts.push({ opt, idx });
+      } else if (opt.impl) {
+        implementedOpts.push({ opt, idx });
       } else {
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = `opt_${idx}`;
-        checkbox.checked = this.optState[idx];
-        if (disabled) checkbox.disabled = true;
-        checkbox.onchange = (e) => { this.optState[idx] = e.target.checked; };
-        
-        const info = this.createOptInfo(opt, idx);
-        item.appendChild(checkbox);
-        item.appendChild(info);
+        pendingOpts.push({ opt, idx });
       }
-      container.appendChild(item);
-    });
-    
-    if (this.applyBtn) {
-      this.applyBtn.textContent = t('common.apply') + ' ' + t('optimizations.fpsGain');
     }
-    if (this.rebenchBtn) {
-      this.rebenchBtn.textContent = t('optimizations.fpsGain') + ' →';
+
+    if (implementedOpts.length > 0) {
+      const categoryDiv = document.createElement('div');
+      categoryDiv.className = 'opt-category';
+      categoryDiv.textContent = t('optimizations.available');
+      container.appendChild(categoryDiv);
+      
+      for (const { opt, idx } of implementedOpts) {
+        if (opt.type === 'slider') {
+          this.createSliderItem(container, opt, currentQualityValue);
+        } else {
+          this.createSwitchItem(container, opt, idx);
+        }
+      }
+    }
+
+    if (pendingOpts.length > 0) {
+      const categoryDiv = document.createElement('div');
+      categoryDiv.className = 'opt-category';
+      categoryDiv.textContent = t('optimizations.comingSoon');
+      container.appendChild(categoryDiv);
+      
+      for (const { opt, idx } of pendingOpts) {
+        this.createPendingItem(container, opt, idx);
+      }
     }
   }
 
-  createSliderInfo(opt, currentValue) {
+  createSwitchItem(container, opt, idx) {
+    const item = document.createElement('div');
+    item.className = `opt-item ${this.optState[idx] ? 'opt-item-enabled' : ''}`;
+    
+    const info = document.createElement('div');
+    info.className = 'opt-info';
+    
+    const optKey = getOptKey(opt.name);
+    const optName = t(`optimizations.${optKey}`) || opt.name;
+    const optDesc = t(`optimizations.${optKey}Desc`) || opt.desc;
+    const optPros = t(`optimizations.${optKey}Pros`) || opt.pros;
+    const optCons = t(`optimizations.${optKey}Cons`) || opt.cons;
+    const gain = this.currentGains[idx] || 0;
+    const gainText = gain > 0 ? `+${gain}%` : (gain === 0 ? '0%' : t('optimizations.notMeasured'));
+    
+    info.innerHTML = `
+      <div class="opt-title">${optName}</div>
+      <div class="opt-desc">${optDesc}</div>
+      <div class="opt-pros">${optPros}</div>
+      <div class="opt-cons">${optCons}</div>
+      <div class="opt-fps">FPS: ${gainText}</div>
+    `;
+    
+    const switchEl = document.createElement('div');
+    switchEl.className = `opt-switch ${this.optState[idx] ? 'active' : ''}`;
+    const handle = document.createElement('div');
+    handle.className = 'opt-switch-handle';
+    switchEl.appendChild(handle);
+    
+    switchEl.onclick = (e) => {
+      e.stopPropagation();
+      if (!opt.impl) return;
+      this.optState[idx] = !this.optState[idx];
+      switchEl.classList.toggle('active');
+      item.classList.toggle('opt-item-enabled');
+      this.applyOptimizationImmediately(idx, this.optState[idx]);
+    };
+    
+    item.appendChild(info);
+    item.appendChild(switchEl);
+    container.appendChild(item);
+  }
+
+  createSliderItem(container, opt, currentValue) {
+    const item = document.createElement('div');
+    item.className = 'opt-item opt-item-enabled';
+    
     const info = document.createElement('div');
     info.className = 'opt-info';
     
@@ -136,15 +177,12 @@ export class OptimizationPanel {
     info.innerHTML = `
       <div class="opt-title">${optName}</div>
       <div class="opt-desc">${optDesc}</div>
-      <div class="opt-pros">✓ ${optPros}</div>
-      <div class="opt-cons">✗ ${optCons}</div>
+      <div class="opt-pros">${optPros}</div>
+      <div class="opt-cons">${optCons}</div>
     `;
     
     const sliderDiv = document.createElement('div');
-    sliderDiv.style.display = 'flex';
-    sliderDiv.style.alignItems = 'center';
-    sliderDiv.style.gap = '8px';
-    sliderDiv.style.marginTop = '8px';
+    sliderDiv.className = 'opt-slider-container';
     
     const slider = document.createElement('input');
     slider.type = 'range';
@@ -152,47 +190,52 @@ export class OptimizationPanel {
     slider.max = opt.max;
     slider.step = opt.step;
     slider.value = currentValue;
-    slider.style.flex = '1';
+    slider.className = 'opt-slider';
     
     const valueSpan = document.createElement('span');
-    valueSpan.className = 'quality-value';
-    valueSpan.innerText = currentValue + '%';
+    valueSpan.className = 'opt-slider-value';
+    valueSpan.textContent = currentValue + '%';
+    
+    const modeSpan = document.createElement('div');
+    modeSpan.className = 'opt-quality-mode';
+    
+    const updateQuality = (value) => {
+      valueSpan.textContent = value + '%';
+      let modeMsg = '';
+      if (value <= 20) modeMsg = t('optimizations.extreme');
+      else if (value <= 50) modeMsg = t('optimizations.low');
+      else if (value <= 80) modeMsg = t('optimizations.medium');
+      else modeMsg = t('optimizations.high');
+      modeSpan.textContent = modeMsg;
+      if (this.onQualityChangeCallback) this.onQualityChangeCallback(value);
+    };
+    
+    updateQuality(currentValue);
     
     slider.oninput = (e) => {
       const newValue = parseInt(e.target.value);
+      updateQuality(newValue);
+    };
+    
+    slider.onchange = (e) => {
+      const newValue = parseInt(e.target.value);
       if (this.onQualityChangeCallback) this.onQualityChangeCallback(newValue);
-      valueSpan.innerText = newValue + '%';
-      
-      let modeMsg = '';
-      if (newValue <= 20) modeMsg = ` (${t('optimizations.extreme')})`;
-      else if (newValue <= 50) modeMsg = ` (${t('optimizations.low')})`;
-      else if (newValue <= 80) modeMsg = ` (${t('optimizations.medium')})`;
-      else modeMsg = ` (${t('optimizations.high')})`;
-      
-      const fpsDiv = info.querySelector('.opt-fps');
-      if (fpsDiv) {
-        fpsDiv.innerHTML = `${t('optimizations.currentQuality')}: ${newValue}%${modeMsg}<br>${t('optimizations.simplifiedBy')} ${100 - newValue}%`;
-      }
+      window._designQualitySaved = newValue;
+      if (this.renderer && this.renderer.render) this.renderer.render();
     };
     
     sliderDiv.appendChild(slider);
     sliderDiv.appendChild(valueSpan);
     info.appendChild(sliderDiv);
-    
-    const fpsDiv = document.createElement('div');
-    fpsDiv.className = 'opt-fps';
-    let modeMsg = '';
-    if (currentValue <= 20) modeMsg = ` (${t('optimizations.extreme')})`;
-    else if (currentValue <= 50) modeMsg = ` (${t('optimizations.low')})`;
-    else if (currentValue <= 80) modeMsg = ` (${t('optimizations.medium')})`;
-    else modeMsg = ` (${t('optimizations.high')})`;
-    fpsDiv.innerHTML = `${t('optimizations.currentQuality')}: ${currentValue}%${modeMsg}<br>${t('optimizations.simplifiedBy')} ${100 - currentValue}%`;
-    info.appendChild(fpsDiv);
-    
-    return info;
+    info.appendChild(modeSpan);
+    item.appendChild(info);
+    container.appendChild(item);
   }
 
-  createOptInfo(opt, idx) {
+  createPendingItem(container, opt, idx) {
+    const item = document.createElement('div');
+    item.className = 'opt-item opt-item-disabled';
+    
     const info = document.createElement('div');
     info.className = 'opt-info';
     
@@ -202,74 +245,70 @@ export class OptimizationPanel {
     const optPros = t(`optimizations.${optKey}Pros`) || opt.pros;
     const optCons = t(`optimizations.${optKey}Cons`) || opt.cons;
     
-    const gain = this.currentGains[idx] || 0;
-    const gainText = gain > 0 ? `+${gain}%` : (gain === 0 ? '0%' : t('optimizations.notMeasured'));
-    
     info.innerHTML = `
       <div class="opt-title">${optName}</div>
       <div class="opt-desc">${optDesc}</div>
-      <div class="opt-pros">✓ ${optPros}</div>
-      <div class="opt-cons">✗ ${optCons}</div>
-      <div class="opt-fps" style="margin-top:8px;border-top:1px solid #2e385c;padding-top:4px;">📊 ${t('optimizations.fpsGain')}: ${gainText}</div>
+      <div class="opt-pros">${optPros}</div>
+      <div class="opt-cons">${optCons}</div>
+      <div class="opt-fps" style="color:#667799;">${t('optimizations.notImplemented')}</div>
     `;
-    return info;
+    
+    const switchEl = document.createElement('div');
+    switchEl.className = 'opt-switch';
+    switchEl.style.cursor = 'not-allowed';
+    switchEl.style.opacity = '0.3';
+    const handle = document.createElement('div');
+    handle.className = 'opt-switch-handle';
+    switchEl.appendChild(handle);
+    
+    item.appendChild(info);
+    item.appendChild(switchEl);
+    container.appendChild(item);
   }
 
-  apply() {
-    const state = this.optState;
-    
-    if (state[0] && this.renderer && this.renderer.setVirtual) {
-      this.renderer.setVirtual(true);
-    } else if (this.renderer && this.renderer.setVirtual) {
-      this.renderer.setVirtual(false);
+  applyOptimizationImmediately(index, enabled) {
+    switch(index) {
+      case 0: this.setVirtual(enabled); break;
+      case 1: this.setGpuTransform(enabled); break;
+      case 5: this.setWillChange(enabled); break;
+      case 9: this.setContain(enabled); break;
+      case 12: this.setPointerEvents(enabled); break;
+      case 15: this.setHistoryMax(enabled ? 20 : 50); break;
     }
-    
-    const canvasContainer = document.getElementById('canvasContainer');
-    if (canvasContainer) {
-      if (state[1]) {
-        canvasContainer.style.transform = 'translate3d(0,0,0)';
-      } else {
-        canvasContainer.style.transform = '';
-      }
+    if (this.renderer && this.renderer.render) this.renderer.render();
+  }
+
+  setVirtual(enabled) {
+    window._rendererVirtual = enabled;
+    if (this.renderer && this.renderer.setVirtual) this.renderer.setVirtual(enabled);
+  }
+
+  setGpuTransform(enabled) {
+    const container = document.getElementById('canvasContainer');
+    if (container) {
+      if (enabled) container.style.transform = 'translate3d(0,0,0)';
+      else container.style.transform = '';
     }
-    
-    if (this.renderer && this.renderer.opts) {
-      this.renderer.opts.willChange = state[5];
-      this.renderer.opts.contain = state[9];
-      this.renderer.opts.pointerEvents = state[12];
-    }
-    
-    if (this.renderer && this.renderer.applyOptStyles) {
-      const self = this;
-      this.renderer.applyOptStyles = function(el) {
-        if (self.renderer && self.renderer.opts && self.renderer.opts.willChange) {
-          el.style.willChange = 'left, top';
-        } else if (el) {
-          el.style.willChange = '';
-        }
-        if (self.renderer && self.renderer.opts && self.renderer.opts.contain) {
-          el.style.contain = 'layout paint';
-        } else if (el) {
-          el.style.contain = '';
-        }
-      };
-    }
-    
-    if (this.history) {
-      if (state[15]) {
-        this.history.maxSize = 20;
-      } else {
-        this.history.maxSize = 50;
-      }
-    }
-    
-    if (this.renderer && this.renderer.render) {
-      this.renderer.render();
-    }
-    
-    if (this.panel) {
-      this.panel.classList.add('hidden');
-    }
+  }
+
+  setWillChange(enabled) {
+    window._rendererWillChange = enabled;
+    if (this.renderer && this.renderer.opts) this.renderer.opts.willChange = enabled;
+  }
+
+  setContain(enabled) {
+    window._rendererContain = enabled;
+    if (this.renderer && this.renderer.opts) this.renderer.opts.contain = enabled;
+  }
+
+  setPointerEvents(enabled) {
+    window._rendererPointerEvents = enabled;
+    if (this.renderer && this.renderer.opts) this.renderer.opts.pointerEvents = enabled;
+  }
+
+  setHistoryMax(max) {
+    window._historyMaxSize = max;
+    if (this.history) this.history.maxSize = max;
   }
 
   updateGains(gains) {
