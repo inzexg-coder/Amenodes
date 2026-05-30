@@ -1162,6 +1162,20 @@ body {
   margin-top: 4px;
 }
 
+.opt-fps-gain {
+  font-size: 11px;
+  color: #88dd88;
+  font-family: monospace;
+  margin-top: 6px;
+  padding-top: 4px;
+  border-top: 1px solid #2e385c;
+}
+
+.opt-fps-gain i {
+  margin-right: 4px;
+  font-size: 10px;
+}
+
 .apply-btn, .rebench-btn {
   margin: 8px 16px;
   padding: 10px;
