@@ -11,7 +11,13 @@ export const en = {
     warning: 'Warning',
     info: 'Info',
     value: 'Value',
-    parameter: 'Parameter'
+    parameter: 'Parameter',
+    benchmarking: 'Benchmarking optimizations...',
+    measuringBaseline: 'Measuring baseline performance...',
+    baselineFPS: 'Baseline FPS',
+    testing: 'Testing',
+    completed: 'Benchmark completed',
+    fpsLabel: 'FPS'
   },
 
   toolbar: {
@@ -320,5 +326,6 @@ export const en = {
     inputs: 'Inputs',
     outputs: 'Outputs',
     noDescription: 'No description'
-}
+  },
+
 };
