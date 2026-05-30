@@ -1,3 +1,5 @@
+/* RESET & BASE STYLES */
+
 * {
   user-select: none;
   box-sizing: border-box;
@@ -24,6 +26,8 @@ body {
   --border-light: 1px solid rgba(255,255,255,.15);
   --handle-shadow: 0 0 0 1px #0006;
 }
+
+/* DESIGN QUALITY MODES */
 
 .design-quality-1 {
   --node-bg: #1e243b;
@@ -117,6 +121,8 @@ body {
   border-radius: 0px !important;
 }
 
+/* NODE SELECTION & MARK */
+
 .node-temp-selected {
   box-shadow: 0 0 0 3px #ffaa55, var(--node-shadow) !important;
   z-index: 20 !important;
@@ -134,6 +140,8 @@ body {
 .design-quality-extreme .node-important {
   box-shadow: 0 0 0 2px #00aaff, 0 0 8px 1px #00aaff !important;
 }
+
+/* SPLASH SCREEN */
 
 .splash-overlay {
   position: fixed;
@@ -162,14 +170,8 @@ body {
 }
 
 @keyframes splashFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .splash-logo {
@@ -258,6 +260,8 @@ body {
   align-items: center;
   gap: 6px;
 }
+
+/* APP CONTAINER */
 
 .app-container {
   display: flex;
@@ -353,6 +357,8 @@ body {
   margin: 0 8px;
   color: #ffefcf;
 }
+
+/* WORKSPACE SIDEBARS */
 
 .workspace {
   display: flex;
@@ -459,6 +465,8 @@ body {
   padding: 12px;
 }
 
+/* NODES LIBRARY */
+
 .node-category {
   margin-bottom: 20px;
 }
@@ -527,6 +535,8 @@ body {
   color: #ffb347;
 }
 
+/* PROPERTIES PANEL */
+
 .empty-property {
   text-align: center;
   padding: 40px 20px;
@@ -559,6 +569,8 @@ body {
   border-radius: 8px;
   word-break: break-word;
 }
+
+/* VIEWPORT & CANVAS */
 
 .viewport-container {
   flex: 1;
@@ -595,6 +607,8 @@ body {
   height: 100%;
   overflow: visible;
 }
+
+/* STATUS BAR */
 
 .status-bar {
   position: fixed;
@@ -642,6 +656,8 @@ body {
   opacity: 0;
   transition: opacity 0.3s;
 }
+
+/* NODE STYLES */
 
 .node {
   position: absolute;
@@ -747,6 +763,8 @@ body {
   overflow-y: auto;
 }
 
+/* DATA TABLE */
+
 .data-table {
   padding: 12px;
 }
@@ -794,6 +812,8 @@ body {
   min-height: 28px;
 }
 
+/* SPECIFIC ITEMS */
+
 .group-items {
   padding: 8px 12px;
   display: flex;
@@ -831,6 +851,8 @@ body {
   margin-top: 4px;
   width: fit-content;
 }
+
+/* HANDLES */
 
 .node-handle {
   position: absolute;
@@ -885,6 +907,8 @@ body {
   transform: scale(1.3);
 }
 
+/* CONTEXT MENU */
+
 .node-menu {
   position: fixed;
   background: #232837f2;
@@ -937,9 +961,7 @@ body {
   border-color: #2e3a5e;
 }
 
-.hidden-file-input {
-  display: none;
-}
+/* EDGE LINES */
 
 .edge-line {
   cursor: pointer;
@@ -949,6 +971,8 @@ body {
 .edge-line:hover {
   stroke-width: 5;
 }
+
+/* OPTIMIZATION PANEL */
 
 .opt-panel {
   position: fixed;
@@ -1016,14 +1040,9 @@ body {
   border: 1px solid #2e385c;
 }
 
-.opt-item-enabled {
-  border-left: 3px solid #ffb347;
-}
-
 .opt-item-disabled {
   opacity: 0.5;
   filter: grayscale(0.3);
-  border-left: 3px solid #4a4a5a;
 }
 
 .opt-item-disabled .opt-switch {
@@ -1188,6 +1207,8 @@ body {
   margin-top: 0;
 }
 
+/* FPS METER, OPT TOGGLE */
+
 .fps-meter {
   position: fixed;
   bottom: 24px;
@@ -1229,6 +1250,8 @@ body {
   transform: scale(1.05);
 }
 
+/* BENCHMARK */
+
 .webgl-canvas {
   position: absolute;
   top: 0;
@@ -1254,20 +1277,7 @@ body {
   border-left: 3px solid #ffb347;
 }
 
-.autosave-status {
-  position: fixed;
-  bottom: 24px;
-  right: 90px;
-  background: #000000aa;
-  backdrop-filter: blur(4px);
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 11px;
-  color: #88dd88;
-  z-index: 250;
-  pointer-events: none;
-  transition: opacity 0.3s;
-}
+/* SPECIFIC SWITCH */
 
 .map-mode-switch {
   display: flex;
@@ -1308,16 +1318,7 @@ body {
   border-radius: 0 32px 32px 0;
 }
 
-.opt-item-disabled {
-  opacity: 0.6;
-  filter: grayscale(0.2);
-  pointer-events: none;
-}
-
-.opt-item-enabled {
-  border: 2px solid #6fcf97;
-  box-shadow: 0 0 8px #6fcf97;
-}
+/* NODE SPECIAL */
 
 .node[data-type="constant"] {
   border-left: 3px solid #ffaa55;
@@ -1326,6 +1327,8 @@ body {
 .node[data-type="constant"] .node-header {
   background: linear-gradient(135deg, #2a2a3a, #1a1a2a);
 }
+
+/* LANGUAGE SWITCHER */
 
 .language-btn {
   background: linear-gradient(135deg, #2a3a5e, #1f2a44);
@@ -1386,6 +1389,8 @@ body {
   backdrop-filter: none !important;
 }
 
+/* MENU OVERLAY */
+
 .node-menu-overlay {
   position: fixed;
   top: 0;
@@ -1415,14 +1420,8 @@ body {
 }
 
 @keyframes menuSlideIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .node-menu-header {
@@ -1740,6 +1739,8 @@ body {
   border-radius: 0px;
 }
 
+/* CANVAS MODAL */
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -2008,15 +2009,21 @@ body {
   color: #eef2ff;
 }
 
+/* HIDDEN FILE INPUT */
+
 .hidden-file-input {
   display: none;
 }
+
+/* INDICATORS */
 
 .loading-nodes {
   text-align: center;
   padding: 40px 20px;
   color: #6d8ae0;
 }
+
+/* SPECIFIC INPUT STYLES */
 
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
@@ -2029,6 +2036,8 @@ input[type=number] {
   appearance: textfield;
 }
 
+/* DISABLE TEXT SELECTION ON VIEWPORT */
+
 .viewport, .viewport * {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -2037,6 +2046,8 @@ input[type=number] {
   -ms-user-select: none;
   user-select: none;
 }
+
+/* TEMPLATES PAGE STYLES */
 
 .templates-container {
   max-width: 1200px;
@@ -2256,6 +2267,8 @@ input[type=number] {
   background: #2d3a5e;
 }
 
+/* PROFILE PAGE STYLES */
+
 .profile-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -2387,6 +2400,8 @@ input[type=number] {
   color: #ffb347;
   border-bottom: 2px solid #ffb347;
 }
+
+/* MODERATION PAGE STYLES */
 
 .mod-container {
   max-width: 1400px;
@@ -2529,6 +2544,8 @@ input[type=number] {
   color: #888;
 }
 
+/* STATES */
+
 .empty-state {
   text-align: center;
   padding: 60px;
@@ -2555,6 +2572,8 @@ input[type=number] {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* RESPONSIVE */
 
 @media (max-width: 768px) {
   .templates-container, .profile-container, .mod-container { padding: 16px; }
