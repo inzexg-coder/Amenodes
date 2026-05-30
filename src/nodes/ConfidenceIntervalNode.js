@@ -8,7 +8,7 @@ export const metadata = {
   descriptionKey: 'nodeDescriptions.confidenceInterval',
   author: 'Amenoke',
   github: 'https://github.com/inzexg-coder/Amenodes',
-  icon: 'fa-chart-simple',
+  icon: 'fa-sharp-duotone fa-solid fa-bars',
   dataType: 'interval',
   canHaveIncomingEdges: true,
   canHaveOutgoingEdges: true,
