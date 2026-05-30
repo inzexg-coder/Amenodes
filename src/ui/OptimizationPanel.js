@@ -196,17 +196,42 @@ export class OptimizationPanel {
     valueSpan.className = 'opt-slider-value';
     valueSpan.textContent = currentValue + '%';
     
+    const fpsGainSpan = document.createElement('div');
+    fpsGainSpan.className = 'opt-fps-gain';
+    fpsGainSpan.style.cssText = 'font-size: 11px; color: #88dd88; font-family: monospace; margin-top: 6px; padding-top: 4px; border-top: 1px solid #2e385c;';
+    
     const modeSpan = document.createElement('div');
     modeSpan.className = 'opt-quality-mode';
+    
+    const calculateFPSGain = (value) => {
+      if (value <= 20) return 300;
+      if (value <= 50) return 150;
+      if (value <= 80) return 50;
+      return 0;
+    };
     
     const updateQuality = (value) => {
       valueSpan.textContent = value + '%';
       let modeMsg = '';
-      if (value <= 20) modeMsg = t('optimizations.extreme');
-      else if (value <= 50) modeMsg = t('optimizations.low');
-      else if (value <= 80) modeMsg = t('optimizations.medium');
-      else modeMsg = t('optimizations.high');
+      let fpsGainMsg = '';
+      
+      if (value <= 20) {
+        modeMsg = t('optimizations.extreme');
+        fpsGainMsg = `+300% FPS`;
+      } else if (value <= 50) {
+        modeMsg = t('optimizations.low');
+        fpsGainMsg = `+150% FPS`;
+      } else if (value <= 80) {
+        modeMsg = t('optimizations.medium');
+        fpsGainMsg = `+50% FPS`;
+      } else {
+        modeMsg = t('optimizations.high');
+        fpsGainMsg = `0% FPS`;
+      }
+      
       modeSpan.textContent = modeMsg;
+      fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: ${fpsGainMsg}`;
+      
       if (this.onQualityChangeCallback) this.onQualityChangeCallback(value);
     };
     
@@ -228,6 +253,7 @@ export class OptimizationPanel {
     sliderDiv.appendChild(slider);
     sliderDiv.appendChild(valueSpan);
     info.appendChild(sliderDiv);
+    info.appendChild(fpsGainSpan);
     info.appendChild(modeSpan);
     item.appendChild(info);
     container.appendChild(item);
