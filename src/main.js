@@ -375,7 +375,7 @@ class Application {
 
   initOptimizationPanel() {
     this.optPanel = new OptimizationPanel(
-      'optPanel', null, 'closeOptPanel', 'applyOptimizationsBtn', 'rebenchmarkBtn',
+      'optPanel', null, 'closeOptPanel', 'applyOptimizationsBtn', 'rebenchBtn',
       this.benchmarkService, this.renderer, this.history
     );
     this.optPanel.setDesignQualityCallback((value) => this.applyDesignQuality(value));
