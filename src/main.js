@@ -246,6 +246,8 @@ class Application {
       gridSizeInput.addEventListener('input', handleGridSizeInput);
     }
     
+    this.fixToggleSwitches();
+    
     modalEl.classList.remove('hidden');
   }
 
@@ -254,53 +256,34 @@ class Application {
     if (modalEl) modalEl.classList.add('hidden');
   }
 
-  saveCanvasSettings() {
-    const snapToGridCheck = document.getElementById('snapToGrid');
-    const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
-    const invertZoomCheck = document.getElementById('invertZoomDirection');
-    const gridSizeInput = document.getElementById('gridSize');
-    
-    const activeStyleBtn = document.querySelector('.grid-style-btn.active');
-    const newGridStyle = activeStyleBtn ? activeStyleBtn.getAttribute('data-grid') : 'dots';
-    const newGridSize = gridSizeInput ? parseInt(gridSizeInput.value) : 20;
-    const newSnapToGrid = snapToGridCheck ? snapToGridCheck.checked : false;
-    const newCtrlZoomOnly = ctrlZoomCheck ? ctrlZoomCheck.checked : false;
-    const newInvertZoomDirection = invertZoomCheck ? invertZoomCheck.checked : false;
-    
-    let needRender = false;
-    
-    if (this.gridStyle !== newGridStyle) {
-      this.gridStyle = newGridStyle;
-      needRender = true;
-    }
-    if (this.gridSize !== newGridSize) {
-      this.gridSize = newGridSize;
-      needRender = true;
-    }
-    if (this.snapToGrid !== newSnapToGrid) {
-      this.snapToGrid = newSnapToGrid;
-      if (this.renderer) {
-        this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
-      }
-    }
-    
-    this.ctrlZoomOnly = newCtrlZoomOnly;
-    this.invertZoomDirection = newInvertZoomDirection;
-    
-    localStorage.setItem('canvas_grid_style', this.gridStyle);
-    localStorage.setItem('canvas_grid_size', this.gridSize.toString());
-    localStorage.setItem('canvas_snap_to_grid', this.snapToGrid.toString());
-    localStorage.setItem('ctrl_zoom_only', this.ctrlZoomOnly.toString());
-    localStorage.setItem('invert_zoom_direction', this.invertZoomDirection.toString());
-    
-    if (needRender) {
-      this.applyCanvasSettings();
-      if (this.renderer) {
-        this.renderer.render();
-      }
-    }
-    
-    this.closeCanvasSettings();
+  fixToggleSwitches() {
+    const toggleWrappers = document.querySelectorAll('.toggle-switch');
+    toggleWrappers.forEach(wrapper => {
+      const checkbox = wrapper.querySelector('input[type="checkbox"]');
+      if (!checkbox) return;
+      
+      if (wrapper.hasAttribute('data-fixed')) return;
+      
+      const newWrapper = wrapper.cloneNode(true);
+      wrapper.parentNode.replaceChild(newWrapper, wrapper);
+      
+      const newCheckbox = newWrapper.querySelector('input[type="checkbox"]');
+      
+      newWrapper.style.cursor = 'pointer';
+      
+      const toggleCheckbox = function(e) {
+        if (e.target !== newCheckbox) {
+          e.preventDefault();
+          e.stopPropagation();
+          newCheckbox.checked = !newCheckbox.checked;
+          const changeEvent = new Event('change', { bubbles: true });
+          newCheckbox.dispatchEvent(changeEvent);
+        }
+      };
+      
+      newWrapper.addEventListener('click', toggleCheckbox);
+      newWrapper.setAttribute('data-fixed', 'true');
+    });
   }
 
   initUI() {
@@ -350,7 +333,39 @@ class Application {
     
     if (closeSettingsModal) closeSettingsModal.onclick = () => this.closeCanvasSettings();
     if (cancelSettings) cancelSettings.onclick = () => this.closeCanvasSettings();
-    if (applySettings) applySettings.onclick = () => this.saveCanvasSettings();
+    
+    if (applySettings) {
+      applySettings.onclick = () => {
+        const snapToGridCheck = document.getElementById('snapToGrid');
+        const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
+        const invertZoomCheck = document.getElementById('invertZoomDirection');
+        const gridSizeInput = document.getElementById('gridSize');
+        const activeStyleBtn = document.querySelector('.grid-style-btn.active');
+        
+        if (snapToGridCheck) this.snapToGrid = snapToGridCheck.checked;
+        if (ctrlZoomCheck) this.ctrlZoomOnly = ctrlZoomCheck.checked;
+        if (invertZoomCheck) this.invertZoomDirection = invertZoomCheck.checked;
+        if (gridSizeInput) this.gridSize = parseInt(gridSizeInput.value);
+        if (activeStyleBtn) this.gridStyle = activeStyleBtn.getAttribute('data-grid');
+        
+        localStorage.setItem('canvas_grid_style', this.gridStyle);
+        localStorage.setItem('canvas_grid_size', this.gridSize.toString());
+        localStorage.setItem('canvas_snap_to_grid', this.snapToGrid.toString());
+        localStorage.setItem('ctrl_zoom_only', this.ctrlZoomOnly.toString());
+        localStorage.setItem('invert_zoom_direction', this.invertZoomDirection.toString());
+        
+        if (this.renderer) {
+          this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
+        }
+        
+        this.applyCanvasSettings();
+        if (this.renderer) this.renderer.render();
+        
+        this.closeCanvasSettings();
+      };
+    }
+    
+    this.fixToggleSwitches();
     
     if (newCanvasBtn) {
       newCanvasBtn.onclick = () => {
