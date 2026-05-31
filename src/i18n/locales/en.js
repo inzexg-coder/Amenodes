@@ -12,12 +12,7 @@ export const en = {
     info: 'Info',
     value: 'Value',
     parameter: 'Parameter',
-    benchmarking: 'Benchmarking optimizations...',
-    measuringBaseline: 'Measuring baseline performance...',
-    baselineFPS: 'Baseline FPS',
-    testing: 'Testing',
-    completed: 'Benchmark completed',
-    fpsLabel: 'FPS'
+    noDescription: 'No description'
   },
 
   toolbar: {
@@ -127,8 +122,14 @@ export const en = {
     simplifiedBy: 'Simplified by',
     available: 'Available Optimizations',
     comingSoon: 'Coming Soon',
-    notImplemented: 'Not yet implemented'
-},
+    notImplemented: 'Not yet implemented',
+    benchmarking: 'Benchmarking optimizations...',
+    measuringBaseline: 'Measuring baseline performance...',
+    baselineFPS: 'Baseline FPS',
+    testing: 'Testing',
+    completed: 'Benchmark completed',
+    fpsLabel: 'FPS'
+  },
 
   modal: {
     notification: 'Notification',
@@ -146,11 +147,6 @@ export const en = {
 
   status: {
     noConnections: 'No connections',
-    benchmarking: 'Benchmarking optimizations...',
-    measuringBaseline: 'Measuring baseline performance...',
-    baselineFPS: 'Baseline FPS',
-    testing: 'Testing',
-    completed: 'Benchmark completed',
     saved: 'Saved'
   },
 
@@ -325,7 +321,9 @@ export const en = {
     connections: 'Connections',
     inputs: 'Inputs',
     outputs: 'Outputs',
-    noDescription: 'No description'
-  },
-
+    ctrlZoom: 'Ctrl + Scroll to zoom',
+    enableCtrlZoom: 'Require Ctrl key for zooming',
+    invertZoom: 'Invert zoom direction',
+    enableInvertZoom: 'Reverse scroll direction for zoom'
+  }
 };

@@ -29,6 +29,8 @@ class Application {
     this.gridStyle = localStorage.getItem('canvas_grid_style') || 'dots';
     this.gridSize = parseInt(localStorage.getItem('canvas_grid_size') || '20');
     this.snapToGrid = localStorage.getItem('canvas_snap_to_grid') === 'true';
+    this.ctrlZoomOnly = localStorage.getItem('ctrl_zoom_only') === 'true';
+    this.invertZoomDirection = localStorage.getItem('invert_zoom_direction') === 'true';
 
     this.initRenderer();
     this.initHistory();
@@ -70,17 +72,44 @@ class Application {
     let currentZoom = 1;
     const viewportEl = document.getElementById('viewport');
     
-    const setZoom = (z) => {
+    const setZoom = (z, centerX = null, centerY = null) => {
+      const oldZoom = currentZoom;
       currentZoom = Math.min(3, Math.max(0.3, z));
       window.currentZoom = currentZoom;
-      this.viewport.update();
+      
+      if (centerX !== null && centerY !== null && oldZoom !== currentZoom) {
+        const offset = this.viewport.getOffset();
+        const rect = viewportEl.getBoundingClientRect();
+        const worldX = (centerX - rect.left - offset.x) / oldZoom;
+        const worldY = (centerY - rect.top - offset.y) / oldZoom;
+        const newOffsetX = centerX - rect.left - worldX * currentZoom;
+        const newOffsetY = centerY - rect.top - worldY * currentZoom;
+        this.viewport.setOffset(newOffsetX, newOffsetY);
+      } else {
+        this.viewport.update();
+      }
+      
       this.renderer.render();
       this.updateZoomIndicator();
     };
     
     viewportEl.addEventListener('wheel', (e) => {
+      if (this.ctrlZoomOnly && !e.ctrlKey) {
+        return;
+      }
       e.preventDefault();
-      setZoom(currentZoom * (1 - e.deltaY * 0.005));
+      
+      let delta = e.deltaY > 0 ? -0.05 : 0.05;
+      if (this.invertZoomDirection) {
+        delta = -delta;
+      }
+      
+      const rect = viewportEl.getBoundingClientRect();
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+      
+      const newZoom = currentZoom * (1 + delta);
+      setZoom(newZoom, mouseX, mouseY);
     }, { passive: false });
     
     viewportEl.addEventListener('contextmenu', (e) => {
@@ -131,15 +160,17 @@ class Application {
     const modalEl = document.getElementById('canvasSettingsModal');
     if (!modalEl) return;
     
-    const gridStyleSelect = document.getElementById('gridStyleSelect');
-    const gridSizeInput = document.getElementById('gridSize');
     const snapToGridCheck = document.getElementById('snapToGrid');
+    const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
+    const invertZoomCheck = document.getElementById('invertZoomDirection');
+    const gridSizeInput = document.getElementById('gridSize');
     const gridSizeValue = document.getElementById('gridSizeValue');
     const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
     
-    if (gridStyleSelect) gridStyleSelect.value = this.gridStyle;
-    if (gridSizeInput) gridSizeInput.value = this.gridSize;
     if (snapToGridCheck) snapToGridCheck.checked = this.snapToGrid;
+    if (ctrlZoomCheck) ctrlZoomCheck.checked = this.ctrlZoomOnly;
+    if (invertZoomCheck) invertZoomCheck.checked = this.invertZoomDirection;
+    if (gridSizeInput) gridSizeInput.value = this.gridSize;
     if (gridSizeValue) gridSizeValue.textContent = this.gridSize;
     
     const gridStyleBtns = document.querySelectorAll('.grid-style-btn');
@@ -162,7 +193,60 @@ class Application {
     
     if (gridPreviewCanvas) {
       gridPreviewCanvas.setAttribute('data-preview', this.gridStyle);
+      gridPreviewCanvas.style.backgroundSize = `${this.gridSize}px ${this.gridSize}px`;
     }
+    
+    const handleStyleClick = (e) => {
+      const btn = e.currentTarget;
+      const gridVal = btn.getAttribute('data-grid');
+      gridStyleBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (gridPreviewCanvas) {
+        gridPreviewCanvas.setAttribute('data-preview', gridVal);
+      }
+    };
+    
+    const handleSizePresetClick = (e) => {
+      const preset = e.currentTarget;
+      const size = parseInt(preset.getAttribute('data-size'));
+      sizePresets.forEach(p => p.classList.remove('active'));
+      preset.classList.add('active');
+      if (gridSizeInput) gridSizeInput.value = size;
+      if (gridSizeValue) gridSizeValue.textContent = size;
+      if (gridPreviewCanvas) {
+        const currentStyle = document.querySelector('.grid-style-btn.active')?.getAttribute('data-grid') || this.gridStyle;
+        gridPreviewCanvas.setAttribute('data-preview', currentStyle);
+        gridPreviewCanvas.style.backgroundSize = `${size}px ${size}px`;
+      }
+    };
+    
+    const handleGridSizeInput = (e) => {
+      const size = e.target.value;
+      if (gridSizeValue) gridSizeValue.textContent = size;
+      if (gridPreviewCanvas) {
+        const currentStyle = document.querySelector('.grid-style-btn.active')?.getAttribute('data-grid') || this.gridStyle;
+        gridPreviewCanvas.setAttribute('data-preview', currentStyle);
+        gridPreviewCanvas.style.backgroundSize = `${size}px ${size}px`;
+      }
+      sizePresets.forEach(p => p.classList.remove('active'));
+    };
+    
+    gridStyleBtns.forEach(btn => {
+      btn.removeEventListener('click', handleStyleClick);
+      btn.addEventListener('click', handleStyleClick);
+    });
+    
+    sizePresets.forEach(preset => {
+      preset.removeEventListener('click', handleSizePresetClick);
+      preset.addEventListener('click', handleSizePresetClick);
+    });
+    
+    if (gridSizeInput) {
+      gridSizeInput.removeEventListener('input', handleGridSizeInput);
+      gridSizeInput.addEventListener('input', handleGridSizeInput);
+    }
+    
+    this.fixToggleSwitches();
     
     modalEl.classList.remove('hidden');
   }
@@ -172,25 +256,34 @@ class Application {
     if (modalEl) modalEl.classList.add('hidden');
   }
 
-  saveCanvasSettings() {
-    const gridStyleSelect = document.getElementById('gridStyleSelect');
-    const gridSizeInput = document.getElementById('gridSize');
-    const snapToGridCheck = document.getElementById('snapToGrid');
-    
-    this.gridStyle = gridStyleSelect ? gridStyleSelect.value : 'dots';
-    this.gridSize = gridSizeInput ? parseInt(gridSizeInput.value) : 20;
-    this.snapToGrid = snapToGridCheck ? snapToGridCheck.checked : false;
-    
-    localStorage.setItem('canvas_grid_style', this.gridStyle);
-    localStorage.setItem('canvas_grid_size', this.gridSize.toString());
-    localStorage.setItem('canvas_snap_to_grid', this.snapToGrid.toString());
-    
-    if (this.renderer) {
-      this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
-    }
-    
-    this.applyCanvasSettings();
-    this.closeCanvasSettings();
+  fixToggleSwitches() {
+    const toggleWrappers = document.querySelectorAll('.toggle-switch');
+    toggleWrappers.forEach(wrapper => {
+      const checkbox = wrapper.querySelector('input[type="checkbox"]');
+      if (!checkbox) return;
+      
+      if (wrapper.hasAttribute('data-fixed')) return;
+      
+      const newWrapper = wrapper.cloneNode(true);
+      wrapper.parentNode.replaceChild(newWrapper, wrapper);
+      
+      const newCheckbox = newWrapper.querySelector('input[type="checkbox"]');
+      
+      newWrapper.style.cursor = 'pointer';
+      
+      const toggleCheckbox = function(e) {
+        if (e.target !== newCheckbox) {
+          e.preventDefault();
+          e.stopPropagation();
+          newCheckbox.checked = !newCheckbox.checked;
+          const changeEvent = new Event('change', { bubbles: true });
+          newCheckbox.dispatchEvent(changeEvent);
+        }
+      };
+      
+      newWrapper.addEventListener('click', toggleCheckbox);
+      newWrapper.setAttribute('data-fixed', 'true');
+    });
   }
 
   initUI() {
@@ -215,11 +308,6 @@ class Application {
     const splashSettingsBtn = document.getElementById('splashSettingsBtn');
     const splashOverlay = document.getElementById('splashOverlay');
     const appContainer = document.getElementById('appContainer');
-    const gridStyleSelect = document.getElementById('gridStyleSelect');
-    const gridSizeInput = document.getElementById('gridSize');
-    const snapToGridCheck = document.getElementById('snapToGrid');
-    const gridSizeValue = document.getElementById('gridSizeValue');
-    const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
     
     if (undoBtn) undoBtn.onclick = () => this.undo();
     if (redoBtn) redoBtn.onclick = () => this.redo();
@@ -245,54 +333,39 @@ class Application {
     
     if (closeSettingsModal) closeSettingsModal.onclick = () => this.closeCanvasSettings();
     if (cancelSettings) cancelSettings.onclick = () => this.closeCanvasSettings();
-    if (applySettings) applySettings.onclick = () => this.saveCanvasSettings();
     
-    if (gridStyleSelect) {
-      gridStyleSelect.onchange = (e) => {
-        if (gridPreviewCanvas) {
-          gridPreviewCanvas.setAttribute('data-preview', e.target.value);
+    if (applySettings) {
+      applySettings.onclick = () => {
+        const snapToGridCheck = document.getElementById('snapToGrid');
+        const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
+        const invertZoomCheck = document.getElementById('invertZoomDirection');
+        const gridSizeInput = document.getElementById('gridSize');
+        const activeStyleBtn = document.querySelector('.grid-style-btn.active');
+        
+        if (snapToGridCheck) this.snapToGrid = snapToGridCheck.checked;
+        if (ctrlZoomCheck) this.ctrlZoomOnly = ctrlZoomCheck.checked;
+        if (invertZoomCheck) this.invertZoomDirection = invertZoomCheck.checked;
+        if (gridSizeInput) this.gridSize = parseInt(gridSizeInput.value);
+        if (activeStyleBtn) this.gridStyle = activeStyleBtn.getAttribute('data-grid');
+        
+        localStorage.setItem('canvas_grid_style', this.gridStyle);
+        localStorage.setItem('canvas_grid_size', this.gridSize.toString());
+        localStorage.setItem('canvas_snap_to_grid', this.snapToGrid.toString());
+        localStorage.setItem('ctrl_zoom_only', this.ctrlZoomOnly.toString());
+        localStorage.setItem('invert_zoom_direction', this.invertZoomDirection.toString());
+        
+        if (this.renderer) {
+          this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
         }
+        
+        this.applyCanvasSettings();
+        if (this.renderer) this.renderer.render();
+        
+        this.closeCanvasSettings();
       };
     }
     
-    if (gridSizeInput) {
-      gridSizeInput.oninput = (e) => {
-        const val = e.target.value;
-        if (gridSizeValue) gridSizeValue.textContent = val;
-        if (gridPreviewCanvas) {
-          const currentStyle = gridStyleSelect ? gridStyleSelect.value : 'dots';
-          gridPreviewCanvas.setAttribute('data-preview', currentStyle);
-          gridPreviewCanvas.style.backgroundSize = `${val}px ${val}px`;
-        }
-      };
-    }
-    
-    const gridStyleBtns = document.querySelectorAll('.grid-style-btn');
-    gridStyleBtns.forEach(btn => {
-      btn.onclick = () => {
-        const gridVal = btn.getAttribute('data-grid');
-        if (gridStyleSelect) gridStyleSelect.value = gridVal;
-        if (gridPreviewCanvas) gridPreviewCanvas.setAttribute('data-preview', gridVal);
-        gridStyleBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-      };
-    });
-    
-    const sizePresets = document.querySelectorAll('.grid-size-presets span');
-    sizePresets.forEach(preset => {
-      preset.onclick = () => {
-        const size = parseInt(preset.getAttribute('data-size'));
-        if (gridSizeInput) gridSizeInput.value = size;
-        if (gridSizeValue) gridSizeValue.textContent = size;
-        if (gridPreviewCanvas) {
-          const currentStyle = gridStyleSelect ? gridStyleSelect.value : 'dots';
-          gridPreviewCanvas.setAttribute('data-preview', currentStyle);
-          gridPreviewCanvas.style.backgroundSize = `${size}px ${size}px`;
-        }
-        sizePresets.forEach(p => p.classList.remove('active'));
-        preset.classList.add('active');
-      };
-    });
+    this.fixToggleSwitches();
     
     if (newCanvasBtn) {
       newCanvasBtn.onclick = () => {
