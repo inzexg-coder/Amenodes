@@ -161,12 +161,12 @@ class Application {
     if (!modalEl) return;
     
     const gridStyleSelect = document.getElementById('gridStyleSelect');
-    const gridSizeInput = document.getElementById('gridSize');
-    const snapToGridCheck = document.getElementById('snapToGrid');
+    const gridSizeInput = document.getElementById('gridSizeSlider');
+    const snapToGridCheck = document.getElementById('snapToGridCheckbox');
+    const ctrlZoomCheck = document.getElementById('ctrlZoomCheckbox');
+    const invertZoomCheck = document.getElementById('invertZoomCheckbox');
     const gridSizeValue = document.getElementById('gridSizeValue');
     const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
-    const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
-    const invertZoomCheck = document.getElementById('invertZoomDirection');
     
     if (gridStyleSelect) gridStyleSelect.value = this.gridStyle;
     if (gridSizeInput) gridSizeInput.value = this.gridSize;
@@ -207,10 +207,10 @@ class Application {
 
   saveCanvasSettings() {
     const gridStyleSelect = document.getElementById('gridStyleSelect');
-    const gridSizeInput = document.getElementById('gridSize');
-    const snapToGridCheck = document.getElementById('snapToGrid');
-    const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
-    const invertZoomCheck = document.getElementById('invertZoomDirection');
+    const gridSizeInput = document.getElementById('gridSizeSlider');
+    const snapToGridCheck = document.getElementById('snapToGridCheckbox');
+    const ctrlZoomCheck = document.getElementById('ctrlZoomCheckbox');
+    const invertZoomCheck = document.getElementById('invertZoomCheckbox');
     
     this.gridStyle = gridStyleSelect ? gridStyleSelect.value : 'dots';
     this.gridSize = gridSizeInput ? parseInt(gridSizeInput.value) : 20;
@@ -255,8 +255,8 @@ class Application {
     const splashOverlay = document.getElementById('splashOverlay');
     const appContainer = document.getElementById('appContainer');
     const gridStyleSelect = document.getElementById('gridStyleSelect');
-    const gridSizeInput = document.getElementById('gridSize');
-    const snapToGridCheck = document.getElementById('snapToGrid');
+    const gridSizeInput = document.getElementById('gridSizeSlider');
+    const snapToGridCheck = document.getElementById('snapToGridCheckbox');
     const gridSizeValue = document.getElementById('gridSizeValue');
     const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
     
@@ -302,6 +302,15 @@ class Application {
           const currentStyle = gridStyleSelect ? gridStyleSelect.value : 'dots';
           gridPreviewCanvas.setAttribute('data-preview', currentStyle);
           gridPreviewCanvas.style.backgroundSize = `${val}px ${val}px`;
+        }
+      };
+    }
+    
+    if (snapToGridCheck) {
+      snapToGridCheck.onchange = () => {
+        if (gridPreviewCanvas) {
+          const size = gridSizeInput ? gridSizeInput.value : 20;
+          gridPreviewCanvas.style.backgroundSize = `${size}px ${size}px`;
         }
       };
     }
