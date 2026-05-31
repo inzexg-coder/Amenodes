@@ -325,7 +325,11 @@ export const en = {
     connections: 'Connections',
     inputs: 'Inputs',
     outputs: 'Outputs',
-    noDescription: 'No description'
+    noDescription: 'No description',
+    ctrlZoom: 'Ctrl + Scroll to zoom',
+    enableCtrlZoom: 'Require Ctrl key for zooming',
+    invertZoom: 'Invert zoom direction',
+    enableInvertZoom: 'Reverse scroll direction for zoom'
   },
 
 };
