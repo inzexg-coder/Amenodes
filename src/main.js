@@ -30,6 +30,7 @@ class Application {
     this.gridSize = parseInt(localStorage.getItem('canvas_grid_size') || '20');
     this.snapToGrid = localStorage.getItem('canvas_snap_to_grid') === 'true';
     this.ctrlZoomOnly = localStorage.getItem('ctrl_zoom_only') === 'true';
+    this.invertZoomDirection = localStorage.getItem('invert_zoom_direction') === 'true';
 
     this.initRenderer();
     this.initHistory();
@@ -71,17 +72,44 @@ class Application {
     let currentZoom = 1;
     const viewportEl = document.getElementById('viewport');
     
-    const setZoom = (z) => {
+    const setZoom = (z, centerX = null, centerY = null) => {
+      const oldZoom = currentZoom;
       currentZoom = Math.min(3, Math.max(0.3, z));
       window.currentZoom = currentZoom;
-      this.viewport.update();
+      
+      if (centerX !== null && centerY !== null && oldZoom !== currentZoom) {
+        const offset = this.viewport.getOffset();
+        const rect = viewportEl.getBoundingClientRect();
+        const worldX = (centerX - rect.left - offset.x) / oldZoom;
+        const worldY = (centerY - rect.top - offset.y) / oldZoom;
+        const newOffsetX = centerX - rect.left - worldX * currentZoom;
+        const newOffsetY = centerY - rect.top - worldY * currentZoom;
+        this.viewport.setOffset(newOffsetX, newOffsetY);
+      } else {
+        this.viewport.update();
+      }
+      
       this.renderer.render();
       this.updateZoomIndicator();
     };
     
     viewportEl.addEventListener('wheel', (e) => {
+      if (this.ctrlZoomOnly && !e.ctrlKey) {
+        return;
+      }
       e.preventDefault();
-      setZoom(currentZoom * (1 - e.deltaY * 0.005));
+      
+      let delta = e.deltaY > 0 ? -0.05 : 0.05;
+      if (this.invertZoomDirection) {
+        delta = -delta;
+      }
+      
+      const rect = viewportEl.getBoundingClientRect();
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+      
+      const newZoom = currentZoom * (1 + delta);
+      setZoom(newZoom, mouseX, mouseY);
     }, { passive: false });
     
     viewportEl.addEventListener('contextmenu', (e) => {
@@ -137,10 +165,14 @@ class Application {
     const snapToGridCheck = document.getElementById('snapToGrid');
     const gridSizeValue = document.getElementById('gridSizeValue');
     const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
+    const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
+    const invertZoomCheck = document.getElementById('invertZoomDirection');
     
     if (gridStyleSelect) gridStyleSelect.value = this.gridStyle;
     if (gridSizeInput) gridSizeInput.value = this.gridSize;
     if (snapToGridCheck) snapToGridCheck.checked = this.snapToGrid;
+    if (ctrlZoomCheck) ctrlZoomCheck.checked = this.ctrlZoomOnly;
+    if (invertZoomCheck) invertZoomCheck.checked = this.invertZoomDirection;
     if (gridSizeValue) gridSizeValue.textContent = this.gridSize;
     
     const gridStyleBtns = document.querySelectorAll('.grid-style-btn');
@@ -165,9 +197,6 @@ class Application {
       gridPreviewCanvas.setAttribute('data-preview', this.gridStyle);
     }
     
-    const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
-    if (ctrlZoomCheck) ctrlZoomCheck.checked = this.ctrlZoomOnly;
-    
     modalEl.classList.remove('hidden');
   }
 
@@ -180,18 +209,20 @@ class Application {
     const gridStyleSelect = document.getElementById('gridStyleSelect');
     const gridSizeInput = document.getElementById('gridSize');
     const snapToGridCheck = document.getElementById('snapToGrid');
+    const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
+    const invertZoomCheck = document.getElementById('invertZoomDirection');
     
     this.gridStyle = gridStyleSelect ? gridStyleSelect.value : 'dots';
     this.gridSize = gridSizeInput ? parseInt(gridSizeInput.value) : 20;
     this.snapToGrid = snapToGridCheck ? snapToGridCheck.checked : false;
+    this.ctrlZoomOnly = ctrlZoomCheck ? ctrlZoomCheck.checked : false;
+    this.invertZoomDirection = invertZoomCheck ? invertZoomCheck.checked : false;
     
     localStorage.setItem('canvas_grid_style', this.gridStyle);
     localStorage.setItem('canvas_grid_size', this.gridSize.toString());
     localStorage.setItem('canvas_snap_to_grid', this.snapToGrid.toString());
-
-    const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
-    this.ctrlZoomOnly = ctrlZoomCheck ? ctrlZoomCheck.checked : false;
-    localStorage.setItem('ctrl_zoom_only', this.ctrlZoomOnly);
+    localStorage.setItem('ctrl_zoom_only', this.ctrlZoomOnly.toString());
+    localStorage.setItem('invert_zoom_direction', this.invertZoomDirection.toString());
     
     if (this.renderer) {
       this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
