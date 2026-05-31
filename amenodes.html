@@ -1,817 +1,616 @@
-import { Graph } from './core/Graph.js';
-import { Viewport } from './renderer/Viewport.js';
-import { DomRenderer } from './renderer/DomRenderer.js';
-import { History } from './core/History.js';
-import { PersistenceService } from './services/PersistenceService.js';
-import { EventBus } from './services/EventBus.js';
-import { FPSCounter } from './utils/FPSCounter.js';
-import { OPTIMIZATIONS } from './config/Optimizations.js';
-import { i18n, t } from './i18n/LanguageManager.js';
-import { modal } from './ui/CustomModal.js';
-import { NodeMenu } from './ui/NodeMenu.js';
-import { loadAllNodes, nodeRegistry } from './nodes/registry.js';
-import { typeSystem } from './core/DataType.js';
-import { OptimizationPanel } from './ui/OptimizationPanel.js';
-import { BenchmarkService } from './services/BenchmarkService.js';
-import { NodeFactory } from './nodes/NodeFactory.js';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  (function() {
+    const path = window.location.pathname;
+    const basePath = path.substring(0, path.lastIndexOf('/') + 1);
+    const base = document.createElement('base');
+    base.href = basePath;
+    document.head.appendChild(base);
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title data-i18n="editor.title">@Amenodes</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
 
-window.alert = (msg) => { modal.alert(msg); };
-window.confirm = (msg) => modal.confirm(msg);
-window.prompt = (msg, def) => modal.prompt(msg, def);
+<div id="splashOverlay" class="splash-overlay">
+  <div class="splash-card">
+    <div class="splash-logo">
+      <i class="fas fa-project-diagram"></i>
+      <span>@Amenodes</span>
+    </div>
+    <div class="splash-title"></div>
+    <div class="splash-actions">
+      <button id="newCanvasBtn" class="splash-btn primary"><i class="fas fa-plus-circle"></i> <span data-i18n="editor.newCanvas">New Canvas</span></button>
+      <button id="loadCanvasBtn" class="splash-btn secondary"><i class="fas fa-folder-open"></i> <span data-i18n="editor.loadCanvas">Load Canvas</span></button>
+      <button id="splashSettingsBtn" class="splash-btn secondary"><i class="fas fa-sliders-h"></i> <span data-i18n="editor.settings">Settings</span></button>
+    </div>
+    <div class="splash-footer">
+      <span><i class="fas fa-microchip"></i> 60 FPS Ready</span>
+      <span><i class="fas fa-palette"></i> GPU Acceleration</span>
+    </div>
+  </div>
+</div>
 
-class Application {
-  constructor() {
-    this.graph = new Graph();
-    this.eventBus = new EventBus();
-    this.fpsCounter = new FPSCounter('fpsMeter');
-    this.benchmarkService = new BenchmarkService(this.graph, this.fpsCounter, OPTIMIZATIONS);
-    this.persistenceService = new PersistenceService(this.graph);
-    this.gridStyle = localStorage.getItem('canvas_grid_style') || 'dots';
-    this.gridSize = parseInt(localStorage.getItem('canvas_grid_size') || '20');
-    this.snapToGrid = localStorage.getItem('canvas_snap_to_grid') === 'true';
-    this.ctrlZoomOnly = localStorage.getItem('ctrl_zoom_only') === 'true';
-    this.invertZoomDirection = localStorage.getItem('invert_zoom_direction') === 'true';
-
-    this.initRenderer();
-    this.initHistory();
-    this.initViewport();
-    this.initUI();
-    this.initOptimizationPanel();
-    this.initNodeMenu();
-    this.initEvents();
-    this.initI18n();
-    this.initSidebar();
-    
-    this.initNodesAndStart();
-  }
-
-  initRenderer() {
-    const viewportEl = document.getElementById('viewport');
-    const canvasContainer = document.getElementById('canvasContainer');
-    const nodesLayer = document.getElementById('nodesLayer');
-    
-    this.viewport = new Viewport(viewportEl, canvasContainer);
-    this.renderer = new DomRenderer(this.graph, nodesLayer, viewportEl, this.eventBus);
-    this.renderer.setViewport(this.viewport);
-    this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
-    this.viewport.onChange = () => {
-      this.renderer.render();
-      this.updateCoordIndicator();
-    };
-    
-    window._renderer = this.renderer;
-  }
-
-  initHistory() {
-    this.history = new History(this.graph);
-    this.renderer.setHistory(this.history);
-    window._history = this.history;
-  }
-
-  initViewport() {
-    let currentZoom = 1;
-    const viewportEl = document.getElementById('viewport');
-    
-    const setZoom = (z, centerX = null, centerY = null) => {
-      const oldZoom = currentZoom;
-      currentZoom = Math.min(3, Math.max(0.3, z));
-      window.currentZoom = currentZoom;
-      
-      if (centerX !== null && centerY !== null && oldZoom !== currentZoom) {
-        const offset = this.viewport.getOffset();
-        const rect = viewportEl.getBoundingClientRect();
-        const worldX = (centerX - rect.left - offset.x) / oldZoom;
-        const worldY = (centerY - rect.top - offset.y) / oldZoom;
-        const newOffsetX = centerX - rect.left - worldX * currentZoom;
-        const newOffsetY = centerY - rect.top - worldY * currentZoom;
-        this.viewport.setOffset(newOffsetX, newOffsetY);
-      } else {
-        this.viewport.update();
-      }
-      
-      this.renderer.render();
-      this.updateZoomIndicator();
-    };
-    
-    viewportEl.addEventListener('wheel', (e) => {
-      if (this.ctrlZoomOnly && !e.ctrlKey) {
-        return;
-      }
-      e.preventDefault();
-      
-      let delta = e.deltaY > 0 ? -0.05 : 0.05;
-      if (this.invertZoomDirection) {
-        delta = -delta;
-      }
-      
-      const rect = viewportEl.getBoundingClientRect();
-      const mouseX = e.clientX;
-      const mouseY = e.clientY;
-      
-      const newZoom = currentZoom * (1 + delta);
-      setZoom(newZoom, mouseX, mouseY);
-    }, { passive: false });
-    
-    viewportEl.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      return false;
-    });
-    
-    window.setZoom = setZoom;
-    window.currentZoom = currentZoom;
-    window.applyDesignQuality = (p) => this.applyDesignQuality(p);
-    this.applyCanvasSettings();
-  }
-
-  applyDesignQuality(percent) {
-    window.currentQualityValue = percent;
-    window._designQualitySaved = percent;
-    document.body.classList.remove('design-quality-extreme', 'design-quality-1', 'design-quality-2');
-    if (percent <= 20) document.body.classList.add('design-quality-extreme');
-    else if (percent <= 50) document.body.classList.add('design-quality-1');
-    else if (percent <= 80) document.body.classList.add('design-quality-2');
-  }
-
-  applyCanvasSettings() {
-    const viewport = document.getElementById('viewport');
-    if (!viewport) return;
-    
-    switch(this.gridStyle) {
-      case 'dots':
-        viewport.style.backgroundImage = `radial-gradient(circle, rgba(255, 179, 71, 0.15) 1px, transparent 1px)`;
-        viewport.style.backgroundSize = `${this.gridSize}px ${this.gridSize}px`;
-        break;
-      case 'lines':
-        viewport.style.backgroundImage = `linear-gradient(to right, rgba(255, 179, 71, 0.1) 1px, transparent 1px),
-                                          linear-gradient(to bottom, rgba(255, 179, 71, 0.1) 1px, transparent 1px)`;
-        viewport.style.backgroundSize = `${this.gridSize}px ${this.gridSize}px`;
-        break;
-      case 'cross':
-        viewport.style.backgroundImage = `radial-gradient(circle, rgba(255, 179, 71, 0.2) 2px, transparent 2px)`;
-        viewport.style.backgroundSize = `${this.gridSize * 2}px ${this.gridSize * 2}px`;
-        break;
-      case 'none':
-        viewport.style.backgroundImage = 'none';
-        break;
-    }
-  }
-
-  openCanvasSettings() {
-    const modalEl = document.getElementById('canvasSettingsModal');
-    if (!modalEl) return;
-    
-    const snapToGridCheck = document.getElementById('snapToGrid');
-    const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
-    const invertZoomCheck = document.getElementById('invertZoomDirection');
-    const gridSizeInput = document.getElementById('gridSize');
-    const gridSizeValue = document.getElementById('gridSizeValue');
-    const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
-    
-    if (snapToGridCheck) snapToGridCheck.checked = this.snapToGrid;
-    if (ctrlZoomCheck) ctrlZoomCheck.checked = this.ctrlZoomOnly;
-    if (invertZoomCheck) invertZoomCheck.checked = this.invertZoomDirection;
-    if (gridSizeInput) gridSizeInput.value = this.gridSize;
-    if (gridSizeValue) gridSizeValue.textContent = this.gridSize;
-    
-    const gridStyleBtns = document.querySelectorAll('.grid-style-btn');
-    gridStyleBtns.forEach(btn => {
-      if (btn.getAttribute('data-grid') === this.gridStyle) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
-    });
-    
-    const sizePresets = document.querySelectorAll('.grid-size-presets span');
-    sizePresets.forEach(preset => {
-      if (parseInt(preset.getAttribute('data-size')) === this.gridSize) {
-        preset.classList.add('active');
-      } else {
-        preset.classList.remove('active');
-      }
-    });
-    
-    if (gridPreviewCanvas) {
-      gridPreviewCanvas.setAttribute('data-preview', this.gridStyle);
-      gridPreviewCanvas.style.backgroundSize = `${this.gridSize}px ${this.gridSize}px`;
-    }
-    
-    const handleStyleClick = (e) => {
-      const btn = e.currentTarget;
-      const gridVal = btn.getAttribute('data-grid');
-      gridStyleBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      if (gridPreviewCanvas) {
-        gridPreviewCanvas.setAttribute('data-preview', gridVal);
-      }
-    };
-    
-    const handleSizePresetClick = (e) => {
-      const preset = e.currentTarget;
-      const size = parseInt(preset.getAttribute('data-size'));
-      sizePresets.forEach(p => p.classList.remove('active'));
-      preset.classList.add('active');
-      if (gridSizeInput) gridSizeInput.value = size;
-      if (gridSizeValue) gridSizeValue.textContent = size;
-      if (gridPreviewCanvas) {
-        const currentStyle = document.querySelector('.grid-style-btn.active')?.getAttribute('data-grid') || this.gridStyle;
-        gridPreviewCanvas.setAttribute('data-preview', currentStyle);
-        gridPreviewCanvas.style.backgroundSize = `${size}px ${size}px`;
-      }
-    };
-    
-    const handleGridSizeInput = (e) => {
-      const size = e.target.value;
-      if (gridSizeValue) gridSizeValue.textContent = size;
-      if (gridPreviewCanvas) {
-        const currentStyle = document.querySelector('.grid-style-btn.active')?.getAttribute('data-grid') || this.gridStyle;
-        gridPreviewCanvas.setAttribute('data-preview', currentStyle);
-        gridPreviewCanvas.style.backgroundSize = `${size}px ${size}px`;
-      }
-      sizePresets.forEach(p => p.classList.remove('active'));
-    };
-    
-    gridStyleBtns.forEach(btn => {
-      btn.removeEventListener('click', handleStyleClick);
-      btn.addEventListener('click', handleStyleClick);
-    });
-    
-    sizePresets.forEach(preset => {
-      preset.removeEventListener('click', handleSizePresetClick);
-      preset.addEventListener('click', handleSizePresetClick);
-    });
-    
-    if (gridSizeInput) {
-      gridSizeInput.removeEventListener('input', handleGridSizeInput);
-      gridSizeInput.addEventListener('input', handleGridSizeInput);
-    }
-    
-    modalEl.classList.remove('hidden');
-  }
-
-  closeCanvasSettings() {
-    const modalEl = document.getElementById('canvasSettingsModal');
-    if (modalEl) modalEl.classList.add('hidden');
-  }
-
-  initUI() {
-    const undoBtn = document.getElementById('undoBtn');
-    const redoBtn = document.getElementById('redoBtn');
-    const exportBtn = document.getElementById('canvasExportBtn');
-    const importBtn = document.getElementById('canvasImportBtn');
-    const clearStorageBtn = document.getElementById('clearStorageBtn');
-    const addNodeBtn = document.getElementById('addNodeBtn');
-    const canvasSettingsBtn = document.getElementById('canvasSettingsBtn');
-    const optToggleBtn = document.getElementById('optToggleBtn');
-    const fileInput = document.getElementById('fileInput');
-    const collapseLeft = document.getElementById('collapseLeftBtn');
-    const collapseRight = document.getElementById('collapseRightBtn');
-    const leftSidebar = document.getElementById('leftSidebar');
-    const rightSidebar = document.getElementById('rightSidebar');
-    const closeSettingsModal = document.getElementById('closeSettingsModal');
-    const cancelSettings = document.getElementById('cancelSettings');
-    const applySettings = document.getElementById('applySettings');
-    const newCanvasBtn = document.getElementById('newCanvasBtn');
-    const loadCanvasBtn = document.getElementById('loadCanvasBtn');
-    const splashSettingsBtn = document.getElementById('splashSettingsBtn');
-    const splashOverlay = document.getElementById('splashOverlay');
-    const appContainer = document.getElementById('appContainer');
-    
-    if (undoBtn) undoBtn.onclick = () => this.undo();
-    if (redoBtn) redoBtn.onclick = () => this.redo();
-    if (exportBtn) exportBtn.onclick = () => this.export();
-    if (importBtn) importBtn.onclick = () => this.import();
-    if (clearStorageBtn) clearStorageBtn.onclick = () => this.clearStorage();
-    if (addNodeBtn) addNodeBtn.onclick = () => this.openNodeMenu();
-    if (canvasSettingsBtn) canvasSettingsBtn.onclick = () => this.openCanvasSettings();
-    if (optToggleBtn) {
-      optToggleBtn.onclick = () => {
-        const panel = document.getElementById('optPanel');
-        if (panel) panel.classList.toggle('hidden');
-      };
-    }
-    if (fileInput) fileInput.onchange = (e) => this.handleFileImport(e);
-    
-    if (collapseLeft && leftSidebar) {
-      collapseLeft.onclick = () => leftSidebar.classList.toggle('collapsed');
-    }
-    if (collapseRight && rightSidebar) {
-      collapseRight.onclick = () => rightSidebar.classList.toggle('collapsed');
-    }
-    
-    if (closeSettingsModal) closeSettingsModal.onclick = () => this.closeCanvasSettings();
-    if (cancelSettings) cancelSettings.onclick = () => this.closeCanvasSettings();
-    
-    if (applySettings) {
-      applySettings.onclick = () => {
-        const snapToGridCheck = document.getElementById('snapToGrid');
-        const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
-        const invertZoomCheck = document.getElementById('invertZoomDirection');
-        const gridSizeInput = document.getElementById('gridSize');
-        const activeStyleBtn = document.querySelector('.grid-style-btn.active');
-        
-        if (snapToGridCheck) this.snapToGrid = snapToGridCheck.checked;
-        if (ctrlZoomCheck) this.ctrlZoomOnly = ctrlZoomCheck.checked;
-        if (invertZoomCheck) this.invertZoomDirection = invertZoomCheck.checked;
-        if (gridSizeInput) this.gridSize = parseInt(gridSizeInput.value);
-        if (activeStyleBtn) this.gridStyle = activeStyleBtn.getAttribute('data-grid');
-        
-        localStorage.setItem('canvas_grid_style', this.gridStyle);
-        localStorage.setItem('canvas_grid_size', this.gridSize.toString());
-        localStorage.setItem('canvas_snap_to_grid', this.snapToGrid.toString());
-        localStorage.setItem('ctrl_zoom_only', this.ctrlZoomOnly.toString());
-        localStorage.setItem('invert_zoom_direction', this.invertZoomDirection.toString());
-        
-        if (this.renderer) {
-          this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
-        }
-        
-        this.applyCanvasSettings();
-        if (this.renderer) this.renderer.render();
-        
-        this.closeCanvasSettings();
-      };
-    }
-    
-    const fixToggleSwitches = () => {
-      const toggleSwitches = document.querySelectorAll('.toggle-switch');
-      toggleSwitches.forEach(toggle => {
-        const checkbox = toggle.querySelector('input[type="checkbox"]');
-        if (checkbox && !toggle.hasAttribute('data-fixed')) {
-          toggle.style.cursor = 'pointer';
-          toggle.addEventListener('click', function(e) {
-            if (e.target !== checkbox) {
-              checkbox.checked = !checkbox.checked;
-              const changeEvent = new Event('change', { bubbles: true });
-              checkbox.dispatchEvent(changeEvent);
-            }
-          });
-          toggle.setAttribute('data-fixed', 'true');
-        }
-      });
-    };
-    
-    fixToggleSwitches();
-    
-    if (newCanvasBtn) {
-      newCanvasBtn.onclick = () => {
-        if (this.graph) {
-          this.graph.nodes = [];
-          this.graph.edges = [];
-          this.graph.map.clear();
-          this.graph.nextId = 1;
-          this.graph.nextEdgeId = 1;
-          
-          if (this.viewport) {
-            this.viewport.setOffset(0, 0);
-            window.setZoom(1);
-          }
-          
-          if (window.applyDesignQuality) {
-            window.applyDesignQuality(100);
-          }
-          
-          if (this.renderer) {
-            this.renderer.render();
-          }
-          
-          this.updateNodeCount();
-          this.updateEdgeCount();
-        }
-        
-        if (splashOverlay && appContainer) {
-          splashOverlay.style.opacity = '0';
-          setTimeout(() => {
-            splashOverlay.style.display = 'none';
-            appContainer.classList.remove('hidden');
-          }, 300);
-        }
-      };
-    }
-    
-    if (loadCanvasBtn) {
-      loadCanvasBtn.onclick = () => {
-        const input = document.getElementById('fileInput');
-        if (input) {
-          input.onchange = async (e) => {
-            if (e.target.files.length && this.persistenceService) {
-              const file = e.target.files[0];
-              const success = await this.persistenceService.importFromFile(file);
-              if (success) {
-                if (this.renderer) {
-                  this.renderer.render();
-                  if (this.history) this.history.save();
-                }
-                this.updateNodeCount();
-                this.updateEdgeCount();
-                
-                if (splashOverlay && appContainer) {
-                  splashOverlay.style.opacity = '0';
-                  setTimeout(() => {
-                    splashOverlay.style.display = 'none';
-                    appContainer.classList.remove('hidden');
-                  }, 300);
-                }
-              }
-            }
-            input.value = '';
-          };
-          input.click();
-        }
-      };
-    }
-    
-    if (splashSettingsBtn) {
-      splashSettingsBtn.onclick = () => this.openCanvasSettings();
-    }
-    
-    if (splashOverlay && appContainer && this.graph && this.graph.nodes.length === 0) {
-    } else if (splashOverlay && appContainer) {
-      splashOverlay.style.display = 'none';
-      appContainer.classList.remove('hidden');
-    }
-  }
-
-  initOptimizationPanel() {
-    this.optPanel = new OptimizationPanel(
-      'optPanel', null, 'closeOptPanel', 'applyOptimizationsBtn', 'rebenchBtn',
-      this.benchmarkService, this.renderer, this.history
-    );
-    this.optPanel.setDesignQualityCallback((value) => this.applyDesignQuality(value));
-    this.optPanel.buildPanel(window.currentQualityValue || 100);
-    
-    setTimeout(() => {
-      this.runInitialBenchmark();
-    }, 1000);
-  }
-
-  async runInitialBenchmark() {
-    try {
-      const result = await this.benchmarkService.runBenchmark(true);
-      if (this.optPanel) {
-        this.optPanel.updateGains(result.gains);
-        this.optPanel.buildPanel(window.currentQualityValue || 100);
-      }
-    } catch (e) {
-      console.warn('Initial benchmark failed:', e);
-    }
-  }
-
-  initNodeMenu() {
-    this.nodeMenu = new NodeMenu(this.graph, this.renderer, this.viewport);
-    this.nodeMenu.init();
-  }
-
-  openNodeMenu() {
-    if (this.nodeMenu) {
-      this.nodeMenu.toggle();
-    }
-  }
-
-  async initNodesAndStart() {
-    try {
-      await loadAllNodes();
-      typeSystem.initFromNodeRegistry(nodeRegistry);
-      this.updateUITitles();
-      this.populateNodesLibrary();
-      this.loadInitialState();
-      this.renderer.render();
-      console.log(`[Application] Ready with ${nodeRegistry.size} node types`);
-    } catch (err) {
-      console.error('[Application] Failed to initialize nodes:', err);
-      this.loadInitialState();
-      this.renderer.render();
-    }
-  }
-  
-  populateNodesLibrary() {
-    const container = document.getElementById('nodesLibraryList');
-    if (!container) return;
-    
-    const types = NodeFactory.getAvailableNodeTypes();
-    const categories = types.filter(t => t.isCategory === true);
-    const regularNodes = types.filter(t => !t.isCategory);
-    
-    container.innerHTML = '';
-    
-    if (regularNodes.length) {
-      const categoryDiv = document.createElement('div');
-      categoryDiv.className = 'node-category';
-      categoryDiv.innerHTML = `
-        <div class="category-header">
-          <i class="fas fa-microchip"></i>
-          <span>Core Nodes</span>
-          <i class="fas fa-chevron-down chevron"></i>
+<div id="appContainer" class="app-container hidden">
+  <div class="top-bar">
+    <div class="logo-area">
+      <i class="fas fa-project-diagram"></i>
+      <span>@Amenodes</span>
+    </div>
+    <div class="canvas-controls">
+      <button id="canvasSettingsBtn" class="top-btn" title="Canvas Settings"><i class="fas fa-sliders-h"></i> <span data-i18n="editor.canvasSettings">Canvas Settings</span></button>
+      <button id="canvasExportBtn" class="top-btn" title="Export"><i class="fas fa-download"></i> <span data-i18n="editor.export">Export</span></button>
+      <button id="canvasImportBtn" class="top-btn" title="Import"><i class="fas fa-upload"></i> <span data-i18n="editor.import">Import</span></button>
+      <div class="divider"></div>
+      <button id="undoBtn" class="top-btn" title="Undo"><i class="fas fa-undo-alt"></i> <span data-i18n="editor.undo">Undo</span></button>
+      <button id="redoBtn" class="top-btn" title="Redo"><i class="fas fa-redo-alt"></i> <span data-i18n="editor.redo">Redo</span></button>
+    </div>
+    <div class="right-controls" id="rightControls">
+      <div class="zoom-indicator" id="zoomIndicator">100%</div>
+      <button id="addNodeBtn" class="top-btn primary" title="Add Node"><i class="fas fa-plus"></i> <span data-i18n="editor.addNode">Add node</span></button>
+      <button id="optToggleBtn" class="top-btn" title="Optimizations"><i class="fas fa-tachometer-alt"></i> <span data-i18n="editor.optimize">Optimizations</span></button>
+      <div class="divider"></div>
+      <button id="clearStorageBtn" class="top-btn danger" title="Clear Storage"><i class="fas fa-trash-alt"></i> <span data-i18n="editor.clearStorage">Clear storage</span></button>
+    </div>
+  </div>
+  <div class="workspace">
+    <div class="sidebar left-sidebar" id="leftSidebar">
+      <div class="sidebar-header">
+        <button id="collapseLeftBtn" class="collapse-btn"><i class="fas fa-chevron-left"></i></button>
+        <i class="fas fa-cubes"></i>
+        <span data-i18n="editor.nodesLibrary">Nodes Library</span>
+      </div>
+      <div class="sidebar-content" id="nodesLibraryList">
+        <div class="loading-nodes"><i class="fas fa-spinner fa-pulse"></i> Loading nodes...</div>
+      </div>
+    </div>
+    <div class="viewport-container">
+      <div class="viewport" id="viewport">
+        <div class="canvas-container" id="canvasContainer">
+          <div class="nodes-layer" id="nodesLayer"></div>
         </div>
-        <div class="category-nodes"></div>
-      `;
-      
-      const nodesContainer = categoryDiv.querySelector('.category-nodes');
-      regularNodes.forEach(nodeType => {
-        const item = document.createElement('div');
-        item.className = 'node-list-item';
-        item.innerHTML = `
-          <i class="fas ${nodeType.icon || 'fa-circle'}"></i>
-          <span>${t(nodeType.nameKey)}</span>
-        `;
-        item.onclick = () => this.createNodeAtCenter(nodeType.type);
-        nodesContainer.appendChild(item);
-      });
-      
-      const header = categoryDiv.querySelector('.category-header');
-      header.onclick = () => {
-        header.classList.toggle('collapsed');
-        nodesContainer.classList.toggle('hidden');
-      };
-      
-      container.appendChild(categoryDiv);
-    }
-    
-    categories.forEach(category => {
-      const categoryDiv = document.createElement('div');
-      categoryDiv.className = 'node-category';
-      categoryDiv.innerHTML = `
-        <div class="category-header">
-          <i class="fas ${category.icon || 'fa-folder'}"></i>
-          <span>${t(category.nameKey)}</span>
-          <i class="fas fa-chevron-down chevron"></i>
-        </div>
-        <div class="category-nodes"></div>
-      `;
-      
-      const nodesContainer = categoryDiv.querySelector('.category-nodes');
-      if (category.subnodes) {
-        category.subnodes.forEach(subnode => {
-          const item = document.createElement('div');
-          item.className = 'node-list-item';
-          item.innerHTML = `
-            <i class="fas fa-calculator"></i>
-            <span>${t(subnode.nameKey)}</span>
-          `;
-          item.onclick = () => this.createNodeAtCenter(category.type, subnode);
-          nodesContainer.appendChild(item);
-        });
-      }
-      
-      const header = categoryDiv.querySelector('.category-header');
-      header.onclick = () => {
-        header.classList.toggle('collapsed');
-        nodesContainer.classList.toggle('hidden');
-      };
-      
-      container.appendChild(categoryDiv);
-    });
-  }
-  
-  snapToGridValue(value) {
-    if (!this.snapToGrid) return value;
-    return Math.round(value / this.gridSize) * this.gridSize;
-  }
-
-  createNodeAtCenter(type, subnode = null) {
-    const viewportRect = document.getElementById('viewport').getBoundingClientRect();
-    const offset = this.viewport.getOffset();
-    const zoom = window.currentZoom || 1;
-    
-    let x = (viewportRect.width / 2 - offset.x) / zoom - 140;
-    let y = (viewportRect.height / 2 - offset.y) / zoom - 40;
-    
-    x = this.snapToGridValue(x);
-    y = this.snapToGridValue(y);
-    
-    const options = { x, y };
-    if (subnode) Object.assign(options, subnode);
-    
-    const node = NodeFactory.createNode(type, options);
-    if (node) {
-      this.graph.addNode(node);
-      this.finishNodeCreation();
-    }
-  }
-  
-  finishNodeCreation() {
-    this.graph.reevaluateAll();
-    this.graph.updateAllOutputs();
-    this.renderer.render();
-    this.history.save();
-    this.updateNodeCount();
-    this.updateEdgeCount();
-  }
-  
-  loadInitialState() {
-    const loaded = this.persistenceService.loadFromStorage();
-    this.updateNodeCount();
-    this.updateEdgeCount();
-    
-    if (!loaded && this.graph.nodes.length === 0) {
-      const splashOverlay = document.getElementById('splashOverlay');
-      if (splashOverlay && splashOverlay.style.display !== 'none') {
-      } else if (splashOverlay) {
-        splashOverlay.style.display = 'flex';
-        splashOverlay.style.opacity = '1';
-      }
-    } else {
-      const splashOverlay = document.getElementById('splashOverlay');
-      const appContainer = document.getElementById('appContainer');
-      if (splashOverlay && appContainer) {
-        splashOverlay.style.display = 'none';
-        appContainer.classList.remove('hidden');
-      }
-    }
-  }
-  
-  updateNodeCount() {
-    const nodeCountEl = document.getElementById('nodeCount');
-    if (nodeCountEl) {
-      nodeCountEl.textContent = `${this.graph.nodes.length} nodes`;
-    }
-  }
-  
-  updateEdgeCount() {
-    const edgeCountEl = document.getElementById('edgeCount');
-    if (edgeCountEl) {
-      edgeCountEl.textContent = `${this.graph.edges.length} connections`;
-    }
-  }
-  
-  updateZoomIndicator() {
-    const zoomIndicator = document.getElementById('zoomIndicator');
-    if (zoomIndicator) {
-      const percent = Math.round((window.currentZoom || 1) * 100);
-      zoomIndicator.textContent = `${percent}%`;
-    }
-  }
-  
-  updateCoordIndicator() {
-    const indicator = document.getElementById('coordIndicator');
-    if (indicator && this.viewport) {
-      const offset = this.viewport.getOffset();
-      indicator.textContent = `X: ${Math.round(offset.x)} | Y: ${Math.round(offset.y)}`;
-    }
-  }
-
-  undo() {
-    this.history.undo();
-    this.renderer.render();
-    this.history.autoSave();
-    this.updateNodeCount();
-    this.updateEdgeCount();
-  }
-
-  redo() {
-    this.history.redo();
-    this.renderer.render();
-    this.history.autoSave();
-    this.updateNodeCount();
-    this.updateEdgeCount();
-  }
-
-  export() {
-    this.persistenceService.exportToFile();
-  }
-
-  import() {
-    const fileInput = document.getElementById('fileInput');
-    if (fileInput) fileInput.click();
-  }
-
-  async handleFileImport(event) {
-    if (!event.target.files.length) return;
-    const file = event.target.files[0];
-    const success = await this.persistenceService.importFromFile(file);
-    if (success) {
-      this.renderer.render();
-      this.history.save();
-      this.updateNodeCount();
-      this.updateEdgeCount();
-      this.updateZoomIndicator();
-    }
-    event.target.value = '';
-  }
-
-  clearStorage() {
-    modal.confirm(t('modal.clearStorageConfirm')).then((result) => {
-      if (result) {
-        localStorage.removeItem('amenodes_autosave');
-        modal.alert(t('modal.storageCleared'));
-      }
-    });
-  }
-
-  initEvents() {
-    window.addEventListener('mousemove', (e) => this.renderer.onGlobalMove(e));
-    window.addEventListener('mouseup', (e) => this.renderer.onGlobalUp(e));
-    window.addEventListener('mousemove', (e) => this.renderer.onGlobalMoveEdge(e));
-    window.addEventListener('mouseup', (e) => this.renderer.onGlobalUpEdge(e));
-    
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        this.renderer.closeMenu();
-      }
-      if (e.key === 'Delete' && this.renderer.contextMenu?.currentSourceId) {
-        const nodeId = this.renderer.contextMenu.currentSourceId;
-        if (nodeId) {
-          this.graph.removeNode(nodeId);
-          this.renderer.render();
-          this.history.save();
-          this.updateNodeCount();
-          this.updateEdgeCount();
-        }
-      }
-    });
-    
-    const originalRemoveNode = this.graph.removeNode.bind(this.graph);
-    this.graph.removeNode = (id) => {
-      originalRemoveNode(id);
-      this.updateNodeCount();
-      this.updateEdgeCount();
-    };
-    
-    const originalAddEdge = this.graph.addEdge.bind(this.graph);
-    this.graph.addEdge = (sourceId, targetId, port) => {
-      const edge = originalAddEdge(sourceId, targetId, port);
-      if (edge) this.updateEdgeCount();
-      return edge;
-    };
-    
-    const originalRemoveEdge = this.graph.removeEdge.bind(this.graph);
-    this.graph.removeEdge = (id) => {
-      originalRemoveEdge(id);
-      this.updateEdgeCount();
-    };
-  }
-
-  initI18n() {
-    i18n.subscribe(() => {
-      this.updateUITitles();
-      this.populateNodesLibrary();
-      if (this.renderer) {
-        this.renderer.render();
-      }
-    });
-    
-    this.updateUITitles();
-  }
-
-  updateUITitles() {
-    document.title = `@Amenodes`;
-    
-    if (this.graph) {
-      this.graph.reevaluateAll();
-      this.graph.updateAllOutputs();
-    }
-    
-    if (this.renderer) {
-      this.renderer.render();
-    }
-  }
-
-  initSidebar() {
-    this.renderer.onNodeSelect = (node) => {
-      this.updatePropertiesPanel(node);
-    };
-  }
-  
-  updatePropertiesPanel(node) {
-    const panel = document.getElementById('propertiesPanel');
-    if (!panel) return;
-    
-    if (!node) {
-      panel.innerHTML = `
+        <canvas id="webglCanvas" class="webgl-canvas" style="display:none;"></canvas>
+      </div>
+    </div>
+    <div class="sidebar right-sidebar" id="rightSidebar">
+      <div class="sidebar-header">
+        <button id="collapseRightBtn" class="collapse-btn"><i class="fas fa-chevron-right"></i></button>
+        <i class="fas fa-info-circle"></i>
+        <span data-i18n="editor.properties">Properties</span>
+      </div>
+      <div class="sidebar-content" id="propertiesPanel">
         <div class="empty-property">
           <i class="fas fa-hand-pointer"></i>
-          <p>Select a node to edit properties</p>
-        </div>
-      `;
-      return;
-    }
-    
-    panel.innerHTML = `
-      <div class="property-group">
-        <div class="property-label">Node Type</div>
-        <div class="property-value">${node.type}</div>
-      </div>
-      <div class="property-group">
-        <div class="property-label">ID</div>
-        <div class="property-value">${node.id}</div>
-      </div>
-      <div class="property-group">
-        <div class="property-label">Position</div>
-        <div class="property-value">X: ${Math.round(node.x)}, Y: ${Math.round(node.y)}</div>
-      </div>
-      <div class="property-group">
-        <div class="property-label">Connections</div>
-        <div class="property-value">
-          Inputs: ${this.graph.getIncomingEdges(node.id).length}<br>
-          Outputs: ${this.graph.getOutgoingEdges(node.id).length}
+          <p data-i18n="editor.selectNodeToEdit">Select a node to edit properties</p>
         </div>
       </div>
-    `;
+    </div>
+  </div>
+  <div class="status-bar">
+    <div class="status-left">
+      <span id="nodeCount">0 <span data-i18n="editor.nodeCount">nodes</span></span>
+      <span id="edgeCount">0 <span data-i18n="editor.edgeCount">connections</span></span>
+    </div>
+    <div class="status-center">
+      <div class="coord-indicator" id="coordIndicator">X: 0.00 | Y: 0.00</div>
+    </div>
+    <div class="status-right">
+      <div class="fps-meter" id="fpsMeter"><i class="fas fa-chart-line"></i> <span data-i18n="editor.fps">FPS</span>: --</div>
+      <div class="autosave-status" id="autosaveStatus"><i class="fas fa-save"></i> <span data-i18n="editor.saved">Saved</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="optPanel" class="opt-panel hidden">
+  <div class="opt-header">
+    <span><i class="fas fa-microchip"></i> <span data-i18n="editor.performanceOptimizations">Performance Optimizations</span></span>
+    <button id="closeOptPanel"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="opt-list" id="optListContainer"></div>
+  <button id="rebenchmarkBtn" class="rebench-btn"><i class="fas fa-chart-line"></i> <span data-i18n="editor.recalculateImpact">Recalculate optimizations impact</span></button>
+  <button id="applyOptimizationsBtn" class="apply-btn"><i class="fas fa-check-circle"></i> <span data-i18n="editor.applySelected">APPLY SELECTED</span></button>
+</div>
+
+<div id="canvasSettingsModal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3><i class="fas fa-sliders-h"></i> <span data-i18n="editor.canvasSettings">Canvas Settings</span></h3>
+      <button class="modal-close" id="closeSettingsModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="setting-group">
+        <label><span data-i18n="editor.gridStyle">Grid Style</span></label>
+        <div class="grid-preview" id="gridPreview">
+          <div class="grid-preview-canvas" id="gridPreviewCanvas"></div>
+        </div>
+        <div class="grid-style-buttons">
+          <button class="grid-style-btn" data-grid="dots"><span data-i18n="editor.dots">Dots</span></button>
+          <button class="grid-style-btn" data-grid="lines"><span data-i18n="editor.lines">Lines</span></button>
+          <button class="grid-style-btn" data-grid="cross"><span data-i18n="editor.cross">Cross</span></button>
+          <button class="grid-style-btn" data-grid="none"><span data-i18n="editor.none">None</span></button>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label><span data-i18n="editor.snapToGrid">Snap to Grid</span></label>
+        <div class="toggle-switch">
+          <input type="checkbox" id="snapToGrid">
+          <span class="toggle-slider"></span>
+          <span class="toggle-label"><span data-i18n="editor.enableSnap">Enable snapping nodes to grid</span></span>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label><span data-i18n="editor.ctrlZoom">Ctrl + Scroll to zoom</span></label>
+        <div class="toggle-switch">
+          <input type="checkbox" id="ctrlZoomOnly">
+          <span class="toggle-slider"></span>
+          <span class="toggle-label"><span data-i18n="editor.enableCtrlZoom">Require Ctrl key for zooming</span></span>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label><span data-i18n="editor.invertZoom">Invert zoom direction</span></label>
+        <div class="toggle-switch">
+          <input type="checkbox" id="invertZoomDirection">
+          <span class="toggle-slider"></span>
+          <span class="toggle-label"><span data-i18n="editor.enableInvertZoom">Reverse scroll direction for zoom</span></span>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label><span data-i18n="editor.gridSize">Grid Size</span>: <span id="gridSizeValue">20</span> px</label>
+        <input type="range" id="gridSize" value="20" min="10" max="50" step="5">
+        <div class="grid-size-presets">
+          <span data-size="10">10px</span>
+          <span data-size="15">15px</span>
+          <span data-size="20" class="active">20px</span>
+          <span data-size="25">25px</span>
+          <span data-size="30">30px</span>
+          <span data-size="40">40px</span>
+          <span data-size="50">50px</span>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label><span data-i18n="editor.language">Language</span></label>
+        <div class="language-selector" id="canvasLanguageSelector">
+          <div class="language-option" data-lang="en">
+            <span>English</span>
+            <span id="lang-en-check" style="display:none;">✓</span>
+          </div>
+          <div class="language-option" data-lang="ru">
+            <span>Русский</span>
+            <span id="lang-ru-check" style="display:none;">✓</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn secondary" id="cancelSettings"><span data-i18n="editor.cancel">Cancel</span></button>
+      <button class="modal-btn primary" id="applySettings"><span data-i18n="editor.apply">Apply</span></button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" class="hidden-file-input" accept=".amnk">
+<div id="benchmarkStatus" class="benchmark-status" style="display:none;"><i class="fas fa-flask"></i> Benchmarking optimizations...</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "./src/main.js": "./src/main.js"
   }
 }
+</script>
+<script type="module" src="./src/main.js"></script>
 
-document.addEventListener('DOMContentLoaded', () => {
-  window.app = new Application();
+<script>
+const API_BASE = 'https://amenoke.ru/api';
+let currentUser = null;
+let userMenu = null;
+
+function t(key, params = {}) {
+    const translations = window._translations || {};
+    const keys = key.split('.');
+    let value = translations;
+    for (const k of keys) {
+        if (value && typeof value === 'object' && k in value) {
+            value = value[k];
+        } else {
+            return key;
+        }
+    }
+    if (typeof value === 'string') {
+        return value.replace(/\{(\w+)\}/g, (_, param) => params[param] ?? `{${param}}`);
+    }
+    return key;
+}
+
+function updateUITexts() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (key) el.textContent = t(key);
+    });
+    document.title = t('editor.title');
+}
+
+function loadTranslations() {
+    const savedLang = localStorage.getItem('amenodes_language') || 'en';
+    fetch(`./src/i18n/locales/${savedLang}.js`)
+        .then(res => res.text())
+        .then(text => {
+            const match = text.match(/export const \w+ = ({[\s\S]*?});/);
+            if (match) {
+                const translationsObj = eval('(' + match[1] + ')');
+                window._translations = translationsObj;
+                updateUITexts();
+                if (window.i18n && window.i18n.notifyListeners) {
+                    window.i18n.notifyListeners();
+                }
+            }
+        })
+        .catch(err => console.error('Failed to load translations:', err));
+}
+
+loadTranslations();
+
+class AmenodesAPI {
+    constructor() {
+        this.token = localStorage.getItem('auth_token');
+    }
+    setToken(token) {
+        this.token = token;
+        if (token) localStorage.setItem('auth_token', token);
+        else localStorage.removeItem('auth_token');
+    }
+    async request(endpoint, options = {}) {
+        const headers = { 'Content-Type': 'application/json' };
+        if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+        const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Request failed');
+        return data;
+    }
+    async register(username, email, password) {
+        return this.request('/register.php', {
+            method: 'POST',
+            body: JSON.stringify({ username, email, password })
+        });
+    }
+    async login(login, password) {
+        const data = await this.request('/login.php', {
+            method: 'POST',
+            body: JSON.stringify({ login, password })
+        });
+        if (data.token) this.setToken(data.token);
+        return data;
+    }
+    logout() { this.setToken(null); }
+    async getCurrentUser() {
+        if (!this.token) return null;
+        try { return await this.request('/me.php'); }
+        catch { return null; }
+    }
+    async createTemplate(title, description, graphData) {
+        return this.request('/create_template.php', {
+            method: 'POST',
+            body: JSON.stringify({ title, description, graph_data: graphData })
+        });
+    }
+}
+
+const api = new AmenodesAPI();
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function showAuthModal() {
+    const modal = document.createElement('div');
+    modal.className = 'auth-modal';
+    modal.innerHTML = `
+        <div class="auth-modal-content">
+            <span class="auth-modal-close">&times;</span>
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login">${t('editor.login')}</button>
+                <button class="auth-tab" data-tab="register">${t('editor.register')}</button>
+            </div>
+            <div class="auth-panel active" id="login-panel">
+                <input type="text" id="login-username" placeholder="${t('editor.username')} / ${t('editor.email')}">
+                <input type="password" id="login-password" placeholder="${t('editor.password')}">
+                <button id="login-btn">${t('editor.login')}</button>
+                <div class="auth-error" id="login-error"></div>
+            </div>
+            <div class="auth-panel" id="register-panel">
+                <input type="text" id="reg-username" placeholder="${t('editor.username')}">
+                <input type="email" id="reg-email" placeholder="${t('editor.email')}">
+                <input type="password" id="reg-password" placeholder="${t('editor.passwordMin')}">
+                <button id="register-btn">${t('editor.register')}</button>
+                <div class="auth-error" id="register-error"></div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    const closeBtn = modal.querySelector('.auth-modal-close');
+    const tabs = modal.querySelectorAll('.auth-tab');
+    const panels = modal.querySelectorAll('.auth-panel');
+    closeBtn.onclick = () => modal.remove();
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    tabs.forEach(tab => {
+        tab.onclick = () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            panels.forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(`${tab.dataset.tab}-panel`).classList.add('active');
+        };
+    });
+    document.getElementById('login-btn').onclick = async () => {
+        const login = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+        const errorDiv = document.getElementById('login-error');
+        try {
+            const data = await api.login(login, password);
+            if (data.success) {
+                modal.remove();
+                currentUser = data.user;
+                updateAuthUI();
+                showToast(t('editor.welcome', { username: data.user.username }), 'success');
+            }
+        } catch (err) {
+            errorDiv.textContent = err.message;
+        }
+    };
+    document.getElementById('register-btn').onclick = async () => {
+        const username = document.getElementById('reg-username').value;
+        const email = document.getElementById('reg-email').value;
+        const password = document.getElementById('reg-password').value;
+        const errorDiv = document.getElementById('register-error');
+        try {
+            const data = await api.register(username, email, password);
+            if (data.success) {
+                await api.login(username, password);
+                modal.remove();
+                const userData = await api.getCurrentUser();
+                currentUser = userData.user;
+                updateAuthUI();
+                showToast(t('editor.welcome', { username }), 'success');
+            }
+        } catch (err) {
+            errorDiv.textContent = err.message;
+        }
+    };
+}
+
+function updateAuthUI() {
+    const rightControls = document.getElementById('rightControls');
+    if (!rightControls) return;
+    const existingAuth = document.getElementById('auth-container');
+    if (existingAuth) existingAuth.remove();
+    const authContainer = document.createElement('div');
+    authContainer.id = 'auth-container';
+    authContainer.style.display = 'flex';
+    authContainer.style.alignItems = 'center';
+    authContainer.style.gap = '12px';
+    if (currentUser) {
+        const saveBtn = document.createElement('button');
+        saveBtn.id = 'saveTemplateBtn';
+        saveBtn.className = 'top-btn';
+        saveBtn.style.background = '#2d3a5e';
+        saveBtn.style.color = '#ffb347';
+        saveBtn.innerHTML = `<i class="fas fa-save"></i> ${t('editor.saveTemplate')}`;
+        saveBtn.onclick = () => showSaveTemplateModal();
+        const avatar = document.createElement('div');
+        avatar.className = 'user-avatar';
+        avatar.textContent = currentUser.username.charAt(0).toUpperCase();
+        avatar.onclick = (e) => {
+            e.stopPropagation();
+            toggleUserMenu();
+        };
+        authContainer.appendChild(saveBtn);
+        if (currentUser.role === 'moderator' || currentUser.role === 'admin') {
+            const modBtn = document.createElement('button');
+            modBtn.id = 'moderateBtn';
+            modBtn.className = 'top-btn';
+            modBtn.style.background = '#8b3a3a';
+            modBtn.style.color = '#fff';
+            modBtn.innerHTML = `<i class="fas fa-gavel"></i> ${t('editor.moderate')}`;
+            modBtn.onclick = () => window.open('moderate.html', '_blank');
+            authContainer.appendChild(modBtn);
+        }
+        authContainer.appendChild(avatar);
+        const zoomIndicator = rightControls.querySelector('#zoomIndicator');
+        if (zoomIndicator) rightControls.insertBefore(authContainer, zoomIndicator);
+        else rightControls.insertBefore(authContainer, rightControls.firstChild);
+    } else {
+        const loginBtn = document.createElement('button');
+        loginBtn.id = 'loginHeaderBtn';
+        loginBtn.className = 'top-btn';
+        loginBtn.style.background = '#ffb347';
+        loginBtn.style.color = '#1a1f30';
+        loginBtn.innerHTML = `<i class="fas fa-sign-in-alt"></i> ${t('editor.login')}`;
+        loginBtn.onclick = () => showAuthModal();
+        authContainer.appendChild(loginBtn);
+        const zoomIndicator = rightControls.querySelector('#zoomIndicator');
+        if (zoomIndicator) rightControls.insertBefore(authContainer, zoomIndicator);
+        else rightControls.appendChild(authContainer);
+    }
+}
+
+function toggleUserMenu() {
+    if (userMenu) {
+        userMenu.remove();
+        userMenu = null;
+        return;
+    }
+    userMenu = document.createElement('div');
+    userMenu.className = 'user-menu';
+    userMenu.innerHTML = `
+        <div class="user-menu-item" id="menu-profile">
+            <i class="fas fa-user"></i> ${t('editor.myProfile')}
+        </div>
+        <div class="user-menu-item" id="menu-templates">
+            <i class="fas fa-cubes"></i> ${t('editor.myTemplates')}
+        </div>
+        <div class="user-menu-divider"></div>
+        <div class="user-menu-item" id="menu-logout">
+            <i class="fas fa-sign-out-alt"></i> ${t('editor.logout')}
+        </div>
+    `;
+    document.body.appendChild(userMenu);
+    const rect = document.querySelector('.user-avatar').getBoundingClientRect();
+    userMenu.style.position = 'fixed';
+    userMenu.style.top = `${rect.bottom + 8}px`;
+    userMenu.style.right = `${window.innerWidth - rect.right}px`;
+    document.getElementById('menu-profile').onclick = () => {
+        userMenu.remove();
+        userMenu = null;
+        window.location.href = 'profile.html';
+    };
+    document.getElementById('menu-templates').onclick = () => {
+        userMenu.remove();
+        userMenu = null;
+        window.location.href = 'profile.html';
+    };
+    document.getElementById('menu-logout').onclick = () => {
+        api.logout();
+        currentUser = null;
+        userMenu.remove();
+        userMenu = null;
+        updateAuthUI();
+        showToast(t('editor.logout'), 'info');
+    };
+    const closeMenu = (e) => {
+        if (userMenu && !userMenu.contains(e.target) && !e.target.classList.contains('user-avatar')) {
+            userMenu.remove();
+            userMenu = null;
+            document.removeEventListener('click', closeMenu);
+        }
+    };
+    setTimeout(() => document.addEventListener('click', closeMenu), 100);
+}
+
+function showSaveTemplateModal() {
+    if (!currentUser) {
+        showToast(t('editor.loginFirst'), 'error');
+        showAuthModal();
+        return;
+    }
+    const modal = document.createElement('div');
+    modal.className = 'auth-modal';
+    modal.innerHTML = `
+        <div class="auth-modal-content save-template-modal">
+            <span class="auth-modal-close">&times;</span>
+            <h3><i class="fas fa-save"></i> ${t('editor.saveTemplate')}</h3>
+            <input type="text" id="template-title" placeholder="${t('editor.templateTitle')}">
+            <textarea id="template-desc" placeholder="${t('editor.templateDesc')}" rows="3"></textarea>
+            <button id="save-template-submit">${t('editor.submitForModeration')}</button>
+            <div class="auth-error" id="save-error"></div>
+            <small style="display:block; margin-top:12px; text-align:center; color:#8899bb;">
+                <i class="fas fa-info-circle"></i> ${t('editor.infoText')}
+            </small>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    const closeBtn = modal.querySelector('.auth-modal-close');
+    closeBtn.onclick = () => modal.remove();
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    document.getElementById('save-template-submit').onclick = async () => {
+        const title = document.getElementById('template-title').value.trim();
+        const description = document.getElementById('template-desc').value.trim();
+        const errorDiv = document.getElementById('save-error');
+        if (!title) {
+            errorDiv.textContent = t('editor.titleRequired');
+            return;
+        }
+        if (!window.app || !window.app.graph || !window.app.graph.exportGraph) {
+            errorDiv.textContent = t('editor.graphNotAvailable');
+            return;
+        }
+        const graphData = window.app.graph.exportGraph();
+        try {
+            const data = await api.createTemplate(title, description, graphData);
+            if (data.success) {
+                modal.remove();
+                showToast(t('editor.templateSubmitted'), 'success');
+            }
+        } catch (err) {
+            errorDiv.textContent = err.message;
+        }
+    };
+}
+
+function loadTemplateFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const templateId = urlParams.get('template');
+    if (templateId && window.app && window.app.graph && window.app.graph.loadGraph) {
+        showToast(t('editor.loadingTemplate'), 'info');
+        fetch(`${API_BASE}/get_template.php?id=${templateId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.template.graph_data) {
+                    window.app.graph.loadGraph(data.template.graph_data);
+                    if (window.app.renderer) window.app.renderer.render();
+                    showToast(t('editor.templateLoaded', { title: data.template.title }), 'success');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast(t('editor.loadFailed'), 'error');
+            });
+    }
+}
+
+function initLanguageSettings() {
+    const canvasSettingsBtn = document.getElementById('canvasSettingsBtn');
+    if (!canvasSettingsBtn) return;
+    canvasSettingsBtn.onclick = () => {
+        const modal = document.getElementById('canvasSettingsModal');
+        if (modal) {
+            const currentLang = localStorage.getItem('amenodes_language') || 'en';
+            document.getElementById('lang-en-check').style.display = currentLang === 'en' ? 'inline' : 'none';
+            document.getElementById('lang-ru-check').style.display = currentLang === 'ru' ? 'inline' : 'none';
+            modal.classList.remove('hidden');
+        }
+    };
+    const langOptions = document.querySelectorAll('#canvasLanguageSelector .language-option');
+    langOptions.forEach(opt => {
+        opt.onclick = (e) => {
+            e.stopPropagation();
+            const lang = opt.getAttribute('data-lang');
+            localStorage.setItem('amenodes_language', lang);
+            document.getElementById('lang-en-check').style.display = lang === 'en' ? 'inline' : 'none';
+            document.getElementById('lang-ru-check').style.display = lang === 'ru' ? 'inline' : 'none';
+            showToast(`Language changed to ${lang === 'en' ? 'English' : 'Русский'}`, 'success');
+            setTimeout(() => window.location.reload(), 500);
+        };
+    });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    initLanguageSettings();
+    try {
+        const data = await api.getCurrentUser();
+        if (data && data.success) {
+            currentUser = data.user;
+            updateAuthUI();
+        } else {
+            updateAuthUI();
+        }
+    } catch (err) {
+        console.error(err);
+        updateAuthUI();
+    }
+    setTimeout(() => {
+        loadTemplateFromURL();
+    }, 1500);
 });
-
-export default Application;
+</script>
+</body>
+</html>
