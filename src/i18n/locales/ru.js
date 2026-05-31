@@ -325,6 +325,10 @@ export const ru = {
     connections: 'Соединения',
     inputs: 'Входы',
     outputs: 'Выходы',
-    noDescription: 'Нет описания'
+    noDescription: 'Нет описания',
+    ctrlZoom: 'Ctrl + Scroll для масштабирования',
+    enableCtrlZoom: 'Требовать зажатую клавишу Ctrl для зума',
+    invertZoom: 'Инвертировать направление зума',
+    enableInvertZoom: 'Обратное направление прокрутки для масштабирования'
 }
 };
