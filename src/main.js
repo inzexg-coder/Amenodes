@@ -185,6 +185,10 @@ class Application {
     localStorage.setItem('canvas_grid_style', this.gridStyle);
     localStorage.setItem('canvas_grid_size', this.gridSize.toString());
     localStorage.setItem('canvas_snap_to_grid', this.snapToGrid.toString());
+
+    const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
+    this.ctrlZoomOnly = ctrlZoomCheck ? ctrlZoomCheck.checked : false;
+    localStorage.setItem('ctrl_zoom_only', this.ctrlZoomOnly);
     
     if (this.renderer) {
       this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
