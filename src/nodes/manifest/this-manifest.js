@@ -9,6 +9,7 @@ import { CalcNode, metadata as calcMeta } from '../CalcNode.js';
 import { OutputNode, metadata as outputMeta } from '../OutputNode.js';
 import { MapNode, metadata as mapMeta } from '../MapNode.js';
 import { ConfidenceIntervalNode, metadata as confidenceMeta } from '../ConfidenceIntervalNode.js';
+import { MeanNode, metadata as meanMeta } from '../MeanNode.js';
 
 // import { MyNode, metadata as myNodeMeta } from '../MyNode.js';
 
@@ -24,6 +25,7 @@ export const nodesManifest = [
   { ctor: OutputNode, metadata: outputMeta, fileName: 'output.js' },
   { ctor: MapNode, metadata: mapMeta, fileName: 'map.js' },
   { ctor: ConfidenceIntervalNode, metadata: confidenceMeta, fileName: 'confidenceInterval.js' },
+  { ctor: MeanNode, metadata: meanMeta, fileName: 'mean.js' },
 
 // { ctor: MyNode, metadata: myNodeMeta, fileName: 'node.js' },
 ];
