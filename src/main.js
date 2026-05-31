@@ -165,6 +165,9 @@ class Application {
       gridPreviewCanvas.setAttribute('data-preview', this.gridStyle);
     }
     
+    const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
+    if (ctrlZoomCheck) ctrlZoomCheck.checked = this.ctrlZoomOnly;
+    
     modalEl.classList.remove('hidden');
   }
 
