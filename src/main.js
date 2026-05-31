@@ -161,10 +161,10 @@ class Application {
     if (!modalEl) return;
     
     const gridStyleSelect = document.getElementById('gridStyleSelect');
-    const gridSizeInput = document.getElementById('gridSizeSlider');
-    const snapToGridCheck = document.getElementById('snapToGridCheckbox');
-    const ctrlZoomCheck = document.getElementById('ctrlZoomCheckbox');
-    const invertZoomCheck = document.getElementById('invertZoomCheckbox');
+    const gridSizeInput = document.getElementById('gridSize');
+    const snapToGridCheck = document.getElementById('snapToGrid');
+    const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
+    const invertZoomCheck = document.getElementById('invertZoomDirection');
     const gridSizeValue = document.getElementById('gridSizeValue');
     const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
     
@@ -207,10 +207,10 @@ class Application {
 
   saveCanvasSettings() {
     const gridStyleSelect = document.getElementById('gridStyleSelect');
-    const gridSizeInput = document.getElementById('gridSizeSlider');
-    const snapToGridCheck = document.getElementById('snapToGridCheckbox');
-    const ctrlZoomCheck = document.getElementById('ctrlZoomCheckbox');
-    const invertZoomCheck = document.getElementById('invertZoomCheckbox');
+    const gridSizeInput = document.getElementById('gridSize');
+    const snapToGridCheck = document.getElementById('snapToGrid');
+    const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
+    const invertZoomCheck = document.getElementById('invertZoomDirection');
     
     this.gridStyle = gridStyleSelect ? gridStyleSelect.value : 'dots';
     this.gridSize = gridSizeInput ? parseInt(gridSizeInput.value) : 20;
@@ -255,8 +255,8 @@ class Application {
     const splashOverlay = document.getElementById('splashOverlay');
     const appContainer = document.getElementById('appContainer');
     const gridStyleSelect = document.getElementById('gridStyleSelect');
-    const gridSizeInput = document.getElementById('gridSizeSlider');
-    const snapToGridCheck = document.getElementById('snapToGridCheckbox');
+    const gridSizeInput = document.getElementById('gridSize');
+    const snapToGridCheck = document.getElementById('snapToGrid');
     const gridSizeValue = document.getElementById('gridSizeValue');
     const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
     
