@@ -12,12 +12,7 @@ export const ru = {
     info: 'Информация',
     value: 'Значение',
     parameter: 'Параметр',
-    benchmarking: 'Тестирование оптимизаций...',
-    measuringBaseline: 'Измерение базовой производительности...',
-    baselineFPS: 'Базовый FPS',
-    testing: 'Тест',
-    completed: 'Тест завершён',
-    fpsLabel: 'FPS'
+    noDescription: 'Нет описания'
   },
 
   toolbar: {
@@ -127,8 +122,14 @@ export const ru = {
     simplifiedBy: 'Упрощён на',
     available: 'Доступные оптимизации',
     comingSoon: 'В разработке',
-    notImplemented: 'Пока не реализовано'
-},
+    notImplemented: 'Пока не реализовано',
+    benchmarking: 'Тестирование оптимизаций...',
+    measuringBaseline: 'Измерение базовой производительности...',
+    baselineFPS: 'Базовый FPS',
+    testing: 'Тест',
+    completed: 'Тест завершён',
+    fpsLabel: 'FPS'
+  },
 
   modal: {
     notification: 'Уведомление',
@@ -146,11 +147,6 @@ export const ru = {
 
   status: {
     noConnections: 'Нет связей',
-    benchmarking: 'Тестирование оптимизаций...',
-    measuringBaseline: 'Измерение базовой производительности...',
-    baselineFPS: 'Базовый FPS',
-    testing: 'Тест',
-    completed: 'Тест завершён',
     saved: 'Сохранено'
   },
 
@@ -279,7 +275,7 @@ export const ru = {
     export: 'Экспорт',
     import: 'Импорт',
     clearStorage: 'Очистить',
-    addNode: 'Добавить',
+    addNode: 'Добавить узел',
     optimize: 'Оптимизации',
     canvasSettings: 'Настройки холста',
     gridStyle: 'Стиль сетки',
@@ -325,10 +321,9 @@ export const ru = {
     connections: 'Соединения',
     inputs: 'Входы',
     outputs: 'Выходы',
-    noDescription: 'Нет описания',
-    ctrlZoom: 'Ctrl + Scroll для масштабирования',
-    enableCtrlZoom: 'Требовать зажатую клавишу Ctrl для зума',
+    ctrlZoom: 'Ctrl + Scroll для зума',
+    enableCtrlZoom: 'Требовать клавишу Ctrl для зума',
     invertZoom: 'Инвертировать направление зума',
-    enableInvertZoom: 'Обратное направление прокрутки для масштабирования'
-}
+    enableInvertZoom: 'Изменить направление прокрутки для зума'
+  }
 };
