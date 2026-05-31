@@ -29,6 +29,7 @@ class Application {
     this.gridStyle = localStorage.getItem('canvas_grid_style') || 'dots';
     this.gridSize = parseInt(localStorage.getItem('canvas_grid_size') || '20');
     this.snapToGrid = localStorage.getItem('canvas_snap_to_grid') === 'true';
+    this.ctrlZoomOnly = localStorage.getItem('ctrl_zoom_only') === 'true';
 
     this.initRenderer();
     this.initHistory();
