@@ -7,7 +7,7 @@ export const metadata = {
   descriptionKey: 'nodeDescriptions.sem',
   author: 'Amenoke',
   github: 'https://github.com/inzexg-coder/Amenodes',
-  icon: 'fa-chart-simple',
+  icon: 'fa-solid fa-sigma',
   dataType: 'num',
   canHaveIncomingEdges: true,
   canHaveOutgoingEdges: true,
