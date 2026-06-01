@@ -324,6 +324,7 @@ export const ru = {
     ctrlZoom: 'Ctrl + Scroll для зума',
     enableCtrlZoom: 'Требовать клавишу Ctrl для зума',
     invertZoom: 'Инвертировать направление зума',
-    enableInvertZoom: 'Изменить направление прокрутки для зума'
+    enableInvertZoom: 'Изменить направление прокрутки для зума',
+    unsaved: 'Несохраненные изменения'
   }
 };
