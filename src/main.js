@@ -521,16 +521,18 @@ class Application {
       `;
       
       const nodesContainer = categoryDiv.querySelector('.category-nodes');
-      regularNodes.forEach(nodeType => {
+      for (const nodeType of regularNodes) {
         const item = document.createElement('div');
         item.className = 'node-list-item';
         item.innerHTML = `
           <i class="fas ${nodeType.icon || 'fa-circle'}"></i>
           <span>${t(nodeType.nameKey)}</span>
         `;
-        item.onclick = () => this.createNodeAtCenter(nodeType.type);
+        item.onclick = async () => {
+          await this.createNodeAtCenter(nodeType.type);
+        };
         nodesContainer.appendChild(item);
-      });
+      }
       
       const header = categoryDiv.querySelector('.category-header');
       header.onclick = () => {
@@ -541,7 +543,7 @@ class Application {
       container.appendChild(categoryDiv);
     }
     
-    categories.forEach(category => {
+    for (const category of categories) {
       const categoryDiv = document.createElement('div');
       categoryDiv.className = 'node-category';
       categoryDiv.innerHTML = `
@@ -555,16 +557,18 @@ class Application {
       
       const nodesContainer = categoryDiv.querySelector('.category-nodes');
       if (category.subnodes) {
-        category.subnodes.forEach(subnode => {
+        for (const subnode of category.subnodes) {
           const item = document.createElement('div');
           item.className = 'node-list-item';
           item.innerHTML = `
             <i class="fas fa-calculator"></i>
             <span>${t(subnode.nameKey)}</span>
           `;
-          item.onclick = () => this.createNodeAtCenter(category.type, subnode);
+          item.onclick = async () => {
+            await this.createNodeAtCenter(category.type, subnode);
+          };
           nodesContainer.appendChild(item);
-        });
+        }
       }
       
       const header = categoryDiv.querySelector('.category-header');
@@ -574,7 +578,7 @@ class Application {
       };
       
       container.appendChild(categoryDiv);
-    });
+    }
   }
   
   snapToGridValue(value) {
@@ -582,7 +586,7 @@ class Application {
     return Math.round(value / this.gridSize) * this.gridSize;
   }
 
-  createNodeAtCenter(type, subnode = null) {
+  async createNodeAtCenter(type, subnode = null) {
     const viewportRect = document.getElementById('viewport').getBoundingClientRect();
     const offset = this.viewport.getOffset();
     const zoom = window.currentZoom || 1;
@@ -596,7 +600,8 @@ class Application {
     const options = { x, y };
     if (subnode) Object.assign(options, subnode);
     
-    const node = NodeFactory.createNode(type, options);
+    const node = await NodeFactory.createNode(type, options);
+    
     if (node) {
       this.graph.addNode(node);
       this.finishNodeCreation();
