@@ -10,7 +10,7 @@ export class Node {
     this.title = title;
     this.important = false;
     this.graph = null;
-    this.originalTitle = title;
+    this.originalTitle = title;  
     this.titleEditor = null;
     this.unsubscribeI18n = null;
     
@@ -55,7 +55,7 @@ export class Node {
   }
 
   updateTitleTranslation() {
-    if (this.titleEditor && this.title !== this.originalTitle) {
+    if (this.title !== this.originalTitle) {
       return;
     }
     const newTitle = this.getLocalizedTitle();
@@ -98,8 +98,12 @@ export class Node {
     const header = document.createElement('div');
     header.className = headerClass;
 
-    const localizedTitle = this.getLocalizedTitle();
-    this.titleEditor = new EditableTitle(localizedTitle, (newTitle) => {
+    let displayTitle = this.title;
+    if (this.title === this.originalTitle) {
+      displayTitle = this.getLocalizedTitle();
+    }
+
+    this.titleEditor = new EditableTitle(displayTitle, (newTitle) => {
       this.title = newTitle;
       this.originalTitle = newTitle;
       graph.reevaluateAll();
@@ -111,6 +115,7 @@ export class Node {
     actions.className = 'node-actions';
     const deleteBtn = document.createElement('button');
     deleteBtn.textContent = '✕';
+    deleteBtn.title = 'Delete node';
     deleteBtn.onclick = (e) => {
       e.stopPropagation();
       if (this.unsubscribeI18n) this.unsubscribeI18n();
@@ -127,12 +132,14 @@ export class Node {
 
     if (this.unsubscribeI18n) this.unsubscribeI18n();
     this.unsubscribeI18n = i18n.subscribe(() => {
-      this.updateTitleTranslation();
-      if (this.titleEditor) {
-        const currentDisplayText = this.titleEditor.displaySpan?.textContent;
-        const newDisplayText = this.getLocalizedTitle();
-        if (currentDisplayText !== newDisplayText) {
-          this.titleEditor.setValue(newDisplayText);
+      if (this.title === this.originalTitle) {
+        const newTitle = this.getLocalizedTitle();
+        if (this.title !== newTitle) {
+          this.title = newTitle;
+          this.originalTitle = newTitle;
+          if (this.titleEditor) {
+            this.titleEditor.setValue(newTitle);
+          }
         }
       }
     });
