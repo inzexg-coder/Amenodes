@@ -9,7 +9,8 @@
 - проверку циклов и совместимости типов данных;
 - вычисление значений, передаваемых по графу;
 - сериализацию и десериализацию состояния графа;
-- уведомление узлов об их присоединении/отсоединении.
+- уведомление узлов об их присоединении/отсоединении;
+- **отслеживание dirty-состояния (несохранённые изменения).**
 
 **Важно:** все изменения графа должны выполняться через методы `Graph`. Прямое изменение массивов `nodes` или `edges` не допускается.
 
@@ -40,6 +41,8 @@ constructor()
 | `this.nextId` | `number` | `1` | Следующий доступный числовой идентификатор для нового узла. |
 | `this.nextEdgeId` | `number` | `1` | Следующий доступный числовой идентификатор для нового ребра. |
 | `this.map` | `Map<number, Node>` | `new Map()` | Карта для быстрого доступа к узлам по их `id`. |
+| `this.isDirty` | `boolean` | `false` | Флаг, указывающий на наличие несохранённых изменений. |
+| `this.dirtyCallbacks` | `Array<Function>` | `[]` | Массив колбэков, вызываемых при изменении dirty-состояния. |
 
 ### Публичные свойства
 
@@ -49,8 +52,76 @@ constructor()
 | `edges` | `Array<Edge>` | чтение/запись (только через методы) | Массив связей. Не рекомендуется изменять напрямую. |
 | `nextId` | `number` | чтение | Счётчик для генерации ID новых узлов. |
 | `nextEdgeId` | `number` | чтение | Счётчик для генерации ID новых рёбер. |
+| `isDirty` | `boolean` | чтение | Флаг наличия несохранённых изменений. |
 
 # Методы
+
+## onDirtyChange(callback)
+
+```javascript
+onDirtyChange(callback: (isDirty: boolean) => void): () => void
+```
+
+Подписывается на изменения dirty-состояния графа. Колбэк вызывается каждый раз, когда флаг `isDirty` изменяется.
+
+**Параметры:**
+
+- `callback` – функция, принимающая один аргумент `isDirty` (`boolean`).
+
+**Возвращает:** функцию отписки. При её вызове подписчик удаляется из массива `this.dirtyCallbacks`.
+
+**Пример:**
+
+```javascript
+const unsubscribe = graph.onDirtyChange((isDirty) => {
+  if (isDirty) {
+    console.log('Граф содержит несохранённые изменения');
+  } else {
+    console.log('Все изменения сохранены');
+  }
+});
+
+// Позже, при уничтожении компонента:
+unsubscribe();
+```
+
+## setDirty(dirty)
+
+```javascript
+setDirty(dirty: boolean = true): void
+```
+
+Устанавливает флаг dirty-состояния и уведомляет всех подписчиков об изменении. Вызывается автоматически при любом изменении графа, но может быть вызван и вручную.
+
+**Параметры:**
+
+- `dirty` – новое состояние флага (по умолчанию `true`).
+
+**Пример:**
+
+```javascript
+// Автоматически вызывается при изменении графа
+graph.addNode(node); // setDirty(true) вызывается автоматически
+
+// Ручная установка (если необходимо)
+graph.setDirty(true);
+```
+
+## clearDirty()
+
+```javascript
+clearDirty(): void
+```
+
+Сбрасывает флаг dirty-состояния в `false` и уведомляет подписчиков. Обычно вызывается после успешного сохранения графа.
+
+**Пример:**
+
+```javascript
+// После сохранения графа
+saveGraph();
+graph.clearDirty();
+```
 
 ## addNode(node)
 
@@ -58,7 +129,7 @@ constructor()
 addNode(node: Node): Node
 ```
 
-Добавляет узел в граф. Если у переданного узла отсутствует свойство `id`, оно автоматически присваивается из `this.nextId` с последующим инкрементом.
+Добавляет узел в граф. Автоматически устанавливает `setDirty(true)`.
 
 **Параметры:**
 
@@ -66,41 +137,17 @@ addNode(node: Node): Node
 
 **Возвращает:** тот же экземпляр `node` (для цепочки вызовов).
 
-- Узел добавляется в `this.nodes` и `this.map`.
-- Если у узла определён метод `onAttach`, он вызывается с текущим графом в качестве аргумента.
-- Увеличивается `this.nextId`, если узел не имел собственного `id`.
-
-**Пример:**
-
-```javascript
-const graph = new Graph();
-const outputNode = new OutputNode(null, 100, 100, 'Output');
-graph.addNode(outputNode);
-// outputNode.id теперь 1 (если не был задан)
-```
-
 ## removeNode(id)
 
 ```javascript
 removeNode(id: number): void
 ```
 
-Удаляет узел по его идентификатору, а также все связанные с ним рёбра (как входящие, так и исходящие).
+Удаляет узел по его идентификатору, а также все связанные с ним рёбра. Автоматически устанавливает `setDirty(true)`.
 
 **Параметры:**
 
 - `id` – числовой идентификатор удаляемого узла.
-
-- Если у узла есть метод `onDetach`, он вызывается.
-- Узел удаляется из `this.nodes` и `this.map`.
-- Из `this.edges` удаляются все рёбра, у которых `sourceId === id` или `targetId === id`.
-
-**Пример:**
-
-```javascript
-const nodeId = 2;
-graph.removeNode(nodeId); // удаляет узел 2 и все его связи
-```
 
 ## addEdge(sourceId, targetId, port)
 
@@ -108,32 +155,15 @@ graph.removeNode(nodeId); // удаляет узел 2 и все его связ
 addEdge(sourceId: number, targetId: number, port: string = 'main'): Edge | null
 ```
 
-Создаёт связь между двумя узлами после выполнения набора проверок:
-
-1. Существование обоих узлов в графе.
-2. Если у целевого узла определён метод `canAcceptEdge`, он вызывается для проверки допустимости связи.
-3. Совместимость типов через `typeSystem.canConnect`.
-4. Отсутствие цикла (вызов `hasCycle`).
-5. Отсутствие дублирующей связи (одинаковые `sourceId`, `targetId`, `port`).
-
-В случае неудачи любой проверки пользователю показывается модальное окно с сообщением об ошибке (через `modal.alert`), и связь не создаётся.
+Создаёт связь между двумя узлами после выполнения набора проверок. При успешном создании автоматически устанавливает `setDirty(true)`.
 
 **Параметры:**
 
 - `sourceId` – идентификатор узла-источника.
 - `targetId` – идентификатор узла-приёмника.
-- `port` – имя порта (по умолчанию `'main'`; используется для различения нескольких выходов).
+- `port` – имя порта (по умолчанию `'main'`).
 
-**Возвращает:** созданный объект `Edge` или `null`, если связь не была добавлена.
-
-**Пример:**
-
-```javascript
-const edge = graph.addEdge(1, 2, 'main');
-if (edge) {
-  console.log(`Создано ребро ${edge.id}`);
-}
-```
+**Возвращает:** созданный объект `Edge` или `null`.
 
 ## removeEdge(id)
 
@@ -141,17 +171,33 @@ if (edge) {
 removeEdge(id: number): void
 ```
 
-Удаляет ребро по его идентификатору.
+Удаляет ребро по его идентификатору. Автоматически устанавливает `setDirty(true)`.
 
 **Параметры:**
 
 - `id` – числовой идентификатор ребра.
 
-**Пример:**
+## loadFrom(data)
 
 ```javascript
-graph.removeEdge(5);
+loadFrom(data: object): void
 ```
+
+Загружает состояние графа из ранее сохранённого объекта. Полностью заменяет текущий граф. После успешной загрузки автоматически вызывает `clearDirty()`.
+
+**Параметры:**
+
+- `data` – объект, содержащий поля `nodes`, `edges`, `nextId`, `nextEdgeId`, `designQuality` (опционально).
+
+## toSerial()
+
+```javascript
+toSerial(): object
+```
+
+Сериализует текущее состояние графа в простой JavaScript-объект, пригодный для сохранения в JSON. **Не** включает dirty-флаг, так как это состояние сессии, а не часть графа.
+
+**Возвращает:** объект с полями `nodes`, `edges`, `nextId`, `nextEdgeId`, `designQuality`.
 
 ## getNode(id)
 
@@ -161,19 +207,13 @@ getNode(id: number): Node | undefined
 
 Возвращает узел по идентификатору или `undefined`, если узел не найден.
 
-**Параметры:**
-
-- `id` – идентификатор узла.
-
-**Возвращает:** узел или `undefined`.
-
 ## getIncomingEdges(targetId)
 
 ```javascript
 getIncomingEdges(targetId: number): Array<Edge>
 ```
 
-Возвращает массив рёбер, для которых указанный узел является целью (`edge.targetId === targetId`).
+Возвращает массив рёбер, для которых указанный узел является целью.
 
 ## getOutgoingEdges(sourceId)
 
@@ -181,7 +221,7 @@ getIncomingEdges(targetId: number): Array<Edge>
 getOutgoingEdges(sourceId: number): Array<Edge>
 ```
 
-Возвращает массив рёбер, для которых указанный узел является источником (`edge.sourceId === sourceId`).
+Возвращает массив рёбер, для которых указанный узел является источником.
 
 ## hasCycle(source, target)
 
@@ -189,16 +229,7 @@ getOutgoingEdges(sourceId: number): Array<Edge>
 hasCycle(source: number, target: number): boolean
 ```
 
-Проверяет, создаст ли добавление ребра от `source` к `target` цикл в ориентированном графе. Использует поиск в глубину (DFS) по существующим рёбрам.
-
-**Параметры:**
-
-- `source` – идентификатор узла-источника.
-- `target` – идентификатор узла-приёмника.
-
-**Возвращает:** `true`, если существует путь от `target` к `source` (т.е. добавление ребра замкнёт цикл), иначе `false`.
-
-**Примечание:** прямой цикл (`source === target`) также возвращает `true`.
+Проверяет, создаст ли добавление ребра от `source` к `target` цикл в ориентированном графе.
 
 ## canConnect(sourceId, targetId, port)
 
@@ -206,15 +237,7 @@ hasCycle(source: number, target: number): boolean
 canConnect(sourceId: number, targetId: number, port: string = 'main'): boolean
 ```
 
-Проверяет возможность соединения двух узлов на основе их типов данных, используя глобальную систему типов `typeSystem`. Не учитывает остальные проверки (существование узлов, циклы, дублирование).
-
-**Параметры:**
-
-- `sourceId` – идентификатор источника.
-- `targetId` – идентификатор приёмника.
-- `port` – порт (по умолчанию `'main'`).
-
-**Возвращает:** `true`, если `typeSystem.canConnect` возвращает `true`, иначе `false`.
+Проверяет возможность соединения двух узлов на основе их типов данных.
 
 ## getSourceValue(source, port, visited)
 
@@ -222,23 +245,7 @@ canConnect(sourceId: number, targetId: number, port: string = 'main'): boolean
 getSourceValue(source: Node, port: string = 'main', visited: Set<number> = new Set()): Array<any>
 ```
 
-Рекурсивно получает выходное значение узла, обходя возможные зависимости. Метод учитывает возможность циклических зависимостей через параметр `visited`.
-
-**Параметры:**
-
-- `source` – узел-источник.
-- `port` – порт, для которого запрашивается значение.
-- `visited` – набор идентификаторов уже посещённых узлов (используется для предотвращения бесконечной рекурсии).
-
-**Алгоритм:**
-
-- Если `visited` уже содержит `source.id`, возвращает пустой массив (защита от цикла).
-- Иначе добавляет `source.id` в `visited`.
-- Если у узла определён метод `getOutputValue`, вызывает его.
-- Иначе вызывает `getValue()` узла.
-- Результат приводится к массиву: если `null` или `undefined` → `[]`, если не массив → оборачивается в массив.
-
-**Возвращает:** массив значений (может быть пустым).
+Рекурсивно получает выходное значение узла, обходя возможные зависимости.
 
 ## getMergedInput(nodeId)
 
@@ -246,13 +253,7 @@ getSourceValue(source: Node, port: string = 'main', visited: Set<number> = new S
 getMergedInput(nodeId: number): Array<any>
 ```
 
-Вычисляет объединённое входное значение для узла на основе всех входящих рёбер. Для каждого входящего ребра вызывает `getSourceValue` и объединяет полученные массивы в один плоский массив.
-
-**Параметры:**
-
-- `nodeId` – идентификатор узла, для которого собираются входные данные.
-
-**Возвращает:** массив значений со всех входящих соединений.
+Вычисляет объединённое входное значение для узла на основе всех входящих рёбер.
 
 ## reevaluateAll()
 
@@ -260,7 +261,7 @@ getMergedInput(nodeId: number): Array<any>
 reevaluateAll(): void
 ```
 
-Вызывает метод `reevaluate` у всех узлов графа, которые его реализуют. Обычно это приводит к пересчёту внутренних значений узлов на основе текущих входных данных. 
+Вызывает метод `reevaluate` у всех узлов графа, которые его реализуют.
 
 ## updateAllOutputs()
 
@@ -268,54 +269,7 @@ reevaluateAll(): void
 updateAllOutputs(): void
 ```
 
-Вызывает метод `updateDisplay` у всех узлов, которые его реализуют. Метод предназначен для обновления отображаемых данных без полного пересчёта логики.
-
-## toSerial()
-
-```javascript
-toSerial(): object
-```
-
-Сериализует текущее состояние графа в простой JavaScript-объект, пригодный для сохранения в JSON.
-
-**Возвращает:** объект со следующей структурой:
-
-```javascript
-{
-  nodes: Array<object>,      // результат вызова node.toJSON() для каждого узла
-  edges: Array<object>,      // результат вызова edge.toJSON() для каждого ребра
-  nextId: number,            // текущее значение счётчика узлов
-  nextEdgeId: number,        // текущее значение счётчика рёбер
-  designQuality: number      // значение из window._designQualitySaved (или 100)
-}
-```
-
-## loadFrom(data)
-
-```javascript
-loadFrom(data: object): void
-```
-
-Загружает состояние графа из ранее сохранённого объекта. Полностью заменяет текущий граф. Восстанавливает узлы, восстанавливает связи, вызывает `onAttach` для всех узлов, а затем выполняет `reevaluateAll()` и `updateAllOutputs()`.
-
-**Параметры:**
-
-- `data` – объект, содержащий поля `nodes`, `edges`, `nextId`, `nextEdgeId`, `designQuality` (опционально).
-
-- Очищаются текущие `nodes`, `edges`, `map`.
-- Устанавливаются `this.nextId` и `this.nextEdgeId` из `data`.
-- Для каждого узла из `data.nodes` создаётся экземпляр через `NodeFactory`.
-- Для каждого ребра создаётся объект `Edge`.
-- После восстановления вызывается `reevaluateAll()` и `updateAllOutputs()`.
-- Если передан `designQuality`, сохраняется в `window._designQualitySaved`.
-
-**Пример:**
-
-```javascript
-const serialized = graph.toSerial();
-const newGraph = new Graph();
-newGraph.loadFrom(serialized);
-```
+Вызывает метод `updateDisplay` у всех узлов, которые его реализуют.
 
 ## getTypeDisplayName(typeKey)
 
@@ -323,60 +277,50 @@ newGraph.loadFrom(serialized);
 getTypeDisplayName(typeKey: string): string
 ```
 
-Возвращает локализованное имя типа данных, используя систему i18n. Если перевод для ключа `dataTypes.${typeKey}` отсутствует, возвращает строку с заглавной первой буквой `typeKey`.
-
-**Параметры:**
-
-- `typeKey` – строковый идентификатор типа.
-
-**Возвращает:** локализованное имя типа.
+Возвращает локализованное имя типа данных.
 
 # ПРИМЕРЫ ИСПОЛЬЗОВАНИЯ
 
-### Создание графа и добавление узлов
+### Подписка на изменения dirty-состояния
 
 ```javascript
-import { Graph } from './core/Graph.js';
-import { NumberNode } from './nodes/NumberNode.js';
-import { OutputNode } from './nodes/OutputNode.js';
-
 const graph = new Graph();
-const numNode = new NumberNode(null, 100, 200, 'Value', { val: 42 });
-const outNode = new OutputNode(null, 400, 200, 'Result');
 
-graph.addNode(numNode);
-graph.addNode(outNode);
-graph.addEdge(numNode.id, outNode.id);
-graph.reevaluateAll();
-console.log(outNode.rows); // [{ param: 'Value 1', value: '42.000000' }]
+// Подписываемся на изменения
+graph.onDirtyChange((isDirty) => {
+  if (isDirty) {
+    document.title = '* ' + document.title;
+    showSaveIndicator();
+  } else {
+    document.title = document.title.replace(/^\* /, '');
+    hideSaveIndicator();
+  }
+});
+
+// При изменении графа dirty-флаг устанавливается автоматически
+graph.addNode(node); // isDirty = true
+
+// После сохранения сбрасываем флаг
+saveToFile();
+graph.clearDirty(); // isDirty = false
 ```
 
-### Сериализация и десериализация
+### Проверка dirty-состояния перед закрытием страницы
 
 ```javascript
-const snapshot = graph.toSerial();
-localStorage.setItem('myGraph', JSON.stringify(snapshot));
-
-// Позже:
-const restored = JSON.parse(localStorage.getItem('myGraph'));
-graph.loadFrom(restored);
+window.addEventListener('beforeunload', (e) => {
+  if (graph.isDirty) {
+    e.preventDefault();
+    e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+    return 'You have unsaved changes. Are you sure you want to leave?';
+  }
+});
 ```
 
-### Проверка возможности соединения
+# ЗАМЕЧАНИЯ
 
-```javascript
-const sourceId = 1, targetId = 2;
-if (graph.canConnect(sourceId, targetId)) {
-  graph.addEdge(sourceId, targetId);
-} else {
-  console.warn('Типы несовместимы');
-}
-```
-
-## ЗАМЕЧАНИЯ
-
-- Все методы, изменяющие граф (`addNode`, `removeNode`, `addEdge`, `removeEdge`), **не вызывают автоматически** перерисовку.
-- Система типов (`typeSystem`) инициализируется отдельно через `typeSystem.initFromNodeRegistry`.
-- Метод `getSourceValue` рекурсивно обходит зависимости, но не кэширует результаты – повторные вызовы могут быть затратными.
-- При загрузке через `loadFrom` не проверяется совместимость типов восстановленных связей – предполагается, что сохранённый граф уже корректен.
-- Глобальные переменные `window._designQualitySaved`, `window._viewportX` и другие используются для взаимодействия с другими подсистемами.
+- Dirty-флаг **автоматически** устанавливается при любом изменении графа: добавление/удаление узлов, создание/удаление связей, перемещение узлов (через рендерер), изменение значений узлов.
+- Метод `loadFrom` **сбрасывает** dirty-флаг, так как загруженное состояние считается сохранённым.
+- При сериализации (`toSerial`) dirty-флаг **не сохраняется** – это состояние сессии, а не часть графа.
+- Подписка `onDirtyChange` возвращает функцию отписки, что важно для предотвращения утечек памяти при уничтожении компонентов.
+- Dirty-флаг не влияет на вычисления графа – это исключительно UI-индикатор для пользователя.
