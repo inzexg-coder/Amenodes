@@ -212,17 +212,20 @@ export class Graph {
 
     for (const nodeData of data.nodes) {
       try {
-        const node = NodeFactory.createNode(nodeData.type, {
-          id: nodeData.id,
-          x: nodeData.x,
-          y: nodeData.y,
-          title: nodeData.title,
-          ...nodeData
-        });
-        if (node) {
-          node.important = nodeData.important || false;
-          this.nodes.push(node);
-          this.map.set(node.id, node);
+        const NodeClass = NodeFactory.getNodeClass(nodeData.type);
+        if (NodeClass) {
+          const node = new NodeClass(
+            nodeData.id,
+            nodeData.x,
+            nodeData.y,
+            nodeData.title,
+            nodeData
+          );
+          if (node) {
+            node.important = nodeData.important || false;
+            this.nodes.push(node);
+            this.map.set(node.id, node);
+          }
         }
       } catch (err) {
         console.warn(`Failed to restore node type ${nodeData.type}:`, err);
@@ -265,17 +268,20 @@ export class Graph {
 
     for (const nodeData of data.nodes) {
       try {
-        const node = NodeFactory.createNode(nodeData.type, {
-          id: nodeData.id,
-          x: nodeData.x,
-          y: nodeData.y,
-          title: nodeData.title,
-          ...nodeData
-        });
-        if (node) {
-          node.important = nodeData.important || false;
-          this.nodes.push(node);
-          this.map.set(node.id, node);
+        const NodeClass = NodeFactory.getNodeClass(nodeData.type);
+        if (NodeClass) {
+          const node = new NodeClass(
+            nodeData.id,
+            nodeData.x,
+            nodeData.y,
+            nodeData.title,
+            nodeData
+          );
+          if (node) {
+            node.important = nodeData.important || false;
+            this.nodes.push(node);
+            this.map.set(node.id, node);
+          }
         }
       } catch (err) {
         console.warn(`Failed to restore node type ${nodeData.type}:`, err);
