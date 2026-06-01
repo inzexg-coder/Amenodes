@@ -154,6 +154,10 @@ export class DomRenderer {
       
       for (const node of visibleNodes) {
         if (!this.elementCache.has(node.id)) {
+          if (typeof node.createDOM !== 'function') {
+            console.error('Node missing createDOM method:', node);
+            continue;
+          }
           const element = node.createDOM(this.graph, this);
           this.elementCache.set(node.id, element);
         }
@@ -176,6 +180,10 @@ export class DomRenderer {
     this.elementCache.clear();
     
     for (const node of this.graph.nodes) {
+      if (typeof node.createDOM !== 'function') {
+        console.error('Node missing createDOM method:', node);
+        continue;
+      }
       const element = node.createDOM(this.graph, this);
       this.layer.appendChild(element);
       this.elementCache.set(node.id, element);
@@ -398,7 +406,7 @@ export class DomRenderer {
         element.style.left = `${this.dragNode.x}px`;
         element.style.top = `${this.dragNode.y}px`;
       }
-
+      
       this.renderEdges(this.graph.nodes);
       
       if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
