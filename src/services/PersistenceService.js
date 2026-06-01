@@ -1,4 +1,5 @@
 import { modal } from '../ui/CustomModal.js';
+
 export class PersistenceService {
   constructor(graph) {
     this.graph = graph;
@@ -18,6 +19,10 @@ export class PersistenceService {
     data.designQuality = quality || 100;
     localStorage.setItem('amenodes_autosave', JSON.stringify(data));
     this.showAutosaveStatus();
+    
+    if (this.graph && this.graph.clearDirty) {
+      this.graph.clearDirty();
+    }
   }
 
   loadFromStorage() {
@@ -35,6 +40,11 @@ export class PersistenceService {
         if (data.viewportZoom !== undefined && window.setZoom) {
           window.setZoom(data.viewportZoom);
         }
+        
+        if (this.graph && this.graph.clearDirty) {
+          this.graph.clearDirty();
+        }
+        
         return data;
       }
     } catch (e) {
@@ -56,6 +66,10 @@ export class PersistenceService {
     a.download = `diagram_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.amnk`;
     a.click();
     URL.revokeObjectURL(a.href);
+    
+    if (this.graph && this.graph.clearDirty) {
+      this.graph.clearDirty();
+    }
   }
 
   async importFromFile(file) {
@@ -75,6 +89,11 @@ export class PersistenceService {
           if (data.designQuality !== undefined && window.applyDesignQuality) {
             window.applyDesignQuality(data.designQuality);
           }
+
+          if (this.graph && this.graph.clearDirty) {
+            this.graph.clearDirty();
+          }
+          
           resolve(true);
         } catch (err) {
           this.graph.loadFrom(backup);
