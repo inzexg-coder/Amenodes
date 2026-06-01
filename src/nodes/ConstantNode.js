@@ -1,4 +1,6 @@
 import { Node } from '../core/Node.js';
+import { modal } from '../ui/CustomModal.js';
+import { i18n, t } from '../i18n/LanguageManager.js';
 
 export const metadata = {
   type: 'constant',
@@ -58,17 +60,19 @@ export class ConstantNode extends Node {
   }
 
   static async onCreate(graph, x, y, options = {}) {
-    const { modal } = await import('../ui/CustomModal.js');
-    const { t } = await import('../i18n/LanguageManager.js');
-    
-    const value = await modal.prompt(t('modal.enterNewValue'), '0');
+    const value = await modal.prompt(t('modal.enterValue'), '0');
     if (value === null) return null;
     
     const numValue = parseFloat(value);
     const finalValue = isNaN(numValue) ? 0 : numValue;
     
-    const node = new ConstantNode(null, x, y, t('nodes.constant'), { val: finalValue });
-    graph.addNode(node);
+    const defaultTitle = i18n.t('nodes.constant');
+    const node = new ConstantNode(null, x, y, defaultTitle, { val: finalValue });
+    
+    if (graph) {
+      graph.addNode(node);
+    }
+    
     return node;
   }
 }
