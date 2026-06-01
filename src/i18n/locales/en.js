@@ -326,5 +326,11 @@ export const en = {
     invertZoom: 'Invert zoom direction',
     enableInvertZoom: 'Reverse scroll direction for zoom',
     unsaved: 'Unsaved changes'
+  },
+
+  mean: {
+  inputs: 'Input connections',
+  sampleSize: 'Sample size',
+  result: 'Mean'
   }
 };
