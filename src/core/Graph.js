@@ -11,6 +11,29 @@ export class Graph {
     this.nextId = 1;
     this.nextEdgeId = 1;
     this.map = new Map();
+    this.isDirty = false;
+    this.dirtyCallbacks = [];
+  }
+
+  onDirtyChange(callback) {
+    this.dirtyCallbacks.push(callback);
+    return () => {
+      const index = this.dirtyCallbacks.indexOf(callback);
+      if (index !== -1) this.dirtyCallbacks.splice(index, 1);
+    };
+  }
+
+  setDirty(dirty = true) {
+    if (this.isDirty !== dirty) {
+      this.isDirty = dirty;
+      for (const callback of this.dirtyCallbacks) {
+        callback(this.isDirty);
+      }
+    }
+  }
+
+  clearDirty() {
+    this.setDirty(false);
   }
 
   addNode(node) {
@@ -18,6 +41,7 @@ export class Graph {
     this.nodes.push(node);
     this.map.set(node.id, node);
     if (typeof node.onAttach === 'function') node.onAttach(this);
+    this.setDirty(true);
     return node;
   }
 
@@ -27,6 +51,7 @@ export class Graph {
     this.nodes = this.nodes.filter(n => n.id !== id);
     this.map.delete(id);
     this.edges = this.edges.filter(e => e.sourceId !== id && e.targetId !== id);
+    this.setDirty(true);
   }
 
   addEdge(sourceId, targetId, port = 'main') {
@@ -62,20 +87,13 @@ export class Graph {
 
     const edge = new Edge(this.nextEdgeId++, sourceId, targetId, port);
     this.edges.push(edge);
+    this.setDirty(true);
     return edge;
-  }
-
-  getTypeDisplayName(typeKey) {
-    if (!typeKey) return 'Unknown';
-    const translated = t(`dataTypes.${typeKey}`);
-    if (translated !== `dataTypes.${typeKey}`) {
-      return translated;
-    }
-    return typeKey.charAt(0).toUpperCase() + typeKey.slice(1);
   }
 
   removeEdge(id) {
     this.edges = this.edges.filter(e => e.id !== id);
+    this.setDirty(true);
   }
 
   getNode(id) {
@@ -115,6 +133,15 @@ export class Graph {
     const targetType = typeSystem.getNodeType(target);
 
     return typeSystem.canConnect(sourceType, source.type, targetType, target.type);
+  }
+
+  getTypeDisplayName(typeKey) {
+    if (!typeKey) return 'Unknown';
+    const translated = t(`dataTypes.${typeKey}`);
+    if (translated !== `dataTypes.${typeKey}`) {
+      return translated;
+    }
+    return typeKey.charAt(0).toUpperCase() + typeKey.slice(1);
   }
   
   getSourceValue(source, port = 'main', visited = new Set()) {
@@ -244,6 +271,8 @@ export class Graph {
     this.updateAllOutputs();
 
     if (data.designQuality !== undefined) window._designQualitySaved = data.designQuality;
+    
+    this.clearDirty();
   }
   
   exportGraph() {
@@ -300,5 +329,7 @@ export class Graph {
 
     this.reevaluateAll();
     this.updateAllOutputs();
+    
+    this.clearDirty();
   }
 }

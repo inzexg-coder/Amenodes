@@ -7,6 +7,8 @@
 
 **Важно:** все изменения графа, которые должны быть отменяемы, должны сопровождаться вызовом `history.save()` после завершения операции. Автосохранение выполняется при каждом вызове `save()`.
 
+**Новое в версии 2.5.0:** методы `undo()` и `redo()` теперь автоматически устанавливают dirty-флаг графа, так как отмена или повтор действия приводит к состоянию, отличному от последнего сохранённого.
+
 ## ЗАВИСИМОСТИ
 
 Класс `History` не импортирует внешние модули.
@@ -56,11 +58,6 @@ capture(): object
 
 Создаёт снимок текущего состояния графа и связанных глобальных параметров. Метод вызывается автоматически внутри `save()`.
 
-**Алгоритм:**
-
-1. Сериализует граф через `this.graph.toSerial()`.
-2. Добавляет в объект значение `designQuality` из глобальной переменной `window._designQualitySaved` (или `100`, если переменная не определена).
-
 **Возвращает:** объект со следующей структурой:
 
 ```javascript
@@ -87,18 +84,7 @@ save(): void
 4. Если размер стека превышает `this.maxSize`, удаляет самый старый снимок (с индексом `0`).
 5. Обновляет `this.index` на последнюю позицию в стеке.
 6. Вызывает `this.autoSave()` для сохранения в `localStorage`.
-
-- Модифицируется стек `this.stack`.
-- Изменяется `this.index`.
-- Записываются данные в `localStorage` (асинхронно, но без задержки).
-
-**Пример:**
-
-```javascript
-const history = new History(graph);
-graph.addNode(someNode);
-history.save(); // после изменения графа
-```
+7. **Вызывает `this.graph.clearDirty()`** – после сохранения граф считается чистым.
 
 ## undo()
 
@@ -112,6 +98,7 @@ undo(): void
 
 - Если `this.index > 0`, уменьшает `this.index` на `1`.
 - Вызывает `this.restore(this.stack[this.index])` с соответствующим снимком.
+- **Вызывает `this.graph.setDirty(true)`** – после отмены граф считается изменённым (несохранённым), так как текущее состояние отличается от состояния до отмены.
 
 **Примечание:** при вызове `undo()` на стартовой позиции (`index === 0`) ничего не происходит.
 
@@ -127,6 +114,7 @@ redo(): void
 
 - Если `this.index < this.stack.length - 1`, увеличивает `this.index` на `1`.
 - Вызывает `this.restore(this.stack[this.index])` с соответствующим снимком.
+- **Вызывает `this.graph.setDirty(true)`** – после повтора граф считается изменённым (несохранённым).
 
 **Примечание:** при вызове `redo()` на последнем снимке (`index === stack.length - 1`) ничего не происходит.
 
@@ -167,15 +155,13 @@ autoSave(): void
 - Данные записываются в `localStorage` (синхронно, через `JSON.stringify`).
 - Если на странице существует элемент с `id="autosaveStatus"`, его стиль `opacity` устанавливается в `'1'`, а через 1500 мс возвращается в `'0'`.
 
-**Примечание:** ошибки при записи в `localStorage` перехватываются и игнорируются (блок `try-catch`).
-
 ## loadFromStorage()
 
 ```javascript
 loadFromStorage(): boolean
 ```
 
-Загружает ранее сохранённое состояние графа из `localStorage` и восстанавливает его. Вызывается при инициализации приложения.
+Загружает ранее сохранённое состояние графа из `localStorage` и восстанавливает его.
 
 **Алгоритм:**
 
@@ -185,98 +171,90 @@ loadFromStorage(): boolean
 4. Если в данных присутствует `designQuality` и определена глобальная функция `window.applyDesignQuality`, вызывает её.
 5. Если в данных присутствуют `viewportOffsetX`, `viewportOffsetY` и определён глобальный объект `window._viewport` с методом `setOffset`, вызывает его.
 6. Если в данных присутствует `viewportZoom` и определена глобальная функция `window.setZoom`, вызывает её.
+7. **Вызывает `this.graph.clearDirty()`** – после загрузки граф считается чистым.
 
 **Возвращает:**
 
 - `true` – если данные успешно загружены и восстановлены.
 - `false` – если данные отсутствуют, повреждены или произошла ошибка.
 
-**Пример использования:**
-
-```javascript
-const history = new History(graph);
-if (!history.loadFromStorage()) {
-  // Создать граф по умолчанию
-  console.log('Нет сохранённых данных');
-}
-```
-
 # ПРИМЕРЫ ИСПОЛЬЗОВАНИЯ
 
-### Базовая работа с историей
+### Базовая работа с историей и dirty-состоянием
 
 ```javascript
 import { Graph } from './core/Graph.js';
 import { History } from './core/History.js';
-import { NumberNode } from './nodes/NumberNode.js';
 
 const graph = new Graph();
-const history = new History(graph, 30); // история на 30 шагов
+const history = new History(graph, 30);
+
+// Подписываемся на dirty-состояние
+graph.onDirtyChange((isDirty) => {
+  console.log(`Граф ${isDirty ? 'имеет' : 'не имеет'} несохранённых изменений`);
+});
 
 // Выполняем действия
 const node = new NumberNode(null, 100, 100, 'Value', { val: 10 });
 graph.addNode(node);
-history.save(); // сохраняем состояние
+history.save(); // dirty = false после save()
 
-// Меняем значение
+// Меняем значение (автоматически устанавливает dirty = true)
 node.value = 20;
 graph.reevaluateAll();
-history.save(); // сохраняем ещё одно состояние
+history.save(); // dirty = false после save()
 
-history.undo(); // возвращаем значение к 10
-history.redo(); // снова устанавливаем значение 20
+history.undo(); // dirty = true (состояние изменилось)
+history.redo(); // dirty = true (состояние изменилось)
 ```
 
-### Динамическое изменение глубины истории
+### Проверка dirty-состояния перед выходом
 
 ```javascript
-const history = new History(graph, 50);
-console.log(history.maxSize); // 50
-
-// Уменьшаем глубину для экономии памяти (например, через панель оптимизаций)
-history.maxSize = 20;
-// При следующем вызове save() стек будет ограничен 20 снимками
-history.save();
-```
-
-### Интеграция с рендерером
-
-```javascript
-class DomRenderer {
-  setHistory(history) {
-    this.history = history;
-    window._history = history; // для глобального доступа
+window.addEventListener('beforeunload', (e) => {
+  if (history.graph.isDirty) {
+    e.preventDefault();
+    e.returnValue = 'You have unsaved changes. Are you sure?';
+    return 'You have unsaved changes. Are you sure?';
   }
-  
-  save() {
-    if (this.history) {
-      this.history.save();
-      this.history.autoSave(); // обычно вызывается внутри save(), но можно и явно
-    }
-  }
-}
+});
 ```
 
-### Восстановление при загрузке страницы
+### Интеграция с UI-кнопками
 
 ```javascript
-const graph = new Graph();
-const history = new History(graph);
-const loaded = history.loadFromStorage();
+const undoBtn = document.getElementById('undoBtn');
+const redoBtn = document.getElementById('redoBtn');
+const saveBtn = document.getElementById('saveBtn');
 
-if (!loaded) {
-  // Создаём узел по умолчанию
-  const defaultNode = new OutputNode(null, 500, 300, 'Output');
-  graph.addNode(defaultNode);
-  history.save();
-}
+// Обновляем состояние кнопок при изменении dirty-флага
+graph.onDirtyChange((isDirty) => {
+  saveBtn.disabled = !isDirty;
+  saveBtn.style.opacity = isDirty ? '1' : '0.5';
+});
+
+undoBtn.onclick = () => {
+  history.undo();
+  renderer.render();
+};
+
+redoBtn.onclick = () => {
+  history.redo();
+  renderer.render();
+};
+
+saveBtn.onclick = () => {
+  persistenceService.exportToFile();
+  // dirty сбрасывается внутри exportToFile через graph.clearDirty()
+};
 ```
 
 # ЗАМЕЧАНИЯ
 
-- **Автосохранение:** выполняется при каждом вызове `save()`, перезаписывая предыдущие данные в `localStorage`. Это обеспечивает восстановление после перезагрузки страницы.
-- **Глубина истории:** при достижении лимита `maxSize` самые старые снимки удаляются без предупреждения. Снимки хранятся целиком, поэтому при большом графе и глубокой истории может потребляться значительный объём памяти.
-- **Глобальные зависимости:** класс `History` использует глобальные переменные и функции (`window._viewportX`, `window._viewportY`, `window.currentZoom`, `window.currentQualityValue`, `window.applyDesignQuality`, `window._viewport`, `window.setZoom`). Эти зависимости должны быть инициализированы до вызова `loadFromStorage()` или `autoSave()`.
-- **Отсутствие валидации:** при восстановлении из `localStorage` не выполняется проверка целостности данных. Повреждённый JSON вызовет исключение, которое перехватывается и приводит к возврату `false`.
+- **Автосохранение:** выполняется при каждом вызове `save()`, перезаписывая предыдущие данные в `localStorage`.
+- **Dirty-флаг:** методы `undo()` и `redo()` автоматически устанавливают `graph.setDirty(true)`, так как они изменяют состояние графа. 
+- **Сохранение:** вызов `save()` автоматически сбрасывает dirty-флаг через `graph.clearDirty()`.
+- **Глубина истории:** при достижении лимита `maxSize` самые старые снимки удаляются без предупреждения.
+- **Глобальные зависимости:** класс `History` использует глобальные переменные и функции (`window._viewportX`, `window._viewportY`, `window.currentZoom`, `window.currentQualityValue`, `window.applyDesignQuality`, `window._viewport`, `window.setZoom`).
+- **Отсутствие валидации:** при восстановлении из `localStorage` не выполняется проверка целостности данных.
 - **Снимки включают позицию вьюпорта и зум:** это позволяет восстанавливать не только содержимое графа, но и точное положение камеры.
-- **Совместимость с оптимизациями:** значение `designQuality` сохраняется в истории, что позволяет откатывать не только структуру графа, но и визуальные настройки производительности.\

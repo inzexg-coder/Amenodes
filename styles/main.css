@@ -121,6 +121,21 @@ body {
   border-radius: 0px !important;
 }
 
+/* DIRTY_STATUS */
+
+.dirty-indicator {
+  animation: dirtyPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes dirtyPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.design-quality-extreme .dirty-indicator {
+  animation: none;
+}
+
 /* NODE SELECTION & MARK */
 
 .node-temp-selected {

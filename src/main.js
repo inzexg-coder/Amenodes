@@ -391,6 +391,7 @@ class Application {
           
           this.updateNodeCount();
           this.updateEdgeCount();
+          this.graph.clearDirty();
         }
         
         if (splashOverlay && appContainer) {
@@ -418,6 +419,7 @@ class Application {
                 }
                 this.updateNodeCount();
                 this.updateEdgeCount();
+                this.graph.clearDirty();
                 
                 if (splashOverlay && appContainer) {
                   splashOverlay.style.opacity = '0';
@@ -490,11 +492,13 @@ class Application {
       this.populateNodesLibrary();
       this.loadInitialState();
       this.renderer.render();
+      this.initDirtyIndicator();
       console.log(`[Application] Ready with ${nodeRegistry.size} node types`);
     } catch (err) {
       console.error('[Application] Failed to initialize nodes:', err);
       this.loadInitialState();
       this.renderer.render();
+      this.initDirtyIndicator();
     }
   }
   
@@ -639,17 +643,40 @@ class Application {
     }
   }
   
+  initDirtyIndicator() {
+    const dirtySpan = document.getElementById('dirtyIndicator');
+    if (!dirtySpan) return;
+    
+    dirtySpan.style.display = 'none';
+    
+    if (this.graph && typeof this.graph.onDirtyChange === 'function') {
+      this.graph.onDirtyChange((isDirty) => {
+        dirtySpan.style.display = isDirty ? 'inline-flex' : 'none';
+        
+        if (isDirty) {
+          if (!document.title.startsWith('* ')) {
+            document.title = '* ' + document.title;
+          }
+        } else {
+          if (document.title.startsWith('* ')) {
+            document.title = document.title.substring(2);
+          }
+        }
+      });
+    }
+  }
+  
   updateNodeCount() {
     const nodeCountEl = document.getElementById('nodeCount');
     if (nodeCountEl) {
-      nodeCountEl.textContent = `${this.graph.nodes.length} nodes`;
+      nodeCountEl.textContent = `${this.graph.nodes.length} ${t('editor.nodeCount')}`;
     }
   }
   
   updateEdgeCount() {
     const edgeCountEl = document.getElementById('edgeCount');
     if (edgeCountEl) {
-      edgeCountEl.textContent = `${this.graph.edges.length} connections`;
+      edgeCountEl.textContent = `${this.graph.edges.length} ${t('editor.edgeCount')}`;
     }
   }
   
@@ -704,6 +731,7 @@ class Application {
       this.updateNodeCount();
       this.updateEdgeCount();
       this.updateZoomIndicator();
+      this.graph.clearDirty();
     }
     event.target.value = '';
   }
@@ -713,6 +741,9 @@ class Application {
       if (result) {
         localStorage.removeItem('amenodes_autosave');
         modal.alert(t('modal.storageCleared'));
+        if (this.graph && this.graph.clearDirty) {
+          this.graph.clearDirty();
+        }
       }
     });
   }
@@ -799,7 +830,7 @@ class Application {
       panel.innerHTML = `
         <div class="empty-property">
           <i class="fas fa-hand-pointer"></i>
-          <p>Select a node to edit properties</p>
+          <p>${t('editor.selectNodeToEdit')}</p>
         </div>
       `;
       return;
@@ -807,22 +838,22 @@ class Application {
     
     panel.innerHTML = `
       <div class="property-group">
-        <div class="property-label">Node Type</div>
+        <div class="property-label">${t('editor.nodeType')}</div>
         <div class="property-value">${node.type}</div>
       </div>
       <div class="property-group">
-        <div class="property-label">ID</div>
+        <div class="property-label">${t('editor.id')}</div>
         <div class="property-value">${node.id}</div>
       </div>
       <div class="property-group">
-        <div class="property-label">Position</div>
+        <div class="property-label">${t('editor.position')}</div>
         <div class="property-value">X: ${Math.round(node.x)}, Y: ${Math.round(node.y)}</div>
       </div>
       <div class="property-group">
-        <div class="property-label">Connections</div>
+        <div class="property-label">${t('editor.connections')}</div>
         <div class="property-value">
-          Inputs: ${this.graph.getIncomingEdges(node.id).length}<br>
-          Outputs: ${this.graph.getOutgoingEdges(node.id).length}
+          ${t('editor.inputs')}: ${this.graph.getIncomingEdges(node.id).length}<br>
+          ${t('editor.outputs')}: ${this.graph.getOutgoingEdges(node.id).length}
         </div>
       </div>
     `;

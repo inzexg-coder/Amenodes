@@ -24,12 +24,19 @@ export class History {
     if (this.stack.length > this.maxSize) this.stack.shift();
     else this.index = this.stack.length - 1;
     this.autoSave();
+    
+    if (this.graph && this.graph.clearDirty) {
+      this.graph.clearDirty();
+    }
   }
 
   undo() {
     if (this.index > 0) {
       this.index--;
       this.restore(this.stack[this.index]);
+      if (this.graph && this.graph.setDirty) {
+        this.graph.setDirty(true);
+      }
     }
   }
 
@@ -37,6 +44,9 @@ export class History {
     if (this.index < this.stack.length - 1) {
       this.index++;
       this.restore(this.stack[this.index]);
+      if (this.graph && this.graph.setDirty) {
+        this.graph.setDirty(true);
+      }
     }
   }
 
@@ -79,6 +89,11 @@ export class History {
         if (data.viewportZoom !== undefined && window.setZoom) {
           window.setZoom(data.viewportZoom);
         }
+
+        if (this.graph && this.graph.clearDirty) {
+          this.graph.clearDirty();
+        }
+        
         return true;
       }
     } catch (e) {}
