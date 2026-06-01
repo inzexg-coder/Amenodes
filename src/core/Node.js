@@ -10,7 +10,7 @@ export class Node {
     this.title = title;
     this.important = false;
     this.graph = null;
-    this.originalTitle = title;  
+    this.originalTitle = title;
     this.titleEditor = null;
     this.unsubscribeI18n = null;
     
@@ -68,6 +68,17 @@ export class Node {
     }
   }
 
+  setTitle(newTitle) {
+    this.title = newTitle;
+    this.originalTitle = newTitle;
+    if (this.titleEditor) {
+      this.titleEditor.setValue(newTitle);
+    }
+    if (this.graph && this.graph.history) {
+      this.graph.history.save();
+    }
+  }
+
   toJSON() {
     return {
       id: this.id,
@@ -99,16 +110,21 @@ export class Node {
     header.className = headerClass;
 
     let displayTitle = this.title;
-    if (this.title === this.originalTitle) {
-      displayTitle = this.getLocalizedTitle();
-    }
 
+    const self = this;
+    
     this.titleEditor = new EditableTitle(displayTitle, (newTitle) => {
-      this.title = newTitle;
-      this.originalTitle = newTitle;
+      self.title = newTitle;
+      self.originalTitle = newTitle;
+
       graph.reevaluateAll();
       renderer.render();
       renderer.save();
+      
+      const nodeCountEl = document.getElementById('nodeCount');
+      if (nodeCountEl) {
+        nodeCountEl.textContent = `${graph.nodes.length} nodes`;
+      }
     });
 
     const actions = document.createElement('div');
@@ -129,16 +145,16 @@ export class Node {
     header.appendChild(this.titleEditor.getElement());
     header.appendChild(actions);
     div.appendChild(header);
-
+    
     if (this.unsubscribeI18n) this.unsubscribeI18n();
     this.unsubscribeI18n = i18n.subscribe(() => {
-      if (this.title === this.originalTitle) {
-        const newTitle = this.getLocalizedTitle();
-        if (this.title !== newTitle) {
-          this.title = newTitle;
-          this.originalTitle = newTitle;
-          if (this.titleEditor) {
-            this.titleEditor.setValue(newTitle);
+      if (self.title === self.originalTitle) {
+        const newTitle = self.getLocalizedTitle();
+        if (self.title !== newTitle) {
+          self.title = newTitle;
+          self.originalTitle = newTitle;
+          if (self.titleEditor) {
+            self.titleEditor.setValue(newTitle);
           }
         }
       }
