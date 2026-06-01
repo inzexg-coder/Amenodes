@@ -13,6 +13,8 @@ export class Node {
     this.originalTitle = title;
     this.titleEditor = null;
     this.unsubscribeI18n = null;
+    this.dirtyIndicator = null;
+    this.unsubscribeDirty = null;
     
     Object.assign(this, options);
   }
@@ -108,24 +110,44 @@ export class Node {
 
     const header = document.createElement('div');
     header.className = headerClass;
+    header.style.display = 'flex';
+    header.style.alignItems = 'center';
+    header.style.justifyContent = 'space-between';
+
+    const titleContainer = document.createElement('div');
+    titleContainer.style.display = 'flex';
+    titleContainer.style.alignItems = 'center';
+    titleContainer.style.gap = '6px';
 
     let displayTitle = this.title;
-
+    
     const self = this;
     
     this.titleEditor = new EditableTitle(displayTitle, (newTitle) => {
       self.title = newTitle;
       self.originalTitle = newTitle;
-
+      
       graph.reevaluateAll();
       renderer.render();
       renderer.save();
       
-      const nodeCountEl = document.getElementById('nodeCount');
-      if (nodeCountEl) {
-        nodeCountEl.textContent = `${graph.nodes.length} nodes`;
+      if (graph && graph.setDirty) {
+        graph.setDirty(true);
       }
     });
+
+    this.dirtyIndicator = document.createElement('span');
+    this.dirtyIndicator.textContent = '*';
+    this.dirtyIndicator.style.color = '#ffb347';
+    this.dirtyIndicator.style.fontSize = '14px';
+    this.dirtyIndicator.style.fontWeight = 'bold';
+    this.dirtyIndicator.style.marginLeft = '4px';
+    this.dirtyIndicator.style.display = 'none';
+    this.dirtyIndicator.title = 'Unsaved changes';
+    this.dirtyIndicator.classList.add('dirty-indicator');
+
+    titleContainer.appendChild(this.titleEditor.getElement());
+    titleContainer.appendChild(this.dirtyIndicator);
 
     const actions = document.createElement('div');
     actions.className = 'node-actions';
@@ -135,6 +157,7 @@ export class Node {
     deleteBtn.onclick = (e) => {
       e.stopPropagation();
       if (this.unsubscribeI18n) this.unsubscribeI18n();
+      if (this.unsubscribeDirty) this.unsubscribeDirty();
       graph.removeNode(this.id);
       graph.reevaluateAll();
       renderer.render();
@@ -142,10 +165,20 @@ export class Node {
     };
     actions.appendChild(deleteBtn);
 
-    header.appendChild(this.titleEditor.getElement());
+    header.appendChild(titleContainer);
     header.appendChild(actions);
     div.appendChild(header);
+
+    const updateDirtyIndicator = (isDirty) => {
+      if (this.dirtyIndicator) {
+        this.dirtyIndicator.style.display = isDirty ? 'inline' : 'none';
+      }
+    };
     
+    if (graph && typeof graph.onDirtyChange === 'function') {
+      this.unsubscribeDirty = graph.onDirtyChange(updateDirtyIndicator);
+    }
+
     if (this.unsubscribeI18n) this.unsubscribeI18n();
     this.unsubscribeI18n = i18n.subscribe(() => {
       if (self.title === self.originalTitle) {
@@ -160,6 +193,15 @@ export class Node {
       }
     });
 
+    const originalRemove = div.remove;
+    div.remove = function() {
+      if (self.unsubscribeI18n) self.unsubscribeI18n();
+      if (self.unsubscribeDirty) self.unsubscribeDirty();
+      if (originalRemove) originalRemove.call(this);
+    };
+
+    renderer.applyOptStyles(div);
+    
     return div;
   }
 
