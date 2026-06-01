@@ -59,7 +59,7 @@ export class EditableTitle {
     
     this.input.onblur = () => {
       setTimeout(() => {
-        if (document.activeElement !== this.input) {
+        if (document.activeElement !== this.input && this.input.parentNode === this.element) {
           this.finish();
         }
       }, 100);
@@ -73,6 +73,8 @@ export class EditableTitle {
   }
 
   startEdit() {
+    this.input.value = this.value;
+    
     if (this.displaySpan.parentNode === this.element) {
       this.element.removeChild(this.displaySpan);
     }
@@ -92,20 +94,21 @@ export class EditableTitle {
       newValue = this.value;
     }
     
+    const hasChanged = (newValue !== this.value);
+    
     this.value = newValue;
     this.displaySpan.textContent = replaceSymbols(newValue);
-
+    
     this.element.removeChild(this.input);
     this.element.appendChild(this.displaySpan);
-    
-    if (this.onChange && newValue !== this.value) {
+
+    if (this.onChange && hasChanged) {
       this.onChange(newValue);
     }
   }
 
   cancel() {
     this.input.value = this.value;
-    
     if (this.input.parentNode === this.element) {
       this.element.removeChild(this.input);
       this.element.appendChild(this.displaySpan);
