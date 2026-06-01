@@ -223,19 +223,11 @@ export class NodeMenu {
     const options = { x, y };
     Object.assign(options, subnode);
     
-    const NodeClass = NodeFactory.getNodeClass(categoryType);
+    const node = await NodeFactory.createNode(categoryType, options);
     
-    if (NodeClass && typeof NodeClass.onCreate === 'function') {
-      const node = await NodeClass.onCreate(this.graph, x, y, options);
-      if (node) {
-        this.finishNodeCreation();
-      }
-    } else {
-      const node = NodeFactory.createNode(categoryType, options);
-      if (node) {
-        this.graph.addNode(node);
-        this.finishNodeCreation();
-      }
+    if (node) {
+      this.graph.addNode(node);
+      this.finishNodeCreation();
     }
   }
 
@@ -243,19 +235,12 @@ export class NodeMenu {
     const { x, y } = this.getCenterPosition();
     const options = { x, y };
     
-    const NodeClass = NodeFactory.getNodeClass(type);
+    // Всегда используем фабрику с async/await
+    const node = await NodeFactory.createNode(type, options);
     
-    if (NodeClass && typeof NodeClass.onCreate === 'function') {
-      const node = await NodeClass.onCreate(this.graph, x, y, options);
-      if (node) {
-        this.finishNodeCreation();
-      }
-    } else {
-      const node = NodeFactory.createNode(type, options);
-      if (node) {
-        this.graph.addNode(node);
-        this.finishNodeCreation();
-      }
+    if (node) {
+      this.graph.addNode(node);
+      this.finishNodeCreation();
     }
   }
 
