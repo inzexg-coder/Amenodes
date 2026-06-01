@@ -31,6 +31,7 @@
 - **Import/Export** – Save your graphs to `.amnk` files and load them back.
 - **Pan & Zoom** – Right-click drag to pan, scroll to zoom.
 - **Customizable UI** – Design quality slider to trade off visual effects for performance (up to +300% FPS).
+- **Dirty State Indicator** – Visual feedback for unsaved changes: asterisk `(*)` appears next to node titles and status bar shows "Unsaved changes" when graph has pending modifications.
 
 <div align="center">
   <img src="images/canvas.png" alt="Visual Node Editor" style="width: 100%; max-width: 100%; height: auto;">
@@ -97,7 +98,14 @@ Click the **+** button in the toolbar or right-click on an existing node's handl
 - **Mark as important** – Right-click on a node and select "Mark IMPORTANT node" – the node gets a blue glow.
 - **Delete nodes** – Click the ✕ button in the node header.
 - **Drag nodes** – Click and drag the header to move nodes around.
+- 
+### Saving Changes
 
+- **Dirty indicator** – When you make any changes to the graph (add/remove nodes, create/delete connections, move nodes, edit values), an asterisk `(*)` appears next to each node title and the status bar shows "Unsaved changes".
+- **Auto-save** – The graph is automatically saved to localStorage when you make changes. The dirty indicator disappears after auto-save.
+- **Manual save** – Click **Export** to save your graph to a `.amnk` file. The dirty indicator clears after successful export.
+- **Page title indicator** – When you have unsaved changes, the page title shows `* @Amenodes` to remind you even when the tab is not active.
+- 
 ### User Account & Templates
 
 1. **Register/Login** – Click the login button in the top-right corner
@@ -127,6 +135,7 @@ Click the **+** button in the toolbar or right-click on an existing node's handl
 | **Save Template** | Publish current schema to template library (logged in only) |
 | **Clear storage** | Delete the auto-saved graph from localStorage |
 | **Moderate** | Open moderation panel (moderators only) |
+| **Dirty Indicator** | Shows `*` in node titles and status bar when changes are unsaved |
 
 ### Performance Panel
 
