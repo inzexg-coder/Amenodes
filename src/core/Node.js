@@ -55,7 +55,7 @@ export class Node {
   }
 
   updateTitleTranslation() {
-    if (this.titleEditor && this.title !== this.originalTitle) {
+    if (this.title !== this.originalTitle) {
       return;
     }
     const newTitle = this.getLocalizedTitle();
@@ -65,6 +65,17 @@ export class Node {
       if (this.titleEditor) {
         this.titleEditor.setValue(newTitle);
       }
+    }
+  }
+
+  setTitle(newTitle) {
+    this.title = newTitle;
+    this.originalTitle = newTitle;
+    if (this.titleEditor) {
+      this.titleEditor.setValue(newTitle);
+    }
+    if (this.graph && this.graph.history) {
+      this.graph.history.save();
     }
   }
 
@@ -98,19 +109,29 @@ export class Node {
     const header = document.createElement('div');
     header.className = headerClass;
 
-    const localizedTitle = this.getLocalizedTitle();
-    this.titleEditor = new EditableTitle(localizedTitle, (newTitle) => {
-      this.title = newTitle;
-      this.originalTitle = newTitle;
+    let displayTitle = this.title;
+
+    const self = this;
+    
+    this.titleEditor = new EditableTitle(displayTitle, (newTitle) => {
+      self.title = newTitle;
+      self.originalTitle = newTitle;
+
       graph.reevaluateAll();
       renderer.render();
       renderer.save();
+      
+      const nodeCountEl = document.getElementById('nodeCount');
+      if (nodeCountEl) {
+        nodeCountEl.textContent = `${graph.nodes.length} nodes`;
+      }
     });
 
     const actions = document.createElement('div');
     actions.className = 'node-actions';
     const deleteBtn = document.createElement('button');
     deleteBtn.textContent = '✕';
+    deleteBtn.title = 'Delete node';
     deleteBtn.onclick = (e) => {
       e.stopPropagation();
       if (this.unsubscribeI18n) this.unsubscribeI18n();
@@ -124,15 +145,17 @@ export class Node {
     header.appendChild(this.titleEditor.getElement());
     header.appendChild(actions);
     div.appendChild(header);
-
+    
     if (this.unsubscribeI18n) this.unsubscribeI18n();
     this.unsubscribeI18n = i18n.subscribe(() => {
-      this.updateTitleTranslation();
-      if (this.titleEditor) {
-        const currentDisplayText = this.titleEditor.displaySpan?.textContent;
-        const newDisplayText = this.getLocalizedTitle();
-        if (currentDisplayText !== newDisplayText) {
-          this.titleEditor.setValue(newDisplayText);
+      if (self.title === self.originalTitle) {
+        const newTitle = self.getLocalizedTitle();
+        if (self.title !== newTitle) {
+          self.title = newTitle;
+          self.originalTitle = newTitle;
+          if (self.titleEditor) {
+            self.titleEditor.setValue(newTitle);
+          }
         }
       }
     });
