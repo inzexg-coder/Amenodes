@@ -36,6 +36,7 @@ export class DomRenderer {
       this.graph.updateAllOutputs();
       this.render();
       this.save();
+      if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
     });
     
     this.contextMenu = null;
@@ -66,6 +67,11 @@ export class DomRenderer {
   }
 
   getNodeHeight(node) {
+    if (!node || typeof node.getMinHeight !== 'function') {
+      console.warn('Node missing getMinHeight method:', node);
+      return 80;
+    }
+    
     if (this.heightCache.has(node.id)) {
       return this.heightCache.get(node.id);
     }
@@ -75,6 +81,8 @@ export class DomRenderer {
   }
 
   isNodeVisible(node, viewportRect, offset) {
+    if (!node) return false;
+    
     const nodeX = node.x + offset.x;
     const nodeY = node.y + offset.y;
     const height = this.getNodeHeight(node);
@@ -306,6 +314,7 @@ export class DomRenderer {
         this.graph.updateAllOutputs();
         this.render();
         this.save();
+        if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
       }
     }
     
@@ -384,12 +393,15 @@ export class DomRenderer {
       this.dragNode.x = newX;
       this.dragNode.y = newY;
       
-      const element = document.querySelector(`.node[data-id='${this.dragNode.id}']`);
+      const element = this.elementCache.get(this.dragNode.id);
       if (element) {
         element.style.left = `${this.dragNode.x}px`;
         element.style.top = `${this.dragNode.y}px`;
       }
-      this.render();
+
+      this.renderEdges(this.graph.nodes);
+      
+      if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
     }
   }
 
