@@ -3,14 +3,14 @@
 ## СОДЕРЖАНИЕ
 
 - [Введение и краткое руководство](#введение-и-краткое-руководство)
-- [NumberNode](#numbernode)
-- [ConstantNode](#constantnode)
-- [GroupNode](#groupnode)
-- [CalcNode](#calcnode)
-- [OutputNode](#outputnode)
-- [MapNode](#mapnode)
-- [ConfidenceIntervalNode](#confidenceintervalnode)
-- [ArithmeticMeanNode](#arithmeticmeannode)
+- [ЧИСЛО](#numbernode)
+- [КОНСТАНТА](#constantnode)
+- [ГРУППА](#groupnode)
+- [ПОГРЕШНОСТЬ](#calcnode)
+- [ВЫВОД](#outputnode)
+- [КАРТА ПРЕОБРАЗОВАНИЙ](#mapnode)
+- [ДОВЕРИТЕЛЬНЫЙ ИНТЕРВАЛ](#confidenceintervalnode)
+- [СРЕДНЕЕ АРИФМЕТИЧЕСКОЕ](#arithmeticmeannode)
 - [Руководство по добавлению нового узла](#руководство-по-добавлению-нового-узла)
 
 ---
