@@ -20,20 +20,24 @@ export const metadata = {
 export class GroupNode extends Node {
   constructor(id, x, y, title, options = {}) {
     super(id, 'group', x, y, title, options);
-    this.values = options.vals ?? [{ name: `${i18n.t('common.value')} 1`, val: 0 }];
+    this.values = options.vals ?? [{ name: `${t('common.value')} 1`, val: 0 }];
   }
 
   getValue() {
+    if (!this.values || !Array.isArray(this.values)) {
+      return [];
+    }
     return this.values.map(v => typeof v.val === 'number' ? v.val : parseFloat(v.val))
       .filter(v => !isNaN(v));
   }
 
   toJSON() {
-    return { ...super.toJSON(), vals: this.values.map(v => ({ ...v })) };
+    return { ...super.toJSON(), vals: this.values?.map(v => ({ ...v })) ?? [] };
   }
 
   getMinHeight() {
-    return Math.max(80, 80 + this.values.length * 40);
+    const valuesCount = this.values?.length ?? 1;
+    return Math.max(80, 80 + valuesCount * 40);
   }
 
   createDOM(graph, renderer) {
@@ -41,13 +45,20 @@ export class GroupNode extends Node {
     const itemsContainer = document.createElement('div');
     itemsContainer.className = 'group-items';
     
+    if (!this.values || !this.values.length) {
+      this.values = [{ name: `${t('common.value')} 1`, val: 0 }];
+    }
+    
     const update = () => {
       renderer.invalidateCache(this.id);
       graph.reevaluateAll();
       renderer.render();
       renderer.save();
+      if (graph && graph.setDirty) graph.setDirty(true);
     };
 
+    itemsContainer.innerHTML = '';
+    
     this.values.forEach((val, idx) => {
       const row = document.createElement('div');
       row.className = 'group-row';
@@ -79,6 +90,7 @@ export class GroupNode extends Node {
         };
       } else {
         removeBtn.disabled = true;
+        removeBtn.style.opacity = '0.5';
       }
       
       row.appendChild(nameEditor.getElement());

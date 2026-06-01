@@ -43,14 +43,21 @@ export class MeanNode extends Node {
       this.resultStr = '--';
       return;
     }
-    const sum = input.reduce((acc, val) => acc + val, 0);
-    const mean = sum / input.length;
+    
+    const numbers = input.filter(v => typeof v === 'number' && !isNaN(v));
+    if (numbers.length === 0) {
+      this.result = null;
+      this.resultStr = '--';
+      return;
+    }
+    
+    const sum = numbers.reduce((acc, val) => acc + val, 0);
+    const mean = sum / numbers.length;
     this.result = mean;
     this.resultStr = mean.toFixed(6);
   }
 
   updateDisplay() {
-    // DOM обновится при следующем рендере
   }
 
   onAttach(graph) {
@@ -69,8 +76,11 @@ export class MeanNode extends Node {
     const updateInfo = () => {
       const incoming = graph.getIncomingEdges(this.id);
       const inputCount = incoming.length;
+      const merged = graph.getMergedInput(this.id);
+      const validNumbers = merged.filter(v => typeof v === 'number' && !isNaN(v));
       content.innerHTML = `<strong>${this.getLocalizedTitle()}</strong><br>
                            ${t('mean.inputs')}: ${inputCount}<br>
+                           ${t('mean.sampleSize')}: ${validNumbers.length}<br>
                            ${t('mean.result')}: ${this.resultStr}`;
     };
     

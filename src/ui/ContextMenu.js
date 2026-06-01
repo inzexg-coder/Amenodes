@@ -78,24 +78,16 @@ export class ContextMenu {
       const submenuContainer = this.createSubmenu(
         t(category.nameKey) + ' ▸',
         submenuItems,
-        (type, subnode, title) => {
-          const node = NodeFactory.createNode(type, {
-            x: baseX + 20,
-            y: baseY + 160,
-            title: title,
-            ...subnode
-          });
-          this.graph.addNode(node);
-          this.graph.addEdge(sourceId, node.id, 'main');
-          this.finishNodeCreation();
+        async (type, subnode, title) => {
+          await this.createAndConnectWithCheck(type, baseX, baseY, sourceId, subnode);
         }
       );
       menu.appendChild(submenuContainer);
     }
     
     for (const nodeType of regularNodes) {
-      this.addMenuItem(menu, t(nodeType.nameKey), () => {
-        this.createAndConnect(nodeType.type, baseX, baseY, sourceId);
+      this.addMenuItem(menu, t(nodeType.nameKey), async () => {
+        await this.createAndConnectWithCheck(nodeType.type, baseX, baseY, sourceId);
       });
     }
     
@@ -144,8 +136,8 @@ export class ContextMenu {
       const subItem = document.createElement('div');
       subItem.className = 'node-menu-item';
       subItem.textContent = item.text;
-      subItem.onclick = () => {
-        onSelect(item.type, item.subnode, item.title);
+      subItem.onclick = async () => {
+        await onSelect(item.type, item.subnode, item.title);
         this.close();
       };
       submenu.appendChild(subItem);
@@ -156,18 +148,35 @@ export class ContextMenu {
     return container;
   }
 
-  createAndConnect(nodeType, x, y, sourceId, extraOptions = {}) {
-    const node = NodeFactory.createNode(nodeType, {
+  async createAndConnectWithCheck(nodeType, x, y, sourceId, extraOptions = {}) {
+    const sourceNode = this.graph.getNode(sourceId);
+    if (!sourceNode) return;
+
+    const tempNode = await NodeFactory.createNode(nodeType, {
       x: x + 20,
       y: y + 80,
-      ...extraOptions
+      ...extraOptions,
+      id: -999
     });
     
-    if (node) {
-      this.graph.addNode(node);
-      this.graph.addEdge(sourceId, node.id, 'main');
-      this.finishNodeCreation();
+    if (!tempNode) return;
+
+    const canConnect = this.graph.canConnect(sourceId, tempNode.id);
+    
+    if (!canConnect) {
+      const sourceType = this.graph.getTypeDisplayName(sourceNode.constructor.metadata?.dataType || 'unknown');
+      const targetType = this.graph.getTypeDisplayName(tempNode.constructor.metadata?.dataType || 'unknown');
+      modal.alert(`${t('errors.cannotConnect')}: ${sourceType} → ${targetType}`);
+      return;
     }
+    
+    this.graph.addNode(tempNode);
+    this.graph.addEdge(sourceId, tempNode.id, 'main');
+    this.finishNodeCreation();
+  }
+
+  async createAndConnect(nodeType, x, y, sourceId, extraOptions = {}) {
+    await this.createAndConnectWithCheck(nodeType, x, y, sourceId, extraOptions);
   }
 
   finishNodeCreation() {
