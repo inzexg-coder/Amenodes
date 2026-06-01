@@ -1,10 +1,10 @@
-# NodeFactory
+# `NodeFactory`
 
 ## ОПИСАНИЕ
 
 `NodeFactory` – статическая фабрика для создания экземпляров узлов в приложении Amenodes. Класс предоставляет единый интерфейс для:
 
-- создания узлов по строковому идентификатору типа;
+- создания узлов по строковому идентификатору типа с поддержкой асинхронного создания (через статический метод `onCreate`);
 - получения метаданных зарегистрированных типов узлов;
 - проверки существования типа узла;
 - перечисления всех доступных типов.
@@ -50,15 +50,15 @@ static getAvailableNodeTypes(): Array<object>
 ```javascript
 [
   {
-    type: 'nтип',
-    nameKey: 'nodes.тип',
-    descriptionKey: 'nodeDescriptions.тип',
-    icon: 'fa-иконка',
-    dataType: 'тип данных',
-    canHaveIncomingEdges: T/F,
-    canHaveOutgoingEdges: T/F,
+    type: 'number',
+    nameKey: 'nodes.number',
+    descriptionKey: 'nodeDescriptions.number',
+    icon: 'fa-hashtag',
+    dataType: 'num',
+    canHaveIncomingEdges: false,
+    canHaveOutgoingEdges: true,
     allowedInputTypes: [],
-    allowedOutputTypes: [],
+    allowedOutputTypes: ['num', 'array', 'auto', 'uncert', 'list', 'wlist'],
     defaultValue: 0
   },
   // ... остальные узлы
@@ -133,10 +133,10 @@ if (NumberClass && typeof NumberClass.onCreate === 'function') {
 ## createNode(type, options)
 
 ```javascript
-static createNode(type: string, options: object = {}): Node
+static async createNode(type: string, options: object = {}): Promise<Node | null>
 ```
 
-Создаёт и возвращает экземпляр узла указанного типа. Этот метод является основным способом программного создания узлов.
+Создаёт и возвращает экземпляр узла указанного типа. **Метод является асинхронным**, так как некоторые узлы (например, `ConstantNode`) требуют взаимодействия с пользователем через модальные окна перед созданием.
 
 **Параметры:**
 
@@ -157,16 +157,26 @@ static createNode(type: string, options: object = {}): Node
 2. Извлекает `metadata` и `ctor` (класс-конструктор).
 3. Определяет `defaultTitle` как `i18n.t(metadata.nameKey)`.
 4. Определяет `finalTitle` как `options.title || defaultTitle`.
-5. Вызывает конструктор с параметрами: `new ctor(options.id || 0, options.x || 0, options.y || 0, finalTitle, customParams)`, где `customParams` – это `options` без полей `id`, `x`, `y`, `title`.
+5. **Если у класса есть статический метод `onCreate`:**
+   - Вызывает `await NodeClass.onCreate(graph, options.x || 0, options.y || 0, customParams)`.
+   - Если `onCreate` вернул `null`, метод возвращает `null` (пользователь отменил создание).
+   - Если `onCreate` вернул узел и передан `id`, а у узла нет `id` – присваивает его.
+   - Если передан `finalTitle` и узел имеет стандартный заголовок – обновляет заголовок.
+   - Возвращает созданный узел.
+6. **Иначе (обычное создание):**
+   - Создаёт узел через конструктор: `new ctor(options.id || 0, options.x || 0, options.y || 0, finalTitle, customParams)`.
+   - Возвращает созданный узел.
 
-**Возвращает:** экземпляр класса узла, производного от `Node`.
+**Возвращает:** `Promise<Node | null>` – экземпляр узла или `null`, если создание было отменено (например, пользователь закрыл модальное окно).
 
 **Выбрасывает:** `Error` с сообщением `Unknown node type: ${type}`, если тип не зарегистрирован.
 
-### ## createNodeAt(type, x, y, customParams)
+**Важно:** при загрузке графа из сохранения (через `Graph.loadFrom`) следует использовать прямое создание через конструктор, а не `createNode`, чтобы избежать повторных запросов к пользователю.
+
+### createNodeAt(type, x, y, customParams)
 
 ```javascript
-static createNodeAt(type: string, x: number, y: number, customParams: object = {}): Node
+static async createNodeAt(type: string, x: number, y: number, customParams: object = {}): Promise<Node | null>
 ```
 
 Упрощённый метод для создания узла с указанными координатами. Является обёрткой над `createNode` с предустановленными полями `x` и `y`.
@@ -180,9 +190,9 @@ static createNodeAt(type: string, x: number, y: number, customParams: object = {
 
 **Алгоритм:**
 
-- Вызывает `this.createNode(type, { x, y, ...customParams })`.
+- Вызывает `return await this.createNode(type, { x, y, ...customParams })`.
 
-**Возвращает:** экземпляр узла.
+**Возвращает:** `Promise<Node | null>`.
 
 ## hasNodeType(type)
 
@@ -216,7 +226,7 @@ static getAllTypes(): Array<string>
 
 ```javascript
 const types = NodeFactory.getAllTypes();
-console.log(types);
+console.log(types); // ['number', 'constant', 'group', 'calc', 'output', 'map', 'confidenceInterval', 'mean', 'sem']
 ```
 
 # ПРИМЕРЫ ИСПОЛЬЗОВАНИЯ
@@ -232,12 +242,12 @@ const availableTypes = NodeFactory.getAvailableNodeTypes();
 // Найти тип по имени (например, "Map")
 const mapMetadata = availableTypes.find(t => t.type === 'map');
 if (mapMetadata) {
-  const mapNode = NodeFactory.createNode('map', {
+  const mapNode = await NodeFactory.createNode('map', {
     x: 500,
     y: 500,
     maps: [{ x: 1, y: 10 }, { x: 2, y: 20 }]
   });
-  graph.addNode(mapNode);
+  if (mapNode) graph.addNode(mapNode);
 }
 ```
 
@@ -251,8 +261,23 @@ if (!NodeFactory.hasNodeType(nodeType)) {
   return;
 }
 
-const node = NodeFactory.createNode(nodeType, { x: 0, y: 0 });
-graph.addNode(node);
+const node = await NodeFactory.createNode(nodeType, { x: 0, y: 0 });
+if (node) graph.addNode(node);
+```
+
+### Создание ConstantNode с пользовательским вводом
+
+```javascript
+// ConstantNode имеет статический метод onCreate,
+// который показывает модальное окно для ввода значения
+const constNode = await NodeFactory.createNode('constant', { x: 100, y: 100 });
+if (constNode) {
+  graph.addNode(constNode);
+  // Узел создан с введённым пользователем значением
+} else {
+  // Пользователь отменил создание (закрыл модальное окно)
+  console.log('Создание узла отменено');
+}
 ```
 
 ## Статический метод onCreate узла
@@ -272,7 +297,7 @@ static async onCreate(graph, x, y, options = {}) {
   const finalValue = isNaN(numValue) ? 0 : numValue;
   
   const node = new ConstantNode(null, x, y, t('nodes.constant'), { val: finalValue });
-  graph.addNode(node);
+  if (graph) graph.addNode(node);
   return node;
 }
 ```
@@ -280,17 +305,34 @@ static async onCreate(graph, x, y, options = {}) {
 Использование через фабрику:
 
 ```javascript
-const NodeClass = NodeFactory.getNodeClass('constant');
-if (NodeClass && typeof NodeClass.onCreate === 'function') {
-  const node = await NodeClass.onCreate(graph, 100, 100, {});
-  // node уже добавлен в граф внутри onCreate
+const node = await NodeFactory.createNode('constant', { x: 100, y: 100 });
+// node уже добавлен в граф внутри onCreate (если передан graph)
+```
+
+### Создание узла при загрузке из сохранения (без вызова onCreate)
+
+```javascript
+// В Graph.loadFrom() - НЕ используем фабрику для восстановления
+const NodeClass = NodeFactory.getNodeClass(nodeData.type);
+if (NodeClass) {
+  // Прямой вызов конструктора, без onCreate
+  const node = new NodeClass(
+    nodeData.id,
+    nodeData.x,
+    nodeData.y,
+    nodeData.title,
+    nodeData
+  );
+  this.nodes.push(node);
 }
 ```
 
 # ЗАМЕЧАНИЯ
 
+- **Асинхронность:** метод `createNode` является асинхронным (`async`). Все вызовы должны использовать `await` или `.then()`.
+- **Отмена создания:** если статический метод `onCreate` возвращает `null`, фабрика возвращает `null`. Это позволяет пользователю отменить создание узла (например, закрыть модальное окно).
+- **Восстановление из сохранения:** при загрузке графа из JSON (`Graph.loadFrom`) не следует использовать `NodeFactory.createNode`, так как это приведёт к повторным запросам к пользователю (особенно для `ConstantNode`). Вместо этого используйте прямое создание через конструктор.
 - `NodeFactory` не хранит состояние – все данные берутся из глобального `nodeRegistry`.
 - Реестр `nodeRegistry` заполняется асинхронно через `loadAllNodes()` (вызывается в `Application.initNodesAndStart()`). До завершения этого вызова фабрика может возвращать пустые массивы или выбрасывать исключения о неизвестных типах.
 - При создании узла через `createNode` заголовок не интернационализируется повторно – используется текущий язык в момент вызова. При смене языка заголовки узлов обновляются через подписку `i18n.subscribe()` внутри самих узлов.
-- Метод `createNodeAt` не устанавливает `id` – поле `id` остаётся `null` или `0` и будет перезаписано при добавлении в граф через `graph.addNode()`.
 - Фабрика не проверяет корректность `customParams` – ответственность за правильность параметров лежит на вызывающем коде.
