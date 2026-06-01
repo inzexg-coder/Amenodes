@@ -9,7 +9,9 @@
 - Однокликовое переключение в режим редактирования;
 - Поддержка клавиш `Enter` (сохранить) и `Escape` (отменить);
 - Автоматическое сохранение при потере фокуса (`blur`);
-- Поддержка символьной подстановки через `SymbolMapper.replaceSymbols`.
+- Поддержка символьной подстановки через `SymbolMapper.replaceSymbols`;
+- Визуальная обратная связь при наведении;
+- Предотвращение конфликта между `Enter` и `blur`.
 
 ## ЗАВИСИМОСТИ
 
@@ -33,18 +35,22 @@ constructor(value: string, onChange: (newValue: string) => void)
 
 **Параметры:**
 
-- `value` – начальное строковое значение заголовка.
-- `onChange` – функция обратного вызова, вызываемая при успешном сохранении нового значения. Принимает один аргумент – новую строку.
+| Параметр | Тип | Описание |
+|----------|-----|----------|
+| `value` | `string` | Начальное строковое значение заголовка. |
+| `onChange` | `(newValue: string) => void` | Функция обратного вызова, вызываемая при успешном сохранении нового значения. Принимает один аргумент – новую строку. |
 
 **Инициализируемые свойства:**
 
-| Свойство | Тип | Описание |
-|----------|-----|----------|
-| `this.value` | `string` | Текущее значение заголовка. |
-| `this.onChange` | `Function` | Колбэк сохранения. |
-| `this.element` | `HTMLDivElement` | Корневой DOM-элемент компонента. |
-| `this.displaySpan` | `HTMLSpanElement` | Элемент для отображения текста в режиме просмотра. |
-| `this.input` | `HTMLInputElement` | Поле ввода для режима редактирования. |
+| Свойство | Тип | Начальное значение | Описание |
+|----------|-----|--------------------|----------|
+| `this.value` | `string` | параметр `value` | Текущее значение заголовка. |
+| `this.onChange` | `Function` | параметр `onChange` | Колбэк сохранения. |
+| `this.element` | `HTMLDivElement` | новый элемент | Корневой DOM-элемент компонента. |
+| `this.displaySpan` | `HTMLSpanElement` | `null` (создаётся в `init`) | Элемент для отображения текста в режиме просмотра. |
+| `this.input` | `HTMLInputElement` | `null` (создаётся в `init`) | Поле ввода для режима редактирования. |
+
+**Примечание:** конструктор вызывает `this.init()` для создания DOM-структуры.
 
 # Методы
 
@@ -54,19 +60,28 @@ constructor(value: string, onChange: (newValue: string) => void)
 init(): void
 ```
 
-Инициализирует DOM-структуру компонента:
+Инициализирует DOM-структуру компонента и настраивает обработчики событий.
 
-1. Создаёт `this.displaySpan`:
-   - Присваивает класс `'title-display'`;
-   - Устанавливает `fontFamily: 'monospace'`;
-   - Применяет `replaceSymbols` к начальному значению;
-   - Назначает обработчик `onclick`, вызывающий `startEdit()`.
-2. Создаёт `this.input`:
-   - Тип `'text'`;
-   - Присваивает класс `'title-editable'`;
-   - Устанавливает `fontFamily: 'monospace'`;
-   - Назначает обработчики `onkeydown` (Enter → `finish()`, Escape → `cancel()`) и `onblur` → `finish()`.
-3. Добавляет `this.displaySpan` в `this.element`.
+**Создаваемые элементы:**
+
+### displaySpan
+- Класс: `'title-display'`
+- Стили: `fontFamily: 'monospace'`, `cursor: 'text'`, `padding: '4px 8px'`, `borderRadius: '8px'`
+- Эффекты: при наведении фон меняется на `#2f3a66`
+- Содержимое: `replaceSymbols(this.value)`
+- Обработчик: `onclick` → `startEdit()`
+
+### input
+- Тип: `'text'`
+- Класс: `'title-editable'`
+- Стили: `fontFamily: 'monospace'`, `fontSize: '14px'`, `fontWeight: '700'`, `background: '#0f1222'`, `border: '1px solid #ffb347'`, `borderRadius: '8px'`, `padding: '4px 8px'`, `color: '#dcf0ff'`, `width: '200px'`
+- Значение: `this.value`
+- Обработчики:
+  - `onkeydown` → `Enter`: `finish()`, `Escape`: `cancel()`
+  - `onblur` → `finish()` (с задержкой 100ms для предотвращения конфликта с `Enter`)
+  - `onclick` → `stopPropagation()`
+
+**Побочные эффекты:** добавляет `this.displaySpan` в `this.element`.
 
 ## startEdit()
 
@@ -74,7 +89,16 @@ init(): void
 startEdit(): void
 ```
 
-Переключает компонент в режим редактирования. Удаляет `this.displaySpan` из `this.element`, добавляет `this.input` и устанавливает на него фокус.
+Переключает компонент в режим редактирования.
+
+**Алгоритм:**
+1. Обновляет `this.input.value` актуальным значением из `this.value` (важно для синхронизации после внешних изменений).
+2. Удаляет `this.displaySpan` из `this.element` (если он присутствует).
+3. Добавляет `this.input` в `this.element`.
+4. Устанавливает фокус на `this.input`.
+5. Выделяет весь текст в поле ввода (`input.select()`).
+
+**Побочные эффекты:** изменяется DOM-структура `this.element`.
 
 ## finish()
 
@@ -82,13 +106,19 @@ startEdit(): void
 finish(): void
 ```
 
-Завершает редактирование с сохранением значения:
+Завершает редактирование с сохранением значения.
 
-1. Считывает значение из `this.input` в `this.value`.
-2. Обновляет `this.displaySpan.textContent` через `replaceSymbols`.
-3. Удаляет `this.input` из `this.element` (если присутствует).
-4. Добавляет `this.displaySpan` обратно в `this.element`.
-5. Вызывает `this.onChange(this.value)`, если колбэк был передан.
+**Алгоритм:**
+1. Проверяет, находится ли `this.input` в DOM (`this.input.parentNode === this.element`). Если нет – завершает работу.
+2. Считывает значение из `this.input` и обрезает пробелы (`trim()`).
+3. Если значение пустое, восстанавливает старое значение из `this.value`.
+4. Сохраняет новое значение в `this.value`.
+5. Обновляет `this.displaySpan.textContent` через `replaceSymbols(newValue)`.
+6. Удаляет `this.input` из `this.element`.
+7. Добавляет `this.displaySpan` обратно в `this.element`.
+8. Если колбэк `this.onChange` определён и значение изменилось, вызывает его с новым значением.
+
+**Важно:** проверка `hasChanged` предотвращает лишние вызовы `onChange` при неизменном значении.
 
 ## cancel()
 
@@ -96,7 +126,12 @@ finish(): void
 cancel(): void
 ```
 
-Отменяет редактирование без сохранения. Восстанавливает `this.input.value` из `this.value`, затем вызывает `finish()` (что приводит к возврату в режим отображения без вызова `onChange`).
+Отменяет редактирование без сохранения.
+
+**Алгоритм:**
+1. Восстанавливает `this.input.value` из `this.value` (отбрасывает изменения).
+2. Если `this.input` находится в DOM, удаляет его и добавляет `this.displaySpan`.
+3. Не вызывает `this.onChange`.
 
 ## getElement()
 
@@ -114,13 +149,30 @@ getElement(): HTMLDivElement
 setValue(val: string): void
 ```
 
-Программно устанавливает новое значение заголовка без вызова `onChange`. Обновляет `this.value`, `this.displaySpan.textContent` и (если поле ввода активно) `this.input.value`.
+Программно устанавливает новое значение заголовка без вызова `onChange`.
 
 **Параметры:**
 
-- `val` – новое строковое значение.
+| Параметр | Тип | Описание |
+|----------|-----|----------|
+| `val` | `string` | Новое строковое значение. |
+
+**Алгоритм:**
+1. Обновляет `this.value = val`.
+2. Обновляет `this.displaySpan.textContent = replaceSymbols(val)`.
+3. Если поле ввода активно (`this.input.parentNode === this.element`), обновляет `this.input.value = val`.
 
 **Примечание:** Метод не переключает режим редактирования и не сохраняет изменения через колбэк. Предназначен для внешней синхронизации состояния (например, при смене языка интерфейса).
+
+## getValue()
+
+```javascript
+getValue(): string
+```
+
+Возвращает текущее значение заголовка.
+
+**Возвращает:** строку `this.value`.
 
 # ПРИМЕРЫ ИСПОЛЬЗОВАНИЯ
 
@@ -135,6 +187,7 @@ class MyNode extends Node {
     const titleEditor = new EditableTitle(this.title, (newTitle) => {
       this.title = newTitle;
       renderer.render();
+      renderer.save();
     });
     div.appendChild(titleEditor.getElement());
     return div;
@@ -148,7 +201,9 @@ class MyNode extends Node {
 // Подписка на события i18n
 i18n.subscribe(() => {
   const newTitle = i18n.t(`nodes.${this.type}`);
-  this.titleEditor.setValue(newTitle);
+  if (this.title === this.originalTitle) {
+    this.titleEditor.setValue(newTitle);
+  }
 });
 ```
 
@@ -162,14 +217,26 @@ editor.displaySpan.style.background = '#1f2a44';
 container.appendChild(editor.getElement());
 ```
 
-# ПРИМЕЧАНИЯ 
+# ПРИМЕЧАНИЯ
 
 - Компонент не выполняет санитизацию HTML-ввода. Все значения вставляются через `textContent`, что предотвращает XSS-атаки.
 - Нет ограничения на длину вводимого текста – зависит от браузера и CSS-стилей.
-- При вызове `finish()` после программного изменения `input.value` через `setValue` изменения будут потеряны, если пользователь не подтвердил их вручную.
+- При вызове `finish()` после программного изменения `input.value` через `setValue`, изменения будут потеряны, если пользователь не подтвердил их вручную.
+- Обработчик `onblur` использует `setTimeout` с задержкой 100ms, чтобы `Enter` не вызывал `finish()` дважды (сначала через `onkeydown`, затем через `onblur`). Это критически важно для корректной работы.
+- В `startEdit()` значение `input` обновляется из `this.value` перед показом. Это гарантирует, что при повторном редактировании после внешнего изменения (например, через `setValue`) поле ввода содержит актуальное значение.
+
+# ОШИБКИ И ОГРАНИЧЕНИЯ
+
+| Ситуация | Поведение |
+|----------|-----------|
+| Пользователь вводит пустую строку и нажимает Enter | Значение восстанавливается из `this.value`, `onChange` не вызывается |
+| Пользователь нажимает Enter, затем быстро переключает фокус | Задержка 100ms в `onblur` предотвращает двойной вызов `finish()` |
+| Вызов `setValue()` во время активного редактирования | Обновляет `input.value`, но не прерывает редактирование |
+| Компонент уничтожен, но `onblur` ещё не сработал | Проверка `this.input.parentNode === this.element` предотвращает ошибки |
 
 # СОВМЕСТИМОСТЬ
 
 - Работает во всех современных браузерах с поддержкой ES6.
 - Для корректной работы требуется наличие CSS-классов `title-display` и `title-editable`.
 - Не зависит от глобального состояния приложения.
+- Использует `stopPropagation()` для предотвращения конфликтов с перетаскиванием узлов.
