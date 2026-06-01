@@ -324,6 +324,7 @@ export const en = {
     ctrlZoom: 'Ctrl + Scroll to zoom',
     enableCtrlZoom: 'Require Ctrl key for zooming',
     invertZoom: 'Invert zoom direction',
-    enableInvertZoom: 'Reverse scroll direction for zoom'
+    enableInvertZoom: 'Reverse scroll direction for zoom',
+    unsaved: 'Unsaved changes'
   }
 };
