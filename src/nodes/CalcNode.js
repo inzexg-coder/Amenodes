@@ -16,9 +16,11 @@ export const metadata = {
   isCategory: true,
   categoryName: 'errors',
   subnodes: [
-    { type: 'div3', nameKey: 'calcTypes.div3', calcType: 'div3' },
-    { type: 'div_sqrt12', nameKey: 'calcTypes.div_sqrt12', calcType: 'div_sqrt12' },
-    { type: 'sqrt_sum_sq', nameKey: 'calcTypes.sqrt_sum_sq', calcType: 'sqrt_sum_sq' }
+  { type: 'div3', nameKey: 'calcTypes.div3', calcType: 'div3' },
+  { type: 'div_sqrt12', nameKey: 'calcTypes.div_sqrt12', calcType: 'div_sqrt12' },
+  { type: 'sqrt_sum_sq', nameKey: 'calcTypes.sqrt_sum_sq', calcType: 'sqrt_sum_sq' },
+  { type: 'quadratic_sum', nameKey: 'calcTypes.quadratic_sum', calcType: 'quadratic_sum' },      
+  { type: 'multiply_by_constant', nameKey: 'calcTypes.multiply_by_constant', calcType: 'multiply_by_constant' } 
   ]
 };
 
