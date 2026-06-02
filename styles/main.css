@@ -944,3 +944,10 @@ body {
   .open-library-btn { bottom: 80px; left: 16px; }
   .library-panel, .properties-panel { width: 280px; }
 }
+
+/* 3D*/
+.node-tilt-enabled .node {
+  transition: transform 0.1s ease-out;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
