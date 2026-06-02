@@ -17,6 +17,8 @@ export const SYMBOL_MAP = {
 };
 
 export function replaceSymbols(s) {
-  if (!s) return s;
-  return s.replace(/\$[a-zA-Z]+/g, m => SYMBOL_MAP[m] || m);
+  if (!s || typeof s !== 'string') return s;
+  return s.replace(/\$[a-zA-Z]+/g, function(match) {
+    return SYMBOL_MAP[match] || match;
+  });
 }
