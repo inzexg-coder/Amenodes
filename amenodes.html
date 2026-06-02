@@ -12,10 +12,16 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title data-i18n="editor.title">@Amenodes</title>
+<title data-i18n="editor.title">@Amenodes - Visual Programming</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <link rel="stylesheet" href="styles/main.css">
+<style>
+  body { margin: 0; overflow: hidden; background: #0a0c14; }
+  .splash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 20% 30%, #0f1222, #05070c); display: flex; align-items: center; justify-content: center; z-index: 10000; transition: opacity 0.3s ease; }
+  .app-container.hidden, .hidden { display: none; }
+</style>
 </head>
 <body>
 
@@ -25,7 +31,7 @@
       <i class="fas fa-project-diagram"></i>
       <span>@Amenodes</span>
     </div>
-    <div class="splash-title"></div>
+    <div class="splash-title">VISUAL PROGRAMMING LANGUAGE</div>
     <div class="splash-actions">
       <button id="newCanvasBtn" class="splash-btn primary"><i class="fas fa-plus-circle"></i> <span data-i18n="editor.newCanvas">New Canvas</span></button>
       <button id="loadCanvasBtn" class="splash-btn secondary"><i class="fas fa-folder-open"></i> <span data-i18n="editor.loadCanvas">Load Canvas</span></button>
@@ -34,6 +40,7 @@
     <div class="splash-footer">
       <span><i class="fas fa-microchip"></i> 60 FPS Ready</span>
       <span><i class="fas fa-palette"></i> GPU Acceleration</span>
+      <span><i class="fas fa-star"></i> Cosmic Edition</span>
     </div>
   </div>
 </div>
@@ -45,7 +52,7 @@
       <span>@Amenodes</span>
     </div>
     <div class="canvas-controls">
-      <button id="canvasSettingsBtn" class="top-btn" title="Canvas Settings"><i class="fas fa-sliders-h"></i> <span data-i18n="editor.canvasSettings">Canvas Settings</span></button>
+      <button id="canvasSettingsBtn" class="top-btn" title="Canvas Settings"><i class="fas fa-sliders-h"></i> <span data-i18n="editor.canvasSettings">Settings</span></button>
       <button id="canvasExportBtn" class="top-btn" title="Export"><i class="fas fa-download"></i> <span data-i18n="editor.export">Export</span></button>
       <button id="canvasImportBtn" class="top-btn" title="Import"><i class="fas fa-upload"></i> <span data-i18n="editor.import">Import</span></button>
       <div class="divider"></div>
@@ -55,11 +62,13 @@
     <div class="right-controls" id="rightControls">
       <div class="zoom-indicator" id="zoomIndicator">100%</div>
       <button id="addNodeBtn" class="top-btn primary" title="Add Node"><i class="fas fa-plus"></i> <span data-i18n="editor.addNode">Add node</span></button>
-      <button id="optToggleBtn" class="top-btn" title="Optimizations"><i class="fas fa-tachometer-alt"></i> <span data-i18n="editor.optimize">Optimizations</span></button>
+      <button id="optToggleBtn" class="top-btn" title="Optimizations"><i class="fas fa-tachometer-alt"></i> <span data-i18n="editor.optimize">Optimize</span></button>
+      <button id="turboModeBtn" class="top-btn" title="Turbo Mode"><i class="fas fa-rocket"></i> <span data-i18n="editor.turbo">Turbo</span></button>
       <div class="divider"></div>
-      <button id="clearStorageBtn" class="top-btn danger" title="Clear Storage"><i class="fas fa-trash-alt"></i> <span data-i18n="editor.clearStorage">Clear storage</span></button>
+      <button id="clearStorageBtn" class="top-btn danger" title="Clear Storage"><i class="fas fa-trash-alt"></i> <span data-i18n="editor.clearStorage">Clear</span></button>
     </div>
   </div>
+
   <div class="workspace">
     <div class="sidebar left-sidebar" id="leftSidebar">
       <div class="sidebar-header">
@@ -71,6 +80,7 @@
         <div class="loading-nodes"><i class="fas fa-spinner fa-pulse"></i> Loading nodes...</div>
       </div>
     </div>
+
     <div class="viewport-container">
       <div class="viewport" id="viewport">
         <div class="canvas-container" id="canvasContainer">
@@ -79,6 +89,7 @@
         <canvas id="webglCanvas" class="webgl-canvas" style="display:none;"></canvas>
       </div>
     </div>
+
     <div class="sidebar right-sidebar" id="rightSidebar">
       <div class="sidebar-header">
         <button id="collapseRightBtn" class="collapse-btn"><i class="fas fa-chevron-right"></i></button>
@@ -93,12 +104,13 @@
       </div>
     </div>
   </div>
+  
   <div class="status-bar">
     <div class="status-left">
       <span id="nodeCount">0 <span data-i18n="editor.nodeCount">nodes</span></span>
       <span id="edgeCount">0 <span data-i18n="editor.edgeCount">connections</span></span>
       <span id="dirtyIndicator" style="display: none; color: #ffb347; margin-left: 12px;">
-        <i class="fas fa-pen"></i> <span data-i18n="editor.unsaved">Unsaved changes</span>
+        <i class="fas fa-pen"></i> <span data-i18n="editor.unsaved">Unsaved</span>
       </span>
     </div>
     <div class="status-center">
@@ -110,14 +122,14 @@
     </div>
   </div>
 </div>
-
+  
 <div id="optPanel" class="opt-panel hidden">
   <div class="opt-header">
     <span><i class="fas fa-microchip"></i> <span data-i18n="editor.performanceOptimizations">Performance Optimizations</span></span>
     <button id="closeOptPanel"><i class="fas fa-times"></i></button>
   </div>
   <div class="opt-list" id="optListContainer"></div>
-  <button id="rebenchmarkBtn" class="rebench-btn"><i class="fas fa-chart-line"></i> <span data-i18n="editor.recalculateImpact">Recalculate optimizations impact</span></button>
+  <button id="rebenchmarkBtn" class="rebench-btn"><i class="fas fa-chart-line"></i> <span data-i18n="editor.recalculateImpact">Recalculate Impact</span></button>
   <button id="applyOptimizationsBtn" class="apply-btn"><i class="fas fa-check-circle"></i> <span data-i18n="editor.applySelected">APPLY SELECTED</span></button>
 </div>
 
@@ -137,6 +149,7 @@
           <button class="grid-style-btn" data-grid="dots"><span data-i18n="editor.dots">Dots</span></button>
           <button class="grid-style-btn" data-grid="lines"><span data-i18n="editor.lines">Lines</span></button>
           <button class="grid-style-btn" data-grid="cross"><span data-i18n="editor.cross">Cross</span></button>
+          <button class="grid-style-btn" data-grid="hex"><span data-i18n="editor.hex">Hex</span></button>
           <button class="grid-style-btn" data-grid="none"><span data-i18n="editor.none">None</span></button>
         </div>
       </div>
@@ -145,7 +158,7 @@
         <div class="toggle-switch">
           <input type="checkbox" id="snapToGrid">
           <span class="toggle-slider"></span>
-          <span class="toggle-label"><span data-i18n="editor.enableSnap">Enable snapping nodes to grid</span></span>
+          <span class="toggle-label"><span data-i18n="editor.enableSnap">Enable snapping</span></span>
         </div>
       </div>
       <div class="setting-group">
@@ -153,7 +166,7 @@
         <div class="toggle-switch">
           <input type="checkbox" id="ctrlZoomOnly">
           <span class="toggle-slider"></span>
-          <span class="toggle-label"><span data-i18n="editor.enableCtrlZoom">Require Ctrl key for zooming</span></span>
+          <span class="toggle-label"><span data-i18n="editor.enableCtrlZoom">Require Ctrl key</span></span>
         </div>
       </div>
       <div class="setting-group">
@@ -161,7 +174,7 @@
         <div class="toggle-switch">
           <input type="checkbox" id="invertZoomDirection">
           <span class="toggle-slider"></span>
-          <span class="toggle-label"><span data-i18n="editor.enableInvertZoom">Reverse scroll direction for zoom</span></span>
+          <span class="toggle-label"><span data-i18n="editor.enableInvertZoom">Reverse scroll</span></span>
         </div>
       </div>
       <div class="setting-group">
@@ -199,7 +212,7 @@
 </div>
 
 <input type="file" id="fileInput" class="hidden-file-input" accept=".amnk">
-<div id="benchmarkStatus" class="benchmark-status" style="display:none;"><i class="fas fa-flask"></i> Benchmarking optimizations...</div>
+<div id="benchmarkStatus" class="benchmark-status" style="display:none;"><i class="fas fa-flask"></i> Benchmarking...</div>
 
 <script type="importmap">
 {
