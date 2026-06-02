@@ -85,23 +85,6 @@ export class MapNode extends Node {
       renderer.save();
     };
     
-    const updateUI = () => {
-      if (this.unmappedMode === 'passthrough') {
-        passBtn.classList.add('active');
-        sepBtn.classList.remove('active');
-      } else {
-        sepBtn.classList.add('active');
-        passBtn.classList.remove('active');
-      }
-      renderer.addHandles(div, this.id, this.unmappedMode === 'separate' ? 'unmapped' : null);
-      if (this.unmappedMode === 'passthrough') {
-        graph.edges = graph.edges.filter(e => !(e.sourceId === this.id && e.sourcePort === 'unmapped'));
-      }
-      graph.reevaluateAll();
-      renderer.render();
-      renderer.save();
-    };
-    
     const header = document.createElement('div');
     header.style.display = 'flex';
     header.style.gap = '8px';
@@ -205,19 +188,25 @@ export class MapNode extends Node {
     sepBtn.textContent = t('map.separateOutput');
     sepBtn.style.borderRadius = '0 32px 32px 0';
     
-    passBtn.onclick = () => {
-      if (this.unmappedMode !== 'passthrough') {
-        this.unmappedMode = 'passthrough';
-        updateUI();
+    const setMode = (mode) => {
+      this.unmappedMode = mode;
+      if (mode === 'passthrough') {
+        passBtn.classList.add('active');
+        sepBtn.classList.remove('active');
+        renderer.addHandles(div, this.id, null);
+        graph.edges = graph.edges.filter(e => !(e.sourceId === this.id && e.sourcePort === 'unmapped'));
+      } else {
+        sepBtn.classList.add('active');
+        passBtn.classList.remove('active');
+        renderer.addHandles(div, this.id, 'unmapped');
       }
+      graph.reevaluateAll();
+      renderer.render();
+      renderer.save();
     };
     
-    sepBtn.onclick = () => {
-      if (this.unmappedMode !== 'separate') {
-        this.unmappedMode = 'separate';
-        updateUI();
-      }
-    };
+    passBtn.onclick = () => { if (this.unmappedMode !== 'passthrough') setMode('passthrough'); };
+    sepBtn.onclick = () => { if (this.unmappedMode !== 'separate') setMode('separate'); };
     
     modeDiv.appendChild(passBtn);
     modeDiv.appendChild(sepBtn);
@@ -227,7 +216,8 @@ export class MapNode extends Node {
     renderer.addHandles(div, this.id, this.unmappedMode === 'separate' ? 'unmapped' : null);
     renderer.applyOptStyles(div);
     
-    updateUI();
+    if (this.unmappedMode === 'passthrough') passBtn.classList.add('active');
+    else sepBtn.classList.add('active');
     
     const unsubscribe = i18n.subscribe(() => {
       addBtn.textContent = t('map.addRule');
