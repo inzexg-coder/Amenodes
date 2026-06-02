@@ -154,6 +154,9 @@ export class ContextMenu {
     
     if (NodeClass && typeof NodeClass.onCreate === 'function') {
       node = await NodeClass.onCreate(this.graph, x + 20, y + 80, extraOptions);
+      if (node && !this.graph.nodes.includes(node)) {
+        this.graph.addNode(node);
+      }
     } else {
       node = NodeFactory.createNode(nodeType, {
         x: x + 20,
@@ -166,6 +169,10 @@ export class ContextMenu {
     }
     
     if (node) {
+      if (typeof node.getMinHeight !== 'function') {
+        node.getMinHeight = function() { return 80; };
+      }
+      
       await this.ensureNodeReady(node);
       
       const edge = this.graph.addEdge(sourceId, node.id, 'main');
