@@ -1,36 +1,51 @@
 export class EdgeRenderer {
-  constructor(layer) {
+  constructor(layer, domRenderer) {
     this.layer = layer;
+    this.domRenderer = domRenderer;
     this.onEdgeRemoved = null;
+    this.particleFlowEnabled = false;
+    this.particleAnimations = [];
+  }
+
+  setParticleFlowEnabled(enabled) {
+    this.particleFlowEnabled = enabled;
+    if (!enabled) {
+      this.clearParticles();
+    }
+  }
+
+  clearParticles() {
+    if (this.particleAnimations.length) {
+      for (const anim of this.particleAnimations) {
+        if (anim.cancel) anim.cancel();
+      }
+      this.particleAnimations = [];
+    }
+    const particles = this.layer.querySelectorAll('.edge-particle');
+    particles.forEach(p => p.remove());
   }
 
   renderEdges(edges, graph, rectCache) {
     const oldSvg = this.layer.querySelector('.edge-layer');
     if (oldSvg) oldSvg.remove();
-    
     const svg = this.createSvgLayer();
     this.layer.appendChild(svg);
-    
+    this.clearParticles();
     for (const edge of edges) {
       const source = graph.getNode(edge.sourceId);
       const target = graph.getNode(edge.targetId);
       if (!source || !target) continue;
-      
       const sourceRect = rectCache.get(edge.sourceId);
       const targetRect = rectCache.get(edge.targetId);
       if (!sourceRect || !targetRect) continue;
-      
       const point1 = this.getBorderPoint(sourceRect, targetRect);
       const point2 = this.getBorderPoint(targetRect, sourceRect);
       const isBlue = edge.sourcePort === 'unmapped';
       const color = isBlue ? "#44aaff" : "#ffb347";
-      
       const line = this.createLine(point1, point2, color, edge.id);
       const arrow = this.createArrow(point1, point2, color);
-      
       svg.appendChild(line);
       svg.appendChild(arrow);
-      
       line.addEventListener('contextmenu', (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
@@ -39,7 +54,31 @@ export class EdgeRenderer {
         graph.updateAllOutputs();
         if (this.onEdgeRemoved) this.onEdgeRemoved();
       });
+      if (this.particleFlowEnabled) {
+        this.animateParticles(point1, point2, color, svg);
+      }
     }
+  }
+
+  animateParticles(p1, p2, color, svg) {
+    const duration = 1500;
+    const startTime = performance.now();
+    const particle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    particle.setAttribute("r", "3");
+    particle.setAttribute("fill", color);
+    particle.classList.add('edge-particle');
+    svg.appendChild(particle);
+    const animate = (now) => {
+      const elapsed = (now - startTime) % duration;
+      const t = elapsed / duration;
+      const x = p1.x + (p2.x - p1.x) * t;
+      const y = p1.y + (p2.y - p1.y) * t;
+      particle.setAttribute("cx", x);
+      particle.setAttribute("cy", y);
+      requestAnimationFrame(animate);
+    };
+    const raf = requestAnimationFrame(animate);
+    this.particleAnimations.push({ raf, particle, svg });
   }
 
   createSvgLayer() {
@@ -81,7 +120,6 @@ export class EdgeRenderer {
     const perpX = -Math.sin(angle) * 5;
     const perpY = Math.cos(angle) * 5;
     const points = `${tipX},${tipY} ${backX + perpX},${backY + perpY} ${backX - perpX},${backY - perpY}`;
-    
     const arrow = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
     arrow.setAttribute("points", points);
     arrow.setAttribute("fill", color);
@@ -96,13 +134,10 @@ export class EdgeRenderer {
     const centerTo = { x: toRect.x + toRect.w / 2, y: toRect.y + toRect.h / 2 };
     const dx = centerTo.x - centerFrom.x;
     const dy = centerTo.y - centerFrom.y;
-    
     if (dx === 0 && dy === 0) {
       return { x: fromRect.x + fromRect.w / 2, y: fromRect.y + fromRect.h };
     }
-    
     let t = Infinity;
-    
     if (dx !== 0) {
       const tx1 = (fromRect.x - centerFrom.x) / dx;
       const tx2 = (fromRect.x + fromRect.w - centerFrom.x) / dx;
@@ -115,7 +150,6 @@ export class EdgeRenderer {
         if (y >= fromRect.y && y <= fromRect.y + fromRect.h) t = tx2;
       }
     }
-    
     if (dy !== 0) {
       const ty1 = (fromRect.y - centerFrom.y) / dy;
       const ty2 = (fromRect.y + fromRect.h - centerFrom.y) / dy;
@@ -128,7 +162,6 @@ export class EdgeRenderer {
         if (x >= fromRect.x && x <= fromRect.x + fromRect.w) t = ty2;
       }
     }
-    
     if (t === Infinity) t = 0;
     return { x: centerFrom.x + dx * t, y: centerFrom.y + dy * t };
   }
