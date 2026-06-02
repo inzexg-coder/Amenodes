@@ -29,7 +29,6 @@ class Application {
     this.fpsCounter = new FPSCounter('fpsMeter');
     this.benchmarkService = new BenchmarkService(this.graph, this.fpsCounter, OPTIMIZATIONS);
     this.persistenceService = new PersistenceService(this.graph);
-    
     this.gridStyle = localStorage.getItem('canvas_grid_style') || 'dots';
     this.gridSize = parseInt(localStorage.getItem('canvas_grid_size') || '20');
     this.snapToGrid = localStorage.getItem('canvas_snap_to_grid') === 'true';
@@ -38,7 +37,6 @@ class Application {
     this.enableParticleFlow = localStorage.getItem('enable_particle_flow') !== 'false';
     this.enable3DTilt = localStorage.getItem('enable_3d_tilt') !== 'false';
     this.enableSoundEffects = localStorage.getItem('enable_sound_effects') === 'true';
-    
     this.initStarfield();
     this.initRenderer();
     this.initHistory();
@@ -66,7 +64,6 @@ class Application {
     const viewportEl = document.getElementById('viewport');
     const canvasContainer = document.getElementById('canvasContainer');
     const nodesLayer = document.getElementById('nodesLayer');
-    
     this.viewport = new Viewport(viewportEl, canvasContainer);
     this.renderer = new DomRenderer(this.graph, nodesLayer, viewportEl, this.eventBus);
     this.renderer.setViewport(this.viewport);
@@ -80,9 +77,7 @@ class Application {
     };
     this.renderer.onNodeSelect = (node) => {
       this.updatePropertiesPanel(node);
-      if (this.propertiesPanel && node) {
-        this.propertiesPanel.classList.remove('hidden');
-      }
+      if (this.propertiesPanel && node) this.propertiesPanel.classList.remove('hidden');
     };
     window._renderer = this.renderer;
   }
