@@ -14,6 +14,12 @@ import { typeSystem } from './core/DataType.js';
 import { OptimizationPanel } from './ui/OptimizationPanel.js';
 import { BenchmarkService } from './services/BenchmarkService.js';
 import { NodeFactory } from './nodes/NodeFactory.js';
+import { Starfield } from './effects/Starfield.js';
+import { createParticleBurst, flashNode } from './effects/Particles.js';
+
+let starfield = null;
+let cursorElement = null;
+let isCursorEnabled = true;
 
 window.alert = (msg) => { modal.alert(msg); };
 window.confirm = (msg) => modal.confirm(msg);
@@ -41,8 +47,54 @@ class Application {
     this.initEvents();
     this.initI18n();
     this.initSidebar();
+    this.initCosmicEffects();
     
     this.initNodesAndStart();
+  }
+
+  initCosmicEffects() {
+    if (!starfield) {
+      starfield = new Starfield();
+      starfield.init();
+    }
+    
+    if (!document.querySelector('.nebula')) {
+      const nebula = document.createElement('div');
+      nebula.className = 'nebula';
+      document.body.insertBefore(nebula, document.body.firstChild);
+    }
+    
+    this.initCustomCursor();
+  }
+
+  initCustomCursor() {
+    cursorElement = document.createElement('div');
+    cursorElement.className = 'custom-cursor';
+    document.body.appendChild(cursorElement);
+    
+    const updateCursorVisibility = () => {
+      const isExtreme = document.body.classList.contains('design-quality-extreme');
+      const isTurbo = document.body.classList.contains('turbo-mode');
+      isCursorEnabled = !isExtreme && !isTurbo;
+      cursorElement.style.display = isCursorEnabled ? 'block' : 'none';
+    };
+    
+    document.addEventListener('mousemove', (e) => {
+      if (!isCursorEnabled) return;
+      cursorElement.style.left = e.clientX + 'px';
+      cursorElement.style.top = e.clientY + 'px';
+      
+      const target = document.elementsFromPoint(e.clientX, e.clientY)[0];
+      if (target?.classList?.contains('node-handle')) {
+        cursorElement.classList.add('hover-port');
+      } else {
+        cursorElement.classList.remove('hover-port');
+      }
+    });
+    
+    const observer = new MutationObserver(updateCursorVisibility);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    updateCursorVisibility();
   }
 
   initRenderer() {
@@ -72,44 +124,20 @@ class Application {
     let currentZoom = 1;
     const viewportEl = document.getElementById('viewport');
     
-    const setZoom = (z, centerX = null, centerY = null) => {
-      const oldZoom = currentZoom;
+    const setZoom = (z) => {
       currentZoom = Math.min(3, Math.max(0.3, z));
       window.currentZoom = currentZoom;
-      
-      if (centerX !== null && centerY !== null && oldZoom !== currentZoom) {
-        const offset = this.viewport.getOffset();
-        const rect = viewportEl.getBoundingClientRect();
-        const worldX = (centerX - rect.left - offset.x) / oldZoom;
-        const worldY = (centerY - rect.top - offset.y) / oldZoom;
-        const newOffsetX = centerX - rect.left - worldX * currentZoom;
-        const newOffsetY = centerY - rect.top - worldY * currentZoom;
-        this.viewport.setOffset(newOffsetX, newOffsetY);
-      } else {
-        this.viewport.update();
-      }
-      
+      this.viewport.update();
       this.renderer.render();
       this.updateZoomIndicator();
     };
     
     viewportEl.addEventListener('wheel', (e) => {
-      if (this.ctrlZoomOnly && !e.ctrlKey) {
-        return;
-      }
+      if (this.ctrlZoomOnly && !e.ctrlKey) return;
       e.preventDefault();
-      
-      let delta = e.deltaY > 0 ? -0.05 : 0.05;
-      if (this.invertZoomDirection) {
-        delta = -delta;
-      }
-      
-      const rect = viewportEl.getBoundingClientRect();
-      const mouseX = e.clientX;
-      const mouseY = e.clientY;
-      
-      const newZoom = currentZoom * (1 + delta);
-      setZoom(newZoom, mouseX, mouseY);
+      let delta = e.deltaY;
+      if (this.invertZoomDirection) delta = -delta;
+      setZoom(currentZoom * (1 - delta * 0.005));
     }, { passive: false });
     
     viewportEl.addEventListener('contextmenu', (e) => {
@@ -126,10 +154,23 @@ class Application {
   applyDesignQuality(percent) {
     window.currentQualityValue = percent;
     window._designQualitySaved = percent;
-    document.body.classList.remove('design-quality-extreme', 'design-quality-1', 'design-quality-2');
-    if (percent <= 20) document.body.classList.add('design-quality-extreme');
-    else if (percent <= 50) document.body.classList.add('design-quality-1');
-    else if (percent <= 80) document.body.classList.add('design-quality-2');
+    document.body.classList.remove('design-quality-high', 'design-quality-2', 'design-quality-1', 'design-quality-extreme');
+    if (percent <= 20) {
+      document.body.classList.add('design-quality-extreme');
+    } else if (percent <= 50) {
+      document.body.classList.add('design-quality-1');
+    } else if (percent <= 80) {
+      document.body.classList.add('design-quality-2');
+    } else {
+      document.body.classList.add('design-quality-high');
+    }
+    
+    if (starfield) {
+      const quality = document.body.classList.contains('design-quality-extreme') ? 'extreme' :
+                      document.body.classList.contains('design-quality-1') ? 'low' :
+                      document.body.classList.contains('design-quality-2') ? 'medium' : 'high';
+      starfield.setQuality(quality);
+    }
   }
 
   applyCanvasSettings() {
@@ -140,18 +181,28 @@ class Application {
       case 'dots':
         viewport.style.backgroundImage = `radial-gradient(circle, rgba(255, 179, 71, 0.15) 1px, transparent 1px)`;
         viewport.style.backgroundSize = `${this.gridSize}px ${this.gridSize}px`;
+        viewport.classList.remove('hex-grid');
         break;
       case 'lines':
         viewport.style.backgroundImage = `linear-gradient(to right, rgba(255, 179, 71, 0.1) 1px, transparent 1px),
                                           linear-gradient(to bottom, rgba(255, 179, 71, 0.1) 1px, transparent 1px)`;
         viewport.style.backgroundSize = `${this.gridSize}px ${this.gridSize}px`;
+        viewport.classList.remove('hex-grid');
         break;
       case 'cross':
         viewport.style.backgroundImage = `radial-gradient(circle, rgba(255, 179, 71, 0.2) 2px, transparent 2px)`;
         viewport.style.backgroundSize = `${this.gridSize * 2}px ${this.gridSize * 2}px`;
+        viewport.classList.remove('hex-grid');
+        break;
+      case 'hex':
+        viewport.style.backgroundImage = `linear-gradient(30deg, rgba(255, 179, 71, 0.08) 1px, transparent 1px),
+                                          linear-gradient(150deg, rgba(255, 179, 71, 0.08) 1px, transparent 1px)`;
+        viewport.style.backgroundSize = `40px 69.28px`;
+        viewport.classList.add('hex-grid');
         break;
       case 'none':
         viewport.style.backgroundImage = 'none';
+        viewport.classList.remove('hex-grid');
         break;
     }
   }
@@ -160,17 +211,19 @@ class Application {
     const modalEl = document.getElementById('canvasSettingsModal');
     if (!modalEl) return;
     
+    const gridStyleSelect = document.getElementById('gridStyleSelect');
+    const gridSizeInput = document.getElementById('gridSize');
     const snapToGridCheck = document.getElementById('snapToGrid');
     const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
     const invertZoomCheck = document.getElementById('invertZoomDirection');
-    const gridSizeInput = document.getElementById('gridSize');
     const gridSizeValue = document.getElementById('gridSizeValue');
     const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
     
+    if (gridStyleSelect) gridStyleSelect.value = this.gridStyle;
+    if (gridSizeInput) gridSizeInput.value = this.gridSize;
     if (snapToGridCheck) snapToGridCheck.checked = this.snapToGrid;
     if (ctrlZoomCheck) ctrlZoomCheck.checked = this.ctrlZoomOnly;
     if (invertZoomCheck) invertZoomCheck.checked = this.invertZoomDirection;
-    if (gridSizeInput) gridSizeInput.value = this.gridSize;
     if (gridSizeValue) gridSizeValue.textContent = this.gridSize;
     
     const gridStyleBtns = document.querySelectorAll('.grid-style-btn');
@@ -194,59 +247,10 @@ class Application {
     if (gridPreviewCanvas) {
       gridPreviewCanvas.setAttribute('data-preview', this.gridStyle);
       gridPreviewCanvas.style.backgroundSize = `${this.gridSize}px ${this.gridSize}px`;
+      if (this.gridStyle === 'hex') {
+        gridPreviewCanvas.style.backgroundSize = `40px 69.28px`;
+      }
     }
-    
-    const handleStyleClick = (e) => {
-      const btn = e.currentTarget;
-      const gridVal = btn.getAttribute('data-grid');
-      gridStyleBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      if (gridPreviewCanvas) {
-        gridPreviewCanvas.setAttribute('data-preview', gridVal);
-      }
-    };
-    
-    const handleSizePresetClick = (e) => {
-      const preset = e.currentTarget;
-      const size = parseInt(preset.getAttribute('data-size'));
-      sizePresets.forEach(p => p.classList.remove('active'));
-      preset.classList.add('active');
-      if (gridSizeInput) gridSizeInput.value = size;
-      if (gridSizeValue) gridSizeValue.textContent = size;
-      if (gridPreviewCanvas) {
-        const currentStyle = document.querySelector('.grid-style-btn.active')?.getAttribute('data-grid') || this.gridStyle;
-        gridPreviewCanvas.setAttribute('data-preview', currentStyle);
-        gridPreviewCanvas.style.backgroundSize = `${size}px ${size}px`;
-      }
-    };
-    
-    const handleGridSizeInput = (e) => {
-      const size = e.target.value;
-      if (gridSizeValue) gridSizeValue.textContent = size;
-      if (gridPreviewCanvas) {
-        const currentStyle = document.querySelector('.grid-style-btn.active')?.getAttribute('data-grid') || this.gridStyle;
-        gridPreviewCanvas.setAttribute('data-preview', currentStyle);
-        gridPreviewCanvas.style.backgroundSize = `${size}px ${size}px`;
-      }
-      sizePresets.forEach(p => p.classList.remove('active'));
-    };
-    
-    gridStyleBtns.forEach(btn => {
-      btn.removeEventListener('click', handleStyleClick);
-      btn.addEventListener('click', handleStyleClick);
-    });
-    
-    sizePresets.forEach(preset => {
-      preset.removeEventListener('click', handleSizePresetClick);
-      preset.addEventListener('click', handleSizePresetClick);
-    });
-    
-    if (gridSizeInput) {
-      gridSizeInput.removeEventListener('input', handleGridSizeInput);
-      gridSizeInput.addEventListener('input', handleGridSizeInput);
-    }
-    
-    this.fixToggleSwitches();
     
     modalEl.classList.remove('hidden');
   }
@@ -256,34 +260,31 @@ class Application {
     if (modalEl) modalEl.classList.add('hidden');
   }
 
-  fixToggleSwitches() {
-    const toggleWrappers = document.querySelectorAll('.toggle-switch');
-    toggleWrappers.forEach(wrapper => {
-      const checkbox = wrapper.querySelector('input[type="checkbox"]');
-      if (!checkbox) return;
-      
-      if (wrapper.hasAttribute('data-fixed')) return;
-      
-      const newWrapper = wrapper.cloneNode(true);
-      wrapper.parentNode.replaceChild(newWrapper, wrapper);
-      
-      const newCheckbox = newWrapper.querySelector('input[type="checkbox"]');
-      
-      newWrapper.style.cursor = 'pointer';
-      
-      const toggleCheckbox = function(e) {
-        if (e.target !== newCheckbox) {
-          e.preventDefault();
-          e.stopPropagation();
-          newCheckbox.checked = !newCheckbox.checked;
-          const changeEvent = new Event('change', { bubbles: true });
-          newCheckbox.dispatchEvent(changeEvent);
-        }
-      };
-      
-      newWrapper.addEventListener('click', toggleCheckbox);
-      newWrapper.setAttribute('data-fixed', 'true');
-    });
+  saveCanvasSettings() {
+    const gridStyleSelect = document.getElementById('gridStyleSelect');
+    const gridSizeInput = document.getElementById('gridSize');
+    const snapToGridCheck = document.getElementById('snapToGrid');
+    const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
+    const invertZoomCheck = document.getElementById('invertZoomDirection');
+    
+    this.gridStyle = gridStyleSelect ? gridStyleSelect.value : 'dots';
+    this.gridSize = gridSizeInput ? parseInt(gridSizeInput.value) : 20;
+    this.snapToGrid = snapToGridCheck ? snapToGridCheck.checked : false;
+    this.ctrlZoomOnly = ctrlZoomCheck ? ctrlZoomCheck.checked : false;
+    this.invertZoomDirection = invertZoomCheck ? invertZoomCheck.checked : false;
+    
+    localStorage.setItem('canvas_grid_style', this.gridStyle);
+    localStorage.setItem('canvas_grid_size', this.gridSize.toString());
+    localStorage.setItem('canvas_snap_to_grid', this.snapToGrid.toString());
+    localStorage.setItem('ctrl_zoom_only', this.ctrlZoomOnly.toString());
+    localStorage.setItem('invert_zoom_direction', this.invertZoomDirection.toString());
+    
+    if (this.renderer) {
+      this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
+    }
+    
+    this.applyCanvasSettings();
+    this.closeCanvasSettings();
   }
 
   initUI() {
@@ -308,6 +309,7 @@ class Application {
     const splashSettingsBtn = document.getElementById('splashSettingsBtn');
     const splashOverlay = document.getElementById('splashOverlay');
     const appContainer = document.getElementById('appContainer');
+    const turboBtn = document.getElementById('turboModeBtn');
     
     if (undoBtn) undoBtn.onclick = () => this.undo();
     if (redoBtn) redoBtn.onclick = () => this.redo();
@@ -333,39 +335,82 @@ class Application {
     
     if (closeSettingsModal) closeSettingsModal.onclick = () => this.closeCanvasSettings();
     if (cancelSettings) cancelSettings.onclick = () => this.closeCanvasSettings();
+    if (applySettings) applySettings.onclick = () => this.saveCanvasSettings();
     
-    if (applySettings) {
-      applySettings.onclick = () => {
-        const snapToGridCheck = document.getElementById('snapToGrid');
-        const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
-        const invertZoomCheck = document.getElementById('invertZoomDirection');
-        const gridSizeInput = document.getElementById('gridSize');
-        const activeStyleBtn = document.querySelector('.grid-style-btn.active');
-        
-        if (snapToGridCheck) this.snapToGrid = snapToGridCheck.checked;
-        if (ctrlZoomCheck) this.ctrlZoomOnly = ctrlZoomCheck.checked;
-        if (invertZoomCheck) this.invertZoomDirection = invertZoomCheck.checked;
-        if (gridSizeInput) this.gridSize = parseInt(gridSizeInput.value);
-        if (activeStyleBtn) this.gridStyle = activeStyleBtn.getAttribute('data-grid');
-        
-        localStorage.setItem('canvas_grid_style', this.gridStyle);
-        localStorage.setItem('canvas_grid_size', this.gridSize.toString());
-        localStorage.setItem('canvas_snap_to_grid', this.snapToGrid.toString());
-        localStorage.setItem('ctrl_zoom_only', this.ctrlZoomOnly.toString());
-        localStorage.setItem('invert_zoom_direction', this.invertZoomDirection.toString());
-        
-        if (this.renderer) {
-          this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
+    if (turboBtn) {
+      turboBtn.onclick = () => {
+        const isTurbo = document.body.classList.contains('turbo-mode');
+        if (isTurbo) {
+          document.body.classList.remove('turbo-mode');
+          const savedQuality = localStorage.getItem('amenodes_quality') || '100';
+          this.applyDesignQuality(parseInt(savedQuality));
+          modal.alert('Turbo mode disabled');
+        } else {
+          localStorage.setItem('amenodes_quality', window.currentQualityValue || '100');
+          document.body.classList.add('turbo-mode');
+          this.applyDesignQuality(0);
+          modal.alert('⚡ TURBO MODE ENABLED - Maximum performance');
         }
-        
-        this.applyCanvasSettings();
-        if (this.renderer) this.renderer.render();
-        
-        this.closeCanvasSettings();
       };
     }
     
-    this.fixToggleSwitches();
+    const gridStyleBtns = document.querySelectorAll('.grid-style-btn');
+    const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
+    const gridSizeInputEl = document.getElementById('gridSize');
+    const gridSizeValueEl = document.getElementById('gridSizeValue');
+    
+    gridStyleBtns.forEach(btn => {
+      btn.onclick = () => {
+        const gridVal = btn.getAttribute('data-grid');
+        if (gridPreviewCanvas) {
+          gridPreviewCanvas.setAttribute('data-preview', gridVal);
+          const currentSize = gridSizeInputEl ? parseInt(gridSizeInputEl.value) : 20;
+          if (gridVal === 'hex') {
+            gridPreviewCanvas.style.backgroundSize = `40px 69.28px`;
+          } else {
+            gridPreviewCanvas.style.backgroundSize = `${currentSize}px ${currentSize}px`;
+          }
+        }
+        gridStyleBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      };
+    });
+    
+    if (gridSizeInputEl) {
+      gridSizeInputEl.oninput = (e) => {
+        const val = e.target.value;
+        if (gridSizeValueEl) gridSizeValueEl.textContent = val;
+        if (gridPreviewCanvas) {
+          const currentStyle = document.querySelector('.grid-style-btn.active')?.getAttribute('data-grid') || 'dots';
+          gridPreviewCanvas.setAttribute('data-preview', currentStyle);
+          if (currentStyle === 'hex') {
+            gridPreviewCanvas.style.backgroundSize = `40px 69.28px`;
+          } else {
+            gridPreviewCanvas.style.backgroundSize = `${val}px ${val}px`;
+          }
+        }
+      };
+    }
+    
+    const sizePresets = document.querySelectorAll('.grid-size-presets span');
+    sizePresets.forEach(preset => {
+      preset.onclick = () => {
+        const size = parseInt(preset.getAttribute('data-size'));
+        if (gridSizeInputEl) gridSizeInputEl.value = size;
+        if (gridSizeValueEl) gridSizeValueEl.textContent = size;
+        if (gridPreviewCanvas) {
+          const currentStyle = document.querySelector('.grid-style-btn.active')?.getAttribute('data-grid') || 'dots';
+          gridPreviewCanvas.setAttribute('data-preview', currentStyle);
+          if (currentStyle === 'hex') {
+            gridPreviewCanvas.style.backgroundSize = `40px 69.28px`;
+          } else {
+            gridPreviewCanvas.style.backgroundSize = `${size}px ${size}px`;
+          }
+        }
+        sizePresets.forEach(p => p.classList.remove('active'));
+        preset.classList.add('active');
+      };
+    });
     
     if (newCanvasBtn) {
       newCanvasBtn.onclick = () => {
@@ -391,7 +436,6 @@ class Application {
           
           this.updateNodeCount();
           this.updateEdgeCount();
-          this.graph.clearDirty();
         }
         
         if (splashOverlay && appContainer) {
@@ -419,7 +463,6 @@ class Application {
                 }
                 this.updateNodeCount();
                 this.updateEdgeCount();
-                this.graph.clearDirty();
                 
                 if (splashOverlay && appContainer) {
                   splashOverlay.style.opacity = '0';
@@ -492,13 +535,11 @@ class Application {
       this.populateNodesLibrary();
       this.loadInitialState();
       this.renderer.render();
-      this.initDirtyIndicator();
       console.log(`[Application] Ready with ${nodeRegistry.size} node types`);
     } catch (err) {
       console.error('[Application] Failed to initialize nodes:', err);
       this.loadInitialState();
       this.renderer.render();
-      this.initDirtyIndicator();
     }
   }
   
@@ -525,18 +566,16 @@ class Application {
       `;
       
       const nodesContainer = categoryDiv.querySelector('.category-nodes');
-      for (const nodeType of regularNodes) {
+      regularNodes.forEach(nodeType => {
         const item = document.createElement('div');
         item.className = 'node-list-item';
         item.innerHTML = `
           <i class="fas ${nodeType.icon || 'fa-circle'}"></i>
           <span>${t(nodeType.nameKey)}</span>
         `;
-        item.onclick = async () => {
-          await this.createNodeAtCenter(nodeType.type);
-        };
+        item.onclick = () => this.createNodeAtCenter(nodeType.type);
         nodesContainer.appendChild(item);
-      }
+      });
       
       const header = categoryDiv.querySelector('.category-header');
       header.onclick = () => {
@@ -547,7 +586,7 @@ class Application {
       container.appendChild(categoryDiv);
     }
     
-    for (const category of categories) {
+    categories.forEach(category => {
       const categoryDiv = document.createElement('div');
       categoryDiv.className = 'node-category';
       categoryDiv.innerHTML = `
@@ -561,18 +600,16 @@ class Application {
       
       const nodesContainer = categoryDiv.querySelector('.category-nodes');
       if (category.subnodes) {
-        for (const subnode of category.subnodes) {
+        category.subnodes.forEach(subnode => {
           const item = document.createElement('div');
           item.className = 'node-list-item';
           item.innerHTML = `
             <i class="fas fa-calculator"></i>
             <span>${t(subnode.nameKey)}</span>
           `;
-          item.onclick = async () => {
-            await this.createNodeAtCenter(category.type, subnode);
-          };
+          item.onclick = () => this.createNodeAtCenter(category.type, subnode);
           nodesContainer.appendChild(item);
-        }
+        });
       }
       
       const header = categoryDiv.querySelector('.category-header');
@@ -582,7 +619,7 @@ class Application {
       };
       
       container.appendChild(categoryDiv);
-    }
+    });
   }
   
   snapToGridValue(value) {
@@ -590,7 +627,7 @@ class Application {
     return Math.round(value / this.gridSize) * this.gridSize;
   }
 
-  async createNodeAtCenter(type, subnode = null) {
+  createNodeAtCenter(type, subnode = null) {
     const viewportRect = document.getElementById('viewport').getBoundingClientRect();
     const offset = this.viewport.getOffset();
     const zoom = window.currentZoom || 1;
@@ -604,11 +641,14 @@ class Application {
     const options = { x, y };
     if (subnode) Object.assign(options, subnode);
     
-    const node = await NodeFactory.createNode(type, options);
-    
+    const node = NodeFactory.createNode(type, options);
     if (node) {
       this.graph.addNode(node);
       this.finishNodeCreation();
+      
+      const centerX = viewportRect.left + viewportRect.width / 2;
+      const centerY = viewportRect.top + viewportRect.height / 2;
+      createParticleBurst(centerX, centerY);
     }
   }
   
@@ -640,29 +680,6 @@ class Application {
         splashOverlay.style.display = 'none';
         appContainer.classList.remove('hidden');
       }
-    }
-  }
-  
-  initDirtyIndicator() {
-    const dirtySpan = document.getElementById('dirtyIndicator');
-    if (!dirtySpan) return;
-    
-    dirtySpan.style.display = 'none';
-    
-    if (this.graph && typeof this.graph.onDirtyChange === 'function') {
-      this.graph.onDirtyChange((isDirty) => {
-        dirtySpan.style.display = isDirty ? 'inline-flex' : 'none';
-        
-        if (isDirty) {
-          if (!document.title.startsWith('* ')) {
-            document.title = '* ' + document.title;
-          }
-        } else {
-          if (document.title.startsWith('* ')) {
-            document.title = document.title.substring(2);
-          }
-        }
-      });
     }
   }
   
@@ -731,7 +748,6 @@ class Application {
       this.updateNodeCount();
       this.updateEdgeCount();
       this.updateZoomIndicator();
-      this.graph.clearDirty();
     }
     event.target.value = '';
   }
@@ -741,9 +757,6 @@ class Application {
       if (result) {
         localStorage.removeItem('amenodes_autosave');
         modal.alert(t('modal.storageCleared'));
-        if (this.graph && this.graph.clearDirty) {
-          this.graph.clearDirty();
-        }
       }
     });
   }
@@ -768,6 +781,22 @@ class Application {
           this.updateEdgeCount();
         }
       }
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        this.persistenceService.exportToFile();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
+        e.preventDefault();
+        this.import();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        this.undo();
+      }
+      if (((e.ctrlKey || e.metaKey) && e.key === 'y') || ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Z')) {
+        e.preventDefault();
+        this.redo();
+      }
     });
     
     const originalRemoveNode = this.graph.removeNode.bind(this.graph);
@@ -789,6 +818,51 @@ class Application {
       originalRemoveEdge(id);
       this.updateEdgeCount();
     };
+    
+    let isDirty = false;
+    const dirtyIndicator = document.getElementById('dirtyIndicator');
+    const markDirty = () => {
+      if (!isDirty) {
+        isDirty = true;
+        if (dirtyIndicator) dirtyIndicator.style.display = 'inline-flex';
+      }
+    };
+    const markClean = () => {
+      if (isDirty) {
+        isDirty = false;
+        if (dirtyIndicator) dirtyIndicator.style.display = 'none';
+      }
+    };
+    
+    const originalHistorySave = this.history.save.bind(this.history);
+    this.history.save = () => {
+      originalHistorySave();
+      markClean();
+    };
+    
+    const originalAddNode = this.graph.addNode.bind(this.graph);
+    this.graph.addNode = (node) => {
+      markDirty();
+      return originalAddNode(node);
+    };
+    
+    const originalRemoveNodeGraph = this.graph.removeNode.bind(this.graph);
+    this.graph.removeNode = (id) => {
+      markDirty();
+      return originalRemoveNodeGraph(id);
+    };
+    
+    const originalAddEdgeGraph = this.graph.addEdge.bind(this.graph);
+    this.graph.addEdge = (sourceId, targetId, port) => {
+      markDirty();
+      return originalAddEdgeGraph(sourceId, targetId, port);
+    };
+    
+    const originalRemoveEdgeGraph = this.graph.removeEdge.bind(this.graph);
+    this.graph.removeEdge = (id) => {
+      markDirty();
+      return originalRemoveEdgeGraph(id);
+    };
   }
 
   initI18n() {
@@ -804,7 +878,7 @@ class Application {
   }
 
   updateUITitles() {
-    document.title = `@Amenodes`;
+    document.title = `@Amenodes - Visual Programming`;
     
     if (this.graph) {
       this.graph.reevaluateAll();
@@ -838,22 +912,22 @@ class Application {
     
     panel.innerHTML = `
       <div class="property-group">
-        <div class="property-label">${t('editor.nodeType')}</div>
+        <div class="property-label">${t('editor.nodeType') || 'Node Type'}</div>
         <div class="property-value">${node.type}</div>
       </div>
       <div class="property-group">
-        <div class="property-label">${t('editor.id')}</div>
+        <div class="property-label">ID</div>
         <div class="property-value">${node.id}</div>
       </div>
       <div class="property-group">
-        <div class="property-label">${t('editor.position')}</div>
+        <div class="property-label">${t('editor.position') || 'Position'}</div>
         <div class="property-value">X: ${Math.round(node.x)}, Y: ${Math.round(node.y)}</div>
       </div>
       <div class="property-group">
-        <div class="property-label">${t('editor.connections')}</div>
+        <div class="property-label">${t('editor.connections') || 'Connections'}</div>
         <div class="property-value">
-          ${t('editor.inputs')}: ${this.graph.getIncomingEdges(node.id).length}<br>
-          ${t('editor.outputs')}: ${this.graph.getOutgoingEdges(node.id).length}
+          ${t('editor.inputs') || 'Inputs'}: ${this.graph.getIncomingEdges(node.id).length}<br>
+          ${t('editor.outputs') || 'Outputs'}: ${this.graph.getOutgoingEdges(node.id).length}
         </div>
       </div>
     `;
