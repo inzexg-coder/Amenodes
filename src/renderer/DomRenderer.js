@@ -26,12 +26,7 @@ export class DomRenderer {
     this.getGridSize = null;
     this.particleFlowEnabled = false;
     this.tiltEnabled = false;
-    this.opts = {
-      willChange: false,
-      contain: false,
-      pointerEvents: false
-    };
-    
+    this.opts = { willChange: false, contain: false, pointerEvents: false };
     this.edgeRenderer = new EdgeRenderer(this.layer, this);
     this.edgeRenderer.setOnEdgeRemoved(() => {
       this.graph.reevaluateAll();
@@ -40,7 +35,6 @@ export class DomRenderer {
       this.save();
       if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
     });
-    
     this.contextMenu = null;
     this.onNodeSelect = null;
   }
@@ -116,13 +110,8 @@ export class DomRenderer {
   }
 
   getNodeHeight(node) {
-    if (!node || typeof node.getMinHeight !== 'function') {
-      console.warn('Node missing getMinHeight method:', node);
-      return 80;
-    }
-    if (this.heightCache.has(node.id)) {
-      return this.heightCache.get(node.id);
-    }
+    if (!node || typeof node.getMinHeight !== 'function') return 80;
+    if (this.heightCache.has(node.id)) return this.heightCache.get(node.id);
     const height = node.getMinHeight();
     this.heightCache.set(node.id, height);
     return height;
@@ -134,10 +123,7 @@ export class DomRenderer {
     const nodeY = node.y + offset.y;
     const height = this.getNodeHeight(node);
     const margin = 300;
-    return !(nodeX + 280 + margin < 0 || 
-             nodeX - margin > viewportRect.w || 
-             nodeY + height + margin < 0 || 
-             nodeY - margin > viewportRect.h);
+    return !(nodeX + 280 + margin < 0 || nodeX - margin > viewportRect.w || nodeY + height + margin < 0 || nodeY - margin > viewportRect.h);
   }
 
   clearTemp() {
@@ -147,25 +133,16 @@ export class DomRenderer {
   updateNodeClass(node) {
     const element = this.elementCache.get(node.id);
     if (element) {
-      if (node.important) {
-        element.classList.add('node-important');
-      } else {
-        element.classList.remove('node-important');
-      }
+      if (node.important) element.classList.add('node-important');
+      else element.classList.remove('node-important');
     }
   }
 
   applyOptStyles(element) {
-    if (this.opts.willChange) {
-      element.style.willChange = 'left, top';
-    } else {
-      element.style.willChange = '';
-    }
-    if (this.opts.contain) {
-      element.style.contain = 'layout paint';
-    } else {
-      element.style.contain = '';
-    }
+    if (this.opts.willChange) element.style.willChange = 'left, top';
+    else element.style.willChange = '';
+    if (this.opts.contain) element.style.contain = 'layout paint';
+    else element.style.contain = '';
   }
 
   renderEdges(visibleNodes) {
@@ -173,12 +150,7 @@ export class DomRenderer {
     const filteredEdges = this.graph.edges.filter(e => nodeIds.has(e.sourceId) && nodeIds.has(e.targetId));
     const rectCache = new Map();
     for (const node of visibleNodes) {
-      rectCache.set(node.id, {
-        x: node.x,
-        y: node.y,
-        w: 280,
-        h: this.getNodeHeight(node)
-      });
+      rectCache.set(node.id, { x: node.x, y: node.y, w: 280, h: this.getNodeHeight(node) });
     }
     this.edgeRenderer.renderEdges(filteredEdges, this.graph, rectCache);
   }
@@ -196,10 +168,7 @@ export class DomRenderer {
       }
       for (const node of visibleNodes) {
         if (!this.elementCache.has(node.id)) {
-          if (typeof node.createDOM !== 'function') {
-            console.error('Node missing createDOM method:', node);
-            continue;
-          }
+          if (typeof node.createDOM !== 'function') continue;
           const element = node.createDOM(this.graph, this);
           this.elementCache.set(node.id, element);
         }
@@ -220,10 +189,7 @@ export class DomRenderer {
     this.layer.innerHTML = '';
     this.elementCache.clear();
     for (const node of this.graph.nodes) {
-      if (typeof node.createDOM !== 'function') {
-        console.error('Node missing createDOM method:', node);
-        continue;
-      }
+      if (typeof node.createDOM !== 'function') continue;
       const element = node.createDOM(this.graph, this);
       this.layer.appendChild(element);
       this.elementCache.set(node.id, element);
@@ -232,12 +198,7 @@ export class DomRenderer {
     }
     const rectCache = new Map();
     for (const node of this.graph.nodes) {
-      rectCache.set(node.id, {
-        x: node.x,
-        y: node.y,
-        w: 280,
-        h: this.getNodeHeight(node)
-      });
+      rectCache.set(node.id, { x: node.x, y: node.y, w: 280, h: this.getNodeHeight(node) });
     }
     this.edgeRenderer.renderEdges(this.graph.edges, this.graph, rectCache);
     this.attachDragEvents();
@@ -333,12 +294,9 @@ export class DomRenderer {
 
   onGlobalUpEdge(event) {
     if (!this.isDraggingEdge) return;
-    const targetElement = document.elementsFromPoint(event.clientX, event.clientY)
-      .find(el => el.classList && el.classList.contains('node'));
+    const targetElement = document.elementsFromPoint(event.clientX, event.clientY).find(el => el.classList && el.classList.contains('node'));
     const targetId = targetElement ? parseInt(targetElement.getAttribute('data-id')) : null;
-    if (this.tempSvg && this.tempLine) {
-      this.tempSvg.remove();
-    }
+    if (this.tempSvg && this.tempLine) this.tempSvg.remove();
     this.tempLine = null;
     this.tempSvg = null;
     if (targetId && targetId !== this.edgeSourceId) {
@@ -358,9 +316,7 @@ export class DomRenderer {
   }
 
   showMenu(x, y, sourceId) {
-    if (!this.contextMenu) {
-      this.contextMenu = new ContextMenu(this.graph, this, this.history, this.viewport);
-    }
+    if (!this.contextMenu) this.contextMenu = new ContextMenu(this.graph, this, this.history, this.viewport);
     this.contextMenu.show(x, y, sourceId);
   }
 
@@ -376,21 +332,13 @@ export class DomRenderer {
   attachDragEvents() {
     document.querySelectorAll('.node').forEach(element => {
       const header = element.querySelector('.node-header, .output-header, .calc-header, .map-header, .group-header');
-      if (header) {
-        header.addEventListener('mousedown', this.onNodeDown.bind(this));
-      }
+      if (header) header.addEventListener('mousedown', this.onNodeDown.bind(this));
     });
   }
 
   onNodeDown(event) {
     if (event.button !== 0) return;
-    if (event.target.closest('.node-handle') ||
-        event.target.closest('.node-actions') ||
-        event.target.closest('input') ||
-        event.target.closest('button') ||
-        event.target.closest('.title-editable')) {
-      return;
-    }
+    if (event.target.closest('.node-handle') || event.target.closest('.node-actions') || event.target.closest('input') || event.target.closest('button') || event.target.closest('.title-editable')) return;
     const nodeElement = event.target.closest('.node');
     if (!nodeElement) return;
     const nodeId = parseInt(nodeElement.getAttribute('data-id'));
@@ -445,8 +393,6 @@ export class DomRenderer {
   }
 
   closeMenu() {
-    if (this.contextMenu) {
-      this.contextMenu.close();
-    }
+    if (this.contextMenu) this.contextMenu.close();
   }
 }
