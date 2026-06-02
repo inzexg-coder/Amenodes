@@ -3080,3 +3080,80 @@ input[type=number] {
   cursor: pointer;
   font-family: monospace;
 }
+
+/* CALC NODE STYLES */
+.calc-dropdown {
+  position: relative;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.calc-dropdown-toggle {
+  width: 100%;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #1a1f30, #0f1222);
+  color: #ffefcf;
+  border: 1px solid rgba(255, 179, 71, 0.3);
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.calc-dropdown-toggle:hover {
+  border-color: rgba(255, 179, 71, 0.7);
+  background: linear-gradient(135deg, #1f2a44, #12162a);
+}
+
+.calc-dropdown-toggle .arrow {
+  transition: transform 0.2s ease;
+  color: #ffb347;
+  font-size: 10px;
+}
+
+.calc-dropdown.open .calc-dropdown-toggle .arrow {
+  transform: rotate(180deg);
+}
+
+.calc-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: linear-gradient(135deg, #1f2a44, #12162a);
+  border: 1px solid rgba(255, 179, 71, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 100;
+  display: none;
+  backdrop-filter: blur(8px);
+}
+
+.calc-dropdown.open .calc-dropdown-menu {
+  display: block;
+}
+
+.calc-dropdown-item {
+  padding: 8px 12px;
+  font-family: monospace;
+  font-size: 12px;
+  color: #ffefcf;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.calc-dropdown-item:hover {
+  background: rgba(255, 179, 71, 0.2);
+  color: #ffb347;
+}
+
+.calc-dropdown-item.active {
+  background: rgba(255, 179, 71, 0.3);
+  color: #ffb347;
+  border-left: 2px solid #ffb347;
+}

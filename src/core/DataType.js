@@ -40,11 +40,10 @@ export class TypeSystem {
     for (const [type, { metadata }] of nodeRegistry.entries()) {
       if (metadata.dataType) {
         this.registerType(metadata.dataType, {
-          name: metadata.dataTypeName || metadata.nameKey,
+          name: metadata.dataType,
           canHaveIncomingEdges: metadata.canHaveIncomingEdges ?? true,
           canHaveOutgoingEdges: metadata.canHaveOutgoingEdges ?? true,
           allowedInputTypes: metadata.allowedInputTypes ?? [],
-          allowedOutputTypes: metadata.allowedOutputTypes ?? [],
           defaultValue: metadata.defaultValue ?? null
         });
       }

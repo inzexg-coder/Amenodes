@@ -14,7 +14,6 @@ export const metadata = {
   canHaveIncomingEdges: true,
   canHaveOutgoingEdges: false,
   allowedInputTypes: ['num', 'array', 'uncert', 'list', 'wlist'],
-  allowedOutputTypes: [],
   defaultValue: null
 };
 

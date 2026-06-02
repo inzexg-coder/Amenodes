@@ -1,12 +1,18 @@
 export default {
-  nodes: { calc: 'Uncertainty' },
-  nodeDescriptions: { calc: 'Uncertainty calculation node' },
+  nodes: {
+    calc: 'Error Propagation'
+  },
+  nodeDescriptions: {
+    calc: 'Node for calculating measurement errors and uncertainties'
+  },
   calcTypes: {
-    div3: 'Measurement Uncertainty',
-    div_sqrt12: 'Rounding Uncertainty',
-    sqrt_sum_sq: 'Combined Uncertainty',
+    div3: 'Divide by 3 (Δ/3)',
+    div_sqrt12: 'Divide by √12 (ω/√12)',
+    sqrt_sum_sq: '√(a² + b²) Pairwise',
+    quadratic_sum: 'Quadratic Sum √(Σσ²)',
+    multiply_by_constant: 'Multiply by Constant',
     result: 'Result',
-    inputs: 'inputs'
+    inputs: 'Inputs'
   },
   dataTypes: {
     uncert: 'Uncertainty'
