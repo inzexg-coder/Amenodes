@@ -12,16 +12,10 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title data-i18n="editor.title">@Amenodes - Visual Programming</title>
+<title data-i18n="editor.title">@Amenodes</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://cdnjs.cloudflare.com">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <link rel="stylesheet" href="styles/main.css">
-<style>
-  body { margin: 0; overflow: hidden; background: #0a0c14; }
-  .splash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 20% 30%, #0f1222, #05070c); display: flex; align-items: center; justify-content: center; z-index: 10000; transition: opacity 0.3s ease; }
-  .app-container.hidden, .hidden { display: none; }
-</style>
 </head>
 <body>
 
@@ -31,188 +25,186 @@
       <i class="fas fa-project-diagram"></i>
       <span>@Amenodes</span>
     </div>
-    <div class="splash-title">VISUAL PROGRAMMING LANGUAGE</div>
+    <div class="splash-title" data-i18n="editor.subtitle">construct your universe</div>
     <div class="splash-actions">
       <button id="newCanvasBtn" class="splash-btn primary"><i class="fas fa-plus-circle"></i> <span data-i18n="editor.newCanvas">New Canvas</span></button>
       <button id="loadCanvasBtn" class="splash-btn secondary"><i class="fas fa-folder-open"></i> <span data-i18n="editor.loadCanvas">Load Canvas</span></button>
       <button id="splashSettingsBtn" class="splash-btn secondary"><i class="fas fa-sliders-h"></i> <span data-i18n="editor.settings">Settings</span></button>
     </div>
     <div class="splash-footer">
-      <span><i class="fas fa-microchip"></i> 60 FPS Ready</span>
-      <span><i class="fas fa-palette"></i> GPU Acceleration</span>
-      <span><i class="fas fa-star"></i> Cosmic Edition</span>
+      <span><i class="fas fa-microchip"></i> 60 FPS Engine</span>
+      <span><i class="fas fa-palette"></i> GPU</span>
     </div>
   </div>
 </div>
 
 <div id="appContainer" class="app-container hidden">
-  <div class="top-bar">
-    <div class="logo-area">
-      <i class="fas fa-project-diagram"></i>
-      <span>@Amenodes</span>
-    </div>
-    <div class="canvas-controls">
-      <button id="canvasSettingsBtn" class="top-btn" title="Canvas Settings"><i class="fas fa-sliders-h"></i> <span data-i18n="editor.canvasSettings">Settings</span></button>
-      <button id="canvasExportBtn" class="top-btn" title="Export"><i class="fas fa-download"></i> <span data-i18n="editor.export">Export</span></button>
-      <button id="canvasImportBtn" class="top-btn" title="Import"><i class="fas fa-upload"></i> <span data-i18n="editor.import">Import</span></button>
-      <div class="divider"></div>
-      <button id="undoBtn" class="top-btn" title="Undo"><i class="fas fa-undo-alt"></i> <span data-i18n="editor.undo">Undo</span></button>
-      <button id="redoBtn" class="top-btn" title="Redo"><i class="fas fa-redo-alt"></i> <span data-i18n="editor.redo">Redo</span></button>
-    </div>
-    <div class="right-controls" id="rightControls">
-      <div class="zoom-indicator" id="zoomIndicator">100%</div>
-      <button id="addNodeBtn" class="top-btn primary" title="Add Node"><i class="fas fa-plus"></i> <span data-i18n="editor.addNode">Add node</span></button>
-      <button id="optToggleBtn" class="top-btn" title="Optimizations"><i class="fas fa-tachometer-alt"></i> <span data-i18n="editor.optimize">Optimize</span></button>
-      <button id="turboModeBtn" class="top-btn" title="Turbo Mode"><i class="fas fa-rocket"></i> <span data-i18n="editor.turbo">Turbo</span></button>
-      <div class="divider"></div>
-      <button id="clearStorageBtn" class="top-btn danger" title="Clear Storage"><i class="fas fa-trash-alt"></i> <span data-i18n="editor.clearStorage">Clear</span></button>
+  <canvas id="starfieldCanvas" class="starfield-canvas"></canvas>
+
+  <div class="viewport-container">
+    <div class="viewport" id="viewport">
+      <div class="canvas-container" id="canvasContainer">
+        <div class="nodes-layer" id="nodesLayer"></div>
+      </div>
+      <canvas id="webglCanvas" class="webgl-canvas" style="display:none;"></canvas>
     </div>
   </div>
 
-  <div class="workspace">
-    <div class="sidebar left-sidebar" id="leftSidebar">
-      <div class="sidebar-header">
-        <button id="collapseLeftBtn" class="collapse-btn"><i class="fas fa-chevron-left"></i></button>
-        <i class="fas fa-cubes"></i>
-        <span data-i18n="editor.nodesLibrary">Nodes Library</span>
-      </div>
-      <div class="sidebar-content" id="nodesLibraryList">
-        <div class="loading-nodes"><i class="fas fa-spinner fa-pulse"></i> Loading nodes...</div>
-      </div>
-    </div>
+  <div id="miniMap" class="mini-map"></div>
 
-    <div class="viewport-container">
-      <div class="viewport" id="viewport">
-        <div class="canvas-container" id="canvasContainer">
-          <div class="nodes-layer" id="nodesLayer"></div>
-        </div>
-        <canvas id="webglCanvas" class="webgl-canvas" style="display:none;"></canvas>
-      </div>
+  <div id="floatingToolbar" class="floating-toolbar">
+    <div class="toolbar-core">
+      <button id="toolbarAddNode" class="toolbar-btn primary" title="Add Node"><i class="fas fa-plus"></i></button>
+      <button id="toolbarUndo" class="toolbar-btn" title="Undo"><i class="fas fa-undo-alt"></i></button>
+      <button id="toolbarRedo" class="toolbar-btn" title="Redo"><i class="fas fa-redo-alt"></i></button>
+      <button id="toolbarExport" class="toolbar-btn" title="Export"><i class="fas fa-download"></i></button>
+      <button id="toolbarImport" class="toolbar-btn" title="Import"><i class="fas fa-upload"></i></button>
+      <button id="toolbarSettings" class="toolbar-btn" title="Canvas Settings"><i class="fas fa-sliders-h"></i></button>
+      <button id="toolbarClear" class="toolbar-btn danger" title="Clear Storage"><i class="fas fa-trash-alt"></i></button>
     </div>
+  </div>
 
-    <div class="sidebar right-sidebar" id="rightSidebar">
-      <div class="sidebar-header">
-        <button id="collapseRightBtn" class="collapse-btn"><i class="fas fa-chevron-right"></i></button>
-        <i class="fas fa-info-circle"></i>
-        <span data-i18n="editor.properties">Properties</span>
-      </div>
-      <div class="sidebar-content" id="propertiesPanel">
-        <div class="empty-property">
-          <i class="fas fa-hand-pointer"></i>
-          <p data-i18n="editor.selectNodeToEdit">Select a node to edit properties</p>
-        </div>
+  <div class="status-panel" id="statusPanel">
+    <div class="status-item"><i class="fas fa-chart-line"></i> <span id="fpsMeter">--</span> <span data-i18n="editor.fps">FPS</span></div>
+    <div class="status-item"><i class="fas fa-save"></i> <span id="autosaveStatus" data-i18n="editor.saved">Saved</span></div>
+    <div class="status-item"><i class="fas fa-crosshairs"></i> <span id="coordIndicator">0,0</span></div>
+    <div class="status-item"><i class="fas fa-cubes"></i> <span id="nodeCount">0</span> / <span id="edgeCount">0</span></div>
+    <div class="status-item zoom-indicator" id="zoomIndicator">100%</div>
+  </div>
+
+  <button id="openLibraryBtn" class="open-library-btn" title="Node Library"><i class="fas fa-cubes"></i></button>
+
+  <div id="libraryPanel" class="library-panel hidden">
+    <div class="library-header">
+      <span><i class="fas fa-cubes"></i> <span data-i18n="editor.nodesLibrary">Nodes Library</span></span>
+      <button id="closeLibraryBtn" class="close-panel-btn"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="library-content" id="nodesLibraryList">
+      <div class="loading-nodes"><i class="fas fa-spinner fa-pulse"></i> Loading nodes...</div>
+    </div>
+  </div>
+
+  <div id="propertiesPanel" class="properties-panel hidden">
+    <div class="properties-header">
+      <span><i class="fas fa-info-circle"></i> <span data-i18n="editor.properties">Properties</span></span>
+      <button id="closePropertiesBtn" class="close-panel-btn"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="properties-content" id="propertiesPanelContent">
+      <div class="empty-property">
+        <i class="fas fa-hand-pointer"></i>
+        <p data-i18n="editor.selectNodeToEdit">Select a node to edit properties</p>
       </div>
     </div>
   </div>
-  
-  <div class="status-bar">
-    <div class="status-left">
-      <span id="nodeCount">0 <span data-i18n="editor.nodeCount">nodes</span></span>
-      <span id="edgeCount">0 <span data-i18n="editor.edgeCount">connections</span></span>
-      <span id="dirtyIndicator" style="display: none; color: #ffb347; margin-left: 12px;">
-        <i class="fas fa-pen"></i> <span data-i18n="editor.unsaved">Unsaved</span>
-      </span>
-    </div>
-    <div class="status-center">
-      <div class="coord-indicator" id="coordIndicator">X: 0.00 | Y: 0.00</div>
-    </div>
-    <div class="status-right">
-      <div class="fps-meter" id="fpsMeter"><i class="fas fa-chart-line"></i> <span data-i18n="editor.fps">FPS</span>: --</div>
-      <div class="autosave-status" id="autosaveStatus"><i class="fas fa-save"></i> <span data-i18n="editor.saved">Saved</span></div>
-    </div>
-  </div>
-</div>
-  
-<div id="optPanel" class="opt-panel hidden">
-  <div class="opt-header">
-    <span><i class="fas fa-microchip"></i> <span data-i18n="editor.performanceOptimizations">Performance Optimizations</span></span>
-    <button id="closeOptPanel"><i class="fas fa-times"></i></button>
-  </div>
-  <div class="opt-list" id="optListContainer"></div>
-  <button id="rebenchmarkBtn" class="rebench-btn"><i class="fas fa-chart-line"></i> <span data-i18n="editor.recalculateImpact">Recalculate Impact</span></button>
-  <button id="applyOptimizationsBtn" class="apply-btn"><i class="fas fa-check-circle"></i> <span data-i18n="editor.applySelected">APPLY SELECTED</span></button>
-</div>
 
-<div id="canvasSettingsModal" class="modal-overlay hidden">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3><i class="fas fa-sliders-h"></i> <span data-i18n="editor.canvasSettings">Canvas Settings</span></h3>
-      <button class="modal-close" id="closeSettingsModal">&times;</button>
+  <div id="optPanel" class="opt-panel hidden">
+    <div class="opt-header">
+      <span><i class="fas fa-microchip"></i> <span data-i18n="editor.performanceOptimizations">Performance Optimizations</span></span>
+      <button id="closeOptPanel"><i class="fas fa-times"></i></button>
     </div>
-    <div class="modal-body">
-      <div class="setting-group">
-        <label><span data-i18n="editor.gridStyle">Grid Style</span></label>
-        <div class="grid-preview" id="gridPreview">
-          <div class="grid-preview-canvas" id="gridPreviewCanvas"></div>
-        </div>
-        <div class="grid-style-buttons">
-          <button class="grid-style-btn" data-grid="dots"><span data-i18n="editor.dots">Dots</span></button>
-          <button class="grid-style-btn" data-grid="lines"><span data-i18n="editor.lines">Lines</span></button>
-          <button class="grid-style-btn" data-grid="cross"><span data-i18n="editor.cross">Cross</span></button>
-          <button class="grid-style-btn" data-grid="hex"><span data-i18n="editor.hex">Hex</span></button>
-          <button class="grid-style-btn" data-grid="none"><span data-i18n="editor.none">None</span></button>
-        </div>
+    <div class="opt-list" id="optListContainer"></div>
+    <button id="rebenchmarkBtn" class="rebench-btn"><i class="fas fa-chart-line"></i> <span data-i18n="editor.recalculateImpact">Recalculate optimizations impact</span></button>
+    <button id="applyOptimizationsBtn" class="apply-btn"><i class="fas fa-check-circle"></i> <span data-i18n="editor.applySelected">APPLY SELECTED</span></button>
+  </div>
+
+  <div id="canvasSettingsModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-sliders-h"></i> <span data-i18n="editor.canvasSettings">Canvas Settings</span></h3>
+        <button class="modal-close" id="closeSettingsModal">&times;</button>
       </div>
-      <div class="setting-group">
-        <label><span data-i18n="editor.snapToGrid">Snap to Grid</span></label>
-        <div class="toggle-switch">
-          <input type="checkbox" id="snapToGrid">
-          <span class="toggle-slider"></span>
-          <span class="toggle-label"><span data-i18n="editor.enableSnap">Enable snapping</span></span>
-        </div>
-      </div>
-      <div class="setting-group">
-        <label><span data-i18n="editor.ctrlZoom">Ctrl + Scroll to zoom</span></label>
-        <div class="toggle-switch">
-          <input type="checkbox" id="ctrlZoomOnly">
-          <span class="toggle-slider"></span>
-          <span class="toggle-label"><span data-i18n="editor.enableCtrlZoom">Require Ctrl key</span></span>
-        </div>
-      </div>
-      <div class="setting-group">
-        <label><span data-i18n="editor.invertZoom">Invert zoom direction</span></label>
-        <div class="toggle-switch">
-          <input type="checkbox" id="invertZoomDirection">
-          <span class="toggle-slider"></span>
-          <span class="toggle-label"><span data-i18n="editor.enableInvertZoom">Reverse scroll</span></span>
-        </div>
-      </div>
-      <div class="setting-group">
-        <label><span data-i18n="editor.gridSize">Grid Size</span>: <span id="gridSizeValue">20</span> px</label>
-        <input type="range" id="gridSize" value="20" min="10" max="50" step="5">
-        <div class="grid-size-presets">
-          <span data-size="10">10px</span>
-          <span data-size="15">15px</span>
-          <span data-size="20" class="active">20px</span>
-          <span data-size="25">25px</span>
-          <span data-size="30">30px</span>
-          <span data-size="40">40px</span>
-          <span data-size="50">50px</span>
-        </div>
-      </div>
-      <div class="setting-group">
-        <label><span data-i18n="editor.language">Language</span></label>
-        <div class="language-selector" id="canvasLanguageSelector">
-          <div class="language-option" data-lang="en">
-            <span>English</span>
-            <span id="lang-en-check" style="display:none;">✓</span>
+      <div class="modal-body">
+        <div class="setting-group">
+          <label><span data-i18n="editor.gridStyle">Grid Style</span></label>
+          <div class="grid-preview" id="gridPreview">
+            <div class="grid-preview-canvas" id="gridPreviewCanvas"></div>
           </div>
-          <div class="language-option" data-lang="ru">
-            <span>Русский</span>
-            <span id="lang-ru-check" style="display:none;">✓</span>
+          <div class="grid-style-buttons">
+            <button class="grid-style-btn" data-grid="dots"><span data-i18n="editor.dots">Dots</span></button>
+            <button class="grid-style-btn" data-grid="lines"><span data-i18n="editor.lines">Lines</span></button>
+            <button class="grid-style-btn" data-grid="cross"><span data-i18n="editor.cross">Cross</span></button>
+            <button class="grid-style-btn" data-grid="none"><span data-i18n="editor.none">None</span></button>
           </div>
         </div>
+        <div class="setting-group">
+          <label><span data-i18n="editor.snapToGrid">Snap to Grid</span></label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="snapToGrid">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label"><span data-i18n="editor.enableSnap">Enable snapping nodes to grid</span></span>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label><span data-i18n="editor.ctrlZoom">Ctrl + Scroll to zoom</span></label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="ctrlZoomOnly">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label"><span data-i18n="editor.enableCtrlZoom">Require Ctrl key for zooming</span></span>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label><span data-i18n="editor.invertZoom">Invert zoom direction</span></label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="invertZoomDirection">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label"><span data-i18n="editor.enableInvertZoom">Reverse scroll direction for zoom</span></span>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label><span data-i18n="editor.gridSize">Grid Size</span>: <span id="gridSizeValue">20</span> px</label>
+          <input type="range" id="gridSize" value="20" min="10" max="50" step="5">
+          <div class="grid-size-presets">
+            <span data-size="10">10px</span>
+            <span data-size="15">15px</span>
+            <span data-size="20" class="active">20px</span>
+            <span data-size="25">25px</span>
+            <span data-size="30">30px</span>
+            <span data-size="40">40px</span>
+            <span data-size="50">50px</span>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label><span data-i18n="editor.language">Language</span></label>
+          <div class="language-selector" id="canvasLanguageSelector">
+            <div class="language-option" data-lang="en">
+              <span>English</span>
+              <span id="lang-en-check" style="display:none;">✓</span>
+            </div>
+            <div class="language-option" data-lang="ru">
+              <span>Русский</span>
+              <span id="lang-ru-check" style="display:none;">✓</span>
+            </div>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label><span>Extra Effects</span></label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="enableParticleFlow">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label"><span>Particle flow on edges</span></span>
+          </div>
+          <div class="toggle-switch">
+            <input type="checkbox" id="enable3DTilt">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label"><span>3D hover tilt (nodes)</span></span>
+          </div>
+          <div class="toggle-switch">
+            <input type="checkbox" id="enableSoundEffects">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label"><span>Sound effects (experimental)</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn secondary" id="cancelSettings"><span data-i18n="editor.cancel">Cancel</span></button>
+        <button class="modal-btn primary" id="applySettings"><span data-i18n="editor.apply">Apply</span></button>
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="modal-btn secondary" id="cancelSettings"><span data-i18n="editor.cancel">Cancel</span></button>
-      <button class="modal-btn primary" id="applySettings"><span data-i18n="editor.apply">Apply</span></button>
-    </div>
   </div>
-</div>
 
-<input type="file" id="fileInput" class="hidden-file-input" accept=".amnk">
-<div id="benchmarkStatus" class="benchmark-status" style="display:none;"><i class="fas fa-flask"></i> Benchmarking...</div>
+  <input type="file" id="fileInput" class="hidden-file-input" accept=".amnk">
+  <div id="benchmarkStatus" class="benchmark-status" style="display:none;"><i class="fas fa-flask"></i> Benchmarking optimizations...</div>
+</div>
 
 <script type="importmap">
 {
@@ -291,30 +283,20 @@ class AmenodesAPI {
         return data;
     }
     async register(username, email, password) {
-        return this.request('/register.php', {
-            method: 'POST',
-            body: JSON.stringify({ username, email, password })
-        });
+        return this.request('/register.php', { method: 'POST', body: JSON.stringify({ username, email, password }) });
     }
     async login(login, password) {
-        const data = await this.request('/login.php', {
-            method: 'POST',
-            body: JSON.stringify({ login, password })
-        });
+        const data = await this.request('/login.php', { method: 'POST', body: JSON.stringify({ login, password }) });
         if (data.token) this.setToken(data.token);
         return data;
     }
     logout() { this.setToken(null); }
     async getCurrentUser() {
         if (!this.token) return null;
-        try { return await this.request('/me.php'); }
-        catch { return null; }
+        try { return await this.request('/me.php'); } catch { return null; }
     }
     async createTemplate(title, description, graphData) {
-        return this.request('/create_template.php', {
-            method: 'POST',
-            body: JSON.stringify({ title, description, graph_data: graphData })
-        });
+        return this.request('/create_template.php', { method: 'POST', body: JSON.stringify({ title, description, graph_data: graphData }) });
     }
 }
 
@@ -405,119 +387,65 @@ function showAuthModal() {
 }
 
 function updateAuthUI() {
-    const rightControls = document.getElementById('rightControls');
-    if (!rightControls) return;
-    const existingAuth = document.getElementById('auth-container');
+    const statusPanel = document.getElementById('statusPanel');
+    if (!statusPanel) return;
+    const existingAuth = document.getElementById('authWidget');
     if (existingAuth) existingAuth.remove();
-    const authContainer = document.createElement('div');
-    authContainer.id = 'auth-container';
-    authContainer.style.display = 'flex';
-    authContainer.style.alignItems = 'center';
-    authContainer.style.gap = '12px';
+    const authWidget = document.createElement('div');
+    authWidget.id = 'authWidget';
+    authWidget.className = 'status-item';
     if (currentUser) {
         const saveBtn = document.createElement('button');
         saveBtn.id = 'saveTemplateBtn';
-        saveBtn.className = 'top-btn';
-        saveBtn.style.background = '#2d3a5e';
-        saveBtn.style.color = '#ffb347';
+        saveBtn.className = 'mini-btn';
         saveBtn.innerHTML = `<i class="fas fa-save"></i> ${t('editor.saveTemplate')}`;
         saveBtn.onclick = () => showSaveTemplateModal();
         const avatar = document.createElement('div');
-        avatar.className = 'user-avatar';
+        avatar.className = 'user-avatar-mini';
         avatar.textContent = currentUser.username.charAt(0).toUpperCase();
-        avatar.onclick = (e) => {
-            e.stopPropagation();
-            toggleUserMenu();
-        };
-        authContainer.appendChild(saveBtn);
+        avatar.onclick = (e) => { e.stopPropagation(); toggleUserMenu(); };
+        authWidget.appendChild(saveBtn);
+        authWidget.appendChild(avatar);
         if (currentUser.role === 'moderator' || currentUser.role === 'admin') {
             const modBtn = document.createElement('button');
-            modBtn.id = 'moderateBtn';
-            modBtn.className = 'top-btn';
-            modBtn.style.background = '#8b3a3a';
-            modBtn.style.color = '#fff';
+            modBtn.className = 'mini-btn';
             modBtn.innerHTML = `<i class="fas fa-gavel"></i> ${t('editor.moderate')}`;
             modBtn.onclick = () => window.open('moderate.html', '_blank');
-            authContainer.appendChild(modBtn);
+            authWidget.appendChild(modBtn);
         }
-        authContainer.appendChild(avatar);
-        const zoomIndicator = rightControls.querySelector('#zoomIndicator');
-        if (zoomIndicator) rightControls.insertBefore(authContainer, zoomIndicator);
-        else rightControls.insertBefore(authContainer, rightControls.firstChild);
     } else {
         const loginBtn = document.createElement('button');
-        loginBtn.id = 'loginHeaderBtn';
-        loginBtn.className = 'top-btn';
-        loginBtn.style.background = '#ffb347';
-        loginBtn.style.color = '#1a1f30';
+        loginBtn.className = 'mini-btn';
         loginBtn.innerHTML = `<i class="fas fa-sign-in-alt"></i> ${t('editor.login')}`;
         loginBtn.onclick = () => showAuthModal();
-        authContainer.appendChild(loginBtn);
-        const zoomIndicator = rightControls.querySelector('#zoomIndicator');
-        if (zoomIndicator) rightControls.insertBefore(authContainer, zoomIndicator);
-        else rightControls.appendChild(authContainer);
+        authWidget.appendChild(loginBtn);
     }
+    statusPanel.appendChild(authWidget);
 }
 
 function toggleUserMenu() {
-    if (userMenu) {
-        userMenu.remove();
-        userMenu = null;
-        return;
-    }
+    if (userMenu) { userMenu.remove(); userMenu = null; return; }
     userMenu = document.createElement('div');
     userMenu.className = 'user-menu';
     userMenu.innerHTML = `
-        <div class="user-menu-item" id="menu-profile">
-            <i class="fas fa-user"></i> ${t('editor.myProfile')}
-        </div>
-        <div class="user-menu-item" id="menu-templates">
-            <i class="fas fa-cubes"></i> ${t('editor.myTemplates')}
-        </div>
+        <div class="user-menu-item" id="menu-profile"><i class="fas fa-user"></i> ${t('editor.myProfile')}</div>
+        <div class="user-menu-item" id="menu-templates"><i class="fas fa-cubes"></i> ${t('editor.myTemplates')}</div>
         <div class="user-menu-divider"></div>
-        <div class="user-menu-item" id="menu-logout">
-            <i class="fas fa-sign-out-alt"></i> ${t('editor.logout')}
-        </div>
+        <div class="user-menu-item" id="menu-logout"><i class="fas fa-sign-out-alt"></i> ${t('editor.logout')}</div>
     `;
     document.body.appendChild(userMenu);
-    const rect = document.querySelector('.user-avatar').getBoundingClientRect();
+    const rect = document.querySelector('.user-avatar-mini').getBoundingClientRect();
     userMenu.style.position = 'fixed';
     userMenu.style.top = `${rect.bottom + 8}px`;
     userMenu.style.right = `${window.innerWidth - rect.right}px`;
-    document.getElementById('menu-profile').onclick = () => {
-        userMenu.remove();
-        userMenu = null;
-        window.location.href = 'profile.html';
-    };
-    document.getElementById('menu-templates').onclick = () => {
-        userMenu.remove();
-        userMenu = null;
-        window.location.href = 'profile.html';
-    };
-    document.getElementById('menu-logout').onclick = () => {
-        api.logout();
-        currentUser = null;
-        userMenu.remove();
-        userMenu = null;
-        updateAuthUI();
-        showToast(t('editor.logout'), 'info');
-    };
-    const closeMenu = (e) => {
-        if (userMenu && !userMenu.contains(e.target) && !e.target.classList.contains('user-avatar')) {
-            userMenu.remove();
-            userMenu = null;
-            document.removeEventListener('click', closeMenu);
-        }
-    };
-    setTimeout(() => document.addEventListener('click', closeMenu), 100);
+    document.getElementById('menu-profile').onclick = () => { userMenu.remove(); userMenu = null; window.location.href = 'profile.html'; };
+    document.getElementById('menu-templates').onclick = () => { userMenu.remove(); userMenu = null; window.location.href = 'profile.html'; };
+    document.getElementById('menu-logout').onclick = () => { api.logout(); currentUser = null; userMenu.remove(); userMenu = null; updateAuthUI(); showToast(t('editor.logout'), 'info'); };
+    setTimeout(() => document.addEventListener('click', (e) => { if (userMenu && !userMenu.contains(e.target) && !e.target.classList.contains('user-avatar-mini')) { userMenu.remove(); userMenu = null; } }), 100);
 }
 
 function showSaveTemplateModal() {
-    if (!currentUser) {
-        showToast(t('editor.loginFirst'), 'error');
-        showAuthModal();
-        return;
-    }
+    if (!currentUser) { showToast(t('editor.loginFirst'), 'error'); showAuthModal(); return; }
     const modal = document.createElement('div');
     modal.className = 'auth-modal';
     modal.innerHTML = `
@@ -528,9 +456,7 @@ function showSaveTemplateModal() {
             <textarea id="template-desc" placeholder="${t('editor.templateDesc')}" rows="3"></textarea>
             <button id="save-template-submit">${t('editor.submitForModeration')}</button>
             <div class="auth-error" id="save-error"></div>
-            <small style="display:block; margin-top:12px; text-align:center; color:#8899bb;">
-                <i class="fas fa-info-circle"></i> ${t('editor.infoText')}
-            </small>
+            <small><i class="fas fa-info-circle"></i> ${t('editor.infoText')}</small>
         </div>
     `;
     document.body.appendChild(modal);
@@ -541,24 +467,13 @@ function showSaveTemplateModal() {
         const title = document.getElementById('template-title').value.trim();
         const description = document.getElementById('template-desc').value.trim();
         const errorDiv = document.getElementById('save-error');
-        if (!title) {
-            errorDiv.textContent = t('editor.titleRequired');
-            return;
-        }
-        if (!window.app || !window.app.graph || !window.app.graph.exportGraph) {
-            errorDiv.textContent = t('editor.graphNotAvailable');
-            return;
-        }
+        if (!title) { errorDiv.textContent = t('editor.titleRequired'); return; }
+        if (!window.app || !window.app.graph || !window.app.graph.exportGraph) { errorDiv.textContent = t('editor.graphNotAvailable'); return; }
         const graphData = window.app.graph.exportGraph();
         try {
             const data = await api.createTemplate(title, description, graphData);
-            if (data.success) {
-                modal.remove();
-                showToast(t('editor.templateSubmitted'), 'success');
-            }
-        } catch (err) {
-            errorDiv.textContent = err.message;
-        }
+            if (data.success) { modal.remove(); showToast(t('editor.templateSubmitted'), 'success'); }
+        } catch (err) { errorDiv.textContent = err.message; }
     };
 }
 
@@ -576,25 +491,14 @@ function loadTemplateFromURL() {
                     showToast(t('editor.templateLoaded', { title: data.template.title }), 'success');
                 }
             })
-            .catch(err => {
-                console.error(err);
-                showToast(t('editor.loadFailed'), 'error');
-            });
+            .catch(err => { console.error(err); showToast(t('editor.loadFailed'), 'error'); });
     }
 }
 
 function initLanguageSettings() {
-    const canvasSettingsBtn = document.getElementById('canvasSettingsBtn');
-    if (!canvasSettingsBtn) return;
-    canvasSettingsBtn.onclick = () => {
-        const modal = document.getElementById('canvasSettingsModal');
-        if (modal) {
-            const currentLang = localStorage.getItem('amenodes_language') || 'en';
-            document.getElementById('lang-en-check').style.display = currentLang === 'en' ? 'inline' : 'none';
-            document.getElementById('lang-ru-check').style.display = currentLang === 'ru' ? 'inline' : 'none';
-            modal.classList.remove('hidden');
-        }
-    };
+    const settingsModal = document.getElementById('canvasSettingsModal');
+    const applyBtn = document.getElementById('applySettings');
+    if (!settingsModal) return;
     const langOptions = document.querySelectorAll('#canvasLanguageSelector .language-option');
     langOptions.forEach(opt => {
         opt.onclick = (e) => {
@@ -607,25 +511,18 @@ function initLanguageSettings() {
             setTimeout(() => window.location.reload(), 500);
         };
     });
+    applyBtn.onclick = () => {
+    };
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
     initLanguageSettings();
     try {
         const data = await api.getCurrentUser();
-        if (data && data.success) {
-            currentUser = data.user;
-            updateAuthUI();
-        } else {
-            updateAuthUI();
-        }
-    } catch (err) {
-        console.error(err);
-        updateAuthUI();
-    }
-    setTimeout(() => {
-        loadTemplateFromURL();
-    }, 1500);
+        if (data && data.success) { currentUser = data.user; updateAuthUI(); }
+        else { updateAuthUI(); }
+    } catch (err) { console.error(err); updateAuthUI(); }
+    setTimeout(() => loadTemplateFromURL(), 1500);
 });
 </script>
 </body>
