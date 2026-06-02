@@ -61,7 +61,7 @@ export class DomRenderer {
 
   set3DTiltEnabled(enabled) {
     this.tiltEnabled = enabled;
-    if (enabled) {
+    if(enabled) {
       document.body.classList.add('node-tilt-enabled');
       this.attachTiltEvents();
     } else {
@@ -71,10 +71,10 @@ export class DomRenderer {
   }
 
   attachTiltEvents() {
-    if (this.tiltHandler) return;
+    if(this.tiltHandler) return;
     this.tiltHandler = (e) => {
       const nodeEl = e.target.closest('.node');
-      if (!nodeEl) return;
+      if(!nodeEl) return;
       const rect = nodeEl.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width - 0.5;
       const y = (e.clientY - rect.top) / rect.height - 0.5;
@@ -84,7 +84,7 @@ export class DomRenderer {
     };
     const resetTilt = (e) => {
       const nodeEl = e.target.closest('.node');
-      if (nodeEl) nodeEl.style.transform = '';
+      if(nodeEl) nodeEl.style.transform = '';
     };
     this.layer.addEventListener('mousemove', this.tiltHandler);
     this.layer.addEventListener('mouseleave', resetTilt);
@@ -92,7 +92,7 @@ export class DomRenderer {
   }
 
   detachTiltEvents() {
-    if (this.tiltHandler) {
+    if(this.tiltHandler) {
       this.layer.removeEventListener('mousemove', this.tiltHandler);
       this.layer.removeEventListener('mouseleave', this.tiltReset);
       this.tiltHandler = null;
@@ -100,9 +100,7 @@ export class DomRenderer {
     }
   }
 
-  save() {
-    if (this.history) this.history.save();
-  }
+  save() { if(this.history) this.history.save(); }
 
   invalidateCache(nodeId) {
     this.heightCache.delete(nodeId);
@@ -126,9 +124,7 @@ export class DomRenderer {
     return !(nodeX + 280 + margin < 0 || nodeX - margin > viewportRect.w || nodeY + height + margin < 0 || nodeY - margin > viewportRect.h);
   }
 
-  clearTemp() {
-    this.layer.querySelectorAll('svg.temp, svg.edge-layer').forEach(svg => svg.remove());
-  }
+  clearTemp() { this.layer.querySelectorAll('svg.temp, svg.edge-layer').forEach(svg => svg.remove()); }
 
   updateNodeClass(node) {
     const element = this.elementCache.get(node.id);
@@ -392,7 +388,5 @@ export class DomRenderer {
     this.render();
   }
 
-  closeMenu() {
-    if (this.contextMenu) this.contextMenu.close();
-  }
+  closeMenu() { if (this.contextMenu) this.contextMenu.close(); }
 }
