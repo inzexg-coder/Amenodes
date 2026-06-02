@@ -55,7 +55,6 @@ export class MapNode extends Node {
   onDetach() { this.graph = null; }
   createDOM(graph,renderer) {
     const div = this.createBaseDiv(graph,renderer,'map-header');
-    div.style.position='absolute';
     const itemsContainer = document.createElement('div');
     itemsContainer.className = 'group-items';
     const update = () => {
@@ -131,8 +130,6 @@ export class MapNode extends Node {
     const updateModeHandles = () => {
       if(this.unmappedMode==='separate') {
         renderer.addHandles(div,this.id,'unmapped');
-        const blueHandle = div.querySelector('.node-handle-blue');
-        if(blueHandle) blueHandle.style.animation='neutronPulse 1s infinite';
         div.style.border='2px solid #44aaff';
         div.style.boxShadow='0 0 20px rgba(68,170,255,0.5)';
       } else {
