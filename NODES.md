@@ -711,9 +711,7 @@ console.log(meanNode.resultStr);  // "4.000000"
 
 ## ФОРМУЛА
 
-```
-S_x̄ = √[ Σ (X_i - X̄)² / (n·(n-1)) ]
-```
+![SEM formula](https://latex.codecogs.com/svg.latex?S_%7B%5Cbar%7BX%7D%7D%20%3D%20%5Csqrt%7B%5Cfrac%7B%5Csum%20%28X_i%20-%20%5Cbar%7BX%7D%29%5E2%7D%7Bn%28n-1%29%7D%7D)
 
 где:
 - **Xᵢ** — отдельные значения выборки
