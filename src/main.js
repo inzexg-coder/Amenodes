@@ -51,10 +51,12 @@ class Application {
     this.initI18n();
     this.initNodesAndStart();
   }
+
   initStarfield() {
     const canvas = document.getElementById('starfieldCanvas');
     if(canvas) { this.starfield = new Starfield(canvas); this.starfield.start(); }
   }
+
   initRenderer() {
     const viewportEl = document.getElementById('viewport');
     const canvasContainer = document.getElementById('canvasContainer');
@@ -76,7 +78,9 @@ class Application {
     };
     window._renderer = this.renderer;
   }
+
   initHistory() { this.history = new History(this.graph); this.renderer.setHistory(this.history); window._history = this.history; }
+
   initViewport() {
     let currentZoom = 1;
     const viewportEl = document.getElementById('viewport');
@@ -111,6 +115,7 @@ class Application {
     window.applyDesignQuality = (p)=>this.applyDesignQuality(p);
     this.applyCanvasSettings();
   }
+
   initTopToolbar() {
     const addBtn = document.getElementById('toolbarAddNode');
     const undoBtn = document.getElementById('toolbarUndo');
@@ -127,6 +132,7 @@ class Application {
     if(settingsBtn) settingsBtn.onclick = ()=>this.openCanvasSettings();
     if(clearBtn) clearBtn.onclick = ()=>this.clearStorage();
   }
+
   initMiniMap() {
     const container = document.getElementById('miniMap');
     if(container) {
@@ -134,6 +140,7 @@ class Application {
       this.miniMap.onNavigate = (x,y) => { this.viewport.setOffset(-x * window.currentZoom, -y * window.currentZoom); this.renderer.render(); };
     }
   }
+
   initSoundManager() {
     this.soundManager = new SoundManager();
     this.soundManager.setEnabled(this.enableSoundEffects);
@@ -142,6 +149,7 @@ class Application {
     this.graph.onEdgeRemoved = ()=>{ if(this.enableSoundEffects) this.soundManager.play('disconnect'); };
     this.graph.onNodeRemoved = ()=>{ if(this.enableSoundEffects) this.soundManager.play('delete'); };
   }
+
   initPanels() {
     const libraryPanel = document.getElementById('libraryPanel');
     const openLibraryBtn = document.getElementById('openLibraryBtn');
@@ -154,6 +162,7 @@ class Application {
     const closePropertiesBtn = document.getElementById('closePropertiesBtn');
     if(closePropertiesBtn && this.propertiesPanel) closePropertiesBtn.onclick = ()=>this.propertiesPanel.classList.add('hidden');
   }
+
   populateNodesLibrary() {
     const container = document.getElementById('nodesLibraryList');
     if(!container) return;
@@ -196,15 +205,19 @@ class Application {
       container.appendChild(categoryDiv);
     }
   }
+
   initOptimizationPanel() {
     this.optPanel = new OptimizationPanel('optPanel',null,'closeOptPanel','applyOptimizationsBtn','rebenchBtn',this.benchmarkService,this.renderer,this.history);
     this.optPanel.setDesignQualityCallback((value)=>this.applyDesignQuality(value));
     this.optPanel.buildPanel(window.currentQualityValue||100);
     setTimeout(()=>this.runInitialBenchmark(),1000);
   }
+
   async runInitialBenchmark() { try { const result = await this.benchmarkService.runBenchmark(true); if(this.optPanel) { this.optPanel.updateGains(result.gains); this.optPanel.buildPanel(window.currentQualityValue||100); } } catch(e){} }
+
   initNodeMenu() { this.nodeMenu = new NodeMenu(this.graph, this.renderer, this.viewport); this.nodeMenu.init(); }
   openNodeMenu() { if(this.nodeMenu) this.nodeMenu.toggle(); }
+
   applyDesignQuality(percent) {
     window.currentQualityValue = percent;
     window._designQualitySaved = percent;
@@ -218,6 +231,7 @@ class Application {
     }
     if(this.starfield) this.starfield.setIntensity(percent>30?0.6:0.2);
   }
+
   applyCanvasSettings() {
     const viewport = document.getElementById('viewport');
     if(!viewport) return;
@@ -228,6 +242,7 @@ class Application {
       default: viewport.style.backgroundImage='none';
     }
   }
+
   openCanvasSettings() {
     const modalEl = document.getElementById('canvasSettingsModal');
     if(!modalEl) return;
@@ -272,6 +287,7 @@ class Application {
     document.getElementById('cancelSettings').onclick = closeModal;
     modalEl.classList.remove('hidden');
   }
+
   async initNodesAndStart() {
     try {
       await loadAllNodes();
@@ -283,6 +299,7 @@ class Application {
       this.initDirtyIndicator();
     } catch(err) { console.error(err); this.loadInitialState(); this.renderer.render(); this.initDirtyIndicator(); }
   }
+
   loadInitialState() {
     const loaded = this.persistenceService.loadFromStorage();
     this.updateNodeCount();
@@ -291,6 +308,7 @@ class Application {
     else { const splash = document.getElementById('splashOverlay'); const app = document.getElementById('appContainer'); if(splash && app) { splash.style.display='none'; app.classList.remove('hidden'); } }
     if(this.miniMap) this.miniMap.update();
   }
+
   initDirtyIndicator() {
     const dirtySpan = document.getElementById('dirtyIndicator');
     if(!dirtySpan) return;
@@ -298,10 +316,12 @@ class Application {
       this.graph.onDirtyChange((isDirty)=>{ dirtySpan.style.display=isDirty?'inline-flex':'none'; document.title=isDirty?'* @Amenodes':'@Amenodes'; });
     }
   }
+
   updateNodeCount() { const el=document.getElementById('nodeCount'); if(el) el.textContent=this.graph.nodes.length; }
   updateEdgeCount() { const el=document.getElementById('edgeCount'); if(el) el.textContent=this.graph.edges.length; }
   updateZoomIndicator() { const el=document.getElementById('zoomIndicator'); if(el) el.textContent=`${Math.round((window.currentZoom||1)*100)}%`; }
   updateCoordIndicator() { const offset=this.viewport.getOffset(); const el=document.getElementById('coordIndicator'); if(el) el.textContent=`${Math.round(offset.x)}, ${Math.round(offset.y)}`; }
+
   async createNodeAtCenter(type, subnode=null) {
     const rect=document.getElementById('viewport').getBoundingClientRect();
     const offset=this.viewport.getOffset();
@@ -314,7 +334,9 @@ class Application {
     const node = await NodeFactory.createNode(type,options);
     if(node) { this.graph.addNode(node); this.finishNodeCreation(); }
   }
+
   finishNodeCreation() { this.graph.reevaluateAll(); this.graph.updateAllOutputs(); this.renderer.render(); this.history.save(); this.updateNodeCount(); this.updateEdgeCount(); if(this.miniMap) this.miniMap.update(); }
+
   undo() { this.history.undo(); this.renderer.render(); this.history.autoSave(); this.updateNodeCount(); this.updateEdgeCount(); if(this.miniMap) this.miniMap.update(); }
   redo() { this.history.redo(); this.renderer.render(); this.history.autoSave(); this.updateNodeCount(); this.updateEdgeCount(); if(this.miniMap) this.miniMap.update(); }
   export() { this.persistenceService.exportToFile(); }
@@ -327,6 +349,7 @@ class Application {
     event.target.value='';
   }
   clearStorage() { modal.confirm(t('modal.clearStorageConfirm')).then((result)=>{ if(result) { localStorage.removeItem('amenodes_autosave'); modal.alert(t('modal.storageCleared')); if(this.graph) this.graph.clearDirty(); } }); }
+
   initEvents() {
     window.addEventListener('mousemove',(e)=>this.renderer.onGlobalMove(e));
     window.addEventListener('mouseup',(e)=>this.renderer.onGlobalUp(e));
@@ -342,6 +365,7 @@ class Application {
     const fileInput=document.getElementById('fileInput');
     if(fileInput) fileInput.onchange=(e)=>this.handleFileImport(e);
   }
+
   initI18n() { i18n.subscribe(()=>{ this.updateUITitles(); this.populateNodesLibrary(); if(this.renderer) this.renderer.render(); }); this.updateUITitles(); }
   updateUITitles() { document.title='@Amenodes'; if(this.graph) { this.graph.reevaluateAll(); this.graph.updateAllOutputs(); } if(this.renderer) this.renderer.render(); }
   updatePropertiesPanel(node) {
@@ -351,5 +375,6 @@ class Application {
     container.innerHTML=`<div class="property-group"><div class="property-label">${t('editor.nodeType')}</div><div class="property-value">${node.type}</div></div><div class="property-group"><div class="property-label">${t('editor.id')}</div><div class="property-value">${node.id}</div></div><div class="property-group"><div class="property-label">${t('editor.position')}</div><div class="property-value">X: ${Math.round(node.x)}, Y: ${Math.round(node.y)}</div></div><div class="property-group"><div class="property-label">${t('editor.connections')}</div><div class="property-value">${t('editor.inputs')}: ${this.graph.getIncomingEdges(node.id).length}<br>${t('editor.outputs')}: ${this.graph.getOutgoingEdges(node.id).length}</div></div>`;
   }
 }
+
 document.addEventListener('DOMContentLoaded',()=>{ window.app = new Application(); });
 export default Application;
