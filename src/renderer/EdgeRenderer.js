@@ -34,6 +34,7 @@ export class EdgeRenderer {
       const sourceRect = rectCache.get(edge.sourceId);
       const targetRect = rectCache.get(edge.targetId);
       if (!sourceRect || !targetRect) continue;
+      // Вычисляем точки на границе нод
       const point1 = this.getBorderPoint(sourceRect, targetRect);
       const point2 = this.getBorderPoint(targetRect, sourceRect);
       const isBlue = edge.sourcePort === 'unmapped';
