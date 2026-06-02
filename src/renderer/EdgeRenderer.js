@@ -6,10 +6,12 @@ export class EdgeRenderer {
     this.particleFlowEnabled = false;
     this.particleAnimations = [];
   }
+
   setParticleFlowEnabled(enabled) {
     this.particleFlowEnabled = enabled;
     if (!enabled) this.clearParticles();
   }
+
   clearParticles() {
     for (const anim of this.particleAnimations) {
       if (anim.cancel) anim.cancel();
@@ -18,6 +20,7 @@ export class EdgeRenderer {
     const particles = this.layer.querySelectorAll('.edge-particle');
     particles.forEach(p => p.remove());
   }
+
   renderEdges(edges, graph, rectCache) {
     const oldSvg = this.layer.querySelector('.edge-layer');
     if (oldSvg) oldSvg.remove();
@@ -65,6 +68,7 @@ export class EdgeRenderer {
       }
     }
   }
+
   getControlPoint(p1, p2, factor) {
     const dx = p2.x - p1.x;
     const dy = p2.y - p1.y;
@@ -73,6 +77,7 @@ export class EdgeRenderer {
     const perpY = dx / dist * 40;
     return { x: p1.x + dx * factor + perpX, y: p1.y + dy * factor + perpY };
   }
+
   createCurve(p1, cp1, cp2, p2, color, edgeId) {
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     const d = `M ${p1.x} ${p1.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p2.x} ${p2.y}`;
@@ -85,6 +90,7 @@ export class EdgeRenderer {
     path.setAttribute("data-edge-id", edgeId);
     return path;
   }
+
   createArrowAtEnd(p1, cp1, cp2, p2, color) {
     const t = 0.95;
     const ax = Math.pow(1-t,3)*p1.x + 3*Math.pow(1-t,2)*t*cp1.x + 3*(1-t)*Math.pow(t,2)*cp2.x + Math.pow(t,3)*p2.x;
@@ -108,6 +114,7 @@ export class EdgeRenderer {
     arrow.setAttribute("stroke-linejoin","round");
     return arrow;
   }
+
   animateParticlesCurve(p1,cp1,cp2,p2,color,svg) {
     const duration = 2000;
     const startTime = performance.now();
@@ -128,6 +135,7 @@ export class EdgeRenderer {
     const raf = requestAnimationFrame(animate);
     this.particleAnimations.push({ raf, particle, svg });
   }
+
   createSvgLayer() {
     const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
     svg.classList.add('edge-layer');
@@ -140,6 +148,7 @@ export class EdgeRenderer {
     svg.style.overflow="visible";
     return svg;
   }
+
   getBorderPoint(fromRect, toRect) {
     const centerFrom = { x: fromRect.x + fromRect.w/2, y: fromRect.y + fromRect.h/2 };
     const centerTo = { x: toRect.x + toRect.w/2, y: toRect.y + toRect.h/2 };
@@ -174,6 +183,7 @@ export class EdgeRenderer {
     if (t===Infinity) t=0;
     return { x: centerFrom.x + dx*t, y: centerFrom.y + dy*t };
   }
+
   setOnEdgeRemoved(callback) {
     this.onEdgeRemoved = callback;
   }
