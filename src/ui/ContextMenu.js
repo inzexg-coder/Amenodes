@@ -79,15 +79,7 @@ export class ContextMenu {
         t(category.nameKey) + ' ▸',
         submenuItems,
         (type, subnode, title) => {
-          const node = NodeFactory.createNode(type, {
-            x: baseX + 20,
-            y: baseY + 160,
-            title: title,
-            ...subnode
-          });
-          this.graph.addNode(node);
-          this.graph.addEdge(sourceId, node.id, 'main');
-          this.finishNodeCreation();
+          this.createAndConnect(type, baseX, baseY, sourceId, { title, ...subnode });
         }
       );
       menu.appendChild(submenuContainer);
@@ -156,19 +148,54 @@ export class ContextMenu {
     return container;
   }
 
-  createAndConnect(nodeType, x, y, sourceId, extraOptions = {}) {
-    const node = NodeFactory.createNode(nodeType, {
-      x: x + 20,
-      y: y + 80,
-      ...extraOptions
-    });
+  async createAndConnect(nodeType, x, y, sourceId, extraOptions = {}) {
+    const NodeClass = NodeFactory.getNodeClass(nodeType);
+    let node = null;
+    
+    if (NodeClass && typeof NodeClass.onCreate === 'function') {
+      node = await NodeClass.onCreate(this.graph, x + 20, y + 80, extraOptions);
+    } else {
+      node = NodeFactory.createNode(nodeType, {
+        x: x + 20,
+        y: y + 80,
+        ...extraOptions
+      });
+      if (node) {
+        this.graph.addNode(node);
+      }
+    }
     
     if (node) {
-      this.graph.addNode(node);
+      await this.ensureNodeReady(node);
+      
+      const edge = this.graph.addEdge(sourceId, node.id, 'main');
+      if (edge) {
+        this.graph.reevaluateAll();
+        this.renderer.render();
+        this.history.save();
+      }
+      
+      this.finishNodeCreation();
+    }
+  }
+
+  async ensureNodeReady(node) {
+    return new Promise((resolve) => {
+      const checkReady = () => {
+        const typeSystem = window.app?.typeSystem || window._typeSystem;
+        const nodeType = node.constructor.metadata?.dataType;
+        
+        if (typeSystem && nodeType && typeSystem.typeDefinitions?.has(nodeType)) {
+          resolve();
+        } else {
+          setTimeout(checkReady, 5);
+        }
+      };
       
       if (node.constructor.metadata && node.constructor.metadata.dataType) {
-        const dataType = node.constructor.metadata.dataType;
         const typeSystem = window.app?.typeSystem || window._typeSystem;
+        const dataType = node.constructor.metadata.dataType;
+        
         if (typeSystem && !typeSystem.typeDefinitions?.has(dataType)) {
           typeSystem.registerType(dataType, {
             name: dataType,
@@ -180,17 +207,8 @@ export class ContextMenu {
         }
       }
       
-      setTimeout(() => {
-        const edge = this.graph.addEdge(sourceId, node.id, 'main');
-        if (edge) {
-          this.graph.reevaluateAll();
-          this.renderer.render();
-          this.history.save();
-        }
-      }, 10);
-      
-      this.finishNodeCreation();
-    }
+      setTimeout(checkReady, 5);
+    });
   }
 
   finishNodeCreation() {
