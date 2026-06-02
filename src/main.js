@@ -15,7 +15,6 @@ import { OptimizationPanel } from './ui/OptimizationPanel.js';
 import { BenchmarkService } from './services/BenchmarkService.js';
 import { NodeFactory } from './nodes/NodeFactory.js';
 import { Starfield } from './ui/Starfield.js';
-import { FloatingToolbar } from './ui/FloatingToolbar.js';
 import { MiniMap } from './ui/MiniMap.js';
 import { SoundManager } from './ui/SoundManager.js';
 
@@ -39,20 +38,19 @@ class Application {
     this.enableParticleFlow = localStorage.getItem('enable_particle_flow') !== 'false';
     this.enable3DTilt = localStorage.getItem('enable_3d_tilt') !== 'false';
     this.enableSoundEffects = localStorage.getItem('enable_sound_effects') === 'true';
-
+    
     this.initStarfield();
     this.initRenderer();
     this.initHistory();
     this.initViewport();
-    this.initFloatingToolbar();
+    this.initTopToolbar();
     this.initMiniMap();
     this.initSoundManager();
-    this.initPanels();     
+    this.initPanels();
     this.initOptimizationPanel();
     this.initNodeMenu();
     this.initEvents();
     this.initI18n();
-    
     this.initNodesAndStart();
   }
 
@@ -80,14 +78,12 @@ class Application {
       this.updateCoordIndicator();
       if (this.miniMap) this.miniMap.update();
     };
-    
     this.renderer.onNodeSelect = (node) => {
       this.updatePropertiesPanel(node);
       if (this.propertiesPanel && node) {
         this.propertiesPanel.classList.remove('hidden');
       }
     };
-    
     window._renderer = this.renderer;
   }
 
@@ -100,12 +96,10 @@ class Application {
   initViewport() {
     let currentZoom = 1;
     const viewportEl = document.getElementById('viewport');
-    
     const setZoom = (z, centerX = null, centerY = null) => {
       const oldZoom = currentZoom;
       currentZoom = Math.min(3, Math.max(0.3, z));
       window.currentZoom = currentZoom;
-      
       if (centerX !== null && centerY !== null && oldZoom !== currentZoom) {
         const offset = this.viewport.getOffset();
         const rect = viewportEl.getBoundingClientRect();
@@ -117,22 +111,18 @@ class Application {
       } else {
         this.viewport.update();
       }
-      
       this.renderer.render();
       this.updateZoomIndicator();
       if (this.miniMap) this.miniMap.update();
     };
-    
     viewportEl.addEventListener('wheel', (e) => {
       if (this.ctrlZoomOnly && !e.ctrlKey) return;
       e.preventDefault();
       let delta = e.deltaY > 0 ? -0.05 : 0.05;
       if (this.invertZoomDirection) delta = -delta;
-      const rect = viewportEl.getBoundingClientRect();
       const newZoom = currentZoom * (1 + delta);
       setZoom(newZoom, e.clientX, e.clientY);
     }, { passive: false });
-    
     viewportEl.addEventListener('contextmenu', (e) => e.preventDefault());
     window.setZoom = setZoom;
     window.currentZoom = currentZoom;
@@ -140,15 +130,21 @@ class Application {
     this.applyCanvasSettings();
   }
 
-  initFloatingToolbar() {
-    this.toolbar = new FloatingToolbar();
-    this.toolbar.onAddNode = () => this.openNodeMenu();
-    this.toolbar.onUndo = () => this.undo();
-    this.toolbar.onRedo = () => this.redo();
-    this.toolbar.onExport = () => this.export();
-    this.toolbar.onImport = () => this.import();
-    this.toolbar.onSettings = () => this.openCanvasSettings();
-    this.toolbar.onClear = () => this.clearStorage();
+  initTopToolbar() {
+    const addBtn = document.getElementById('toolbarAddNode');
+    const undoBtn = document.getElementById('toolbarUndo');
+    const redoBtn = document.getElementById('toolbarRedo');
+    const exportBtn = document.getElementById('toolbarExport');
+    const importBtn = document.getElementById('toolbarImport');
+    const settingsBtn = document.getElementById('toolbarSettings');
+    const clearBtn = document.getElementById('toolbarClear');
+    if (addBtn) addBtn.onclick = () => this.openNodeMenu();
+    if (undoBtn) undoBtn.onclick = () => this.undo();
+    if (redoBtn) redoBtn.onclick = () => this.redo();
+    if (exportBtn) exportBtn.onclick = () => this.export();
+    if (importBtn) importBtn.onclick = () => this.import();
+    if (settingsBtn) settingsBtn.onclick = () => this.openCanvasSettings();
+    if (clearBtn) clearBtn.onclick = () => this.clearStorage();
   }
 
   initMiniMap() {
@@ -179,7 +175,6 @@ class Application {
       openLibraryBtn.onclick = () => libraryPanel.classList.remove('hidden');
       if (closeLibraryBtn) closeLibraryBtn.onclick = () => libraryPanel.classList.add('hidden');
     }
-    
     this.propertiesPanel = document.getElementById('propertiesPanel');
     const closePropertiesBtn = document.getElementById('closePropertiesBtn');
     if (closePropertiesBtn && this.propertiesPanel) {
@@ -190,24 +185,14 @@ class Application {
   populateNodesLibrary() {
     const container = document.getElementById('nodesLibraryList');
     if (!container) return;
-    
     const types = NodeFactory.getAvailableNodeTypes();
     const categories = types.filter(t => t.isCategory === true);
     const regularNodes = types.filter(t => !t.isCategory);
-    
     container.innerHTML = '';
-    
     if (regularNodes.length) {
       const categoryDiv = document.createElement('div');
       categoryDiv.className = 'node-category';
-      categoryDiv.innerHTML = `
-        <div class="category-header">
-          <i class="fas fa-microchip"></i>
-          <span>Core Nodes</span>
-          <i class="fas fa-chevron-down chevron"></i>
-        </div>
-        <div class="category-nodes"></div>
-      `;
+      categoryDiv.innerHTML = `<div class="category-header"><i class="fas fa-microchip"></i><span>Core Nodes</span><i class="fas fa-chevron-down chevron"></i></div><div class="category-nodes"></div>`;
       const nodesContainer = categoryDiv.querySelector('.category-nodes');
       for (const nodeType of regularNodes) {
         const item = document.createElement('div');
@@ -223,18 +208,10 @@ class Application {
       };
       container.appendChild(categoryDiv);
     }
-    
     for (const category of categories) {
       const categoryDiv = document.createElement('div');
       categoryDiv.className = 'node-category';
-      categoryDiv.innerHTML = `
-        <div class="category-header">
-          <i class="fas ${category.icon || 'fa-folder'}"></i>
-          <span>${t(category.nameKey)}</span>
-          <i class="fas fa-chevron-down chevron"></i>
-        </div>
-        <div class="category-nodes"></div>
-      `;
+      categoryDiv.innerHTML = `<div class="category-header"><i class="fas ${category.icon || 'fa-folder'}"></i><span>${t(category.nameKey)}</span><i class="fas fa-chevron-down chevron"></i></div><div class="category-nodes"></div>`;
       const nodesContainer = categoryDiv.querySelector('.category-nodes');
       if (category.subnodes) {
         for (const subnode of category.subnodes) {
@@ -255,10 +232,7 @@ class Application {
   }
 
   initOptimizationPanel() {
-    this.optPanel = new OptimizationPanel(
-      'optPanel', null, 'closeOptPanel', 'applyOptimizationsBtn', 'rebenchBtn',
-      this.benchmarkService, this.renderer, this.history
-    );
+    this.optPanel = new OptimizationPanel('optPanel', null, 'closeOptPanel', 'applyOptimizationsBtn', 'rebenchBtn', this.benchmarkService, this.renderer, this.history);
     this.optPanel.setDesignQualityCallback((value) => this.applyDesignQuality(value));
     this.optPanel.buildPanel(window.currentQualityValue || 100);
     setTimeout(() => this.runInitialBenchmark(), 1000);
@@ -290,7 +264,6 @@ class Application {
     if (percent <= 20) document.body.classList.add('design-quality-extreme');
     else if (percent <= 50) document.body.classList.add('design-quality-1');
     else if (percent <= 80) document.body.classList.add('design-quality-2');
-    
     if (this.renderer) {
       this.renderer.setParticleFlowEnabled(percent > 50 && this.enableParticleFlow);
       this.renderer.set3DTiltEnabled(percent > 30 && this.enable3DTilt);
@@ -329,7 +302,6 @@ class Application {
     document.getElementById('enableParticleFlow').checked = this.enableParticleFlow;
     document.getElementById('enable3DTilt').checked = this.enable3DTilt;
     document.getElementById('enableSoundEffects').checked = this.enableSoundEffects;
-    
     const applyBtn = document.getElementById('applySettings');
     const closeModal = () => modalEl.classList.add('hidden');
     const saveSettings = () => {
@@ -340,7 +312,6 @@ class Application {
       this.enableParticleFlow = document.getElementById('enableParticleFlow').checked;
       this.enable3DTilt = document.getElementById('enable3DTilt').checked;
       this.enableSoundEffects = document.getElementById('enableSoundEffects').checked;
-      
       localStorage.setItem('canvas_grid_style', this.gridStyle);
       localStorage.setItem('canvas_grid_size', this.gridSize);
       localStorage.setItem('canvas_snap_to_grid', this.snapToGrid);
@@ -349,7 +320,6 @@ class Application {
       localStorage.setItem('enable_particle_flow', this.enableParticleFlow);
       localStorage.setItem('enable_3d_tilt', this.enable3DTilt);
       localStorage.setItem('enable_sound_effects', this.enableSoundEffects);
-      
       if (this.renderer) {
         this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
         this.renderer.setParticleFlowEnabled(this.enableParticleFlow);
@@ -560,5 +530,4 @@ class Application {
 document.addEventListener('DOMContentLoaded', () => {
   window.app = new Application();
 });
-
 export default Application;
