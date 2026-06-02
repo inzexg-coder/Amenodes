@@ -165,11 +165,16 @@ class Application {
       document.body.classList.add('design-quality-high');
     }
     
-    if (starfield) {
+    if (starfield && typeof starfield.setQuality === 'function') {
       const quality = document.body.classList.contains('design-quality-extreme') ? 'extreme' :
                       document.body.classList.contains('design-quality-1') ? 'low' :
                       document.body.classList.contains('design-quality-2') ? 'medium' : 'high';
       starfield.setQuality(quality);
+    } else if (starfield && typeof starfield.setStarsCount === 'function') {
+      const quality = document.body.classList.contains('design-quality-extreme') ? 'extreme' :
+                      document.body.classList.contains('design-quality-1') ? 'low' :
+                      document.body.classList.contains('design-quality-2') ? 'medium' : 'high';
+      starfield.setStarsCount(quality);
     }
   }
 
