@@ -12,7 +12,7 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title data-i18n="editor.title">@Amenodes</title>
+<title data-i18n="editor.title">@Amenodes — Cosmic Editor</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <link rel="stylesheet" href="styles/main.css">
@@ -33,7 +33,7 @@
     </div>
     <div class="splash-footer">
       <span><i class="fas fa-microchip"></i> 60 FPS Engine</span>
-      <span><i class="fas fa-palette"></i> GPU</span>
+      <span><i class="fas fa-palette"></i> GPU Nebula</span>
     </div>
   </div>
 </div>
@@ -52,16 +52,17 @@
 
   <div id="miniMap" class="mini-map"></div>
 
-  <div id="floatingToolbar" class="floating-toolbar">
-    <div class="toolbar-core">
+  <div class="top-toolbar">
+    <div class="toolbar-left">
       <button id="toolbarAddNode" class="toolbar-btn primary" title="Add Node"><i class="fas fa-plus"></i></button>
       <button id="toolbarUndo" class="toolbar-btn" title="Undo"><i class="fas fa-undo-alt"></i></button>
       <button id="toolbarRedo" class="toolbar-btn" title="Redo"><i class="fas fa-redo-alt"></i></button>
       <button id="toolbarExport" class="toolbar-btn" title="Export"><i class="fas fa-download"></i></button>
       <button id="toolbarImport" class="toolbar-btn" title="Import"><i class="fas fa-upload"></i></button>
-      <button id="toolbarSettings" class="toolbar-btn" title="Canvas Settings"><i class="fas fa-sliders-h"></i></button>
+      <button id="toolbarSettings" class="toolbar-btn" title="Settings"><i class="fas fa-sliders-h"></i></button>
       <button id="toolbarClear" class="toolbar-btn danger" title="Clear Storage"><i class="fas fa-trash-alt"></i></button>
     </div>
+    <div class="toolbar-right" id="toolbarAuthContainer"></div>
   </div>
 
   <div class="status-panel" id="statusPanel">
@@ -70,6 +71,7 @@
     <div class="status-item"><i class="fas fa-crosshairs"></i> <span id="coordIndicator">0,0</span></div>
     <div class="status-item"><i class="fas fa-cubes"></i> <span id="nodeCount">0</span> / <span id="edgeCount">0</span></div>
     <div class="status-item zoom-indicator" id="zoomIndicator">100%</div>
+    <div id="authWidgetPlaceholder" style="display:inline-flex;"></div>
   </div>
 
   <button id="openLibraryBtn" class="open-library-btn" title="Node Library"><i class="fas fa-cubes"></i></button>
@@ -177,7 +179,7 @@
           </div>
         </div>
         <div class="setting-group">
-          <label><span>Extra Effects</span></label>
+          <label><span>✨ Extra Effects</span></label>
           <div class="toggle-switch">
             <input type="checkbox" id="enableParticleFlow">
             <span class="toggle-slider"></span>
@@ -387,40 +389,42 @@ function showAuthModal() {
 }
 
 function updateAuthUI() {
-    const statusPanel = document.getElementById('statusPanel');
-    if (!statusPanel) return;
-    const existingAuth = document.getElementById('authWidget');
-    if (existingAuth) existingAuth.remove();
-    const authWidget = document.createElement('div');
-    authWidget.id = 'authWidget';
-    authWidget.className = 'status-item';
+    const container = document.getElementById('toolbarAuthContainer');
+    if (!container) return;
+    container.innerHTML = '';
     if (currentUser) {
         const saveBtn = document.createElement('button');
         saveBtn.id = 'saveTemplateBtn';
-        saveBtn.className = 'mini-btn';
-        saveBtn.innerHTML = `<i class="fas fa-save"></i> ${t('editor.saveTemplate')}`;
+        saveBtn.className = 'toolbar-btn';
+        saveBtn.style.background = '#2d3a5e';
+        saveBtn.style.color = '#ffb347';
+        saveBtn.innerHTML = `<i class="fas fa-save"></i>`;
+        saveBtn.title = t('editor.saveTemplate');
         saveBtn.onclick = () => showSaveTemplateModal();
         const avatar = document.createElement('div');
         avatar.className = 'user-avatar-mini';
         avatar.textContent = currentUser.username.charAt(0).toUpperCase();
         avatar.onclick = (e) => { e.stopPropagation(); toggleUserMenu(); };
-        authWidget.appendChild(saveBtn);
-        authWidget.appendChild(avatar);
+        container.appendChild(saveBtn);
         if (currentUser.role === 'moderator' || currentUser.role === 'admin') {
             const modBtn = document.createElement('button');
-            modBtn.className = 'mini-btn';
-            modBtn.innerHTML = `<i class="fas fa-gavel"></i> ${t('editor.moderate')}`;
+            modBtn.className = 'toolbar-btn';
+            modBtn.style.background = '#8b3a3a';
+            modBtn.style.color = '#fff';
+            modBtn.innerHTML = `<i class="fas fa-gavel"></i>`;
+            modBtn.title = t('editor.moderate');
             modBtn.onclick = () => window.open('moderate.html', '_blank');
-            authWidget.appendChild(modBtn);
+            container.appendChild(modBtn);
         }
+        container.appendChild(avatar);
     } else {
         const loginBtn = document.createElement('button');
-        loginBtn.className = 'mini-btn';
-        loginBtn.innerHTML = `<i class="fas fa-sign-in-alt"></i> ${t('editor.login')}`;
+        loginBtn.className = 'toolbar-btn primary';
+        loginBtn.innerHTML = `<i class="fas fa-sign-in-alt"></i>`;
+        loginBtn.title = t('editor.login');
         loginBtn.onclick = () => showAuthModal();
-        authWidget.appendChild(loginBtn);
+        container.appendChild(loginBtn);
     }
-    statusPanel.appendChild(authWidget);
 }
 
 function toggleUserMenu() {
@@ -496,9 +500,8 @@ function loadTemplateFromURL() {
 }
 
 function initLanguageSettings() {
-    const settingsModal = document.getElementById('canvasSettingsModal');
-    const applyBtn = document.getElementById('applySettings');
-    if (!settingsModal) return;
+    const modalEl = document.getElementById('canvasSettingsModal');
+    if (!modalEl) return;
     const langOptions = document.querySelectorAll('#canvasLanguageSelector .language-option');
     langOptions.forEach(opt => {
         opt.onclick = (e) => {
@@ -511,8 +514,6 @@ function initLanguageSettings() {
             setTimeout(() => window.location.reload(), 500);
         };
     });
-    applyBtn.onclick = () => {
-    };
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
