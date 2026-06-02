@@ -22,6 +22,7 @@ export class Starfield {
   }
 
   resize() {
+    if (!this.canvas) return;
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
     this.generateStars();
@@ -43,10 +44,7 @@ export class Starfield {
   }
 
   getStarCount() {
-    const quality = document.body.classList.contains('design-quality-extreme') ? 'extreme' :
-                    document.body.classList.contains('design-quality-1') ? 'low' :
-                    document.body.classList.contains('design-quality-2') ? 'medium' : 'high';
-    
+    const quality = this.quality; 
     switch(quality) {
       case 'extreme': return 0;
       case 'low': return 150;
@@ -58,12 +56,9 @@ export class Starfield {
   animate() {
     if (!this.canvas) return;
     
-    const quality = document.body.classList.contains('design-quality-extreme') ? 'extreme' :
-                    document.body.classList.contains('design-quality-1') ? 'low' :
-                    document.body.classList.contains('design-quality-2') ? 'medium' : 'high';
-    
-    if (quality === 'extreme') {
+    if (this.quality === 'extreme') {
       if (this.canvas.style.display !== 'none') this.canvas.style.display = 'none';
+      this.animationId = requestAnimationFrame(() => this.animate());
       return;
     } else {
       if (this.canvas.style.display !== '') this.canvas.style.display = '';
@@ -82,6 +77,11 @@ export class Starfield {
     }
     
     this.animationId = requestAnimationFrame(() => this.animate());
+  }
+
+  setQuality(qualityLevel) {
+    this.quality = qualityLevel;
+    this.generateStars();
   }
 
   destroy() {
