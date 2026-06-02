@@ -444,3 +444,23 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
 .edge-curve {
   fill: none;
 }
+.viewport::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 20px 10px rgba(255, 255, 200, 0.8);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 5;
+  animation: starGlow 2s infinite;
+}
+@keyframes starGlow {
+  0% { box-shadow: 0 0 10px 2px rgba(255, 255, 200, 0.8); opacity: 0.8; }
+  50% { box-shadow: 0 0 30px 15px rgba(255, 255, 200, 1); opacity: 1; }
+  100% { box-shadow: 0 0 10px 2px rgba(255, 255, 200, 0.8); opacity: 0.8; }
+}
