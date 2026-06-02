@@ -200,55 +200,169 @@ export class CalcNode extends Node {
     content.className = 'calc-result';
     content.style.padding = '8px';
 
-    const select = document.createElement('select');
-    select.style.width = '100%';
-    select.style.marginBottom = '8px';
-    select.style.background = '#1f2a44';
-    select.style.color = '#ffefcf';
-    select.style.border = '1px solid #4a6a8a';
-    select.style.borderRadius = '6px';
-    select.style.padding = '4px';
+    const dropdown = document.createElement('div');
+    dropdown.className = 'calc-dropdown';
+    dropdown.style.position = 'relative';
+    dropdown.style.width = '100%';
+    dropdown.style.marginBottom = '8px';
+
+    const toggle = document.createElement('div');
+    toggle.className = 'calc-dropdown-toggle';
+    toggle.style.width = '100%';
+    toggle.style.padding = '8px 12px';
+    toggle.style.background = 'linear-gradient(135deg, #1a1f30, #0f1222)';
+    toggle.style.color = '#ffefcf';
+    toggle.style.border = '1px solid rgba(255, 179, 71, 0.3)';
+    toggle.style.borderRadius = '8px';
+    toggle.style.fontFamily = 'monospace';
+    toggle.style.fontSize = '12px';
+    toggle.style.cursor = 'pointer';
+    toggle.style.display = 'flex';
+    toggle.style.justifyContent = 'space-between';
+    toggle.style.alignItems = 'center';
+    toggle.style.transition = 'all 0.2s ease';
+
+    const selectedText = document.createElement('span');
+    selectedText.className = 'selected-text';
+    selectedText.textContent = t(`calcTypes.${this.operation}`);
+
+    const arrow = document.createElement('span');
+    arrow.className = 'arrow';
+    arrow.style.transition = 'transform 0.2s ease';
+    arrow.style.color = '#ffb347';
+    arrow.style.fontSize = '10px';
+    arrow.textContent = '▼';
+
+    toggle.appendChild(selectedText);
+    toggle.appendChild(arrow);
+
+    const menu = document.createElement('div');
+    menu.className = 'calc-dropdown-menu';
+    menu.style.position = 'absolute';
+    menu.style.top = '100%';
+    menu.style.left = '0';
+    menu.style.right = '0';
+    menu.style.marginTop = '4px';
+    menu.style.background = 'linear-gradient(135deg, #1f2a44, #12162a)';
+    menu.style.border = '1px solid rgba(255, 179, 71, 0.3)';
+    menu.style.borderRadius = '8px';
+    menu.style.overflow = 'hidden';
+    menu.style.zIndex = '100';
+    menu.style.display = 'none';
+    menu.style.backdropFilter = 'blur(8px)';
 
     const operations = ['div3', 'div_sqrt12', 'sqrt_sum_sq', 'quadratic_sum', 'multiply_by_constant'];
+    const items = [];
+
     for (const op of operations) {
-      const option = document.createElement('option');
-      option.value = op;
-      option.textContent = t(`calcTypes.${op}`);
-      if (this.operation === op) option.selected = true;
-      select.appendChild(option);
+      const item = document.createElement('div');
+      item.className = 'calc-dropdown-item';
+      item.style.padding = '8px 12px';
+      item.style.fontFamily = 'monospace';
+      item.style.fontSize = '12px';
+      item.style.color = '#ffefcf';
+      item.style.cursor = 'pointer';
+      item.style.transition = 'all 0.1s ease';
+      if (this.operation === op) {
+        item.classList.add('active');
+        item.style.background = 'rgba(255, 179, 71, 0.3)';
+        item.style.color = '#ffb347';
+        item.style.borderLeft = '2px solid #ffb347';
+      }
+      item.textContent = t(`calcTypes.${op}`);
+      item.dataset.op = op;
+
+      item.onmouseenter = () => {
+        item.style.background = 'rgba(255, 179, 71, 0.2)';
+        item.style.color = '#ffb347';
+      };
+      item.onmouseleave = () => {
+        if (this.operation === op) {
+          item.style.background = 'rgba(255, 179, 71, 0.3)';
+          item.style.color = '#ffb347';
+        } else {
+          item.style.background = '';
+          item.style.color = '#ffefcf';
+        }
+      };
+      item.onclick = (e) => {
+        e.stopPropagation();
+        this.operation = op;
+        selectedText.textContent = t(`calcTypes.${op}`);
+        for (const i of items) {
+          i.classList.remove('active');
+          i.style.background = '';
+          i.style.color = '#ffefcf';
+          i.style.borderLeft = '';
+        }
+        item.classList.add('active');
+        item.style.background = 'rgba(255, 179, 71, 0.3)';
+        item.style.color = '#ffb347';
+        item.style.borderLeft = '2px solid #ffb347';
+        dropdown.classList.remove('open');
+        menu.style.display = 'none';
+        arrow.style.transform = '';
+        graph.reevaluateAll();
+        renderer.render();
+        renderer.save();
+        updateInfo();
+      };
+      menu.appendChild(item);
+      items.push(item);
     }
 
-    select.onchange = () => {
-      this.operation = select.value;
-      graph.reevaluateAll();
-      renderer.render();
-      renderer.save();
+    toggle.onclick = (e) => {
+      e.stopPropagation();
+      const isOpen = dropdown.classList.contains('open');
+      if (isOpen) {
+        dropdown.classList.remove('open');
+        menu.style.display = 'none';
+        arrow.style.transform = '';
+      } else {
+        dropdown.classList.add('open');
+        menu.style.display = 'block';
+        arrow.style.transform = 'rotate(180deg)';
+      }
     };
+
+    dropdown.appendChild(toggle);
+    dropdown.appendChild(menu);
+
+    const closeDropdown = (e) => {
+      if (!dropdown.contains(e.target)) {
+        dropdown.classList.remove('open');
+        menu.style.display = 'none';
+        arrow.style.transform = '';
+      }
+    };
+    document.addEventListener('click', closeDropdown);
 
     const infoDiv = document.createElement('div');
     infoDiv.style.fontFamily = 'monospace';
     infoDiv.style.fontSize = '12px';
-    infoDiv.style.marginTop = '4px';
+    infoDiv.style.marginTop = '8px';
+    infoDiv.style.padding = '8px';
+    infoDiv.style.background = 'rgba(0,0,0,0.3)';
+    infoDiv.style.borderRadius = '6px';
 
     const updateInfo = () => {
-      const opName = t(`calcTypes.${this.operation}`);
       const inputsCount = graph.getIncomingEdges(this.id).length;
       infoDiv.innerHTML = `
-        <strong>${opName}</strong><br>
-        ${t('calcTypes.result')}: ${this.resultStr}<br>
+        <strong>${t('calcTypes.result')}:</strong> ${this.resultStr}<br>
         <span style="font-size:10px; color:#8899bb;">${t('calcTypes.inputs')}: ${inputsCount}</span>
       `;
     };
     updateInfo();
 
     const unsubscribe = i18n.subscribe(() => {
-      for (const option of select.options) {
-        option.textContent = t(`calcTypes.${option.value}`);
+      selectedText.textContent = t(`calcTypes.${this.operation}`);
+      for (const item of items) {
+        item.textContent = t(`calcTypes.${item.dataset.op}`);
       }
       updateInfo();
     });
 
-    content.appendChild(select);
+    content.appendChild(dropdown);
     content.appendChild(infoDiv);
     div.appendChild(content);
 
@@ -258,6 +372,7 @@ export class CalcNode extends Node {
     const originalRemove = div.remove;
     div.remove = () => {
       unsubscribe();
+      document.removeEventListener('click', closeDropdown);
       if (originalRemove) originalRemove.call(div);
     };
 
