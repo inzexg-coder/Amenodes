@@ -34,16 +34,17 @@ export class EdgeRenderer {
       const sourceRect = rectCache.get(edge.sourceId);
       const targetRect = rectCache.get(edge.targetId);
       if (!sourceRect || !targetRect) continue;
-      // Вычисляем точки на границе нод
-      const point1 = this.getBorderPoint(sourceRect, targetRect);
-      const point2 = this.getBorderPoint(targetRect, sourceRect);
+      const p1 = this.getBorderPoint(sourceRect, targetRect);
+      const p2 = this.getBorderPoint(targetRect, sourceRect);
+      const cp1 = this.getControlPoint(p1, p2, 0.3);
+      const cp2 = this.getControlPoint(p2, p1, 0.3);
       const isBlue = edge.sourcePort === 'unmapped';
       const color = isBlue ? "#44aaff" : "#ffb347";
-      const line = this.createLine(point1, point2, color, edge.id);
-      const arrow = this.createArrow(point1, point2, color);
-      svg.appendChild(line);
+      const path = this.createCurve(p1, cp1, cp2, p2, color, edge.id);
+      const arrow = this.createArrowAtEnd(p1, cp1, cp2, p2, color);
+      svg.appendChild(path);
       svg.appendChild(arrow);
-      line.addEventListener('contextmenu', (ev) => {
+      path.addEventListener('contextmenu', (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
         graph.removeEdge(edge.id);
@@ -52,13 +53,62 @@ export class EdgeRenderer {
         if (this.onEdgeRemoved) this.onEdgeRemoved();
       });
       if (this.particleFlowEnabled) {
-        this.animateParticles(point1, point2, color, svg);
+        this.animateParticlesCurve(p1, cp1, cp2, p2, color, svg);
       }
     }
   }
 
-  animateParticles(p1, p2, color, svg) {
-    const duration = 1500;
+  getControlPoint(p1, p2, factor) {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const dist = Math.hypot(dx, dy);
+    const perpX = -dy / dist * 40;
+    const perpY = dx / dist * 40;
+    return {
+      x: p1.x + dx * factor + perpX,
+      y: p1.y + dy * factor + perpY
+    };
+  }
+
+  createCurve(p1, cp1, cp2, p2, color, edgeId) {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    const d = `M ${p1.x} ${p1.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p2.x} ${p2.y}`;
+    path.setAttribute("d", d);
+    path.setAttribute("stroke", color);
+    path.setAttribute("stroke-width", "3");
+    path.setAttribute("fill", "none");
+    path.classList.add("edge-line", "edge-curve");
+    path.style.pointerEvents = "visibleStroke";
+    path.setAttribute("data-edge-id", edgeId);
+    return path;
+  }
+
+  createArrowAtEnd(p1, cp1, cp2, p2, color) {
+    const t = 0.95;
+    const ax = Math.pow(1-t, 3) * p1.x + 3 * Math.pow(1-t, 2) * t * cp1.x + 3 * (1-t) * Math.pow(t, 2) * cp2.x + Math.pow(t, 3) * p2.x;
+    const ay = Math.pow(1-t, 3) * p1.y + 3 * Math.pow(1-t, 2) * t * cp1.y + 3 * (1-t) * Math.pow(t, 2) * cp2.y + Math.pow(t, 3) * p2.y;
+    const dt = 0.05;
+    const bx = Math.pow(1-(t-dt), 3) * p1.x + 3 * Math.pow(1-(t-dt), 2) * (t-dt) * cp1.x + 3 * (1-(t-dt)) * Math.pow(t-dt, 2) * cp2.x + Math.pow(t-dt, 3) * p2.x;
+    const by = Math.pow(1-(t-dt), 3) * p1.y + 3 * Math.pow(1-(t-dt), 2) * (t-dt) * cp1.y + 3 * (1-(t-dt)) * Math.pow(t-dt, 2) * cp2.y + Math.pow(t-dt, 3) * p2.y;
+    const angle = Math.atan2(ay - by, ax - bx);
+    const tipX = ax;
+    const tipY = ay;
+    const backX = ax - Math.cos(angle) * 8;
+    const backY = ay - Math.sin(angle) * 8;
+    const perpX = -Math.sin(angle) * 5;
+    const perpY = Math.cos(angle) * 5;
+    const points = `${tipX},${tipY} ${backX + perpX},${backY + perpY} ${backX - perpX},${backY - perpY}`;
+    const arrow = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    arrow.setAttribute("points", points);
+    arrow.setAttribute("fill", color);
+    arrow.setAttribute("stroke", color === "#44aaff" ? "#88ccff" : "#ffda99");
+    arrow.setAttribute("stroke-width", "1");
+    arrow.setAttribute("stroke-linejoin", "round");
+    return arrow;
+  }
+
+  animateParticlesCurve(p1, cp1, cp2, p2, color, svg) {
+    const duration = 2000;
     const startTime = performance.now();
     const particle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     particle.setAttribute("r", "3");
@@ -68,8 +118,8 @@ export class EdgeRenderer {
     const animate = (now) => {
       const elapsed = (now - startTime) % duration;
       const t = elapsed / duration;
-      const x = p1.x + (p2.x - p1.x) * t;
-      const y = p1.y + (p2.y - p1.y) * t;
+      const x = Math.pow(1-t, 3) * p1.x + 3 * Math.pow(1-t, 2) * t * cp1.x + 3 * (1-t) * Math.pow(t, 2) * cp2.x + Math.pow(t, 3) * p2.x;
+      const y = Math.pow(1-t, 3) * p1.y + 3 * Math.pow(1-t, 2) * t * cp1.y + 3 * (1-t) * Math.pow(t, 2) * cp2.y + Math.pow(t, 3) * p2.y;
       particle.setAttribute("cx", x);
       particle.setAttribute("cy", y);
       requestAnimationFrame(animate);
@@ -89,41 +139,6 @@ export class EdgeRenderer {
     svg.style.pointerEvents = "none";
     svg.style.overflow = "visible";
     return svg;
-  }
-
-  createLine(p1, p2, color, edgeId) {
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute("x1", p1.x);
-    line.setAttribute("y1", p1.y);
-    line.setAttribute("x2", p2.x);
-    line.setAttribute("y2", p2.y);
-    line.setAttribute("stroke-width", "3");
-    line.setAttribute("stroke-linecap", "round");
-    line.classList.add("edge-line");
-    line.setAttribute("stroke", color);
-    line.style.pointerEvents = "visibleStroke";
-    line.setAttribute("data-edge-id", edgeId);
-    return line;
-  }
-
-  createArrow(p1, p2, color) {
-    const midX = (p1.x + p2.x) / 2;
-    const midY = (p1.y + p2.y) / 2;
-    const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-    const tipX = midX + Math.cos(angle) * 6;
-    const tipY = midY + Math.sin(angle) * 6;
-    const backX = midX - Math.cos(angle) * 8;
-    const backY = midY - Math.sin(angle) * 8;
-    const perpX = -Math.sin(angle) * 5;
-    const perpY = Math.cos(angle) * 5;
-    const points = `${tipX},${tipY} ${backX + perpX},${backY + perpY} ${backX - perpX},${backY - perpY}`;
-    const arrow = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-    arrow.setAttribute("points", points);
-    arrow.setAttribute("fill", color);
-    arrow.setAttribute("stroke", color === "#44aaff" ? "#88ccff" : "#ffda99");
-    arrow.setAttribute("stroke-width", "1");
-    arrow.setAttribute("stroke-linejoin", "round");
-    return arrow;
   }
 
   getBorderPoint(fromRect, toRect) {
