@@ -75,6 +75,7 @@ export class MapNode extends Node {
 
   createDOM(graph, renderer) {
     const div = this.createBaseDiv(graph, renderer, 'map-header');
+    div.style.position = 'absolute';
     const itemsContainer = document.createElement('div');
     itemsContainer.className = 'group-items';
     
@@ -119,110 +120,109 @@ export class MapNode extends Node {
     header.appendChild(empty);
     itemsContainer.appendChild(header);
 
-    this.maps.forEach((map, idx) => {
-      const row = document.createElement('div');
-      row.className = 'group-row';
-      
-      const xInput = document.createElement('input');
-      xInput.type = 'number';
-      xInput.value = map.x;
-      xInput.step = "any";
-      xInput.className = 'group-row-value';
-      xInput.onchange = () => {
-        const newX = parseFloat(xInput.value) || 0;
-        if (this.maps.some((m, i) => i !== idx && Math.abs(m.x - newX) < 1e-9)) {
-          xInput.value = map.x;
-          return;
-        }
-        this.maps[idx].x = newX;
-        update();
-      };
-      
-      const yInput = document.createElement('input');
-      yInput.type = 'number';
-      yInput.value = map.y;
-      yInput.step = "any";
-      yInput.className = 'group-row-value';
-      yInput.onchange = () => {
-        this.maps[idx].y = parseFloat(yInput.value) || 0;
-        update();
-      };
-      
-      const removeBtn = document.createElement('button');
-      removeBtn.textContent = '✕';
-      removeBtn.style.cssText = 'background:none;border:none;color:#ffaa88;cursor:pointer';
-      if (this.maps.length > 1) {
-        removeBtn.onclick = () => {
-          this.maps.splice(idx, 1);
+    const renderRows = () => {
+      const existingRows = itemsContainer.querySelectorAll('.group-row:not(.header-row)');
+      existingRows.forEach(row => row.remove());
+      this.maps.forEach((map, idx) => {
+        const row = document.createElement('div');
+        row.className = 'group-row';
+        
+        const xInput = document.createElement('input');
+        xInput.type = 'number';
+        xInput.value = map.x;
+        xInput.step = "any";
+        xInput.className = 'group-row-value';
+        xInput.onchange = () => {
+          const newX = parseFloat(xInput.value) || 0;
+          if (this.maps.some((m, i) => i !== idx && Math.abs(m.x - newX) < 1e-9)) {
+            xInput.value = map.x;
+            return;
+          }
+          this.maps[idx].x = newX;
           update();
         };
-      } else {
-        removeBtn.disabled = true;
-      }
-      
-      row.appendChild(xInput);
-      row.appendChild(yInput);
-      row.appendChild(removeBtn);
-      itemsContainer.appendChild(row);
-    });
+        
+        const yInput = document.createElement('input');
+        yInput.type = 'number';
+        yInput.value = map.y;
+        yInput.step = "any";
+        yInput.className = 'group-row-value';
+        yInput.onchange = () => {
+          this.maps[idx].y = parseFloat(yInput.value) || 0;
+          update();
+        };
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '✕';
+        removeBtn.style.cssText = 'background:none;border:none;color:#ffaa88;cursor:pointer';
+        if (this.maps.length > 1) {
+          removeBtn.onclick = () => {
+            this.maps.splice(idx, 1);
+            renderRows();
+            update();
+          };
+        } else {
+          removeBtn.disabled = true;
+          removeBtn.style.opacity = '0.5';
+        }
+        
+        row.appendChild(xInput);
+        row.appendChild(yInput);
+        row.appendChild(removeBtn);
+        itemsContainer.appendChild(row);
+      });
+    };
+    
+    renderRows();
     
     const addBtn = document.createElement('button');
     addBtn.textContent = t('map.addRule');
     addBtn.className = 'add-value-btn';
     addBtn.onclick = () => {
       this.maps.push({ x: 0, y: 0 });
+      renderRows();
       update();
     };
     itemsContainer.appendChild(addBtn);
     
-    const modeDiv = document.createElement('div');
-    modeDiv.className = 'map-mode-switch';
+    div.appendChild(itemsContainer);
     
-    const passBtn = document.createElement('div');
-    passBtn.className = 'map-mode-option';
-    passBtn.textContent = t('map.passThrough');
-    passBtn.style.borderRadius = '32px 0 0 32px';
-    
-    const sepBtn = document.createElement('div');
-    sepBtn.className = 'map-mode-option';
-    sepBtn.textContent = t('map.separateOutput');
-    sepBtn.style.borderRadius = '0 32px 32px 0';
-    
-    const setMode = (mode) => {
-      this.unmappedMode = mode;
-      if (mode === 'passthrough') {
-        passBtn.classList.add('active');
-        sepBtn.classList.remove('active');
-        renderer.addHandles(div, this.id, null);
-        graph.edges = graph.edges.filter(e => !(e.sourceId === this.id && e.sourcePort === 'unmapped'));
-      } else {
-        sepBtn.classList.add('active');
-        passBtn.classList.remove('active');
+    let handleDblClick = null;
+    const updateModeHandles = () => {
+      if (this.unmappedMode === 'separate') {
         renderer.addHandles(div, this.id, 'unmapped');
+        const blueHandle = div.querySelector('.node-handle-blue');
+        if (blueHandle) {
+          blueHandle.style.animation = 'neutronPulse 1s infinite';
+        }
+      } else {
+        renderer.addHandles(div, this.id, null);
       }
+    };
+    
+    const toggleMode = () => {
+      if (this.unmappedMode === 'passthrough') {
+        this.unmappedMode = 'separate';
+      } else {
+        this.unmappedMode = 'passthrough';
+      }
+      updateModeHandles();
       graph.reevaluateAll();
       renderer.render();
       renderer.save();
     };
     
-    passBtn.onclick = () => { if (this.unmappedMode !== 'passthrough') setMode('passthrough'); };
-    sepBtn.onclick = () => { if (this.unmappedMode !== 'separate') setMode('separate'); };
+    div.addEventListener('dblclick', (e) => {
+      if (!e.target.closest('.node-handle') && !e.target.closest('.node-actions')) {
+        toggleMode();
+      }
+    });
     
-    modeDiv.appendChild(passBtn);
-    modeDiv.appendChild(sepBtn);
-    itemsContainer.appendChild(modeDiv);
-    div.appendChild(itemsContainer);
-    
-    renderer.addHandles(div, this.id, this.unmappedMode === 'separate' ? 'unmapped' : null);
+    updateModeHandles();
     renderer.applyOptStyles(div);
-    
-    if (this.unmappedMode === 'passthrough') passBtn.classList.add('active');
-    else sepBtn.classList.add('active');
     
     const unsubscribe = i18n.subscribe(() => {
       addBtn.textContent = t('map.addRule');
-      passBtn.textContent = t('map.passThrough');
-      sepBtn.textContent = t('map.separateOutput');
     });
     
     const originalRemove = div.remove;
