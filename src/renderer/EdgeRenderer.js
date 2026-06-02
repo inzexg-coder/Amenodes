@@ -9,18 +9,14 @@ export class EdgeRenderer {
 
   setParticleFlowEnabled(enabled) {
     this.particleFlowEnabled = enabled;
-    if (!enabled) {
-      this.clearParticles();
-    }
+    if (!enabled) this.clearParticles();
   }
 
   clearParticles() {
-    if (this.particleAnimations.length) {
-      for (const anim of this.particleAnimations) {
-        if (anim.cancel) anim.cancel();
-      }
-      this.particleAnimations = [];
+    for (const anim of this.particleAnimations) {
+      if (anim.cancel) anim.cancel();
     }
+    this.particleAnimations = [];
     const particles = this.layer.querySelectorAll('.edge-particle');
     particles.forEach(p => p.remove());
   }
@@ -134,9 +130,7 @@ export class EdgeRenderer {
     const centerTo = { x: toRect.x + toRect.w / 2, y: toRect.y + toRect.h / 2 };
     const dx = centerTo.x - centerFrom.x;
     const dy = centerTo.y - centerFrom.y;
-    if (dx === 0 && dy === 0) {
-      return { x: fromRect.x + fromRect.w / 2, y: fromRect.y + fromRect.h };
-    }
+    if (dx === 0 && dy === 0) return { x: fromRect.x + fromRect.w / 2, y: fromRect.y + fromRect.h };
     let t = Infinity;
     if (dx !== 0) {
       const tx1 = (fromRect.x - centerFrom.x) / dx;
