@@ -13,7 +13,7 @@ export const metadata = {
   dataType: 'auto',
   canHaveIncomingEdges: true,
   canHaveOutgoingEdges: false,
-  allowedInputTypes: ['num', 'array', 'uncert', 'list', 'wlist', 'interval'],
+  allowedInputTypes: ['num', 'array', 'uncert', 'list', 'wlist'],
   allowedOutputTypes: [],
   defaultValue: null
 };
