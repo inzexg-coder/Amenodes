@@ -152,28 +152,34 @@ export class ContextMenu {
     const NodeClass = NodeFactory.getNodeClass(nodeType);
     let node = null;
     
-    if (NodeClass && typeof NodeClass.onCreate === 'function') {
-      node = await NodeClass.onCreate(this.graph, x + 20, y + 80, extraOptions);
-      if (node && !this.graph.nodes.includes(node)) {
+    try {
+      if (NodeClass && typeof NodeClass.onCreate === 'function') {
+        node = await NodeClass.onCreate(this.graph, x + 20, y + 80, extraOptions);
+      } else {
+        node = NodeFactory.createNode(nodeType, {
+          x: x + 20,
+          y: y + 80,
+          ...extraOptions
+        });
+        if (node) {
+          this.graph.addNode(node);
+        }
+      }
+      
+      if (!node) {
+        console.warn('Failed to create node:', nodeType);
+        return;
+      }
+      
+      if (!this.graph.nodes.includes(node)) {
         this.graph.addNode(node);
       }
-    } else {
-      node = NodeFactory.createNode(nodeType, {
-        x: x + 20,
-        y: y + 80,
-        ...extraOptions
-      });
-      if (node) {
-        this.graph.addNode(node);
-      }
-    }
-    
-    if (node) {
+      
       if (typeof node.getMinHeight !== 'function') {
         node.getMinHeight = function() { return 80; };
       }
       
-      await this.ensureNodeReady(node);
+      await this.waitForNodeRender(node);
       
       const edge = this.graph.addEdge(sourceId, node.id, 'main');
       if (edge) {
@@ -183,38 +189,24 @@ export class ContextMenu {
       }
       
       this.finishNodeCreation();
+    } catch (err) {
+      console.error('Error creating node:', err);
     }
   }
 
-  async ensureNodeReady(node) {
+  async waitForNodeRender(node) {
     return new Promise((resolve) => {
-      const checkReady = () => {
-        const typeSystem = window.app?.typeSystem || window._typeSystem;
-        const nodeType = node.constructor.metadata?.dataType;
-        
-        if (typeSystem && nodeType && typeSystem.typeDefinitions?.has(nodeType)) {
+      const checkRender = () => {
+        const element = document.querySelector(`.node[data-id="${node.id}"]`);
+        if (element && element.parentNode) {
           resolve();
         } else {
-          setTimeout(checkReady, 5);
+          setTimeout(checkRender, 10);
         }
       };
       
-      if (node.constructor.metadata && node.constructor.metadata.dataType) {
-        const typeSystem = window.app?.typeSystem || window._typeSystem;
-        const dataType = node.constructor.metadata.dataType;
-        
-        if (typeSystem && !typeSystem.typeDefinitions?.has(dataType)) {
-          typeSystem.registerType(dataType, {
-            name: dataType,
-            canHaveIncomingEdges: node.constructor.metadata.canHaveIncomingEdges ?? true,
-            canHaveOutgoingEdges: node.constructor.metadata.canHaveOutgoingEdges ?? true,
-            allowedInputTypes: node.constructor.metadata.allowedInputTypes ?? [],
-            defaultValue: node.constructor.metadata.defaultValue ?? null
-          });
-        }
-      }
-      
-      setTimeout(checkReady, 5);
+      this.renderer.render();
+      setTimeout(checkRender, 20);
     });
   }
 
