@@ -7,6 +7,10 @@ export class MiniMap {
     this.ctx = this.canvas.getContext('2d');
     this.container.appendChild(this.canvas);
     this.onNavigate = null;
+    this.minX = 0;
+    this.minY = 0;
+    this.maxX = 1000;
+    this.maxY = 1000;
     this.resize();
     window.addEventListener('resize', () => this.resize());
     this.container.addEventListener('click', (e) => this.handleClick(e));
@@ -19,15 +23,22 @@ export class MiniMap {
     this.update();
   }
   update() {
-    if (!this.graph.nodes.length) return;
-    const nodes = this.graph.nodes;
+    if (!this.graph.nodes.length) {
+      this.ctx.fillStyle = '#0a0c14';
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      return;
+    }
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (const n of nodes) {
+    for (const n of this.graph.nodes) {
       minX = Math.min(minX, n.x);
       minY = Math.min(minY, n.y);
-      maxX = Math.max(maxX, n.x + 220);
+      maxX = Math.max(maxX, n.x + 280);
       maxY = Math.max(maxY, n.y + 100);
     }
+    this.minX = minX;
+    this.minY = minY;
+    this.maxX = maxX;
+    this.maxY = maxY;
     const w = maxX - minX || 1;
     const h = maxY - minY || 1;
     const scaleX = this.canvas.width / w;
@@ -35,7 +46,7 @@ export class MiniMap {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.fillStyle = '#0a0c14';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    for (const n of nodes) {
+    for (const n of this.graph.nodes) {
       const x = (n.x - minX) * scaleX;
       const y = (n.y - minY) * scaleY;
       this.ctx.fillStyle = '#ffb347';
