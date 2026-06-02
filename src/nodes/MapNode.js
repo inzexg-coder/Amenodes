@@ -1,166 +1,246 @@
-export class EdgeRenderer {
-  constructor(layer, domRenderer) {
-    this.layer = layer;
-    this.domRenderer = domRenderer;
-    this.onEdgeRemoved = null;
-    this.particleFlowEnabled = false;
-    this.particleAnimations = [];
+import { Node } from '../core/Node.js';
+import { EditableTitle } from '../ui/EditableTitle.js';
+import { i18n, t } from '../i18n/LanguageManager.js';
+
+export const metadata = {
+  type: 'map',
+  nameKey: 'nodes.map',
+  descriptionKey: 'nodeDescriptions.map',
+  author: 'Amenoke',
+  github: 'https://github.com/inzexg-coder/Amenodes',
+  icon: 'fa-map',
+  dataType: 'list',
+  canHaveIncomingEdges: true,
+  canHaveOutgoingEdges: true,
+  allowedInputTypes: ['num', 'array', 'uncert', 'list', 'wlist'],
+  allowedOutputTypes: ['auto', 'uncert', 'list', 'wlist'],
+  defaultValue: []
+};
+
+export class MapNode extends Node {
+  constructor(id, x, y, title, options = {}) {
+    super(id, 'map', x, y, title, options);
+    this.maps = options.maps ?? [{ x: 0, y: 0 }];
+    this.xCol = options.xCol ?? "x";
+    this.yCol = options.yCol ?? "y";
+    this.unmappedMode = options.unmappedMode ?? "passthrough";
+    this.graph = null;
   }
 
-  setParticleFlowEnabled(enabled) {
-    this.particleFlowEnabled = enabled;
-    if (!enabled) this.clearParticles();
+  getUnmapped() {
+    const input = this.graph ? this.graph.getMergedInput(this.id) : [];
+    if (!input.length) return [];
+    const mappedSet = new Set(this.maps.map(m => m.x));
+    return input.filter(v => !mappedSet.has(v));
   }
 
-  clearParticles() {
-    for (const anim of this.particleAnimations) {
-      if (anim.cancel) anim.cancel();
+  getValue() {
+    const input = this.graph ? this.graph.getMergedInput(this.id) : [];
+    if (!input.length) return [];
+    const map = new Map(this.maps.map(m => [m.x, m.y]));
+    const result = [];
+    for (const v of input) {
+      if (map.has(v)) result.push(map.get(v));
+      else if (this.unmappedMode === "passthrough") result.push(v);
     }
-    this.particleAnimations = [];
-    const particles = this.layer.querySelectorAll('.edge-particle');
-    particles.forEach(p => p.remove());
+    return result;
   }
 
-  renderEdges(edges, graph, rectCache) {
-    const oldSvg = this.layer.querySelector('.edge-layer');
-    if (oldSvg) oldSvg.remove();
-    const svg = this.createSvgLayer();
-    this.layer.appendChild(svg);
-    this.clearParticles();
-    for (const edge of edges) {
-      const source = graph.getNode(edge.sourceId);
-      const target = graph.getNode(edge.targetId);
-      if (!source || !target) continue;
-      const sourceRect = rectCache.get(edge.sourceId);
-      const targetRect = rectCache.get(edge.targetId);
-      if (!sourceRect || !targetRect) continue;
-      const point1 = this.getBorderPoint(sourceRect, targetRect);
-      const point2 = this.getBorderPoint(targetRect, sourceRect);
-      const isBlue = edge.sourcePort === 'unmapped';
-      const color = isBlue ? "#44aaff" : "#ffb347";
-      const line = this.createLine(point1, point2, color, edge.id);
-      const arrow = this.createArrow(point1, point2, color);
-      svg.appendChild(line);
-      svg.appendChild(arrow);
-      line.addEventListener('contextmenu', (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        graph.removeEdge(edge.id);
-        graph.reevaluateAll();
-        graph.updateAllOutputs();
-        if (this.onEdgeRemoved) this.onEdgeRemoved();
-      });
-      if (this.particleFlowEnabled) {
-        this.animateParticles(point1, point2, color, svg);
-      }
-    }
+  getOutputValue(port = 'main', visited = new Set(), graph) {
+    if (port === 'unmapped') return this.getUnmapped();
+    return this.getValue();
   }
 
-  animateParticles(p1, p2, color, svg) {
-    const duration = 1500;
-    const startTime = performance.now();
-    const particle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    particle.setAttribute("r", "3");
-    particle.setAttribute("fill", color);
-    particle.classList.add('edge-particle');
-    svg.appendChild(particle);
-    const animate = (now) => {
-      const elapsed = (now - startTime) % duration;
-      const t = elapsed / duration;
-      const x = p1.x + (p2.x - p1.x) * t;
-      const y = p1.y + (p2.y - p1.y) * t;
-      particle.setAttribute("cx", x);
-      particle.setAttribute("cy", y);
-      requestAnimationFrame(animate);
+  toJSON() {
+    return {
+      ...super.toJSON(),
+      maps: this.maps.map(m => ({ x: m.x, y: m.y })),
+      xCol: this.xCol,
+      yCol: this.yCol,
+      unmappedMode: this.unmappedMode
     };
-    const raf = requestAnimationFrame(animate);
-    this.particleAnimations.push({ raf, particle, svg });
   }
 
-  createSvgLayer() {
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.classList.add('edge-layer');
-    svg.setAttribute("width", "100%");
-    svg.setAttribute("height", "100%");
-    svg.style.position = "absolute";
-    svg.style.top = "0";
-    svg.style.left = "0";
-    svg.style.pointerEvents = "none";
-    svg.style.overflow = "visible";
-    return svg;
+  getMinHeight() {
+    return Math.max(80, 80 + this.maps.length * 45);
   }
 
-  createLine(p1, p2, color, edgeId) {
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute("x1", p1.x);
-    line.setAttribute("y1", p1.y);
-    line.setAttribute("x2", p2.x);
-    line.setAttribute("y2", p2.y);
-    line.setAttribute("stroke-width", "3");
-    line.setAttribute("stroke-linecap", "round");
-    line.classList.add("edge-line");
-    line.setAttribute("stroke", color);
-    line.style.pointerEvents = "visibleStroke";
-    line.setAttribute("data-edge-id", edgeId);
-    return line;
+  onAttach(graph) {
+    this.graph = graph;
   }
 
-  createArrow(p1, p2, color) {
-    const midX = (p1.x + p2.x) / 2;
-    const midY = (p1.y + p2.y) / 2;
-    const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-    const tipX = midX + Math.cos(angle) * 6;
-    const tipY = midY + Math.sin(angle) * 6;
-    const backX = midX - Math.cos(angle) * 8;
-    const backY = midY - Math.sin(angle) * 8;
-    const perpX = -Math.sin(angle) * 5;
-    const perpY = Math.cos(angle) * 5;
-    const points = `${tipX},${tipY} ${backX + perpX},${backY + perpY} ${backX - perpX},${backY - perpY}`;
-    const arrow = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-    arrow.setAttribute("points", points);
-    arrow.setAttribute("fill", color);
-    arrow.setAttribute("stroke", color === "#44aaff" ? "#88ccff" : "#ffda99");
-    arrow.setAttribute("stroke-width", "1");
-    arrow.setAttribute("stroke-linejoin", "round");
-    return arrow;
+  onDetach() {
+    this.graph = null;
   }
 
-  getBorderPoint(fromRect, toRect) {
-    const centerFrom = { x: fromRect.x + fromRect.w / 2, y: fromRect.y + fromRect.h / 2 };
-    const centerTo = { x: toRect.x + toRect.w / 2, y: toRect.y + toRect.h / 2 };
-    const dx = centerTo.x - centerFrom.x;
-    const dy = centerTo.y - centerFrom.y;
-    if (dx === 0 && dy === 0) return { x: fromRect.x + fromRect.w / 2, y: fromRect.y + fromRect.h };
-    let t = Infinity;
-    if (dx !== 0) {
-      const tx1 = (fromRect.x - centerFrom.x) / dx;
-      const tx2 = (fromRect.x + fromRect.w - centerFrom.x) / dx;
-      if (tx1 > 0 && tx1 < t) {
-        const y = centerFrom.y + dy * tx1;
-        if (y >= fromRect.y && y <= fromRect.y + fromRect.h) t = tx1;
+  createDOM(graph, renderer) {
+    const div = this.createBaseDiv(graph, renderer, 'map-header');
+    const itemsContainer = document.createElement('div');
+    itemsContainer.className = 'group-items';
+    
+    const update = () => {
+      renderer.invalidateCache(this.id);
+      graph.reevaluateAll();
+      renderer.render();
+      renderer.save();
+    };
+    
+    const updateUI = () => {
+      if (this.unmappedMode === 'passthrough') {
+        passBtn.classList.add('active');
+        sepBtn.classList.remove('active');
+      } else {
+        sepBtn.classList.add('active');
+        passBtn.classList.remove('active');
       }
-      if (tx2 > 0 && tx2 < t) {
-        const y = centerFrom.y + dy * tx2;
-        if (y >= fromRect.y && y <= fromRect.y + fromRect.h) t = tx2;
+      renderer.addHandles(div, this.id, this.unmappedMode === 'separate' ? 'unmapped' : null);
+      if (this.unmappedMode === 'passthrough') {
+        graph.edges = graph.edges.filter(e => !(e.sourceId === this.id && e.sourcePort === 'unmapped'));
       }
-    }
-    if (dy !== 0) {
-      const ty1 = (fromRect.y - centerFrom.y) / dy;
-      const ty2 = (fromRect.y + fromRect.h - centerFrom.y) / dy;
-      if (ty1 > 0 && ty1 < t) {
-        const x = centerFrom.x + dx * ty1;
-        if (x >= fromRect.x && x <= fromRect.x + fromRect.w) t = ty1;
-      }
-      if (ty2 > 0 && ty2 < t) {
-        const x = centerFrom.x + dx * ty2;
-        if (x >= fromRect.x && x <= fromRect.x + fromRect.w) t = ty2;
-      }
-    }
-    if (t === Infinity) t = 0;
-    return { x: centerFrom.x + dx * t, y: centerFrom.y + dy * t };
-  }
+      graph.reevaluateAll();
+      renderer.render();
+      renderer.save();
+    };
+    
+    const header = document.createElement('div');
+    header.style.display = 'flex';
+    header.style.gap = '8px';
+    header.style.marginBottom = '8px';
+    header.style.fontWeight = 'bold';
+    
+    const xHead = new EditableTitle(this.xCol || 'x', (newVal) => {
+      this.xCol = newVal || 'x';
+      update();
+    });
+    xHead.displaySpan.style.flex = '1';
+    xHead.displaySpan.style.background = '#1f2a44';
+    xHead.displaySpan.style.border = '1px solid #2e385c';
+    xHead.displaySpan.style.borderRadius = '6px';
+    xHead.displaySpan.style.padding = '4px 8px';
+    
+    const yHead = new EditableTitle(this.yCol || 'y', (newVal) => {
+      this.yCol = newVal || 'y';
+      update();
+    });
+    yHead.displaySpan.style.flex = '1';
+    yHead.displaySpan.style.background = '#1f2a44';
+    yHead.displaySpan.style.border = '1px solid #2e385c';
+    yHead.displaySpan.style.borderRadius = '6px';
+    yHead.displaySpan.style.padding = '4px 8px';
+    
+    const empty = document.createElement('span');
+    empty.style.width = '26px';
+    
+    header.appendChild(xHead.getElement());
+    header.appendChild(yHead.getElement());
+    header.appendChild(empty);
+    itemsContainer.appendChild(header);
 
-  setOnEdgeRemoved(callback) {
-    this.onEdgeRemoved = callback;
+    this.maps.forEach((map, idx) => {
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      
+      const xInput = document.createElement('input');
+      xInput.type = 'number';
+      xInput.value = map.x;
+      xInput.step = "any";
+      xInput.className = 'group-row-value';
+      xInput.onchange = () => {
+        const newX = parseFloat(xInput.value) || 0;
+        if (this.maps.some((m, i) => i !== idx && Math.abs(m.x - newX) < 1e-9)) {
+          xInput.value = map.x;
+          return;
+        }
+        this.maps[idx].x = newX;
+        update();
+      };
+      
+      const yInput = document.createElement('input');
+      yInput.type = 'number';
+      yInput.value = map.y;
+      yInput.step = "any";
+      yInput.className = 'group-row-value';
+      yInput.onchange = () => {
+        this.maps[idx].y = parseFloat(yInput.value) || 0;
+        update();
+      };
+      
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = '✕';
+      removeBtn.style.cssText = 'background:none;border:none;color:#ffaa88;cursor:pointer';
+      if (this.maps.length > 1) {
+        removeBtn.onclick = () => {
+          this.maps.splice(idx, 1);
+          update();
+        };
+      } else {
+        removeBtn.disabled = true;
+      }
+      
+      row.appendChild(xInput);
+      row.appendChild(yInput);
+      row.appendChild(removeBtn);
+      itemsContainer.appendChild(row);
+    });
+    
+    const addBtn = document.createElement('button');
+    addBtn.textContent = t('map.addRule');
+    addBtn.className = 'add-value-btn';
+    addBtn.onclick = () => {
+      this.maps.push({ x: 0, y: 0 });
+      update();
+    };
+    itemsContainer.appendChild(addBtn);
+    
+    const modeDiv = document.createElement('div');
+    modeDiv.className = 'map-mode-switch';
+    
+    const passBtn = document.createElement('div');
+    passBtn.className = 'map-mode-option';
+    passBtn.textContent = t('map.passThrough');
+    passBtn.style.borderRadius = '32px 0 0 32px';
+    
+    const sepBtn = document.createElement('div');
+    sepBtn.className = 'map-mode-option';
+    sepBtn.textContent = t('map.separateOutput');
+    sepBtn.style.borderRadius = '0 32px 32px 0';
+    
+    passBtn.onclick = () => {
+      if (this.unmappedMode !== 'passthrough') {
+        this.unmappedMode = 'passthrough';
+        updateUI();
+      }
+    };
+    
+    sepBtn.onclick = () => {
+      if (this.unmappedMode !== 'separate') {
+        this.unmappedMode = 'separate';
+        updateUI();
+      }
+    };
+    
+    modeDiv.appendChild(passBtn);
+    modeDiv.appendChild(sepBtn);
+    itemsContainer.appendChild(modeDiv);
+    div.appendChild(itemsContainer);
+    
+    renderer.addHandles(div, this.id, this.unmappedMode === 'separate' ? 'unmapped' : null);
+    renderer.applyOptStyles(div);
+    
+    updateUI();
+    
+    const unsubscribe = i18n.subscribe(() => {
+      addBtn.textContent = t('map.addRule');
+      passBtn.textContent = t('map.passThrough');
+      sepBtn.textContent = t('map.separateOutput');
+    });
+    
+    const originalRemove = div.remove;
+    div.remove = function() {
+      unsubscribe();
+      if (originalRemove) originalRemove.call(this);
+    };
+    
+    return div;
   }
 }
