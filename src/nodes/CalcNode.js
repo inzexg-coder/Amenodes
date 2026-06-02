@@ -12,7 +12,6 @@ export const metadata = {
   canHaveIncomingEdges: true,
   canHaveOutgoingEdges: true,
   allowedInputTypes: ['num', 'array', 'uncert'],
-  allowedOutputTypes: ['num', 'array', 'auto', 'uncert', 'list', 'wlist'],
   defaultValue: null,
   isCategory: true,
   categoryName: 'errors',
