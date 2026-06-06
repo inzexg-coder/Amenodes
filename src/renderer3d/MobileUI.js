@@ -339,14 +339,24 @@ export class MobileUI {
         if (node) {
           this.graph.addNode(node);
           this.graph.reevaluateAll();
-          this.scene.addNode(node);
+          this.scene.refresh();
           this.app.updateNodeCount();
           this.app.updateEdgeCount();
           this.app.history.save();
+          // Flash feedback
+          var badge = document.getElementById('mNodeCount');
+          if (badge) { badge.style.color = '#b090ff'; setTimeout(function() { badge.style.color = ''; }, 300); }
         }
       } catch (e) {
         console.error('Failed to create node:', e);
+        // Show error on screen for mobile users
+        var badge = document.getElementById('mNodeCount');
+        if (badge) { badge.textContent = 'ERR'; badge.style.color = '#ff6b7a'; setTimeout(function() { badge.textContent = '0'; badge.style.color = ''; }, 2000); }
       }
+    }).catch(function(e) {
+      console.error('Import failed:', e);
+      var badge = document.getElementById('mNodeCount');
+      if (badge) { badge.textContent = 'ERR'; badge.style.color = '#ff6b7a'; }
     });
   }
 

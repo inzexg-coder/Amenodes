@@ -101,6 +101,7 @@ export class Scene3D {
 
     this.initialized = true;
     this._rebuildFromGraph();
+    if (this._pendingRefresh) { this._rebuildFromGraph(); this._pendingRefresh = false; }
     this._animateFrame();
   }
 
@@ -614,22 +615,22 @@ export class Scene3D {
   }
 
   addNode(node) {
-    if (!this.initialized) return;
+    if (!this.initialized) { this._pendingRefresh = true; return; }
     this._rebuildFromGraph();
   }
 
   removeNode(nodeId) {
-    if (!this.initialized) return;
+    if (!this.initialized) { this._pendingRefresh = true; return; }
     this._rebuildFromGraph();
   }
 
   refreshEdges() {
-    if (!this.initialized) return;
+    if (!this.initialized) { this._pendingRefresh = true; return; }
     this._rebuildFromGraph();
   }
 
   refresh() {
-    if (!this.initialized) return;
+    if (!this.initialized) { this._pendingRefresh = true; return; }
     this._rebuildFromGraph();
   }
 
