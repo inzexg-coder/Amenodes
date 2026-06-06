@@ -13,7 +13,7 @@ export class Scene3D {
     this.animFrame = null;
     this.autoRotate = true;
     this.rotationSpeed = 0.005;
-    this.sphereRadius = 5;
+    this.sphereRadius = 6;
     this.initialized = false;
 
     this.scene = null;
@@ -48,7 +48,7 @@ export class Scene3D {
     // Camera
     const aspect = this.container.clientWidth / this.container.clientHeight;
     this.camera = new this.THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
-    this.camera.position.set(0, 2, 12);
+    this.camera.position.set(0, 2, 10);
     this.camera.lookAt(0, 0, 0);
 
     // Renderer
@@ -59,6 +59,7 @@ export class Scene3D {
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setClearColor(0x080610, 1);
+    this.renderer.domElement.style.touchAction = 'manipulation';
     this.container.appendChild(this.renderer.domElement);
 
     // OrbitControls (loaded globally)
@@ -93,7 +94,10 @@ export class Scene3D {
     window.addEventListener('resize', this._boundResize);
     this.renderer.domElement.addEventListener('touchstart', this._boundTouchStart, { passive: true });
     this.renderer.domElement.addEventListener('touchend', this._boundTouchEnd, { passive: true });
+    this.renderer.domElement.addEventListener('touchcancel', this._boundTouchEnd, { passive: true });
     this.renderer.domElement.addEventListener('click', this._boundClick);
+    // Prevent long-press context menu on canvas
+    this.renderer.domElement.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
     this.initialized = true;
     this._rebuildFromGraph();
@@ -109,7 +113,7 @@ export class Scene3D {
 
   _createStarField() {
     const geo = new this.THREE.BufferGeometry();
-    const count = 2500;
+    const count = 4000;
     const pos = new Float32Array(count * 3);
     const sizes = new Float32Array(count);
     for (let i = 0; i < count; i++) {
@@ -201,11 +205,23 @@ export class Scene3D {
     if (obj) {
       const mesh = obj.userData.mesh;
       if (mesh) {
-        mesh.scale.set(1.5, 1.5, 1.5);
-        mesh.material.emissiveIntensity = 0.8;
+        mesh.scale.set(1.8, 1.8, 1.8);
+        mesh.material.emissiveIntensity = 1.5;
+        mesh.material.emissive.setHex(0xffffff);
       }
       const label = obj.userData.label;
-      if (label) label.visible = true;
+      if (label) {
+        label.visible = true;
+        label.material.opacity = 1.0;
+        label.scale.set(3.2, 1.1, 1);
+      }
+      // Highlight rings
+      obj.children.forEach(c => {
+        if (c.isMesh && c.geometry.type === 'RingGeometry') {
+          c.material.opacity = 0.6;
+          c.material.color.setHex(0xffffff);
+        }
+      });
     }
     if (this.eventBus && this.eventBus.emit) {
       this.eventBus.emit('nodeSelect', node);
@@ -217,12 +233,23 @@ export class Scene3D {
       const obj = this.nodeObjects.get(this.selectedNode.id);
       if (obj) {
         const mesh = obj.userData.mesh;
+        const color = obj.userData.color;
         if (mesh) {
           mesh.scale.set(1, 1, 1);
-          mesh.material.emissiveIntensity = 0.3;
+          mesh.material.emissiveIntensity = 0.5;
+          mesh.material.emissive.setHex(color ? color.getHex() : 0x9060ff);
         }
         const label = obj.userData.label;
-        if (label) label.visible = false;
+        if (label) {
+          label.material.opacity = 0.9;
+        }
+        // Reset rings
+        obj.children.forEach(c => {
+          if (c.isMesh && c.geometry.type === 'RingGeometry') {
+            c.material.opacity = 0.12 + (c.userData.ringIdx || 0) * 0.06;
+            c.material.color.setHex(color ? color.getHex() : 0x9060ff);
+          }
+        });
       }
     }
     this.selectedNode = null;
@@ -282,6 +309,9 @@ export class Scene3D {
     if (this.controls) {
       this.controls.autoRotate = this.autoRotate;
     }
+
+    // Ensure matrices up to date for raycasting
+    this.scene.updateMatrixWorld(true);
   }
 
   _createNeuron(node, position) {
@@ -292,14 +322,14 @@ export class Scene3D {
     const color = this._getTypeColor(node.type);
     // Distinct geometry per type
     const typeGeo = {
-      number:    { geo: new THREE.SphereGeometry(1, 16, 16),         size: 0.25, glow: 0x8866ff, symbol: '#' },
-      constant:  { geo: new THREE.OctahedronGeometry(1, 0),          size: 0.28, glow: 0x7766ff, symbol: 'C' },
-      calc:      { geo: new THREE.TorusGeometry(1, 0.4, 12, 18),    size: 0.32, glow: 0xff44aa, symbol: 'Z' },
-      mean:      { geo: new THREE.TetrahedronGeometry(1, 0),         size: 0.28, glow: 0xff66bb, symbol: 'm' },
-      sem:       { geo: new THREE.IcosahedronGeometry(1, 0),         size: 0.27, glow: 0xcc44cc, symbol: 's' },
-      output:    { geo: new THREE.CylinderGeometry(1, 1, 1.4, 12),   size: 0.30, glow: 0x4499ff, symbol: 'O' },
-      map:       { geo: new THREE.BoxGeometry(1, 1, 1),              size: 0.27, glow: 0x44dd99, symbol: 'M' },
-      group:     { geo: new THREE.DodecahedronGeometry(1, 0),        size: 0.30, glow: 0x33bb88, symbol: 'G' }
+      number:    { geo: new THREE.SphereGeometry(1, 24, 24),         size: 0.55, glow: 0x8866ff, symbol: '#' },
+      constant:  { geo: new THREE.OctahedronGeometry(1, 0),          size: 0.60, glow: 0x7766ff, symbol: 'C' },
+      calc:      { geo: new THREE.TorusKnotGeometry(0.8, 0.3, 32, 16), size: 0.58, glow: 0xff44aa, symbol: 'Z' },
+      mean:      { geo: new THREE.TetrahedronGeometry(1, 0),         size: 0.58, glow: 0xff66bb, symbol: 'm' },
+      sem:       { geo: new THREE.IcosahedronGeometry(1, 0),         size: 0.56, glow: 0xcc44cc, symbol: 's' },
+      output:    { geo: new THREE.ConeGeometry(0.8, 1.6, 16),        size: 0.58, glow: 0x4499ff, symbol: 'O' },
+      map:       { geo: new THREE.BoxGeometry(1, 1, 1),              size: 0.56, glow: 0x44dd99, symbol: 'M' },
+      group:     { geo: new THREE.DodecahedronGeometry(1, 0),        size: 0.60, glow: 0x33bb88, symbol: 'G' }
     };
     const cfg = typeGeo[node.type] || typeGeo.number;
     const size = cfg.size + (node.important ? 0.1 : 0);
@@ -320,10 +350,10 @@ export class Scene3D {
 
     const tex = new THREE.CanvasTexture(canvas);
     const haloMat = new THREE.SpriteMaterial({
-      map: tex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.8
+      map: tex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 1.0
     });
     const halo = new THREE.Sprite(haloMat);
-    halo.scale.set(1.8 + size * 0.4, 1.8 + size * 0.4, 1);
+    halo.scale.set(2.4 + size * 0.6, 2.4 + size * 0.6, 1);
     group.add(halo);
 
     // ===== Core geometry =====
@@ -332,9 +362,9 @@ export class Scene3D {
     const meshMat = new THREE.MeshPhongMaterial({
       color: color,
       emissive: color,
-      emissiveIntensity: 0.5,
-      shininess: 60,
-      specular: new THREE.Color(0x444466)
+      emissiveIntensity: 0.8,
+      shininess: 80,
+      specular: new THREE.Color(0x8888aa)
     });
     const mesh = new THREE.Mesh(geo, meshMat);
     mesh.userData.nodeId = node.id;
@@ -343,9 +373,9 @@ export class Scene3D {
 
     // ===== Glow rings =====
     for (let i = 0; i < 2; i++) {
-      const ringGeo = new THREE.RingGeometry(size*1.6 + i*0.2, size*2.4 + i*0.3, 20);
+      const ringGeo = new THREE.RingGeometry(size*2.0 + i*0.3, size*3.2 + i*0.5, 24);
       const ringMat = new THREE.MeshBasicMaterial({
-        color: color, transparent: true, opacity: 0.12 + i * 0.06,
+        color: color, transparent: true, opacity: 0.20 + i * 0.10,
         side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
       });
       const ring = new THREE.Mesh(ringGeo, ringMat);
@@ -358,14 +388,14 @@ export class Scene3D {
     // ===== Important node extra glow =====
     if (node.important) {
       const imp = halo.clone();
-      imp.scale.set(2.8, 2.8, 1);
+      imp.scale.set(3.5, 3.5, 1);
       imp.material = haloMat.clone();
-      imp.material.opacity = 0.4;
+      imp.material.opacity = 0.6;
       group.add(imp);
       
       const iRing = new THREE.Mesh(
-        new THREE.RingGeometry(size*2, size*3.2, 24),
-        new THREE.MeshBasicMaterial({ color: 0x40aaff, transparent: true, opacity: 0.25, side: THREE.DoubleSide, blending: THREE.AdditiveBlending })
+        new THREE.RingGeometry(size*2.5, size*4.0, 24),
+        new THREE.MeshBasicMaterial({ color: 0x40aaff, transparent: true, opacity: 0.4, side: THREE.DoubleSide, blending: THREE.AdditiveBlending })
       );
       iRing.rotation.x = Math.PI / 2.5;
       group.add(iRing);
