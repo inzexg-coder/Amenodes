@@ -31,6 +31,7 @@ export class Scene3D {
     this.isTouchDragging = false;
     this.THREE = null;
 
+    this._touchHandledClick = false;
     this._boundResize = () => this._onResize();
     this._boundTouchStart = (e) => this._onTouchStart(e);
     this._boundTouchEnd = (e) => this._onTouchEnd(e);
@@ -200,11 +201,14 @@ export class Scene3D {
     const dt = Date.now() - this.touchStartTime;
     if (dt < 250 && dist < 15) {
       this._handleTap(changed.clientX, changed.clientY);
+      this._touchHandledClick = true;
     }
     if (dist > 5) this.isTouchDragging = true;
   }
 
   _onClick(e) {
+    // Skip click if it was already handled by touch
+    if (this._touchHandledClick) { this._touchHandledClick = false; return; }
     this._handleTap(e.clientX, e.clientY);
   }
 
@@ -245,15 +249,17 @@ export class Scene3D {
     if (obj) {
       const star = obj.userData.mesh;
       if (star) {
-        star.scale.set(3.5, 3.5, 1);
+        star.scale.set(4.5, 4.5, 1);
         star.material.opacity = 1.0;
       }
-      // Highlight all sprites
+      // Highlight corona glow
       obj.children.forEach(c => {
         if (c.isSprite && c.material && c.userData.isOrbit) return;
-        if (c.isSprite && c.material) {
-          if (c.scale.x > 5) return;
-          c.scale.set(c.scale.x * 1.5, c.scale.y * 1.5, 1);
+        if (c.isSprite && c.material && c.material.map) {
+          // Skip label sprite (detected by large canvas size or label property)
+          if (c === obj.userData.label) return;
+          // Big glow stays big, enhance it
+          c.scale.set(c.scale.x * 1.6, c.scale.y * 1.6, 1);
           c.material.opacity = 1.0;
         }
       });
@@ -312,20 +318,25 @@ export class Scene3D {
   }
 
   _getTypeColor(type) {
-    // Flame-like colors from deep orange to bright yellow
+    // Flame-like colors: deep orange (0.03) to blue-white (0.60)
+    // Based on star spectral types: O (blue), B (blue-white), A (white), 
+    // F (yellow-white), G (yellow), K (orange), M (red-orange)
     var hash = 0;
     for (var i = 0; i < type.length; i++) {
       hash = ((hash << 5) - hash) + type.charCodeAt(i);
     }
-    var hue = 0.03 + (Math.abs(hash) % 50) / 50 * 0.09;
-    var sat = 0.85 + (Math.abs(hash) % 15) / 100;
-    var light = 0.50 + (Math.abs(hash) % 20) / 100;
+    // Map to a wider range: warm orange to hot blue-white
+    var hue = 0.03 + (Math.abs(hash) % 100) / 100 * 0.55;
+    var sat = 0.70 + (Math.abs(hash) % 25) / 100;
+    var light = 0.55 + (Math.abs(hash) % 30) / 100;
     var col = new THREE.Color();
     col.setHSL(hue, sat, light);
     return col.getHex();
   }
 
   _rebuildFromGraph() {
+    // Reset selection state
+    this.selectedNode = null;
     // Clean up
     // Keep nebula and starfield (don't remove them)
     for (const obj of this.nodeObjects.values()) this.scene.remove(obj);
@@ -391,108 +402,100 @@ export class Scene3D {
     const colDim = 'rgba(' + (c.r*255|0) + ',' + (c.g*255|0) + ',' + (c.b*255|0) + ',0.3)';
 
     // ===== Neuron body texture =====
-    function makeNeuronTexture(col, dendriteCount) {
-      // Ultra-realistic star texture with Airy disk pattern and diffraction spikes
+          // Ultra-realistic star texture - point-like with smooth glow
       var canvas = document.createElement('canvas');
-      canvas.width = 512;
-      canvas.height = 512;
+      canvas.width = 1024;
+      canvas.height = 1024;
       var ctx = canvas.getContext('2d');
-      var cx = 256, cy = 256;
+      var cx = 512, cy = 512;
       
-      // Extract RGB from rgba string
+      // Extract RGB
       var rgbMatch = col.match(/rgba\((\d+),(\d+),(\d+)/);
       var r = parseInt(rgbMatch[1]), g = parseInt(rgbMatch[2]), b = parseInt(rgbMatch[3]);
       
-      // 1. Outer atmospheric glow (very large, very soft)
-      for (var g2 = 6; g2 >= 0; g2--) {
-        var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 120 + g2 * 30);
-        grad.addColorStop(0, 'rgba(' + r + ',' + g + ',' + b + ',' + (0.03 + g2 * 0.01) + ')');
-        grad.addColorStop(0.3, 'rgba(' + r + ',' + g + ',' + b + ',' + (0.02 + g2 * 0.005) + ')');
-        grad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = grad;
+      // 1. Soft outer halo (very faint, large radius)
+      var haloGrad = ctx.createRadialGradient(cx, cy, 80, cx, cy, 500);
+      haloGrad.addColorStop(0, 'rgba(' + r + ',' + g + ',' + b + ',0.015)');
+      haloGrad.addColorStop(0.3, 'rgba(' + r + ',' + g + ',' + b + ',0.01)');
+      haloGrad.addColorStop(0.6, 'rgba(' + r + ',' + g + ',' + b + ',0.005)');
+      haloGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = haloGrad;
+      ctx.fillRect(0, 0, 1024, 1024);
+      
+      // 2. Chromatic aberration - slightly offset color channels
+      for (var ch = 0; ch < 3; ch++) {
+        var chR = r, chG = g, chB = b;
+        if (ch === 0) { chR *= 1.0; chG *= 0.6; chB *= 0.3; }  // Red tint
+        else if (ch === 1) { chR *= 0.7; chG *= 1.0; chB *= 0.5; }  // Green tint
+        else { chR *= 0.5; chG *= 0.5; chB *= 1.0; }  // Blue tint
+        var offsetX = (ch - 1) * 2.5;
+        var offsetY = (ch - 1) * 1.5;
+        var abGrad = ctx.createRadialGradient(cx + offsetX, cy + offsetY, 0, cx + offsetX, cy + offsetY, 120);
+        abGrad.addColorStop(0, 'rgba(' + (chR|0) + ',' + (chG|0) + ',' + (chB|0) + ',0.08)');
+        abGrad.addColorStop(0.2, 'rgba(' + (chR|0) + ',' + (chG|0) + ',' + (chB|0) + ',0.04)');
+        abGrad.addColorStop(0.5, 'rgba(' + (chR|0) + ',' + (chG|0) + ',' + (chB|0) + ',0.02)');
+        abGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = abGrad;
         ctx.beginPath();
-        ctx.arc(cx, cy, 120 + g2 * 30, 0, Math.PI * 2);
+        ctx.arc(cx, cy, 120, 0, Math.PI * 2);
         ctx.fill();
       }
       
-      // 2. Diffraction spikes (4-point cross pattern)
-      var spikeLen = 200;
-      var spikeWidth = [1.5, 3, 1.8, 0.8, 2.5, 1.2];
-      for (var s = 0; s < 4; s++) {
-        var angle = s * Math.PI / 2 + 0.05;
-        for (var w = 0; w < 6; w++) {
-          ctx.beginPath();
-          ctx.moveTo(cx, cy);
-          var ex = cx + spikeLen * Math.cos(angle + (w - 2.5) * 0.008);
-          var ey = cy + spikeLen * Math.sin(angle + (w - 2.5) * 0.008);
-          ctx.lineTo(ex, ey);
-          var alpha = 0.08 - w * 0.01;
-          if (alpha > 0) {
-            ctx.strokeStyle = 'rgba(255,255,255,' + alpha + ')';
-            ctx.lineWidth = spikeWidth[w] * 1.5;
-            ctx.stroke();
-          }
-        }
-      }
+      // 3. Bright inner glow (smooth falloff)
+      var innerGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 200);
+      innerGrad.addColorStop(0, 'rgba(' + r + ',' + g + ',' + b + ',0.3)');
+      innerGrad.addColorStop(0.05, 'rgba(' + r + ',' + g + ',' + b + ',0.25)');
+      innerGrad.addColorStop(0.15, 'rgba(' + r + ',' + g + ',' + b + ',0.15)');
+      innerGrad.addColorStop(0.3, 'rgba(' + r + ',' + g + ',' + b + ',0.08)');
+      innerGrad.addColorStop(0.5, 'rgba(' + r + ',' + g + ',' + b + ',0.03)');
+      innerGrad.addColorStop(0.8, 'rgba(' + r + ',' + g + ',' + b + ',0.01)');
+      innerGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = innerGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 200, 0, Math.PI * 2);
+      ctx.fill();
       
-      // 3. Inner glow rings (Airy disk pattern - concentric rings with decreasing intensity)
-      for (var ri = 0; ri < 8; ri++) {
-        var radius = 10 + ri * 14;
-        var ringAlpha = 0.15 * Math.exp(-ri * 0.6) * Math.sin(ri * 1.2 + 1) * 0.5 + 0.5;
-        var grad2 = ctx.createRadialGradient(cx, cy, radius - 3, cx, cy, radius + 3);
-        var col2 = 'rgba(' + r + ',' + g + ',' + b + ',' + (ringAlpha * 0.1) + ')';
-        grad2.addColorStop(0, 'rgba(0,0,0,0)');
-        grad2.addColorStop(0.3, col2);
-        grad2.addColorStop(0.7, col2);
-        grad2.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = grad2;
-        ctx.beginPath();
-        ctx.arc(cx, cy, radius + 3, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      
-      // 4. Saturated core (bright white center bleeding into color)
+      // 4. Very bright core (hot white center, extremely small)
       ctx.shadowColor = 'rgba(' + r + ',' + g + ',' + b + ',1)';
-      ctx.shadowBlur = 60;
-      var coreGrad = ctx.createRadialGradient(cx-2, cy-2, 0, cx, cy, 35);
+      ctx.shadowBlur = 80;
+      var coreGrad = ctx.createRadialGradient(cx - 1, cy - 1, 0, cx, cy, 25);
       coreGrad.addColorStop(0, 'rgba(255,255,255,1)');
       coreGrad.addColorStop(0.05, 'rgba(255,255,255,0.95)');
-      coreGrad.addColorStop(0.15, 'rgba(' + r + ',' + g + ',' + b + ',0.9)');
-      coreGrad.addColorStop(0.3, 'rgba(' + r + ',' + g + ',' + b + ',0.6)');
-      coreGrad.addColorStop(0.5, 'rgba(' + r + ',' + g + ',' + b + ',0.3)');
-      coreGrad.addColorStop(0.7, 'rgba(' + r + ',' + g + ',' + b + ',0.1)');
+      coreGrad.addColorStop(0.15, 'rgba(255,255,255,0.7)');
+      coreGrad.addColorStop(0.3, 'rgba(' + r + ',' + g + ',' + b + ',0.5)');
+      coreGrad.addColorStop(0.5, 'rgba(' + r + ',' + g + ',' + b + ',0.2)');
+      coreGrad.addColorStop(0.7, 'rgba(0,0,0,0)');
       coreGrad.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = coreGrad;
       ctx.beginPath();
-      ctx.arc(cx, cy, 35, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 25, 0, Math.PI * 2);
       ctx.fill();
       
-      // 5. Ultra-bright central pixel
+      // 5. Central pinpoint (brightest point)
       ctx.shadowBlur = 0;
-      var hotGrad = ctx.createRadialGradient(cx-1, cy-1, 0, cx, cy, 6);
-      hotGrad.addColorStop(0, 'rgba(255,255,255,1)');
-      hotGrad.addColorStop(0.5, 'rgba(255,255,255,0.9)');
-      hotGrad.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = hotGrad;
+      var pointGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 5);
+      pointGrad.addColorStop(0, 'rgba(255,255,255,1)');
+      pointGrad.addColorStop(0.5, 'rgba(255,255,255,0.9)');
+      pointGrad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = pointGrad;
       ctx.beginPath();
-      ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 5, 0, Math.PI * 2);
       ctx.fill();
       
-      // 6. Tiny sparkles around (simulating lens flare / nearby stars)
-      for (var sp = 0; sp < 12; sp++) {
-        var sa = Math.random() * Math.PI * 2;
-        var sr = 15 + Math.random() * 80;
-        var sx = cx + sr * Math.cos(sa);
-        var sy = cy + sr * Math.sin(sa);
-        var ss = 0.5 + Math.random() * 2;
+      // 6. Diffraction spikes (very subtle cross pattern)
+      ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+      ctx.lineWidth = 1.5;
+      for (var s = 0; s < 4; s++) {
+        var angle = s * Math.PI / 2 + 0.02;
         ctx.beginPath();
-        ctx.arc(sx, sy, ss, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,' + (0.2 + Math.random() * 0.4) + ')';
-        ctx.fill();
+        ctx.moveTo(cx, cy);
+        var ex = cx + 350 * Math.cos(angle);
+        var ey = cy + 350 * Math.sin(angle);
+        ctx.lineTo(ex, ey);
+        ctx.stroke();
       }
-
-      return canvas;
-    }    const texCanvas = makeNeuronTexture(colStr, 0);
+      
+      return canvas;    const texCanvas = makeNeuronTexture(colStr, 0);
     const neuronTex = new THREE.CanvasTexture(texCanvas);
     neuronTex.needsUpdate = true;
     const neuronMat = new THREE.SpriteMaterial({
@@ -504,13 +507,6 @@ export class Scene3D {
     group.add(neuronSprite);
     this.nodeMeshes.push(neuronSprite);
     
-    // Fallback: small visible sphere for debugging
-    var fbGeo = new THREE.SphereGeometry(neuronSize * 0.8, 12, 12);
-    var fbMat = new THREE.MeshBasicMaterial({ color: color });
-    var fbMesh = new THREE.Mesh(fbGeo, fbMat);
-    fbMesh.userData.nodeId = node.id;
-    group.add(fbMesh);
-
     // ===== Outer corona =====
     const coronaCanvas = document.createElement('canvas');
     coronaCanvas.width = 96; coronaCanvas.height = 96;
@@ -744,23 +740,31 @@ export class Scene3D {
       this.nebula.rotation.x += 0.00004;
     }
 
-    // Twinkle stars with flame-like color animation
+    // Twinkle stars with organic flame-like animation
     for (const [id, obj] of this.nodeObjects) {
       var star = obj.userData.mesh;
       if (star) {
-        var twinkle = 0.80 + Math.sin(time * 1.3 + id * 2.1) * 0.12 + Math.sin(time * 3.7 + id * 1.3) * 0.08;
+        // Multi-layer twinkle for organic feel
+        var twinkle = 0.75 
+          + Math.sin(time * 1.3 + id * 2.1) * 0.12 
+          + Math.sin(time * 3.7 + id * 1.3) * 0.08
+          + Math.sin(time * 7.1 + id * 0.5) * 0.05;
         var baseScale = obj.userData.baseScale || 1;
         star.scale.set(baseScale * twinkle, baseScale * twinkle, 1);
-        star.material.opacity = 0.6 + Math.sin(time * 2.1 + id * 1.7) * 0.25;
+        // Opacity oscillates more dramatically
+        star.material.opacity = 0.5 + Math.sin(time * 2.1 + id * 1.7) * 0.3 + Math.sin(time * 5.3 + id * 0.8) * 0.2;
         
-        // Flame-like color shifting: cycle hue slightly
+        // Flame-like color shifting with multiple harmonics
         var color = obj.userData.color;
         if (color && obj.userData.baseHue !== undefined) {
-          var hueShift = Math.sin(time * 1.0 + id * 0.7) * 0.015 + Math.sin(time * 2.5 + id * 1.1) * 0.008;
+          var hueShift = Math.sin(time * 0.8 + id * 0.7) * 0.02 + Math.sin(time * 2.2 + id * 1.1) * 0.01;
           var newHue = obj.userData.baseHue + hueShift;
           if (newHue < 0) newHue += 1;
           if (newHue > 1) newHue -= 1;
-          color.setHSL(newHue, 0.9, 0.55 + Math.sin(time * 1.8 + id * 0.9) * 0.08);
+          // Also shift saturation and lightness for a "living flame" effect
+          var satShift = Math.sin(time * 1.5 + id * 1.2) * 0.08;
+          var lightShift = Math.sin(time * 1.8 + id * 0.9) * 0.12;
+          color.setHSL(newHue, 0.85 + satShift, 0.55 + lightShift);
           star.material.color.set(color);
         }
       }

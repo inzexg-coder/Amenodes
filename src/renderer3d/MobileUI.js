@@ -119,11 +119,12 @@ export class MobileUI {
     document.getElementById('mConnections').addEventListener('click', () => {
       connectMode = !connectMode;
       document.getElementById('mConnIndicator').classList.toggle('hidden', !connectMode);
+      document.getElementById('mConnections').classList.toggle('active', connectMode);
       if (!connectMode) {
         connectSource = null;
         document.getElementById('mConnIndicator').textContent = '● Tap source, then target node';
       }
-      this.scene.controls.enableRotate = !connectMode;
+      if (this.scene.controls) this.scene.controls.enableRotate = !connectMode;
     });
 
     // Auto Rotate toggle
@@ -242,7 +243,8 @@ export class MobileUI {
           connectSource = null;
           connectMode = false;
           document.getElementById('mConnIndicator').classList.add('hidden');
-          this.scene.controls.enableRotate = true;
+          document.getElementById('mConnections').classList.remove('active');
+          if (this.scene.controls) this.scene.controls.enableRotate = true;
         }
       } else {
         this._showNodeConfig(node);
