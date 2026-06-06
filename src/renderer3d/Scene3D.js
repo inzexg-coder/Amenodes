@@ -101,25 +101,10 @@ export class Scene3D {
   }
 
   async _ensureThreeJS() {
-    if (window.THREE && window.THREE.Scene) {
-      this.THREE = window.THREE;
-      return;
+    while (!window.THREE || typeof window.THREE.OrbitControls === 'undefined') {
+      await new Promise(r => setTimeout(r, 100));
     }
-    return new Promise((resolve) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-      script.onload = () => {
-        // Load OrbitControls
-        const ctrlScript = document.createElement('script');
-        ctrlScript.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js';
-        ctrlScript.onload = () => {
-          this.THREE = window.THREE;
-          resolve();
-        };
-        document.head.appendChild(ctrlScript);
-      };
-      document.head.appendChild(script);
-    });
+    this.THREE = window.THREE;
   }
 
   _createStarField() {
