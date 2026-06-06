@@ -402,7 +402,8 @@ export class Scene3D {
     const colDim = 'rgba(' + (c.r*255|0) + ',' + (c.g*255|0) + ',' + (c.b*255|0) + ',0.3)';
 
     // ===== Neuron body texture =====
-          // Ultra-realistic star texture - point-like with smooth glow
+    function makeNeuronTexture(col, dendriteCount) {
+      // Ultra-realistic star texture - point-like with smooth glow
       var canvas = document.createElement('canvas');
       canvas.width = 1024;
       canvas.height = 1024;
@@ -495,7 +496,8 @@ export class Scene3D {
         ctx.stroke();
       }
       
-      return canvas;    const texCanvas = makeNeuronTexture(colStr, 0);
+      return canvas;
+    }    const texCanvas = makeNeuronTexture(colStr, 0);
     const neuronTex = new THREE.CanvasTexture(texCanvas);
     neuronTex.needsUpdate = true;
     const neuronMat = new THREE.SpriteMaterial({
