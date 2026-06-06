@@ -413,7 +413,8 @@ export class Scene3D {
     label.position.y = -(size + 0.9);
     label.scale.set(2.8, 0.95, 1);
     label.visible = true;
-    group.add(label); = { mesh: sphere, label, color: c, nodeType: node.type, nodeId: node.id };
+    group.add(label);
+    group.userData = { mesh: sphere, label, color: c, nodeType: node.type, nodeId: node.id };
     this.nodeObjects.set(node.id, group);
     this.scene.add(group);
   }
