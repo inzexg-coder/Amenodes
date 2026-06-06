@@ -408,6 +408,7 @@ export class Scene3D {
 
     const texCanvas = makeNeuronTexture(colStr, dendrites);
     const neuronTex = new THREE.CanvasTexture(texCanvas);
+    neuronTex.needsUpdate = true;
     const neuronMat = new THREE.SpriteMaterial({
       map: neuronTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 1.0
     });
@@ -416,6 +417,13 @@ export class Scene3D {
     neuronSprite.userData.nodeId = node.id;
     group.add(neuronSprite);
     this.nodeMeshes.push(neuronSprite);
+    
+    // Fallback: small visible sphere for debugging
+    var fbGeo = new THREE.SphereGeometry(neuronSize * 0.8, 12, 12);
+    var fbMat = new THREE.MeshBasicMaterial({ color: color });
+    var fbMesh = new THREE.Mesh(fbGeo, fbMat);
+    fbMesh.userData.nodeId = node.id;
+    group.add(fbMesh);
 
     // ===== Outer corona =====
     const coronaCanvas = document.createElement('canvas');
