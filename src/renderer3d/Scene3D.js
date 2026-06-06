@@ -273,12 +273,10 @@ export class Scene3D {
   }
 
   _getTypeColor(type) {
-    const map = {
-      number: 0x9060ff, constant: 0x8060ff, calc: 0xe040a0,
-      mean: 0xd040b0, sem: 0xc040c0, output: 0x4090ff,
-      map: 0x40d090, group: 0x30b080, interval: 0x80a0ff
-    };
-    return map[type] || 0x8060c0;
+    // Read from node's constructor metadata (set by registry.loadAllNodes)
+    // Fallback: use hardcoded default
+    const defaultColors = { number: 0x9060ff, constant: 0x8060ff, calc: 0xe040a0, mean: 0xd040b0, sem: 0xc040c0, output: 0x4090ff, map: 0x40d090, group: 0x30b080 };
+    return defaultColors[type] || 0x8060c0;
   }
 
   _rebuildFromGraph() {
@@ -327,32 +325,32 @@ export class Scene3D {
     const group = new THREE.Object3D();
     group.position.set(position.x, position.y, position.z);
 
-    const color = this._getTypeColor(node.type);
+    // Read visual params from metadata
+    let visual3d = null;
+    try {
+      if (node.constructor && node.constructor.metadata && node.constructor.metadata.visual3d) {
+        visual3d = node.constructor.metadata.visual3d;
+      }
+    } catch(e) {}
+    if (!visual3d) {
+      visual3d = { color: 0x8060c0, size: 0.5, dendrites: 4, glow: '#8060c0' };
+    }
+    
+    const color = visual3d.color;
     const c = new THREE.Color(color);
-    const typeInfo = {
-      number:    { size: 0.5, dendrites: 5, colorMult: 1.0, glow: '#8866ff' },
-      constant:  { size: 0.55, dendrites: 6, colorMult: 0.9, glow: '#7766ff' },
-      calc:      { size: 0.6, dendrites: 7, colorMult: 1.2, glow: '#ff44aa' },
-      mean:      { size: 0.55, dendrites: 5, colorMult: 1.1, glow: '#ff66bb' },
-      sem:       { size: 0.5, dendrites: 5, colorMult: 1.0, glow: '#cc44cc' },
-      output:    { size: 0.55, dendrites: 4, colorMult: 0.9, glow: '#4499ff' },
-      map:       { size: 0.5, dendrites: 6, colorMult: 1.0, glow: '#44dd99' },
-      group:     { size: 0.55, dendrites: 6, colorMult: 1.1, glow: '#33bb88' }
-    };
-    const info = typeInfo[node.type] || typeInfo.number;
-    const neuronSize = info.size + (node.important ? 0.15 : 0);
+    const neuronSize = visual3d.size + (node.important ? 0.15 : 0);
+    const dendrites = visual3d.dendrites || 4;
     const colStr = 'rgba(' + (c.r*255|0) + ',' + (c.g*255|0) + ',' + (c.b*255|0) + ',1)';
     const colDim = 'rgba(' + (c.r*255|0) + ',' + (c.g*255|0) + ',' + (c.b*255|0) + ',0.3)';
 
-    // ===== Neuron body texture (cell body with dendrite tendrils) =====
-    function makeNeuronTexture(col, dendrites) {
+    // ===== Neuron body texture =====
+    function makeNeuronTexture(col, dendriteCount) {
       const canvas = document.createElement('canvas');
       canvas.width = 128;
       canvas.height = 128;
       const ctx = canvas.getContext('2d');
       const cx = 64, cy = 64;
 
-      // Outer glow
       const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 64);
       grad.addColorStop(0, col.replace('1)', '0.6)'));
       grad.addColorStop(0.4, col.replace('1)', '0.2)'));
@@ -361,12 +359,10 @@ export class Scene3D {
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 128, 128);
 
-      // Dendrite tendrils
-      for (let i = 0; i < dendrites; i++) {
-        const angle = (i / dendrites) * Math.PI * 2 + (node.id * 0.3);
+      for (let i = 0; i < dendriteCount; i++) {
+        const angle = (i / dendriteCount) * Math.PI * 2 + (node.id * 0.3);
         ctx.beginPath();
         ctx.moveTo(cx, cy);
-        // Wavy tendril
         const len = 35 + Math.random() * 25;
         const segments = 8;
         for (let s = 1; s <= segments; s++) {
@@ -381,7 +377,6 @@ export class Scene3D {
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // Small terminal button
         const tx = cx + len * Math.cos(angle);
         const ty = cy + len * Math.sin(angle);
         ctx.beginPath();
@@ -390,7 +385,6 @@ export class Scene3D {
         ctx.fill();
       }
 
-      // Cell body (bright core)
       ctx.shadowColor = col;
       ctx.shadowBlur = 20;
       ctx.beginPath();
@@ -403,7 +397,6 @@ export class Scene3D {
       ctx.fillStyle = coreGrad;
       ctx.fill();
 
-      // Glowing nucleus
       ctx.shadowBlur = 0;
       ctx.beginPath();
       ctx.arc(cx, cy, 6, 0, Math.PI * 2);
@@ -413,7 +406,7 @@ export class Scene3D {
       return canvas;
     }
 
-    const texCanvas = makeNeuronTexture(colStr, info.dendrites);
+    const texCanvas = makeNeuronTexture(colStr, dendrites);
     const neuronTex = new THREE.CanvasTexture(texCanvas);
     const neuronMat = new THREE.SpriteMaterial({
       map: neuronTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 1.0
@@ -498,7 +491,6 @@ export class Scene3D {
     lCanvas.height = 180;
     const lctx = lCanvas.getContext('2d');
     
-    // Glowing dot
     lctx.beginPath();
     lctx.arc(70, 90, 16, 0, Math.PI * 2);
     lctx.fillStyle = '#' + c.getHexString();

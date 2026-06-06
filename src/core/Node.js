@@ -97,6 +97,10 @@ export class Node {
     return 80;
   }
 
+  getConfigHTML() {
+    return '<div class="info-row"><span class="info-label">Value</span><span class="info-value dim">—</span></div>';
+  }
+
   createBaseDiv(graph, renderer, headerClass = 'node-header') {
     const div = document.createElement('div');
     div.className = 'node';

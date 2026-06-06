@@ -14,6 +14,7 @@ export const metadata = {
   canHaveOutgoingEdges: true,
   allowedInputTypes: [],
   defaultValue: []
+  visual3d: { color: 0x30b080, size: 0.55, dendrites: 6, glow: '#33bb88' },
 };
 
 export class GroupNode extends Node {
@@ -37,6 +38,44 @@ export class GroupNode extends Node {
   getMinHeight() {
     const valuesCount = this.values?.length ?? 1;
     return Math.max(80, 80 + valuesCount * 40);
+  }
+
+  bindConfig(doc, node, app) {
+    var groupAdd = doc.getElementById('cfgGroupAdd');
+    if (groupAdd) groupAdd.onclick = function() {
+      if (!node.values) node.values = [];
+      node.values.push({ val: 0, name: '' });
+      app.mobileUI._showNodeConfig(node);
+      app.graph.setDirty(true);
+    };
+    if (node.values) {
+      node.values.forEach(function(v, idx) {
+        var valInp = doc.getElementById('cfgGVal_' + idx);
+        if (valInp) valInp.onchange = function() { node.values[idx].val = parseFloat(this.value) || 0; app.graph.reevaluateAll(); app.scene.refresh(); app.graph.setDirty(true); };
+        var nameInp = doc.getElementById('cfgGName_' + idx);
+        if (nameInp) nameInp.onchange = function() { node.values[idx].name = this.value; app.graph.setDirty(true); };
+        var delBtn = doc.getElementById('cfgGDel_' + idx);
+        if (delBtn) delBtn.onclick = function() { node.values.splice(idx, 1); app.mobileUI._showNodeConfig(node); app.graph.reevaluateAll(); app.scene.refresh(); app.graph.setDirty(true); };
+      });
+    }
+  }
+
+  getConfigHTML() {
+    var vals = this.values || [];
+    var html = '<div class="info-field"><label class="info-label">Values (' + vals.length + ')</label><div class="info-list" id="cfgGroupList">';
+    for (var i = 0; i < vals.length; i++) {
+      var v = vals[i];
+      html += '<div class="info-list-item">';
+      html += '<span class="info-list-idx">#' + (i+1) + '</span>';
+      html += '<input class="info-input-sm" id="cfgGVal_' + i + '" type="number" step="any" value="' + (v.val ?? 0) + '" placeholder="val" />';
+      html += '<input class="info-input-sm" id="cfgGName_' + i + '" type="text" value="' + (v.name ?? '') + '" placeholder="name" style="flex:0.6" />';
+      html += '<button class="info-list-del" id="cfgGDel_' + i + '">✕</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '<button class="cfg-btn cfg-btn-add" id="cfgGroupAdd">+ Add Value</button>';
+    html += '</div>';
+    return html;
   }
 
   createDOM(graph, renderer) {

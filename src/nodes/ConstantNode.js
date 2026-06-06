@@ -14,6 +14,7 @@ export const metadata = {
   canHaveOutgoingEdges: true,
   allowedInputTypes: [],
   defaultValue: 0
+  visual3d: { color: 0x8060ff, size: 0.6, dendrites: 6, glow: '#7766ff' },
 };
 
 export class ConstantNode extends Node {
@@ -73,5 +74,14 @@ export class ConstantNode extends Node {
     }
     
     return node;
+  }
+
+  getConfigHTML() {
+    return '<div class="info-field"><label class="info-label">Value</label><input class="info-input" id="cfgValue" type="number" step="any" value="' + (this.value ?? 0) + '" /></div>';
+  }
+
+  bindConfig(doc, node, app) {
+    var inp = doc.getElementById('cfgValue');
+    if (inp) inp.onchange = function() { node.value = parseFloat(this.value) || 0; app.graph.reevaluateAll(); app.scene.refresh(); app.graph.setDirty(true); };
   }
 }

@@ -14,6 +14,7 @@ export const metadata = {
   allowedInputTypes: ['num', 'array', 'uncert'],
   defaultValue: null,
   isCategory: false
+  visual3d: { color: 0xe040a0, size: 0.6, dendrites: 7, glow: '#ff44aa' },
 };
 
 export class CalcNode extends Node {
@@ -377,5 +378,18 @@ export class CalcNode extends Node {
     };
 
     return div;
+  }
+
+  bindConfig(doc, node, app) {
+    doc.querySelectorAll('[data-op]').forEach(function(btn) {
+      btn.onclick = function() {
+        node.operation = this.dataset.op;
+        doc.querySelectorAll('[data-op]').forEach(function(b) { b.classList.remove('active'); });
+        this.classList.add('active');
+        app.graph.reevaluateAll();
+        app.scene.refresh();
+        app.graph.setDirty(true);
+      };
+    });
   }
 }

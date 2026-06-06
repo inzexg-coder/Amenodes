@@ -13,6 +13,7 @@ export const metadata = {
   canHaveOutgoingEdges: true,
   allowedInputTypes: ['array', 'list', 'wlist', 'num'],
   defaultValue: null
+  visual3d: { color: 0xc040c0, size: 0.55, dendrites: 5, glow: '#cc44cc' },
 };
 
 export class SEMNode extends Node {
@@ -96,5 +97,15 @@ export class SEMNode extends Node {
     };
     
     return div;
+  }
+
+  getConfigHTML() {
+    try {
+      var val = this.getValue();
+      if (val && val.length > 0) {
+        return '<div class="info-row"><span class="info-label">Result</span><span class="info-value">' + val.map(function(x) { return typeof x === 'number' ? x.toFixed(6) : x; }).join(', ') + '</span></div>';
+      }
+    } catch(e) {}
+    return '<div class="info-row"><span class="info-label">Result</span><span class="info-value dim">—</span></div>';
   }
 }

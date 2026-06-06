@@ -385,126 +385,32 @@ export class MobileUI {
   }
   
   _getNodeConfigHTML(node) {
-    const type = node.type;
-    const parts = [];
-    
-    // Value display (common)
+    // Use node's own getConfigHTML method if available
+    if (typeof node.getConfigHTML === 'function') {
+      try {
+        return node.getConfigHTML();
+      } catch(e) {
+        console.warn('getConfigHTML error:', e);
+      }
+    }
+    // Fallback: show basic info
+    var html = '';
     try {
-      const val = node.getValue();
+      var val = node.getValue();
       if (val && val.length > 0) {
-        const valStr = val.map(x => typeof x === 'number' ? x.toFixed(4) : String(x)).join(', ');
-        parts.push('<div class="info-row"><span class="info-label">Value</span><span class="info-value">' + valStr.slice(0, 50) + '</span></div>');
+        var valStr = val.map(function(x) { return typeof x === 'number' ? x.toFixed(4) : String(x); }).join(', ');
+        html += '<div class="info-row"><span class="info-label">Value</span><span class="info-value">' + valStr.slice(0, 50) + '</span></div>';
       } else {
-        parts.push('<div class="info-row"><span class="info-label">Value</span><span class="info-value dim">—</span></div>');
+        html += '<div class="info-row"><span class="info-label">Value</span><span class="info-value dim">—</span></div>';
       }
     } catch(e) {
-      parts.push('<div class="info-row"><span class="info-label">Value</span><span class="info-value dim">—</span></div>');
+      html += '<div class="info-row"><span class="info-label">Value</span><span class="info-value dim">—</span></div>';
     }
-    
-    // Connection count
-    const inEdges = this.graph.getIncomingEdges ? this.graph.getIncomingEdges(node.id).length : 0;
-    const outEdges = this.graph.getOutgoingEdges ? this.graph.getOutgoingEdges(node.id).length : 0;
-    parts.push('<div class="info-row"><span class="info-label">Connections</span><span class="info-value">IN: ' + inEdges + ' OUT: ' + outEdges + '</span></div>');
-    
-    // Type-specific controls
-    if (type === 'number' || type === 'constant') {
-      const currentVal = node.value !== undefined ? node.value : 0;
-      parts.push('<div class="info-field">');
-      parts.push('<label class="info-label">Value</label>');
-      parts.push('<input class="info-input" id="cfgValue" type="number" step="any" value="' + currentVal + '" />');
-      parts.push('</div>');
-    }
-    else if (type === 'calc') {
-      const operations = [
-        { id: 'div3', label: '÷3' },
-        { id: 'div_sqrt12', label: '÷√12' },
-        { id: 'quadratic_sum', label: '√Σx²' },
-        { id: 'multiply_by_constant', label: '× k (2in)' },
-        { id: 'sqrt_sum_sq', label: '√(a²+b²)' }
-      ];
-      parts.push('<div class="info-field">');
-      parts.push('<label class="info-label">Operation</label>');
-      parts.push('<div class="info-btn-group">');
-      for (const op of operations) {
-        const active = node.operation === op.id ? ' active' : '';
-        parts.push('<button class="cfg-btn' + active + '" data-op="' + op.id + '">' + op.label + '</button>');
-      }
-      parts.push('</div></div>');
-      // Result
-      if (node.resultStr && node.resultStr !== '--') {
-        parts.push('<div class="info-row"><span class="info-label">Result</span><span class="info-value">' + node.resultStr.slice(0, 50) + '</span></div>');
-      }
-    }
-    else if (type === 'group') {
-      const vals = node.values || [];
-      parts.push('<div class="info-field">');
-      parts.push('<label class="info-label">Values (' + vals.length + ')</label>');
-      parts.push('<div class="info-list" id="cfgGroupList">');
-      for (let i = 0; i < vals.length; i++) {
-        const v = vals[i];
-        parts.push('<div class="info-list-item">');
-        parts.push('<span class="info-list-idx">#' + (i+1) + '</span>');
-        parts.push('<input class="info-input-sm" id="cfgGVal_' + i + '" type="number" step="any" value="' + (v.val ?? 0) + '" placeholder="val" />');
-        parts.push('<input class="info-input-sm" id="cfgGName_' + i + '" type="text" value="' + (v.name ?? '') + '" placeholder="name" style="flex:0.6" />');
-        parts.push('<button class="info-list-del" id="cfgGDel_' + i + '">✕</button>');
-        parts.push('</div>');
-      }
-      parts.push('</div>');
-      parts.push('<button class="cfg-btn cfg-btn-add" id="cfgGroupAdd">+ Add Value</button>');
-      parts.push('</div>');
-    }
-    else if (type === 'map') {
-      const maps = node.maps || [];
-      parts.push('<div class="info-field">');
-      parts.push('<label class="info-label">Mappings (' + maps.length + ')</label>');
-      parts.push('<div class="info-list" id="cfgMapList">');
-      for (let i = 0; i < maps.length; i++) {
-        const m = maps[i];
-        parts.push('<div class="info-list-item">');
-        parts.push('<span class="info-list-idx">#' + (i+1) + '</span>');
-        parts.push('<input class="info-input-sm" id="cfgMX_' + i + '" type="number" step="any" value="' + (m.x ?? 0) + '" placeholder="from" style="flex:0.8" />');
-        parts.push('<span style="color:rgba(160,140,220,0.3)">→</span>');
-        parts.push('<input class="info-input-sm" id="cfgMY_' + i + '" type="number" step="any" value="' + (m.y ?? 0) + '" placeholder="to" style="flex:0.8" />');
-        parts.push('<button class="info-list-del" id="cfgMDel_' + i + '">✕</button>');
-        parts.push('</div>');
-      }
-      parts.push('</div>');
-      parts.push('<button class="cfg-btn cfg-btn-add" id="cfgMapAdd">+ Add Mapping</button>');
-      parts.push('</div>');
-      // Unmapped mode
-      parts.push('<div class="info-field">');
-      parts.push('<label class="info-label">Unmapped Mode</label>');
-      parts.push('<div class="info-btn-group">');
-      const umodes = ['passthrough', 'drop'];
-      for (const um of umodes) {
-        const active = (node.unmappedMode || 'passthrough') === um ? ' active' : '';
-        parts.push('<button class="cfg-btn' + active + '" data-umode="' + um + '">' + um + '</button>');
-      }
-      parts.push('</div></div>');
-    }
-    else if (type === 'output') {
-      try {
-        const val = node.getValue();
-        if (val && val.length > 0) {
-          parts.push('<div class="info-field"><div class="info-output-display">' + val.map(x => typeof x === 'number' ? x.toFixed(6) : String(x)).join('<br>') + '</div></div>');
-        }
-      } catch(e) {}
-    }
-    else if (type === 'mean' || type === 'sem') {
-      try {
-        const val = node.getValue();
-        if (val && val.length > 0) {
-          parts.push('<div class="info-row"><span class="info-label">Result</span><span class="info-value">' + val.map(x => typeof x === 'number' ? x.toFixed(6) : String(x)).join(', ') + '</span></div>');
-        }
-      } catch(e) {}
-    }
-    
-    return parts.join('\n');
+    return html;
   }
   
   _bindNodeConfig(node) {
     this._configNode = node;
-    const type = node.type;
     
     // Close button
     const closeBtn = document.getElementById('infoClose');
@@ -538,9 +444,19 @@ export class MobileUI {
       };
     }
     
+    // Delegate type-specific binding to node if available
+    if (typeof node.bindConfig === 'function') {
+      try {
+        node.bindConfig(document, node, this.app);
+      } catch(e) {
+        console.warn('bindConfig error:', e);
+      }
+    }
+    
+    // ----- Type-agnostic fallback bindings -----
     // Number/Constant value
     const valInput = document.getElementById('cfgValue');
-    if (valInput) {
+    if (valInput && typeof node.bindConfig !== 'function') {
       valInput.onchange = () => {
         node.value = parseFloat(valInput.value) || 0;
         this.graph.reevaluateAll();
@@ -549,117 +465,126 @@ export class MobileUI {
       };
     }
     
-    // Calc operation
-    const opBtns = document.querySelectorAll('[data-op]');
-    opBtns.forEach(btn => {
-      btn.onclick = () => {
-        node.operation = btn.dataset.op;
-        opBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        this.graph.reevaluateAll();
-        this.scene.refresh();
-        this.graph.setDirty(true);
-      };
-    });
-    
-    // Map unmapped mode
-    document.querySelectorAll('[data-umode]').forEach(btn => {
-      btn.onclick = () => {
-        node.unmappedMode = btn.dataset.umode;
-        document.querySelectorAll('[data-umode]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        this.graph.reevaluateAll();
-        this.scene.refresh();
-        this.graph.setDirty(true);
-      };
-    });
-    
-    // Map add
-    const mapAdd = document.getElementById('cfgMapAdd');
-    if (mapAdd) {
-      mapAdd.onclick = () => {
-        if (!node.maps) node.maps = [];
-        node.maps.push({ x: 0, y: 0 });
-        this._showNodeConfig(node);
-        this.graph.setDirty(true);
-      };
+    // Calc operation (only if no custom bindConfig)
+    if (typeof node.bindConfig !== 'function') {
+      document.querySelectorAll('[data-op]').forEach(function(btn) {
+        btn.onclick = function() {
+          node.operation = this.dataset.op;
+          document.querySelectorAll('[data-op]').forEach(function(b) { b.classList.remove('active'); });
+          this.classList.add('active');
+          this._app.graph.reevaluateAll();
+          this._app.scene.refresh();
+          this._app.graph.setDirty(true);
+        }.bind(btn);
+        btn._app = this;
+      }.bind(this));
     }
     
-    // Map edits
-    if (node.maps) {
-      node.maps.forEach((m, idx) => {
-        const xInp = document.getElementById('cfgMX_' + idx);
-        if (xInp) {
-          xInp.onchange = () => {
-            node.maps[idx].x = parseFloat(xInp.value) || 0;
-            this.graph.reevaluateAll();
-            this.scene.refresh();
-            this.graph.setDirty(true);
-          };
-        }
-        const yInp = document.getElementById('cfgMY_' + idx);
-        if (yInp) {
-          yInp.onchange = () => {
-            node.maps[idx].y = parseFloat(yInp.value) || 0;
-            this.graph.reevaluateAll();
-            this.scene.refresh();
-            this.graph.setDirty(true);
-          };
-        }
-        const delBtn = document.getElementById('cfgMDel_' + idx);
-        if (delBtn) {
-          delBtn.onclick = () => {
-            node.maps.splice(idx, 1);
-            this._showNodeConfig(node);
-            this.graph.reevaluateAll();
-            this.scene.refresh();
-            this.graph.setDirty(true);
-          };
-        }
-      });
-    }
-    
-    // Group values
-    const groupAdd = document.getElementById('cfgGroupAdd');
-    if (groupAdd) {
-      groupAdd.onclick = () => {
-        if (!node.values) node.values = [];
-        node.values.push({ val: 0, name: '' });
-        this._showNodeConfig(node);
-        this.graph.setDirty(true);
-      };
-    }
-    
-    // Group value changes
-    if (node.values) {
-      node.values.forEach((v, idx) => {
-        const valInp = document.getElementById('cfgGVal_' + idx);
-        if (valInp) {
-          valInp.onchange = () => {
-            node.values[idx].val = parseFloat(valInp.value) || 0;
-            this.graph.reevaluateAll();
-            this.scene.refresh();
-            this.graph.setDirty(true);
-          };
-        }
-        const nameInp = document.getElementById('cfgGName_' + idx);
-        if (nameInp) {
-          nameInp.onchange = () => {
-            node.values[idx].name = nameInp.value;
-            this.graph.setDirty(true);
-          };
-        }
-        const delBtn = document.getElementById('cfgGDel_' + idx);
-        if (delBtn) {
-          delBtn.onclick = () => {
-            node.values.splice(idx, 1);
-            this._showNodeConfig(node);
-            this.graph.reevaluateAll();
-            this.scene.refresh();
-            this.graph.setDirty(true);
-          };
-        }
-      });
+    // Map mode
+    if (typeof node.bindConfig !== 'function') {
+      document.querySelectorAll('[data-umode]').forEach(function(btn) {
+        btn.onclick = function() {
+          node.unmappedMode = this.dataset.umode;
+          document.querySelectorAll('[data-umode]').forEach(function(b) { b.classList.remove('active'); });
+          this.classList.add('active');
+          this._app.graph.reevaluateAll();
+          this._app.scene.refresh();
+          this._app.graph.setDirty(true);
+        }.bind(btn);
+        btn._app = this;
+      }.bind(this));
+      
+      // Map add
+      const mapAdd = document.getElementById('cfgMapAdd');
+      if (mapAdd) {
+        mapAdd.onclick = function() {
+          if (!node.maps) node.maps = [];
+          node.maps.push({ x: 0, y: 0 });
+          this._showNodeConfig(node);
+          this.graph.setDirty(true);
+        }.bind(this);
+      }
+      
+      // Map edits
+      if (node.maps) {
+        node.maps.forEach(function(m, idx) {
+          var xInp = document.getElementById('cfgMX_' + idx);
+          if (xInp) {
+            xInp.onchange = function() {
+              node.maps[idx].x = parseFloat(xInp.value) || 0;
+              this._app.graph.reevaluateAll();
+              this._app.scene.refresh();
+              this._app.graph.setDirty(true);
+            }.bind(xInp);
+            xInp._app = this;
+          }
+          var yInp = document.getElementById('cfgMY_' + idx);
+          if (yInp) {
+            yInp.onchange = function() {
+              node.maps[idx].y = parseFloat(yInp.value) || 0;
+              this._app.graph.reevaluateAll();
+              this._app.scene.refresh();
+              this._app.graph.setDirty(true);
+            }.bind(yInp);
+            yInp._app = this;
+          }
+          var delBtn = document.getElementById('cfgMDel_' + idx);
+          if (delBtn) {
+            delBtn.onclick = function() {
+              node.maps.splice(idx, 1);
+              this._app._showNodeConfig(node);
+              this._app.graph.setDirty(true);
+            }.bind(delBtn);
+            delBtn._app = this;
+          }
+        }, this);
+      }
+      
+      // Group add
+      const groupAdd = document.getElementById('cfgGroupAdd');
+      if (groupAdd) {
+        groupAdd.onclick = function() {
+          if (!node.values) node.values = [];
+          node.values.push({ val: 0, name: '' });
+          this._showNodeConfig(node);
+          this.graph.setDirty(true);
+        }.bind(this);
+      }
+      
+      // Group edits
+      if (node.values) {
+        node.values.forEach(function(v, idx) {
+          var valInp = document.getElementById('cfgGVal_' + idx);
+          if (valInp) {
+            valInp.onchange = function() {
+              node.values[idx].val = parseFloat(valInp.value) || 0;
+              this._app.graph.reevaluateAll();
+              this._app.scene.refresh();
+              this._app.graph.setDirty(true);
+            }.bind(valInp);
+            valInp._app = this;
+          }
+          var nameInp = document.getElementById('cfgGName_' + idx);
+          if (nameInp) {
+            nameInp.onchange = function() {
+              node.values[idx].name = nameInp.value;
+              this._app.graph.setDirty(true);
+            }.bind(nameInp);
+            nameInp._app = this;
+          }
+          var delBtn = document.getElementById('cfgGDel_' + idx);
+          if (delBtn) {
+            delBtn.onclick = function() {
+              node.values.splice(idx, 1);
+              this._app._showNodeConfig(node);
+              this._app.graph.reevaluateAll();
+              this._app.scene.refresh();
+              this._app.graph.setDirty(true);
+            }.bind(delBtn);
+            delBtn._app = this;
+          }
+        }, this);
+      }
     }
   }
   

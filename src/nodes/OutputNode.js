@@ -15,6 +15,7 @@ export const metadata = {
   canHaveOutgoingEdges: false,
   allowedInputTypes: ['num', 'array', 'uncert', 'list', 'wlist'],
   defaultValue: null
+  visual3d: { color: 0x4090ff, size: 0.55, dendrites: 4, glow: '#4499ff' },
 };
 
 export class OutputNode extends Node {
@@ -44,6 +45,20 @@ export class OutputNode extends Node {
 
   getMinHeight() {
     return Math.max(80, 80 + this.rows.length * 35);
+  }
+
+  getConfigHTML() {
+    try {
+      var val = this.getValue();
+      if (val && val.length > 0) {
+        var lines = [];
+        for (var i = 0; i < val.length; i++) {
+          lines.push(typeof val[i] === 'number' ? val[i].toFixed(6) : String(val[i]));
+        }
+        return '<div class="info-field"><div class="info-output-display">' + lines.join('<br>') + '</div></div>';
+      }
+    } catch(e) {}
+    return '<div class="info-row"><span class="info-label">Output</span><span class="info-value dim">—</span></div>';
   }
 
   updateDisplay(graph) {
@@ -136,5 +151,9 @@ export class OutputNode extends Node {
     };
     
     return div;
+  }
+
+  bindConfig(doc, node, app) {
+    // Output is read-only, no interactive config
   }
 }
