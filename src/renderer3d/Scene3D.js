@@ -228,24 +228,32 @@ export class Scene3D {
   }
 
   _selectNode(nodeId) {
-    this._deselectNode();
+    // Only deselect if different node and no modal is shown
+    if (this.selectedNode && this.selectedNode.id !== nodeId) {
+      this._deselectNode();
+    } else if (this.selectedNode && this.selectedNode.id === nodeId) {
+      // Same node tapped again - just re-emit
+      if (this.eventBus && this.eventBus.emit) {
+        this.eventBus.emit('nodeSelect', this.selectedNode);
+      }
+      return;
+    }
     const node = this.graph.getNode(nodeId);
     if (!node) return;
     this.selectedNode = node;
     const obj = this.nodeObjects.get(nodeId);
     if (obj) {
-      // Star sprite - scale up and brighten
       const star = obj.userData.mesh;
       if (star) {
-        star.scale.set(3.2, 3.2, 1);
+        star.scale.set(3.5, 3.5, 1);
         star.material.opacity = 1.0;
       }
-      // Glow sprites - expand
+      // Highlight all sprites
       obj.children.forEach(c => {
-        if (c.isSprite && c.material && c.material.opacity !== undefined && c.userData.isOrbit) return;
-        if (c.isSprite && c.material && c.material.map) {
-          if (c.scale.x > 4) return; // skip big glows
-          c.scale.set(c.scale.x * 1.4, c.scale.y * 1.4, 1);
+        if (c.isSprite && c.material && c.userData.isOrbit) return;
+        if (c.isSprite && c.material) {
+          if (c.scale.x > 5) return;
+          c.scale.set(c.scale.x * 1.5, c.scale.y * 1.5, 1);
           c.material.opacity = 1.0;
         }
       });
@@ -253,7 +261,7 @@ export class Scene3D {
       if (label) {
         label.visible = true;
         label.material.opacity = 1.0;
-        label.scale.set(3.2, 1.1, 1);
+        label.scale.set(3.5, 1.2, 1);
       }
     }
     if (this.eventBus && this.eventBus.emit) {
@@ -304,10 +312,17 @@ export class Scene3D {
   }
 
   _getTypeColor(type) {
-    // Read from node's constructor metadata (set by registry.loadAllNodes)
-    // Fallback: use hardcoded default
-    const defaultColors = { number: 0x9060ff, constant: 0x8060ff, calc: 0xe040a0, mean: 0xd040b0, sem: 0xc040c0, output: 0x4090ff, map: 0x40d090, group: 0x30b080 };
-    return defaultColors[type] || 0x8060c0;
+    // All nodes are stars on the stellar spectrum (orange to blue-white)
+    // based on a hash of the type name
+    var hash = 0;
+    for (var i = 0; i < type.length; i++) {
+      hash = ((hash << 5) - hash) + type.charCodeAt(i);
+    }
+    // Map to hue: 0.03 (orange) to 0.6 (blue)
+    var hue = 0.03 + (Math.abs(hash) % 100) / 100 * 0.57;
+    var col = new THREE.Color();
+    col.setHSL(hue, 0.9, 0.55);
+    return col.getHex();
   }
 
   _rebuildFromGraph() {
@@ -368,7 +383,7 @@ export class Scene3D {
       visual3d = { color: 0x8060c0, size: 0.5, dendrites: 4, glow: '#8060c0' };
     }
     
-    const color = visual3d.color;
+    const color = this._getTypeColor(node.type);
     const c = new THREE.Color(color);
     const neuronSize = visual3d.size + (node.important ? 0.15 : 0);
     const dendrites = visual3d.dendrites || 4;
@@ -601,7 +616,8 @@ export class Scene3D {
     label.scale.set(2.2, 0.8, 1);
     label.visible = true;
     group.add(label);
-    group.userData = { mesh: neuronSprite, label, color: c, nodeType: node.type, nodeId: node.id };
+    var scale = neuronSize * 4.0;
+    group.userData = { mesh: neuronSprite, label, color: c, nodeType: node.type, nodeId: node.id, baseScale: scale };
     this.nodeObjects.set(node.id, group);
     this.scene.add(group);
   }
@@ -715,18 +731,25 @@ export class Scene3D {
       this.nebula.rotation.x += 0.00004;
     }
 
-    // Pulse neurons
+    // Twinkle stars (animate all neurons)
     for (const [id, obj] of this.nodeObjects) {
-      const mesh = obj.userData.mesh;
-      if (mesh && mesh.scale.x < 1.1) {
-        const pulse = 1 + Math.sin(time * 2 + id * 0.7) * 0.04;
-        mesh.scale.set(pulse, pulse, pulse);
+      var star = obj.userData.mesh;
+      if (star) {
+        // Slow pulsation + twinkle
+        var twinkle = 0.85 + Math.sin(time * 1.3 + id * 2.1) * 0.1 + Math.sin(time * 3.7 + id * 1.3) * 0.05;
+        var baseScale = obj.userData.baseScale || 1;
+        star.scale.set(baseScale * twinkle, baseScale * twinkle, 1);
+        star.material.opacity = 0.7 + Math.sin(time * 2.1 + id * 1.7) * 0.2;
       }
-      // Pulse rings
-      const rings = obj.children.filter(c => c.isMesh && c.geometry.type === 'RingGeometry');
-      rings.forEach((r, i) => {
-        r.rotation.z = time * (0.3 + i * 0.1);
-        r.material.opacity = 0.1 + Math.sin(time * 1.5 + id + i) * 0.05;
+      // Animate orbiting particles
+      obj.children.forEach(function(c) {
+        if (c.userData && c.userData.isOrbit) {
+          var angle = c.userData.orbitAngle + time * c.userData.orbitSpeed;
+          var rad = c.userData.orbitRadius || 0.5;
+          c.position.x = Math.cos(angle) * rad;
+          c.position.y = Math.sin(angle) * rad;
+          c.material.opacity = 0.3 + Math.sin(time * 2 + id + angle) * 0.3;
+        }
       });
     }
 
