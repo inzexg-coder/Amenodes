@@ -97,21 +97,9 @@ export class Graph {
   }
 
   _tryEdge(sourceId, targetId, port) {
-    // Like addEdge but returns { ok, message } instead of showing modal alerts
     var source = this.map.get(sourceId);
     var target = this.map.get(targetId);
     if (!source || !target) return { ok: false, message: 'Node not found' };
-
-    if (typeof target.canAcceptEdge === 'function') {
-      var accept = target.canAcceptEdge(source, port || 'main');
-      if (!accept.ok) return { ok: false, message: accept.message || 'Cannot accept edge' };
-    }
-
-    if (!this.canConnect(sourceId, targetId, port || 'main')) {
-      var st = typeSystem.getNodeType(source);
-      var tt = typeSystem.getNodeType(target);
-      return { ok: false, message: 'Type: ' + st + ' -> ' + tt + ' not allowed' };
-    }
 
     if (this.hasCycle(sourceId, targetId)) {
       return { ok: false, message: 'Would create cycle' };

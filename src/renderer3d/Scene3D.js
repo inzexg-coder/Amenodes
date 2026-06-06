@@ -44,6 +44,8 @@ export class Scene3D {
 
     this.scene = new this.THREE.Scene();
     this.scene.background = new this.THREE.Color(0x080610);
+    // Nebula particle field (distant cosmic clouds)
+    this._createNebula();
 
     // Camera
     const aspect = this.container.clientWidth / this.container.clientHeight;
@@ -110,6 +112,34 @@ export class Scene3D {
       await new Promise(r => setTimeout(r, 200));
     }
     this.THREE = window.THREE;
+  }
+
+  _createNebula() {
+    var THREE = this.THREE;
+    var count = 200;
+    var positions = new Float32Array(count * 3);
+    var colors = new Float32Array(count * 3);
+    for (var i = 0; i < count; i++) {
+      var r = 40 + Math.random() * 60;
+      var theta = Math.random() * Math.PI * 2;
+      var phi = Math.acos(2 * Math.random() - 1);
+      positions[i*3] = r * Math.sin(phi) * Math.cos(theta);
+      positions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+      positions[i*3+2] = r * Math.cos(phi);
+      var col = new THREE.Color().setHSL(0.7 + Math.random() * 0.15, 0.6, 0.05 + Math.random() * 0.08);
+      colors[i*3] = col.r;
+      colors[i*3+1] = col.g;
+      colors[i*3+2] = col.b;
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    var mat = new THREE.PointsMaterial({
+      size: 0.8, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending,
+      depthWrite: false, vertexColors: true, sizeAttenuation: true
+    });
+    this.nebula = new THREE.Points(geo, mat);
+    this.scene.add(this.nebula);
   }
 
   _createStarField() {
@@ -282,6 +312,7 @@ export class Scene3D {
 
   _rebuildFromGraph() {
     // Clean up
+    // Keep nebula and starfield (don't remove them)
     for (const obj of this.nodeObjects.values()) this.scene.remove(obj);
     for (const l of this.edgeLines.values()) this.scene.remove(l);
     for (const g of this.edgeGlows.values()) this.scene.remove(g);
@@ -346,67 +377,96 @@ export class Scene3D {
 
     // ===== Neuron body texture =====
     function makeNeuronTexture(col, dendriteCount) {
-      const canvas = document.createElement('canvas');
+      var canvas = document.createElement('canvas');
       canvas.width = 256;
       canvas.height = 256;
-      const ctx = canvas.getContext('2d');
-      const cx = 64, cy = 64;
+      var ctx = canvas.getContext('2d');
+      var cx = 128, cy = 128;
 
-      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 128);
-      grad.addColorStop(0, col.replace('1)', '0.6)'));
-      grad.addColorStop(0.4, col.replace('1)', '0.2)'));
-      grad.addColorStop(0.7, col.replace('1)', '0.05)'));
-      grad.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 128, 128);
-
-      for (let i = 0; i < dendriteCount; i++) {
-        const angle = (i / dendriteCount) * Math.PI * 2 + (node.id * 0.3);
+      // Multi-layer glow
+      for (var g = 3; g >= 0; g--) {
+        var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 100 + g * 20);
+        grad.addColorStop(0, col.replace('1)', String(0.15 - g * 0.03)));
+        grad.addColorStop(0.5, col.replace('1)', String(0.08 - g * 0.02)));
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        const len = 50 + Math.random() * 40;
-        const segments = 8;
-        for (let s = 1; s <= segments; s++) {
-          const t = s / segments;
-          const r = len * t;
-          const wave = Math.sin(t * Math.PI * 3) * 6 * t;
-          const x = cx + r * Math.cos(angle + wave * 0.02);
-          const y = cy + r * Math.sin(angle + wave * 0.02);
-          ctx.lineTo(x, y);
-        }
-        ctx.strokeStyle = col.replace('1)', '0.4)');
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
-
-        const tx = cx + len * Math.cos(angle);
-        const ty = cy + len * Math.sin(angle);
-        ctx.beginPath();
-        ctx.arc(tx, ty, 3, 0, Math.PI * 2);
-        ctx.fillStyle = col.replace('1)', '0.5)');
+        ctx.arc(cx, cy, 100 + g * 20, 0, Math.PI * 2);
         ctx.fill();
       }
 
+      // Dendrite tendrils
+      for (var i = 0; i < dendriteCount; i++) {
+        var angle = (i / dendriteCount) * Math.PI * 2 + (node.id * 0.3);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        var len = 55 + Math.random() * 35;
+        var segments = 12;
+        for (var s = 1; s <= segments; s++) {
+          var t = s / segments;
+          var r = len * t;
+          var wave = Math.sin(t * Math.PI * 5) * 4 * t;
+          var x = cx + r * Math.cos(angle + wave * 0.03);
+          var y = cy + r * Math.sin(angle + wave * 0.03);
+          ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = col.replace('1)', '0.4)');
+        ctx.lineWidth = 1.5 + (1 - i / dendriteCount) * 1.5;
+        ctx.stroke();
+
+        // Terminal spark
+        var tx = cx + len * Math.cos(angle);
+        var ty = cy + len * Math.sin(angle);
+        var sg = ctx.createRadialGradient(tx, ty, 0, tx, ty, 6);
+        sg.addColorStop(0, 'rgba(255,255,255,0.8)');
+        sg.addColorStop(0.5, col.replace('1)', '0.4)'));
+        sg.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = sg;
+        ctx.beginPath();
+        ctx.arc(tx, ty, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Random sparkle dots
+      for (var s = 0; s < 20; s++) {
+        var sa = Math.random() * Math.PI * 2;
+        var sr = 20 + Math.random() * 60;
+        var sx = cx + sr * Math.cos(sa);
+        var sy = cy + sr * Math.sin(sa);
+        var ss = 1 + Math.random() * 2;
+        ctx.beginPath();
+        ctx.arc(sx, sy, ss, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,' + (0.3 + Math.random() * 0.5) + ')';
+        ctx.fill();
+      }
+
+      // Cell body - multi-layer core
       ctx.shadowColor = col;
-      ctx.shadowBlur = 20;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 24, 0, Math.PI * 2);
-      const coreGrad = ctx.createRadialGradient(cx-3, cy-3, 0, cx, cy, 24);
+      ctx.shadowBlur = 40;
+      var coreGrad = ctx.createRadialGradient(cx-4, cy-4, 0, cx, cy, 28);
       coreGrad.addColorStop(0, '#ffffff');
-      coreGrad.addColorStop(0.3, col);
-      coreGrad.addColorStop(0.7, col.replace('1)', '0.7)'));
-      coreGrad.addColorStop(1, col.replace('1)', '0)'));
+      coreGrad.addColorStop(0.15, col.replace('1)', '1)'));
+      coreGrad.addColorStop(0.4, col.replace('1)', '0.8)'));
+      coreGrad.addColorStop(0.7, col.replace('1)', '0.3)'));
+      coreGrad.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = coreGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 28, 0, Math.PI * 2);
       ctx.fill();
 
+      // Bright inner nucleus
       ctx.shadowBlur = 0;
+      var nucGrad = ctx.createRadialGradient(cx-2, cy-2, 0, cx, cy, 8);
+      nucGrad.addColorStop(0, '#ffffff');
+      nucGrad.addColorStop(0.5, 'rgba(255,255,255,0.9)');
+      nucGrad.addColorStop(1, 'rgba(255,255,255,0.2)');
+      ctx.fillStyle = nucGrad;
       ctx.beginPath();
-      ctx.arc(cx, cy, 10, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.arc(cx, cy, 8, 0, Math.PI * 2);
       ctx.fill();
 
       return canvas;
     }
-
     const texCanvas = makeNeuronTexture(colStr, dendrites);
     const neuronTex = new THREE.CanvasTexture(texCanvas);
     neuronTex.needsUpdate = true;
@@ -646,9 +706,13 @@ export class Scene3D {
     const time = Date.now() * 0.001;
     const THREE = this.THREE;
 
-    // Stars slowly rotate
+    // Stars and nebula slowly rotate
     if (this.starField) {
       this.starField.rotation.y += 0.00008;
+    }
+    if (this.nebula) {
+      this.nebula.rotation.y += 0.00012;
+      this.nebula.rotation.x += 0.00004;
     }
 
     // Pulse neurons
@@ -688,6 +752,7 @@ export class Scene3D {
 
   destroy() {
     if (this.animFrame) cancelAnimationFrame(this.animFrame);
+    if (this.nebula) { this.scene.remove(this.nebula); this.nebula = null; }
     window.removeEventListener('resize', this._boundResize);
     if (this.renderer && this.renderer.domElement) {
       this.renderer.domElement.removeEventListener('touchstart', this._boundTouchStart);
