@@ -52,10 +52,74 @@ export class EdgeRenderer {
     svg.style.left = "0";
     svg.style.pointerEvents = "none";
     svg.style.overflow = "visible";
+    
+    // Add glow filters
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    
+    const lineGlow = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+    lineGlow.setAttribute("id", "line-glow");
+    lineGlow.setAttribute("x", "-50%");
+    lineGlow.setAttribute("y", "-50%");
+    lineGlow.setAttribute("width", "200%");
+    lineGlow.setAttribute("height", "200%");
+    
+    const blur1 = document.createElementNS("http://www.w3.org/2000/svg", "feGaussianBlur");
+    blur1.setAttribute("stdDeviation", "3");
+    blur1.setAttribute("result", "blur");
+    lineGlow.appendChild(blur1);
+    const merge1 = document.createElementNS("http://www.w3.org/2000/svg", "feMerge");
+    const mn1 = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode");
+    mn1.setAttribute("in", "blur");
+    merge1.appendChild(mn1);
+    const mn2 = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode");
+    mn2.setAttribute("in", "SourceGraphic");
+    merge1.appendChild(mn2);
+    lineGlow.appendChild(merge1);
+    defs.appendChild(lineGlow);
+    
+    const arrowGlow = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+    arrowGlow.setAttribute("id", "arrow-glow");
+    arrowGlow.setAttribute("x", "-50%");
+    arrowGlow.setAttribute("y", "-50%");
+    arrowGlow.setAttribute("width", "200%");
+    arrowGlow.setAttribute("height", "200%");
+    
+    const blur2 = document.createElementNS("http://www.w3.org/2000/svg", "feGaussianBlur");
+    blur2.setAttribute("stdDeviation", "2");
+    blur2.setAttribute("result", "blur");
+    arrowGlow.appendChild(blur2);
+    const merge2 = document.createElementNS("http://www.w3.org/2000/svg", "feMerge");
+    const mn3 = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode");
+    mn3.setAttribute("in", "blur");
+    merge2.appendChild(mn3);
+    const mn4 = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode");
+    mn4.setAttribute("in", "SourceGraphic");
+    merge2.appendChild(mn4);
+    arrowGlow.appendChild(merge2);
+    defs.appendChild(arrowGlow);
+    
+    svg.appendChild(defs);
     return svg;
   }
 
   createLine(p1, p2, color, edgeId) {
+    const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    group.setAttribute("data-edge-id", edgeId);
+    
+    // Glow line (thick, translucent)
+    const glow = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    glow.setAttribute("x1", p1.x);
+    glow.setAttribute("y1", p1.y);
+    glow.setAttribute("x2", p2.x);
+    glow.setAttribute("y2", p2.y);
+    glow.setAttribute("stroke-width", "6");
+    glow.setAttribute("stroke-linecap", "round");
+    glow.setAttribute("stroke", color === "#44aaff" ? "rgba(68,170,255,0.2)" : "rgba(255,179,71,0.2)");
+    glow.setAttribute("filter", "url(#line-glow)");
+    glow.style.pointerEvents = "none";
+    group.appendChild(glow);
+    
+    // Main line
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
     line.setAttribute("x1", p1.x);
     line.setAttribute("y1", p1.y);
@@ -66,8 +130,21 @@ export class EdgeRenderer {
     line.classList.add("edge-line");
     line.setAttribute("stroke", color);
     line.style.pointerEvents = "visibleStroke";
-    line.setAttribute("data-edge-id", edgeId);
-    return line;
+    group.appendChild(line);
+    
+    // Bright core line (thin)
+    const core = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    core.setAttribute("x1", p1.x);
+    core.setAttribute("y1", p1.y);
+    core.setAttribute("x2", p2.x);
+    core.setAttribute("y2", p2.y);
+    core.setAttribute("stroke-width", "1");
+    core.setAttribute("stroke-linecap", "round");
+    core.setAttribute("stroke", color === "#44aaff" ? "rgba(150,210,255,0.6)" : "rgba(255,220,160,0.6)");
+    core.style.pointerEvents = "none";
+    group.appendChild(core);
+    
+    return group;
   }
 
   createArrow(p1, p2, color) {
@@ -82,13 +159,26 @@ export class EdgeRenderer {
     const perpY = Math.cos(angle) * 5;
     const points = `${tipX},${tipY} ${backX + perpX},${backY + perpY} ${backX - perpX},${backY - perpY}`;
     
+    const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    
+    // Glow
+    const glowPoints = `${tipX},${tipY} ${backX + perpX + perpX*0.3},${backY + perpY + perpY*0.3} ${backX - perpX - perpX*0.3},${backY - perpY - perpY*0.3}`;
+    const glow = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    glow.setAttribute("points", glowPoints);
+    glow.setAttribute("fill", color === "#44aaff" ? "rgba(68,170,255,0.3)" : "rgba(255,179,71,0.3)");
+    glow.setAttribute("filter", "url(#arrow-glow)");
+    group.appendChild(glow);
+    
+    // Main arrow
     const arrow = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
     arrow.setAttribute("points", points);
     arrow.setAttribute("fill", color);
     arrow.setAttribute("stroke", color === "#44aaff" ? "#88ccff" : "#ffda99");
     arrow.setAttribute("stroke-width", "1");
     arrow.setAttribute("stroke-linejoin", "round");
-    return arrow;
+    group.appendChild(arrow);
+    
+    return group;
   }
 
   getBorderPoint(fromRect, toRect) {

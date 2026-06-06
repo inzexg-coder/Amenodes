@@ -140,10 +140,10 @@
     function updateAuthUI() {
         const authSection = document.getElementById('authSection');
         if (currentUser) {
-            authSection.innerHTML = `<div class="user-panel"><span class="user-name">${escapeHtml(currentUser.username)}</span><span class="mod-badge">${currentUser.role === 'admin' ? t('moderate.adminBadge') : t('moderate.modBadge')}</span><span class="user-points">${currentUser.creator_points} CP</span><button id="logoutBtn" style="background:none;border:none;color:#ffb347;cursor:pointer;">${t('moderate.logout')}</button></div>`;
+            authSection.innerHTML = `<div class="user-panel"><span class="user-name">${escapeHtml(currentUser.username)}</span><span class="mod-badge">${currentUser.role === 'admin' ? t('moderate.adminBadge') : t('moderate.modBadge')}</span><span class="user-points">${currentUser.creator_points} CP</span><button id="logoutBtn" style="background:none;border:none;color:#b080ff;cursor:pointer;">${t('moderate.logout')}</button></div>`;
             document.getElementById('logoutBtn').onclick = () => { localStorage.removeItem('auth_token'); window.location.reload(); };
         } else {
-            authSection.innerHTML = `<a href="amenodes.html" style="background:#ffb347;color:#1a1f30;padding:6px 16px;border-radius:30px;text-decoration:none;">${t('moderate.login')}</a>`;
+            authSection.innerHTML = `<a href="amenodes.html" style="background:#8a5aff;color:#1a1f30;padding:6px 16px;border-radius:30px;text-decoration:none;">${t('moderate.login')}</a>`;
         }
     }
     

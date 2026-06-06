@@ -105,6 +105,14 @@ export class DomRenderer {
       } else {
         element.classList.remove('node-important');
       }
+      // Add type-specific class for nebula color theming
+      const typeClass = 'node-type-' + node.type;
+      element.classList.forEach(cls => {
+        if (cls.startsWith('node-type-') && cls !== typeClass) {
+          element.classList.remove(cls);
+        }
+      });
+      element.classList.add(typeClass);
     }
   }
 
