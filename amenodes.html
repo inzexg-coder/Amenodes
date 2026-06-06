@@ -391,8 +391,8 @@ html, body {
 <body>
   <!-- Loading Screen -->
   <div class="loading-3d" id="loading3d">
-    <div class="spinner"></div>
-    <span>Initializing Neural Network...</span>
+    <div class="spinner" id="loadingSpinner"></div>
+    <span id="loadingText">Initializing Neural Network...</span>
   </div>
 
   <!-- 3D Scene -->
@@ -460,6 +460,13 @@ html, body {
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   
   <script type="module">
+    // Global error handler
+    window.addEventListener('error', (e) => {
+      console.error('Global error:', e);
+      document.getElementById('loadingText').textContent = 'Error: ' + (e.message || 'Unknown');
+      document.getElementById('loadingSpinner').style.display = 'none';
+    });
+    
     // Disable context menu on long press
     document.addEventListener('contextmenu', e => e.preventDefault());
     
