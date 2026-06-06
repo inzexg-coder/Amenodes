@@ -79,7 +79,7 @@ export class MobileUI {
         <button class="action-btn" data-action="clear">🗑️ Clear Canvas</button>
         <button class="action-btn" data-action="screenshot">📸 Screenshot</button>
         <button class="action-btn" data-action="settings">⚙️ Settings</button>
-        <button class="action-btn cancel">Cancel</button>
+        <button class="action-btn" data-action="close">Cancel</button>
       </div>
     `;
     document.body.appendChild(actionSheet);
@@ -163,40 +163,38 @@ export class MobileUI {
       document.getElementById('mActionSheet').classList.toggle('hidden');
     });
 
-    // Action sheet buttons
-    document.querySelectorAll('.action-btn[data-action]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const action = e.currentTarget.dataset.action;
-        document.getElementById('mActionSheet').classList.add('hidden');
-        switch (action) {
-          case 'import':
-            this.app.import();
-            break;
-          case 'clear':
-            if (confirm('Clear all nodes?')) {
-              this.graph.nodes = [];
-              this.graph.edges = [];
-              this.graph.map.clear();
-              this.graph.nextId = 1;
-              this.graph.setDirty(true);
-              this.scene.refresh();
-              this.app.updateNodeCount();
-              this.app.updateEdgeCount();
-            }
-            break;
-          case 'screenshot':
-            this._takeScreenshot();
-            break;
-          case 'settings':
-            this.app.openSettings();
-            break;
-        }
-      });
-    });
-
-    // Cancel button in action sheet
-    document.querySelector('.action-btn.cancel').addEventListener('click', () => {
+    // Action sheet buttons (including Cancel)
+    document.getElementById('mActionSheet').addEventListener('click', (e) => {
+      const btn = e.target.closest('.action-btn');
+      if (!btn) return;
+      const action = btn.dataset.action;
       document.getElementById('mActionSheet').classList.add('hidden');
+      switch (action) {
+        case 'import':
+          this.app.import();
+          break;
+        case 'clear':
+          if (confirm('Clear all nodes?')) {
+            this.graph.nodes = [];
+            this.graph.edges = [];
+            this.graph.map.clear();
+            this.graph.nextId = 1;
+            this.graph.setDirty(true);
+            this.scene.refresh();
+            this.app.updateNodeCount();
+            this.app.updateEdgeCount();
+          }
+          break;
+        case 'screenshot':
+          this._takeScreenshot();
+          break;
+        case 'settings':
+          this.app.openSettings();
+          break;
+        case 'close':
+          // Just close, already hidden above
+          break;
+      }
     });
 
     // Node type buttons
@@ -212,6 +210,13 @@ export class MobileUI {
     document.getElementById('mobileNodeMenu').addEventListener('click', (e) => {
       if (e.target === e.currentTarget) {
         this._hideNodeMenu();
+      }
+    });
+
+    // Close action sheet on overlay tap
+    document.getElementById('mActionSheet').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        document.getElementById('mActionSheet').classList.add('hidden');
       }
     });
 
