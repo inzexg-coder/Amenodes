@@ -290,12 +290,22 @@ export class Scene3D {
     group.position.set(position.x, position.y, position.z);
 
     const color = this._getTypeColor(node.type);
-    // Varied size based on type and importance
-    const sizeMap = { number: 0.25, constant: 0.25, calc: 0.32, mean: 0.28, sem: 0.28, output: 0.3, map: 0.27, group: 0.3 };
-    const size = (sizeMap[node.type] || 0.25) + (node.important ? 0.1 : 0);
+    // Distinct geometry per type
+    const typeGeo = {
+      number:    { geo: new THREE.SphereGeometry(1, 16, 16),         size: 0.25, glow: 0x8866ff, symbol: '#' },
+      constant:  { geo: new THREE.OctahedronGeometry(1, 0),          size: 0.28, glow: 0x7766ff, symbol: 'C' },
+      calc:      { geo: new THREE.TorusGeometry(1, 0.4, 12, 18),    size: 0.32, glow: 0xff44aa, symbol: 'Z' },
+      mean:      { geo: new THREE.TetrahedronGeometry(1, 0),         size: 0.28, glow: 0xff66bb, symbol: 'm' },
+      sem:       { geo: new THREE.IcosahedronGeometry(1, 0),         size: 0.27, glow: 0xcc44cc, symbol: 's' },
+      output:    { geo: new THREE.CylinderGeometry(1, 1, 1.4, 12),   size: 0.30, glow: 0x4499ff, symbol: 'O' },
+      map:       { geo: new THREE.BoxGeometry(1, 1, 1),              size: 0.27, glow: 0x44dd99, symbol: 'M' },
+      group:     { geo: new THREE.DodecahedronGeometry(1, 0),        size: 0.30, glow: 0x33bb88, symbol: 'G' }
+    };
+    const cfg = typeGeo[node.type] || typeGeo.number;
+    const size = cfg.size + (node.important ? 0.1 : 0);
     const c = new THREE.Color(color);
 
-    // ===== Outer glow (large, soft) =====
+    // ===== Outer glow =====
     const canvas = document.createElement('canvas');
     canvas.width = 96;
     canvas.height = 96;
@@ -313,24 +323,25 @@ export class Scene3D {
       map: tex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.8
     });
     const halo = new THREE.Sprite(haloMat);
-    halo.scale.set(1.8, 1.8, 1);
+    halo.scale.set(1.8 + size * 0.4, 1.8 + size * 0.4, 1);
     group.add(halo);
 
-    // ===== Core sphere with stronger glow =====
-    const sphereGeo = new THREE.SphereGeometry(size, 16, 16);
-    const sphereMat = new THREE.MeshPhongMaterial({
+    // ===== Core geometry =====
+    const geo = cfg.geo.clone();
+    geo.scale(size, size, size);
+    const meshMat = new THREE.MeshPhongMaterial({
       color: color,
       emissive: color,
       emissiveIntensity: 0.5,
       shininess: 60,
       specular: new THREE.Color(0x444466)
     });
-    const sphere = new THREE.Mesh(sphereGeo, sphereMat);
-    sphere.userData.nodeId = node.id;
-    group.add(sphere);
-    this.nodeMeshes.push(sphere);
+    const mesh = new THREE.Mesh(geo, meshMat);
+    mesh.userData.nodeId = node.id;
+    group.add(mesh);
+    this.nodeMeshes.push(mesh);
 
-    // ===== Glow rings (rotating) =====
+    // ===== Glow rings =====
     for (let i = 0; i < 2; i++) {
       const ringGeo = new THREE.RingGeometry(size*1.6 + i*0.2, size*2.4 + i*0.3, 20);
       const ringMat = new THREE.MeshBasicMaterial({
@@ -349,19 +360,18 @@ export class Scene3D {
       const imp = halo.clone();
       imp.scale.set(2.8, 2.8, 1);
       imp.material = haloMat.clone();
-      imp.material.opacity = 0.35;
+      imp.material.opacity = 0.4;
       group.add(imp);
       
-      // Additional bright ring for important nodes
       const iRing = new THREE.Mesh(
-        new THREE.RingGeometry(size*2, size*2.8, 24),
-        new THREE.MeshBasicMaterial({ color: 0x40aaff, transparent: true, opacity: 0.2, side: THREE.DoubleSide, blending: THREE.AdditiveBlending })
+        new THREE.RingGeometry(size*2, size*3.2, 24),
+        new THREE.MeshBasicMaterial({ color: 0x40aaff, transparent: true, opacity: 0.25, side: THREE.DoubleSide, blending: THREE.AdditiveBlending })
       );
       iRing.rotation.x = Math.PI / 2.5;
       group.add(iRing);
     }
 
-    // ===== Label (always visible with type + value) =====
+    // ===== Label =====
     const labelTitle = node.title || node.type || 'Node';
     const labelType = node.type || '';
     const lCanvas = document.createElement('canvas');
@@ -369,7 +379,6 @@ export class Scene3D {
     lCanvas.height = 180;
     const lctx = lCanvas.getContext('2d');
     
-    // Type dot
     lctx.beginPath();
     lctx.arc(70, 90, 18, 0, Math.PI * 2);
     lctx.fillStyle = '#' + c.getHexString();
@@ -378,30 +387,34 @@ export class Scene3D {
     lctx.fill();
     lctx.shadowBlur = 0;
     
-    // Type name
+    // Symbol icon
+    lctx.font = 'bold 22px monospace';
+    lctx.textAlign = 'center';
+    lctx.textBaseline = 'middle';
+    lctx.fillStyle = '#ffffff';
+    lctx.fillText(cfg.symbol, 70, 88);
+    
     lctx.font = 'bold 20px monospace';
     lctx.textAlign = 'left';
     lctx.textBaseline = 'middle';
     lctx.fillStyle = '#ffffff';
     lctx.fillText(labelType.toUpperCase(), 105, 48);
     
-    // Title
-    lctx.font = 'bold 32px monospace';
+    lctx.font = 'bold 30px monospace';
     lctx.fillStyle = '#e0d0ff';
     lctx.shadowColor = 'rgba(0,0,0,0.8)';
     lctx.shadowBlur = 6;
-    const displayTitle = labelTitle.length > 16 ? labelTitle.slice(0, 14) + '..' : labelTitle;
-    lctx.fillText(displayTitle, 105, 98);
+    const displayTitle = labelTitle.length > 14 ? labelTitle.slice(0, 12) + '..' : labelTitle;
+    lctx.fillText(displayTitle, 105, 96);
 
-    // Value preview
     try {
       const val = node.getValue();
       if (val && val.length > 0) {
         const valStr = val.map(function(x) { return typeof x === 'number' ? x.toFixed(2) : x; }).join(', ');
-        const displayVal = valStr.length > 20 ? valStr.slice(0, 18) + '..' : valStr;
-        lctx.font = '18px monospace';
+        const displayVal = valStr.length > 18 ? valStr.slice(0, 16) + '..' : valStr;
+        lctx.font = '16px monospace';
         lctx.fillStyle = 'rgba(180,160,240,0.4)';
-        lctx.fillText('= ' + displayVal, 105, 142);
+        lctx.fillText('= ' + displayVal, 105, 140);
       }
     } catch(e) {}
 
@@ -411,10 +424,10 @@ export class Scene3D {
     });
     const label = new THREE.Sprite(lMat);
     label.position.y = -(size + 0.9);
-    label.scale.set(2.8, 0.95, 1);
+    label.scale.set(2.6, 0.9, 1);
     label.visible = true;
     group.add(label);
-    group.userData = { mesh: sphere, label, color: c, nodeType: node.type, nodeId: node.id };
+    group.userData = { mesh: mesh, label, color: c, nodeType: node.type, nodeId: node.id };
     this.nodeObjects.set(node.id, group);
     this.scene.add(group);
   }

@@ -373,6 +373,130 @@ html, body {
 .info-btn-secondary { background: rgba(120,80,200,0.15); color: #b090ff; }
 .info-btn-secondary:active { background: rgba(120,80,200,0.25); }
 
+
+/* CONFIG PANEL FIELDS */
+.info-field {
+  margin: 12px 0;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(120,80,200,0.06);
+}
+.info-field:last-child { border-bottom: none; }
+.info-field .info-label {
+  display: block;
+  font-size: 11px;
+  color: rgba(160,140,220,0.5);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.info-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(120,80,200,0.15);
+  border-radius: 12px;
+  color: #d0c0ff;
+  font-family: monospace;
+  font-size: 15px;
+  outline: none;
+  touch-action: manipulation;
+}
+.info-input:focus {
+  border-color: rgba(140,90,255,0.4);
+  box-shadow: 0 0 12px rgba(100,60,200,0.15);
+}
+.info-input-sm {
+  flex: 1;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(120,80,200,0.12);
+  border-radius: 8px;
+  color: #d0c0ff;
+  font-family: monospace;
+  font-size: 13px;
+  outline: none;
+  touch-action: manipulation;
+  min-width: 0;
+}
+.info-btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cfg-btn {
+  padding: 8px 14px;
+  border: 1px solid rgba(120,80,200,0.15);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  color: rgba(180,160,240,0.6);
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 0.15s;
+}
+.cfg-btn:active { transform: scale(0.95); }
+.cfg-btn.active {
+  background: rgba(120,80,200,0.2);
+  border-color: rgba(140,90,255,0.4);
+  color: #b090ff;
+}
+.cfg-btn-add {
+  width: 100%;
+  padding: 12px;
+  border: 1px dashed rgba(120,80,200,0.2);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+  color: rgba(160,140,220,0.5);
+  font-size: 13px;
+  margin-top: 8px;
+}
+.info-list { display: flex; flex-direction: column; gap: 6px; }
+.info-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px;
+}
+.info-list-idx {
+  font-size: 11px;
+  color: rgba(160,140,220,0.3);
+  font-family: monospace;
+  min-width: 24px;
+}
+.info-list-label {
+  font-size: 11px;
+  color: rgba(160,140,220,0.3);
+  font-family: monospace;
+}
+.info-list-del {
+  background: none;
+  border: none;
+  color: rgba(255,80,80,0.4);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  touch-action: manipulation;
+}
+.info-output-display {
+  font-family: monospace;
+  font-size: 13px;
+  color: rgba(160,220,160,0.7);
+  line-height: 1.6;
+  padding: 8px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+.info-value.dim { color: rgba(160,140,220,0.25); }
+
+/* NODE TYPE COLORS IN INFO */
+.info-value[data-type] { font-weight: 600; }
+
 /* LANDSCAPE ADJUSTMENTS */
 @media (min-aspect-ratio: 1/1) {
   .mobile-toolbar {
@@ -405,10 +529,8 @@ html, body {
       <span class="info-title" id="infoTitle">Node</span>
       <button class="info-close" id="infoClose">✕</button>
     </div>
-    <div class="info-body">
+    <div class="info-body" id="infoConfigBody">
       <div class="info-row"><span class="info-label">Type</span><span class="info-value" id="infoType">-</span></div>
-      <div class="info-row"><span class="info-label">Value</span><span class="info-value" id="infoValue">-</span></div>
-      <div class="info-row"><span class="info-label">Connections</span><span class="info-value" id="infoConns">0</span></div>
     </div>
     <div class="info-actions">
       <button class="info-btn" id="infoDelete">Delete</button>
