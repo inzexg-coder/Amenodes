@@ -297,6 +297,81 @@ html, body {
   transform: scale(0.95);
 }
 
+
+/* NODE INFO PANEL */
+.node-info {
+  position: fixed;
+  bottom: 80px;
+  left: 16px;
+  right: 16px;
+  z-index: 150;
+  background: rgba(12,8,28,0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid rgba(120,80,200,0.15);
+  padding: 16px 20px;
+  animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 400px;
+  margin: 0 auto;
+}
+.node-info.hidden { display: none; }
+
+.info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.info-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e0d0ff;
+}
+.info-close {
+  background: none;
+  border: none;
+  color: rgba(160,140,220,0.5);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+.info-body {
+  margin-bottom: 12px;
+}
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(120,80,200,0.06);
+}
+.info-row:last-child { border-bottom: none; }
+.info-label { font-size: 12px; color: rgba(160,140,220,0.5); text-transform: uppercase; letter-spacing: 1px; }
+.info-value { font-size: 14px; color: #d0c0ff; font-family: monospace; }
+
+.info-actions {
+  display: flex;
+  gap: 8px;
+}
+.info-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 12px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  touch-action: manipulation;
+}
+.info-btn:active { transform: scale(0.96); }
+.info-btn { background: rgba(255,60,80,0.15); color: #ff6b7a; }
+.info-btn:active { background: rgba(255,60,80,0.25); }
+.info-btn-secondary { background: rgba(120,80,200,0.15); color: #b090ff; }
+.info-btn-secondary:active { background: rgba(120,80,200,0.25); }
+
 /* LANDSCAPE ADJUSTMENTS */
 @media (min-aspect-ratio: 1/1) {
   .mobile-toolbar {
@@ -322,6 +397,23 @@ html, body {
 
   <!-- 3D Scene -->
   <div id="scene-container"></div>
+
+  <!-- Node info panel (shown on tap) -->
+  <div class="node-info hidden" id="nodeInfo">
+    <div class="info-header">
+      <span class="info-title" id="infoTitle">Node</span>
+      <button class="info-close" id="infoClose">✕</button>
+    </div>
+    <div class="info-body">
+      <div class="info-row"><span class="info-label">Type</span><span class="info-value" id="infoType">-</span></div>
+      <div class="info-row"><span class="info-label">Value</span><span class="info-value" id="infoValue">-</span></div>
+      <div class="info-row"><span class="info-label">Connections</span><span class="info-value" id="infoConns">0</span></div>
+    </div>
+    <div class="info-actions">
+      <button class="info-btn" id="infoDelete">Delete</button>
+      <button class="info-btn info-btn-secondary" id="infoImportant">★ Important</button>
+    </div>
+  </div>
 
   <!-- Empty state hint -->
   <div class="empty-hint" id="emptyHint">

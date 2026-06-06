@@ -320,17 +320,22 @@ export class MobileUI {
   }
 
   _addNodeOfType(type) {
-    // Dynamic import since NodeFactory is not available at class init
-    import('../nodes/NodeFactory.js').then(({ NodeFactory }) => {
-      const node = NodeFactory.createNode(type, 0, 0,
-        type.charAt(0).toUpperCase() + type.slice(1));
-      if (node) {
-        this.graph.addNode(node);
-        this.graph.reevaluateAll();
-        this.scene.addNode(node);
-        this.app.updateNodeCount();
-        this.app.updateEdgeCount();
-        this.app.history.save();
+    import('../nodes/NodeFactory.js').then(async ({ NodeFactory }) => {
+      try {
+        const node = await NodeFactory.createNode(type, {
+          x: 0, y: 0,
+          title: type.charAt(0).toUpperCase() + type.slice(1)
+        });
+        if (node) {
+          this.graph.addNode(node);
+          this.graph.reevaluateAll();
+          this.scene.addNode(node);
+          this.app.updateNodeCount();
+          this.app.updateEdgeCount();
+          this.app.history.save();
+        }
+      } catch (e) {
+        console.error('Failed to create node:', e);
       }
     });
   }

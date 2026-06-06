@@ -305,85 +305,130 @@ export class Scene3D {
     group.position.set(position.x, position.y, position.z);
 
     const color = this._getTypeColor(node.type);
-    const size = 0.25 + (node.important ? 0.08 : 0);
+    // Varied size based on type and importance
+    const sizeMap = { number: 0.25, constant: 0.25, calc: 0.32, mean: 0.28, sem: 0.28, output: 0.3, map: 0.27, group: 0.3 };
+    const size = (sizeMap[node.type] || 0.25) + (node.important ? 0.1 : 0);
     const c = new THREE.Color(color);
 
-    // Glow halo (sprite)
+    // ===== Outer glow (large, soft) =====
     const canvas = document.createElement('canvas');
-    canvas.width = 64;
-    canvas.height = 64;
+    canvas.width = 96;
+    canvas.height = 96;
     const ctx = canvas.getContext('2d');
-    const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-    grad.addColorStop(0, `rgba(${c.r*255|0},${c.g*255|0},${c.b*255|0},0.5)`);
-    grad.addColorStop(0.4, `rgba(${c.r*255|0},${c.g*255|0},${c.b*255|0},0.15)`);
+    const grad = ctx.createRadialGradient(48, 48, 0, 48, 48, 48);
+    grad.addColorStop(0, `rgba(${c.r*255|0},${c.g*255|0},${c.b*255|0},0.7)`);
+    grad.addColorStop(0.25, `rgba(${c.r*255|0},${c.g*255|0},${c.b*255|0},0.3)`);
+    grad.addColorStop(0.6, `rgba(${c.r*255|0},${c.g*255|0},${c.b*255|0},0.08)`);
     grad.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 64, 64);
+    ctx.fillRect(0, 0, 96, 96);
 
     const tex = new THREE.CanvasTexture(canvas);
     const haloMat = new THREE.SpriteMaterial({
-      map: tex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false
+      map: tex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.8
     });
     const halo = new THREE.Sprite(haloMat);
-    halo.scale.set(1.2, 1.2, 1);
+    halo.scale.set(1.8, 1.8, 1);
     group.add(halo);
 
-    // Core sphere
-    const sphereGeo = new THREE.SphereGeometry(size, 12, 12);
+    // ===== Core sphere with stronger glow =====
+    const sphereGeo = new THREE.SphereGeometry(size, 16, 16);
     const sphereMat = new THREE.MeshPhongMaterial({
-      color: color, emissive: color, emissiveIntensity: 0.3, shininess: 40
+      color: color,
+      emissive: color,
+      emissiveIntensity: 0.5,
+      shininess: 60,
+      specular: new THREE.Color(0x444466)
     });
     const sphere = new THREE.Mesh(sphereGeo, sphereMat);
     sphere.userData.nodeId = node.id;
     group.add(sphere);
     this.nodeMeshes.push(sphere);
 
-    // Glow ring
-    const ringGeo = new THREE.RingGeometry(size*1.5, size*2.2, 16);
-    const ringMat = new THREE.MeshBasicMaterial({
-      color: color, transparent: true, opacity: 0.15,
-      side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
-    });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = Math.PI / 2 + (node.id * 0.5);
-    group.add(ring);
-    const ring2 = ring.clone();
-    ring2.rotation.x = Math.PI / 3 + (node.id * 0.3);
-    group.add(ring2);
+    // ===== Glow rings (rotating) =====
+    for (let i = 0; i < 2; i++) {
+      const ringGeo = new THREE.RingGeometry(size*1.6 + i*0.2, size*2.4 + i*0.3, 20);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: color, transparent: true, opacity: 0.12 + i * 0.06,
+        side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = Math.PI / 2 + i * 0.4 + (node.id * 0.1);
+      ring.rotation.y = i * 0.5 + (node.id * 0.07);
+      ring.userData.ringIdx = i;
+      group.add(ring);
+    }
 
-    // Label sprite
+    // ===== Important node extra glow =====
+    if (node.important) {
+      const imp = halo.clone();
+      imp.scale.set(2.8, 2.8, 1);
+      imp.material = haloMat.clone();
+      imp.material.opacity = 0.35;
+      group.add(imp);
+      
+      // Additional bright ring for important nodes
+      const iRing = new THREE.Mesh(
+        new THREE.RingGeometry(size*2, size*2.8, 24),
+        new THREE.MeshBasicMaterial({ color: 0x40aaff, transparent: true, opacity: 0.2, side: THREE.DoubleSide, blending: THREE.AdditiveBlending })
+      );
+      iRing.rotation.x = Math.PI / 2.5;
+      group.add(iRing);
+    }
+
+    // ===== Label (always visible with type + value) =====
+    const labelTitle = node.title || node.type || 'Node';
+    const labelType = node.type || '';
     const lCanvas = document.createElement('canvas');
-    lCanvas.width = 256;
-    lCanvas.height = 64;
+    lCanvas.width = 512;
+    lCanvas.height = 180;
     const lctx = lCanvas.getContext('2d');
-    lctx.font = 'bold 28px monospace';
-    lctx.textAlign = 'center';
+    
+    // Type dot
+    lctx.beginPath();
+    lctx.arc(70, 90, 18, 0, Math.PI * 2);
+    lctx.fillStyle = '#' + c.getHexString();
+    lctx.shadowColor = '#' + c.getHexString();
+    lctx.shadowBlur = 25;
+    lctx.fill();
+    lctx.shadowBlur = 0;
+    
+    // Type name
+    lctx.font = 'bold 20px monospace';
+    lctx.textAlign = 'left';
     lctx.textBaseline = 'middle';
-    lctx.shadowColor = 'rgba(0,0,0,0.9)';
-    lctx.shadowBlur = 6;
+    lctx.fillStyle = '#ffffff';
+    lctx.fillText(labelType.toUpperCase(), 105, 48);
+    
+    // Title
+    lctx.font = 'bold 32px monospace';
     lctx.fillStyle = '#e0d0ff';
-    lctx.fillText(node.title || node.type, 128, 34);
+    lctx.shadowColor = 'rgba(0,0,0,0.8)';
+    lctx.shadowBlur = 6;
+    const displayTitle = labelTitle.length > 16 ? labelTitle.slice(0, 14) + '..' : labelTitle;
+    lctx.fillText(displayTitle, 105, 98);
+
+    // Value preview
+    try {
+      const val = node.getValue();
+      if (val && val.length > 0) {
+        const valStr = val.map(function(x) { return typeof x === 'number' ? x.toFixed(2) : x; }).join(', ');
+        const displayVal = valStr.length > 20 ? valStr.slice(0, 18) + '..' : valStr;
+        lctx.font = '18px monospace';
+        lctx.fillStyle = 'rgba(180,160,240,0.4)';
+        lctx.fillText('= ' + displayVal, 105, 142);
+      }
+    } catch(e) {}
 
     const lTex = new THREE.CanvasTexture(lCanvas);
     const lMat = new THREE.SpriteMaterial({
-      map: lTex, transparent: true, depthTest: false, depthWrite: false
+      map: lTex, transparent: true, depthTest: false, depthWrite: false, opacity: 0.9
     });
     const label = new THREE.Sprite(lMat);
-    label.position.y = -(size + 0.4);
-    label.scale.set(1.5, 0.4, 1);
-    label.visible = false;
-    group.add(label);
-
-    // Important node extra glow
-    if (node.important) {
-      const imp = halo.clone();
-      imp.scale.set(2.2, 2.2, 1);
-      imp.material = haloMat.clone();
-      imp.material.opacity = 0.25;
-      group.add(imp);
-    }
-
-    group.userData = { mesh: sphere, label };
+    label.position.y = -(size + 0.9);
+    label.scale.set(2.8, 0.95, 1);
+    label.visible = true;
+    group.add(label); = { mesh: sphere, label, color: c, nodeType: node.type, nodeId: node.id };
     this.nodeObjects.set(node.id, group);
     this.scene.add(group);
   }
