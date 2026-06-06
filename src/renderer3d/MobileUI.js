@@ -138,6 +138,54 @@ export class MobileUI {
       this.app.export();
     });
 
+    // Long-press Export for Import
+    (() => {
+      const btn = document.getElementById('mExport');
+      let timer = null;
+      btn.addEventListener('touchstart', () => {
+        timer = setTimeout(() => {
+          timer = null;
+          document.getElementById('fileInput').click();
+        }, 600);
+      }, { passive: true });
+      btn.addEventListener('touchend', () => {
+        if (timer) { clearTimeout(timer); timer = null; }
+      }, { passive: true });
+      btn.addEventListener('touchmove', () => {
+        if (timer) { clearTimeout(timer); timer = null; }
+      }, { passive: true });
+    })();
+
+    // Long-press node count for Clear Canvas
+    (() => {
+      const el = document.getElementById('mNodeCount');
+      let timer = null;
+      const action = () => {
+        if (confirm('Clear all nodes?')) {
+          this.graph.nodes = [];
+          this.graph.edges = [];
+          this.graph.map.clear();
+          this.graph.nextId = 1;
+          this.graph.setDirty(true);
+          this.scene.refresh();
+          this.app.updateNodeCount();
+          this.app.updateEdgeCount();
+        }
+      };
+      el.addEventListener('touchstart', () => {
+        timer = setTimeout(() => {
+          timer = null;
+          action();
+        }, 800);
+      }, { passive: true });
+      el.addEventListener('touchend', () => {
+        if (timer) { clearTimeout(timer); timer = null; }
+      }, { passive: true });
+      el.addEventListener('touchmove', () => {
+        if (timer) { clearTimeout(timer); timer = null; }
+      }, { passive: true });
+    })();
+
     // Hidden menu: long-press on status badge triggers it
     // (handled separately below)
 
