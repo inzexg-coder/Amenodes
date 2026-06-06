@@ -312,16 +312,16 @@ export class Scene3D {
   }
 
   _getTypeColor(type) {
-    // All nodes are stars on the stellar spectrum (orange to blue-white)
-    // based on a hash of the type name
+    // Flame-like colors from deep orange to bright yellow
     var hash = 0;
     for (var i = 0; i < type.length; i++) {
       hash = ((hash << 5) - hash) + type.charCodeAt(i);
     }
-    // Map to hue: 0.03 (orange) to 0.6 (blue)
-    var hue = 0.03 + (Math.abs(hash) % 100) / 100 * 0.57;
+    var hue = 0.03 + (Math.abs(hash) % 50) / 50 * 0.09;
+    var sat = 0.85 + (Math.abs(hash) % 15) / 100;
+    var light = 0.50 + (Math.abs(hash) % 20) / 100;
     var col = new THREE.Color();
-    col.setHSL(hue, 0.9, 0.55);
+    col.setHSL(hue, sat, light);
     return col.getHex();
   }
 
@@ -627,7 +627,10 @@ export class Scene3D {
     label.visible = true;
     group.add(label);
     var scale = neuronSize * 5.0;
-    group.userData = { mesh: neuronSprite, label, color: c, nodeType: node.type, nodeId: node.id, baseScale: scale };
+    // Store base hue for flame color animation
+    var hsl = {};
+    c.getHSL(hsl);
+    group.userData = { mesh: neuronSprite, label, color: c, nodeType: node.type, nodeId: node.id, baseScale: scale, baseHue: hsl.h };
     this.nodeObjects.set(node.id, group);
     this.scene.add(group);
   }
@@ -741,26 +744,26 @@ export class Scene3D {
       this.nebula.rotation.x += 0.00004;
     }
 
-    // Twinkle stars (animate all neurons)
+    // Twinkle stars with flame-like color animation
     for (const [id, obj] of this.nodeObjects) {
       var star = obj.userData.mesh;
       if (star) {
-        // Slow pulsation + twinkle
-        var twinkle = 0.85 + Math.sin(time * 1.3 + id * 2.1) * 0.1 + Math.sin(time * 3.7 + id * 1.3) * 0.05;
+        var twinkle = 0.80 + Math.sin(time * 1.3 + id * 2.1) * 0.12 + Math.sin(time * 3.7 + id * 1.3) * 0.08;
         var baseScale = obj.userData.baseScale || 1;
         star.scale.set(baseScale * twinkle, baseScale * twinkle, 1);
-        star.material.opacity = 0.7 + Math.sin(time * 2.1 + id * 1.7) * 0.2;
-      }
-      // Animate orbiting particles
-      obj.children.forEach(function(c) {
-        if (c.userData && c.userData.isOrbit) {
-          var angle = c.userData.orbitAngle + time * c.userData.orbitSpeed;
-          var rad = c.userData.orbitRadius || 0.5;
-          c.position.x = Math.cos(angle) * rad;
-          c.position.y = Math.sin(angle) * rad;
-          c.material.opacity = 0.3 + Math.sin(time * 2 + id + angle) * 0.3;
+        star.material.opacity = 0.6 + Math.sin(time * 2.1 + id * 1.7) * 0.25;
+        
+        // Flame-like color shifting: cycle hue slightly
+        var color = obj.userData.color;
+        if (color && obj.userData.baseHue !== undefined) {
+          var hueShift = Math.sin(time * 1.0 + id * 0.7) * 0.015 + Math.sin(time * 2.5 + id * 1.1) * 0.008;
+          var newHue = obj.userData.baseHue + hueShift;
+          if (newHue < 0) newHue += 1;
+          if (newHue > 1) newHue -= 1;
+          color.setHSL(newHue, 0.9, 0.55 + Math.sin(time * 1.8 + id * 0.9) * 0.08);
+          star.material.color.set(color);
         }
-      });
+      }
     }
 
     // Pulse edges + move signal particles

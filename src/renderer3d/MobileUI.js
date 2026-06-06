@@ -406,7 +406,7 @@ export class MobileUI {
     } catch(e) {
       console.error('Config panel error:', e);
       var badge = document.getElementById('mNodeCount');
-      if (badge) badge.textContent = 'PanErr:' + (e.message || '').slice(0, 20);
+      if (badge) badge.textContent = 'PanErr:' + (e.message || '').slice(0, 60);
     }
   }
   
@@ -445,11 +445,13 @@ export class MobileUI {
     this._configNode = node;
     
     // Close button
-    const closeBtn = document.getElementById('infoClose');
-    if (closeBtn) {
-      closeBtn._handler = () => this._hideNodeConfig();
-      closeBtn.onclick = closeBtn._handler;
-    }
+    try {
+      var closeBtn = document.getElementById('infoClose');
+      if (closeBtn) {
+        closeBtn._handler = function() { this._hideNodeConfig(); }.bind(this);
+        closeBtn.onclick = closeBtn._handler;
+      }
+    } catch(e) { console.warn('close bind:', e); }
     
     // Delete button
     const delBtn = document.getElementById('infoDelete');
