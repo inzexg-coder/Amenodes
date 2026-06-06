@@ -236,7 +236,11 @@ export class MobileUI {
     });
     // Deselect = hide config
     this.scene.eventBus.on('nodeDeselect', () => {
-      this._hideNodeConfig();
+      const panel = document.getElementById('nodeInfo');
+      if (panel && !panel.classList.contains('hidden')) {
+        panel.classList.add('hidden');
+        this._configNode = null;
+      }
     });
   }
 
@@ -377,9 +381,6 @@ export class MobileUI {
   _hideNodeConfig() {
     const panel = document.getElementById('nodeInfo');
     if (panel) panel.classList.add('hidden');
-    if (this._configNode) {
-      this.scene._deselectNode();
-    }
     this._configNode = null;
   }
   

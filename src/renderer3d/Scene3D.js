@@ -203,25 +203,27 @@ export class Scene3D {
     this.selectedNode = node;
     const obj = this.nodeObjects.get(nodeId);
     if (obj) {
-      const mesh = obj.userData.mesh;
-      if (mesh) {
-        mesh.scale.set(1.8, 1.8, 1.8);
-        mesh.material.emissiveIntensity = 1.5;
-        mesh.material.emissive.setHex(0xffffff);
+      // Star sprite - scale up and brighten
+      const star = obj.userData.mesh;
+      if (star) {
+        star.scale.set(3.2, 3.2, 1);
+        star.material.opacity = 1.0;
       }
+      // Glow sprites - expand
+      obj.children.forEach(c => {
+        if (c.isSprite && c.material && c.material.opacity !== undefined && c.userData.isOrbit) return;
+        if (c.isSprite && c.material && c.material.map) {
+          if (c.scale.x > 4) return; // skip big glows
+          c.scale.set(c.scale.x * 1.4, c.scale.y * 1.4, 1);
+          c.material.opacity = 1.0;
+        }
+      });
       const label = obj.userData.label;
       if (label) {
         label.visible = true;
         label.material.opacity = 1.0;
         label.scale.set(3.2, 1.1, 1);
       }
-      // Highlight rings
-      obj.children.forEach(c => {
-        if (c.isMesh && c.geometry.type === 'RingGeometry') {
-          c.material.opacity = 0.6;
-          c.material.color.setHex(0xffffff);
-        }
-      });
     }
     if (this.eventBus && this.eventBus.emit) {
       this.eventBus.emit('nodeSelect', node);
@@ -229,27 +231,28 @@ export class Scene3D {
   }
 
   _deselectNode() {
-    if (this.selectedNode) {
-      const obj = this.nodeObjects.get(this.selectedNode.id);
-      if (obj) {
-        const mesh = obj.userData.mesh;
-        const color = obj.userData.color;
-        if (mesh) {
-          mesh.scale.set(1, 1, 1);
-          mesh.material.emissiveIntensity = 0.5;
-          mesh.material.emissive.setHex(color ? color.getHex() : 0x9060ff);
+    if (!this.selectedNode) return;
+    const obj = this.nodeObjects.get(this.selectedNode.id);
+    if (obj) {
+      const color = obj.userData.color;
+      // Star sprite - reset
+      const star = obj.userData.mesh;
+      if (star) {
+        star.scale.set(1, 1, 1);
+        star.material.opacity = 0.95;
+      }
+      // Glow sprites - reset
+      obj.children.forEach(c => {
+        if (c.isSprite && c.material && c.material.map) {
+          if (c.userData.isOrbit) return; // skip orbiting dots
+          if (c.scale.x >= 4) return; // big glows stay big
+          c.scale.set(c.scale.x / 1.4, c.scale.y / 1.4, 1);
+          c.material.opacity = 0.7;
         }
-        const label = obj.userData.label;
-        if (label) {
-          label.material.opacity = 0.9;
-        }
-        // Reset rings
-        obj.children.forEach(c => {
-          if (c.isMesh && c.geometry.type === 'RingGeometry') {
-            c.material.opacity = 0.12 + (c.userData.ringIdx || 0) * 0.06;
-            c.material.color.setHex(color ? color.getHex() : 0x9060ff);
-          }
-        });
+      });
+      const label = obj.userData.label;
+      if (label) {
+        label.material.opacity = 0.9;
       }
     }
     this.selectedNode = null;
@@ -320,85 +323,158 @@ export class Scene3D {
     group.position.set(position.x, position.y, position.z);
 
     const color = this._getTypeColor(node.type);
-    // Distinct geometry per type
-    const typeGeo = {
-      number:    { geo: new THREE.SphereGeometry(1, 24, 24),         size: 0.55, glow: 0x8866ff, symbol: '#' },
-      constant:  { geo: new THREE.OctahedronGeometry(1, 0),          size: 0.60, glow: 0x7766ff, symbol: 'C' },
-      calc:      { geo: new THREE.TorusKnotGeometry(0.8, 0.3, 32, 16), size: 0.58, glow: 0xff44aa, symbol: 'Z' },
-      mean:      { geo: new THREE.TetrahedronGeometry(1, 0),         size: 0.58, glow: 0xff66bb, symbol: 'm' },
-      sem:       { geo: new THREE.IcosahedronGeometry(1, 0),         size: 0.56, glow: 0xcc44cc, symbol: 's' },
-      output:    { geo: new THREE.ConeGeometry(0.8, 1.6, 16),        size: 0.58, glow: 0x4499ff, symbol: 'O' },
-      map:       { geo: new THREE.BoxGeometry(1, 1, 1),              size: 0.56, glow: 0x44dd99, symbol: 'M' },
-      group:     { geo: new THREE.DodecahedronGeometry(1, 0),        size: 0.60, glow: 0x33bb88, symbol: 'G' }
-    };
-    const cfg = typeGeo[node.type] || typeGeo.number;
-    const size = cfg.size + (node.important ? 0.1 : 0);
     const c = new THREE.Color(color);
+    const typeInfo = {
+      number:    { size: 0.6, colorMult: 1.0, points: 4, glow: '#8866ff' },
+      constant:  { size: 0.65, colorMult: 0.9, points: 6, glow: '#7766ff' },
+      calc:      { size: 0.7, colorMult: 1.2, points: 4, glow: '#ff44aa' },
+      mean:      { size: 0.62, colorMult: 1.1, points: 5, glow: '#ff66bb' },
+      sem:       { size: 0.6, colorMult: 1.0, points: 5, glow: '#cc44cc' },
+      output:    { size: 0.65, colorMult: 0.9, points: 3, glow: '#4499ff' },
+      map:       { size: 0.6, colorMult: 1.0, points: 4, glow: '#44dd99' },
+      group:     { size: 0.65, colorMult: 1.1, points: 5, glow: '#33bb88' }
+    };
+    const info = typeInfo[node.type] || typeInfo.number;
+    const starSize = info.size + (node.important ? 0.2 : 0);
 
-    // ===== Outer glow =====
-    const canvas = document.createElement('canvas');
-    canvas.width = 96;
-    canvas.height = 96;
-    const ctx = canvas.getContext('2d');
-    const grad = ctx.createRadialGradient(48, 48, 0, 48, 48, 48);
-    grad.addColorStop(0, `rgba(${c.r*255|0},${c.g*255|0},${c.b*255|0},0.7)`);
-    grad.addColorStop(0.25, `rgba(${c.r*255|0},${c.g*255|0},${c.b*255|0},0.3)`);
-    grad.addColorStop(0.6, `rgba(${c.r*255|0},${c.g*255|0},${c.b*255|0},0.08)`);
-    grad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 96, 96);
-
-    const tex = new THREE.CanvasTexture(canvas);
-    const haloMat = new THREE.SpriteMaterial({
-      map: tex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 1.0
-    });
-    const halo = new THREE.Sprite(haloMat);
-    halo.scale.set(2.4 + size * 0.6, 2.4 + size * 0.6, 1);
-    group.add(halo);
-
-    // ===== Core geometry =====
-    const geo = cfg.geo.clone();
-    geo.scale(size, size, size);
-    const meshMat = new THREE.MeshPhongMaterial({
-      color: color,
-      emissive: color,
-      emissiveIntensity: 0.8,
-      shininess: 80,
-      specular: new THREE.Color(0x8888aa)
-    });
-    const mesh = new THREE.Mesh(geo, meshMat);
-    mesh.userData.nodeId = node.id;
-    group.add(mesh);
-    this.nodeMeshes.push(mesh);
-
-    // ===== Glow rings =====
-    for (let i = 0; i < 2; i++) {
-      const ringGeo = new THREE.RingGeometry(size*2.0 + i*0.3, size*3.2 + i*0.5, 24);
-      const ringMat = new THREE.MeshBasicMaterial({
-        color: color, transparent: true, opacity: 0.20 + i * 0.10,
-        side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
-      });
-      const ring = new THREE.Mesh(ringGeo, ringMat);
-      ring.rotation.x = Math.PI / 2 + i * 0.4 + (node.id * 0.1);
-      ring.rotation.y = i * 0.5 + (node.id * 0.07);
-      ring.userData.ringIdx = i;
-      group.add(ring);
+    // ===== Star texture (glowing star shape) =====
+    function makeStarTexture(points, col, size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 128;
+      canvas.height = 128;
+      const ctx = canvas.getContext('2d');
+      const cx = 64, cy = 64, outerR = 60, innerR = 22;
+      
+      // Glow behind star
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, outerR);
+      grad.addColorStop(0, col);
+      grad.addColorStop(0.3, col.replace('1)', '0.6)'));
+      grad.addColorStop(0.6, col.replace('1)', '0.15)'));
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 128, 128);
+      
+      // Star shape
+      ctx.beginPath();
+      for (let i = 0; i < points * 2; i++) {
+        const r = i % 2 === 0 ? outerR : innerR;
+        const angle = (Math.PI * i / points) - Math.PI / 2;
+        const x = cx + r * Math.cos(angle);
+        const y = cy + r * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      
+      ctx.shadowColor = col;
+      ctx.shadowBlur = 30;
+      ctx.fillStyle = col;
+      ctx.fill();
+      
+      // Bright core
+      ctx.shadowBlur = 0;
+      const coreGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 20);
+      coreGrad.addColorStop(0, 'rgba(255,255,255,1)');
+      coreGrad.addColorStop(0.5, col.replace('1)', '0.8)'));
+      coreGrad.addColorStop(1, col.replace('1)', '0)'));
+      ctx.fillStyle = coreGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+      ctx.fill();
+      
+      return canvas;
     }
 
-    // ===== Important node extra glow =====
+    const starCol = 'rgba(' + (c.r*255|0) + ',' + (c.g*255|0) + ',' + (c.b*255|0) + ',1)';
+    const starCanvas = makeStarTexture(info.points, starCol, starSize);
+    const starTex = new THREE.CanvasTexture(starCanvas);
+    const starMat = new THREE.SpriteMaterial({
+      map: starTex,
+      blending: THREE.AdditiveBlending,
+      transparent: true,
+      depthWrite: false,
+      opacity: 0.95
+    });
+    const starSprite = new THREE.Sprite(starMat);
+    starSprite.scale.set(starSize * 2.5, starSize * 2.5, 1);
+    starSprite.userData.nodeId = node.id;
+    group.add(starSprite);
+    this.nodeMeshes.push(starSprite);
+
+    // ===== Secondary outer glow =====
+    const glowCanvas = document.createElement('canvas');
+    glowCanvas.width = 96;
+    glowCanvas.height = 96;
+    const gctx = glowCanvas.getContext('2d');
+    const ggrad = gctx.createRadialGradient(48, 48, 0, 48, 48, 48);
+    ggrad.addColorStop(0, starCol.replace('1)', '0.5)'));
+    ggrad.addColorStop(0.3, starCol.replace('1)', '0.2)'));
+    ggrad.addColorStop(0.7, starCol.replace('1)', '0.05)'));
+    ggrad.addColorStop(1, 'rgba(0,0,0,0)');
+    gctx.fillStyle = ggrad;
+    gctx.fillRect(0, 0, 96, 96);
+    const glowTex = new THREE.CanvasTexture(glowCanvas);
+    const glowMat = new THREE.SpriteMaterial({
+      map: glowTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.7
+    });
+    const glowSprite = new THREE.Sprite(glowMat);
+    glowSprite.scale.set(starSize * 5, starSize * 5, 1);
+    group.add(glowSprite);
+
+    // ===== Small orbiting particles =====
+    for (let i = 0; i < 3; i++) {
+      const dot = document.createElement('canvas');
+      dot.width = 16; dot.height = 16;
+      const dctx = dot.getContext('2d');
+      const dgrad = dctx.createRadialGradient(8, 8, 0, 8, 8, 8);
+      dgrad.addColorStop(0, 'rgba(255,255,255,0.8)');
+      dgrad.addColorStop(0.5, starCol.replace('1)', '0.3)'));
+      dgrad.addColorStop(1, 'rgba(0,0,0,0)');
+      dctx.fillStyle = dgrad;
+      dctx.fillRect(0, 0, 16, 16);
+      const dotTex = new THREE.CanvasTexture(dot);
+      const dotMat = new THREE.SpriteMaterial({
+        map: dotTex, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.5
+      });
+      const dotSprite = new THREE.Sprite(dotMat);
+      const angle = (i / 3) * Math.PI * 2 + node.id * 0.5;
+      dotSprite.position.set(Math.cos(angle) * 0.6, Math.sin(angle) * 0.6, 0);
+      dotSprite.scale.set(0.12, 0.12, 1);
+      dotSprite.userData.isOrbit = true;
+      dotSprite.userData.orbitAngle = angle;
+      dotSprite.userData.orbitSpeed = 0.5 + i * 0.3;
+      dotSprite.userData.orbitRadius = 0.5 + i * 0.15;
+      group.add(dotSprite);
+    }
+
+    // ===== Important node = extra bright star =====
     if (node.important) {
-      const imp = halo.clone();
-      imp.scale.set(3.5, 3.5, 1);
-      imp.material = haloMat.clone();
-      imp.material.opacity = 0.6;
-      group.add(imp);
+      const impGlow = glowSprite.clone();
+      impGlow.scale.set(starSize * 8, starSize * 8, 1);
+      impGlow.material = glowMat.clone();
+      impGlow.material.opacity = 0.5;
+      group.add(impGlow);
       
-      const iRing = new THREE.Mesh(
-        new THREE.RingGeometry(size*2.5, size*4.0, 24),
-        new THREE.MeshBasicMaterial({ color: 0x40aaff, transparent: true, opacity: 0.4, side: THREE.DoubleSide, blending: THREE.AdditiveBlending })
-      );
-      iRing.rotation.x = Math.PI / 2.5;
-      group.add(iRing);
+      // Extra ring
+      const ringCanvas = document.createElement('canvas');
+      ringCanvas.width = 128; ringCanvas.height = 128;
+      const rctx = ringCanvas.getContext('2d');
+      rctx.strokeStyle = 'rgba(64,170,255,0.3)';
+      rctx.lineWidth = 2;
+      rctx.beginPath();
+      rctx.arc(64, 64, 50, 0, Math.PI * 2);
+      rctx.stroke();
+      rctx.strokeStyle = 'rgba(64,170,255,0.1)';
+      rctx.beginPath();
+      rctx.arc(64, 64, 40, 0, Math.PI * 2);
+      rctx.stroke();
+      const ringTex = new THREE.CanvasTexture(ringCanvas);
+      const ringMat = new THREE.SpriteMaterial({
+        map: ringTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.6
+      });
+      const ringSprite = new THREE.Sprite(ringMat);
+      ringSprite.scale.set(starSize * 6, starSize * 6, 1);
+      group.add(ringSprite);
     }
 
     // ===== Label =====
@@ -417,12 +493,11 @@ export class Scene3D {
     lctx.fill();
     lctx.shadowBlur = 0;
     
-    // Symbol icon
     lctx.font = 'bold 22px monospace';
     lctx.textAlign = 'center';
     lctx.textBaseline = 'middle';
     lctx.fillStyle = '#ffffff';
-    lctx.fillText(cfg.symbol, 70, 88);
+    lctx.fillText('*', 70, 88);
     
     lctx.font = 'bold 20px monospace';
     lctx.textAlign = 'left';
@@ -453,11 +528,11 @@ export class Scene3D {
       map: lTex, transparent: true, depthTest: false, depthWrite: false, opacity: 0.9
     });
     const label = new THREE.Sprite(lMat);
-    label.position.y = -(size + 0.9);
-    label.scale.set(2.6, 0.9, 1);
+    label.position.y = -(starSize + 0.7);
+    label.scale.set(2.4, 0.85, 1);
     label.visible = true;
     group.add(label);
-    group.userData = { mesh: mesh, label, color: c, nodeType: node.type, nodeId: node.id };
+    group.userData = { mesh: starSprite, label, color: c, nodeType: node.type, nodeId: node.id };
     this.nodeObjects.set(node.id, group);
     this.scene.add(group);
   }
