@@ -96,6 +96,37 @@ export class Graph {
     this.setDirty(true);
   }
 
+  _tryEdge(sourceId, targetId, port) {
+    // Like addEdge but returns { ok, message } instead of showing modal alerts
+    var source = this.map.get(sourceId);
+    var target = this.map.get(targetId);
+    if (!source || !target) return { ok: false, message: 'Node not found' };
+
+    if (typeof target.canAcceptEdge === 'function') {
+      var accept = target.canAcceptEdge(source, port || 'main');
+      if (!accept.ok) return { ok: false, message: accept.message || 'Cannot accept edge' };
+    }
+
+    if (!this.canConnect(sourceId, targetId, port || 'main')) {
+      var st = typeSystem.getNodeType(source);
+      var tt = typeSystem.getNodeType(target);
+      return { ok: false, message: 'Type: ' + st + ' -> ' + tt + ' not allowed' };
+    }
+
+    if (this.hasCycle(sourceId, targetId)) {
+      return { ok: false, message: 'Would create cycle' };
+    }
+
+    if (this.edges.some(function(e) { return e.sourceId === sourceId && e.targetId === targetId && e.sourcePort === (port || 'main'); })) {
+      return { ok: false, message: 'Edge already exists' };
+    }
+
+    var edge = new Edge(this.nextEdgeId++, sourceId, targetId, port || 'main');
+    this.edges.push(edge);
+    this.setDirty(true);
+    return { ok: true, edge: edge };
+  }
+
   getNode(id) {
     return this.map.get(id);
   }

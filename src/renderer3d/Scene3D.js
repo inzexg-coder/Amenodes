@@ -347,12 +347,12 @@ export class Scene3D {
     // ===== Neuron body texture =====
     function makeNeuronTexture(col, dendriteCount) {
       const canvas = document.createElement('canvas');
-      canvas.width = 128;
-      canvas.height = 128;
+      canvas.width = 256;
+      canvas.height = 256;
       const ctx = canvas.getContext('2d');
       const cx = 64, cy = 64;
 
-      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 64);
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 128);
       grad.addColorStop(0, col.replace('1)', '0.6)'));
       grad.addColorStop(0.4, col.replace('1)', '0.2)'));
       grad.addColorStop(0.7, col.replace('1)', '0.05)'));
@@ -364,7 +364,7 @@ export class Scene3D {
         const angle = (i / dendriteCount) * Math.PI * 2 + (node.id * 0.3);
         ctx.beginPath();
         ctx.moveTo(cx, cy);
-        const len = 35 + Math.random() * 25;
+        const len = 50 + Math.random() * 40;
         const segments = 8;
         for (let s = 1; s <= segments; s++) {
           const t = s / segments;
@@ -375,7 +375,7 @@ export class Scene3D {
           ctx.lineTo(x, y);
         }
         ctx.strokeStyle = col.replace('1)', '0.4)');
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 2.5;
         ctx.stroke();
 
         const tx = cx + len * Math.cos(angle);
@@ -389,8 +389,8 @@ export class Scene3D {
       ctx.shadowColor = col;
       ctx.shadowBlur = 20;
       ctx.beginPath();
-      ctx.arc(cx, cy, 16, 0, Math.PI * 2);
-      const coreGrad = ctx.createRadialGradient(cx-3, cy-3, 0, cx, cy, 16);
+      ctx.arc(cx, cy, 24, 0, Math.PI * 2);
+      const coreGrad = ctx.createRadialGradient(cx-3, cy-3, 0, cx, cy, 24);
       coreGrad.addColorStop(0, '#ffffff');
       coreGrad.addColorStop(0.3, col);
       coreGrad.addColorStop(0.7, col.replace('1)', '0.7)'));
@@ -400,7 +400,7 @@ export class Scene3D {
 
       ctx.shadowBlur = 0;
       ctx.beginPath();
-      ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 10, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(255,255,255,0.9)';
       ctx.fill();
 

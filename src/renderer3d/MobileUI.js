@@ -220,10 +220,24 @@ export class MobileUI {
           connectSource = node.id;
           document.getElementById('mConnIndicator').textContent = '● Now tap target node';
         } else if (connectSource !== node.id) {
-          const edge = this.graph.addEdge(connectSource, node.id);
-          if (edge) {
+          var result = this.graph._tryEdge(connectSource, node.id);
+          if (result && result.ok) {
+            // Edge created
             this.graph.reevaluateAll();
             this.scene.refresh();
+          } else {
+            // Show error on indicator
+            var ind = document.getElementById('mConnIndicator');
+            if (ind) { 
+              ind.textContent = '✗ ' + (result ? result.message : 'Cannot connect');
+              ind.style.color = '#ff6b7a';
+              setTimeout(function() { 
+                ind.style.color = ''; 
+                ind.textContent = '● Tap source, then target node';
+              }, 2500);
+            }
+            // Keep connect mode active so they can retry
+            return;
           }
           connectSource = null;
           connectMode = false;
@@ -454,8 +468,10 @@ export class MobileUI {
       impBtn.onclick = () => {
         node.important = !node.important;
         impBtn.textContent = node.important ? '★ Important' : '☆ Unimportant';
-        this.scene.refresh();
         this.graph.setDirty(true);
+        // Rebuild scene and reselect this node so config stays open
+        this.scene.refresh();
+        this.scene._selectNode(node.id);
       };
     }
     
