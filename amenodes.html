@@ -334,6 +334,16 @@ html, body {
 }
 .hint-text strong { color: rgba(180,160,240,0.6); }
 
+/* Long-press hint on status */
+.status-badge {
+  cursor: default;
+  transition: all 0.2s;
+}
+.status-badge:active {
+  background: rgba(120,80,200,0.2);
+  transform: scale(0.95);
+}
+
 /* LANDSCAPE ADJUSTMENTS */
 @media (min-aspect-ratio: 1/1) {
   .mobile-toolbar {

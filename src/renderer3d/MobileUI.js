@@ -44,13 +44,6 @@ export class MobileUI {
           <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
       </button>
-      <button class="mobile-btn" id="mMenu" title="Menu">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="3" y1="6" x2="21" y2="6"/>
-          <line x1="3" y1="12" x2="21" y2="12"/>
-          <line x1="3" y1="18" x2="21" y2="18"/>
-        </svg>
-      </button>
     `;
     document.body.appendChild(toolbar);
     this.container = toolbar;
@@ -69,20 +62,7 @@ export class MobileUI {
     connIndicator.textContent = '● Tap source, then target node';
     document.body.appendChild(connIndicator);
 
-    // Create action sheet (menu overlay)
-    const actionSheet = document.createElement('div');
-    actionSheet.className = 'mobile-action-sheet hidden';
-    actionSheet.id = 'mActionSheet';
-    actionSheet.innerHTML = `
-      <div class="action-sheet-content">
-        <button class="action-btn" data-action="import">📂 Import</button>
-        <button class="action-btn" data-action="clear">🗑️ Clear Canvas</button>
-        <button class="action-btn" data-action="screenshot">📸 Screenshot</button>
-        <button class="action-btn" data-action="settings">⚙️ Settings</button>
-        <button class="action-btn" data-action="close">Cancel</button>
-      </div>
-    `;
-    document.body.appendChild(actionSheet);
+    // Action sheet created in _setupHiddenMenu()
 
     this._bindEvents();
   }
@@ -158,44 +138,10 @@ export class MobileUI {
       this.app.export();
     });
 
-    // Menu
-    document.getElementById('mMenu').addEventListener('click', () => {
-      document.getElementById('mActionSheet').classList.toggle('hidden');
-    });
+    // Hidden menu: long-press on status badge triggers it
+    // (handled separately below)
 
-    // Action sheet buttons (including Cancel)
-    document.getElementById('mActionSheet').addEventListener('click', (e) => {
-      const btn = e.target.closest('.action-btn');
-      if (!btn) return;
-      const action = btn.dataset.action;
-      document.getElementById('mActionSheet').classList.add('hidden');
-      switch (action) {
-        case 'import':
-          this.app.import();
-          break;
-        case 'clear':
-          if (confirm('Clear all nodes?')) {
-            this.graph.nodes = [];
-            this.graph.edges = [];
-            this.graph.map.clear();
-            this.graph.nextId = 1;
-            this.graph.setDirty(true);
-            this.scene.refresh();
-            this.app.updateNodeCount();
-            this.app.updateEdgeCount();
-          }
-          break;
-        case 'screenshot':
-          this._takeScreenshot();
-          break;
-        case 'settings':
-          this.app.openSettings();
-          break;
-        case 'close':
-          // Just close, already hidden above
-          break;
-      }
-    });
+
 
     // Node type buttons
     document.querySelectorAll('.type-btn').forEach(btn => {
@@ -213,12 +159,11 @@ export class MobileUI {
       }
     });
 
-    // Close action sheet on overlay tap
-    document.getElementById('mActionSheet').addEventListener('click', (e) => {
-      if (e.target === e.currentTarget) {
-        document.getElementById('mActionSheet').classList.add('hidden');
-      }
-    });
+
+
+    // Hidden action sheet (opened via long-press on status badge)
+    // Create it but don't attach to any visible button
+    this._setupHiddenMenu();
 
     // Connect mode handler (tap two nodes)
     this.scene.eventBus.on('nodeSelect', (node) => {
@@ -250,6 +195,80 @@ export class MobileUI {
   _hideNodeMenu() {
     document.getElementById('mobileNodeMenu').classList.add('hidden');
     this.nodeMenuVisible = false;
+  }
+
+  _setupHiddenMenu() {
+    // Create action sheet (hidden, triggered by long-press)
+    const sheet = document.createElement('div');
+    sheet.className = 'mobile-action-sheet hidden';
+    sheet.id = 'mActionSheet';
+    sheet.innerHTML = `
+      <div class="action-sheet-content">
+        <button class="action-btn" data-action="import">📂 Import</button>
+        <button class="action-btn" data-action="clear">🗑️ Clear Canvas</button>
+        <button class="action-btn" data-action="screenshot">📸 Screenshot</button>
+        <button class="action-btn" data-action="settings">⚙️ Settings</button>
+        <button class="action-btn" data-action="close">Cancel</button>
+      </div>
+    `;
+    document.body.appendChild(sheet);
+
+    // Long-press on status badge to open hidden menu
+    const statusEl = document.getElementById('mNodeCount');
+    if (statusEl) {
+      let pressTimer = null;
+      statusEl.addEventListener('touchstart', () => {
+        pressTimer = setTimeout(() => {
+          document.getElementById('mActionSheet').classList.remove('hidden');
+        }, 600);
+      }, { passive: true });
+      statusEl.addEventListener('touchend', () => {
+        clearTimeout(pressTimer);
+      }, { passive: true });
+      statusEl.addEventListener('touchmove', () => {
+        clearTimeout(pressTimer);
+      }, { passive: true });
+    }
+
+    // Close on overlay click
+    sheet.addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        sheet.classList.add('hidden');
+      }
+    });
+
+    // Action buttons inside sheet
+    sheet.addEventListener('click', (e) => {
+      const btn = e.target.closest('.action-btn');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      sheet.classList.add('hidden');
+      switch (action) {
+        case 'import':
+          this.app.import();
+          break;
+        case 'clear':
+          if (confirm('Clear all nodes?')) {
+            this.graph.nodes = [];
+            this.graph.edges = [];
+            this.graph.map.clear();
+            this.graph.nextId = 1;
+            this.graph.setDirty(true);
+            this.scene.refresh();
+            this.app.updateNodeCount();
+            this.app.updateEdgeCount();
+          }
+          break;
+        case 'screenshot':
+          this._takeScreenshot();
+          break;
+        case 'settings':
+          this.app.openSettings();
+          break;
+        case 'close':
+          break;
+      }
+    });
   }
 
   _addNodeOfType(type) {
