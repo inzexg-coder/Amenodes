@@ -286,9 +286,14 @@ export class Scene3D {
     for (const obj of this.nodeObjects.values()) this.scene.remove(obj);
     for (const l of this.edgeLines.values()) this.scene.remove(l);
     for (const g of this.edgeGlows.values()) this.scene.remove(g);
+    // Clean up signal particles
+    if (this.signalParticles) {
+      for (const p of this.signalParticles) this.scene.remove(p);
+    }
     this.nodeObjects.clear();
     this.edgeLines.clear();
     this.edgeGlows.clear();
+    this.signalParticles = [];
     this.nodeMeshes = [];
 
     const nodes = this.graph.nodes;
@@ -325,156 +330,164 @@ export class Scene3D {
     const color = this._getTypeColor(node.type);
     const c = new THREE.Color(color);
     const typeInfo = {
-      number:    { size: 0.6, colorMult: 1.0, points: 4, glow: '#8866ff' },
-      constant:  { size: 0.65, colorMult: 0.9, points: 6, glow: '#7766ff' },
-      calc:      { size: 0.7, colorMult: 1.2, points: 4, glow: '#ff44aa' },
-      mean:      { size: 0.62, colorMult: 1.1, points: 5, glow: '#ff66bb' },
-      sem:       { size: 0.6, colorMult: 1.0, points: 5, glow: '#cc44cc' },
-      output:    { size: 0.65, colorMult: 0.9, points: 3, glow: '#4499ff' },
-      map:       { size: 0.6, colorMult: 1.0, points: 4, glow: '#44dd99' },
-      group:     { size: 0.65, colorMult: 1.1, points: 5, glow: '#33bb88' }
+      number:    { size: 0.5, dendrites: 5, colorMult: 1.0, glow: '#8866ff' },
+      constant:  { size: 0.55, dendrites: 6, colorMult: 0.9, glow: '#7766ff' },
+      calc:      { size: 0.6, dendrites: 7, colorMult: 1.2, glow: '#ff44aa' },
+      mean:      { size: 0.55, dendrites: 5, colorMult: 1.1, glow: '#ff66bb' },
+      sem:       { size: 0.5, dendrites: 5, colorMult: 1.0, glow: '#cc44cc' },
+      output:    { size: 0.55, dendrites: 4, colorMult: 0.9, glow: '#4499ff' },
+      map:       { size: 0.5, dendrites: 6, colorMult: 1.0, glow: '#44dd99' },
+      group:     { size: 0.55, dendrites: 6, colorMult: 1.1, glow: '#33bb88' }
     };
     const info = typeInfo[node.type] || typeInfo.number;
-    const starSize = info.size + (node.important ? 0.2 : 0);
+    const neuronSize = info.size + (node.important ? 0.15 : 0);
+    const colStr = 'rgba(' + (c.r*255|0) + ',' + (c.g*255|0) + ',' + (c.b*255|0) + ',1)';
+    const colDim = 'rgba(' + (c.r*255|0) + ',' + (c.g*255|0) + ',' + (c.b*255|0) + ',0.3)';
 
-    // ===== Star texture (glowing star shape) =====
-    function makeStarTexture(points, col, size) {
+    // ===== Neuron body texture (cell body with dendrite tendrils) =====
+    function makeNeuronTexture(col, dendrites) {
       const canvas = document.createElement('canvas');
       canvas.width = 128;
       canvas.height = 128;
       const ctx = canvas.getContext('2d');
-      const cx = 64, cy = 64, outerR = 60, innerR = 22;
-      
-      // Glow behind star
-      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, outerR);
-      grad.addColorStop(0, col);
-      grad.addColorStop(0.3, col.replace('1)', '0.6)'));
-      grad.addColorStop(0.6, col.replace('1)', '0.15)'));
+      const cx = 64, cy = 64;
+
+      // Outer glow
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 64);
+      grad.addColorStop(0, col.replace('1)', '0.6)'));
+      grad.addColorStop(0.4, col.replace('1)', '0.2)'));
+      grad.addColorStop(0.7, col.replace('1)', '0.05)'));
       grad.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 128, 128);
-      
-      // Star shape
-      ctx.beginPath();
-      for (let i = 0; i < points * 2; i++) {
-        const r = i % 2 === 0 ? outerR : innerR;
-        const angle = (Math.PI * i / points) - Math.PI / 2;
-        const x = cx + r * Math.cos(angle);
-        const y = cy + r * Math.sin(angle);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+
+      // Dendrite tendrils
+      for (let i = 0; i < dendrites; i++) {
+        const angle = (i / dendrites) * Math.PI * 2 + (node.id * 0.3);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        // Wavy tendril
+        const len = 35 + Math.random() * 25;
+        const segments = 8;
+        for (let s = 1; s <= segments; s++) {
+          const t = s / segments;
+          const r = len * t;
+          const wave = Math.sin(t * Math.PI * 3) * 6 * t;
+          const x = cx + r * Math.cos(angle + wave * 0.02);
+          const y = cy + r * Math.sin(angle + wave * 0.02);
+          ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = col.replace('1)', '0.4)');
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Small terminal button
+        const tx = cx + len * Math.cos(angle);
+        const ty = cy + len * Math.sin(angle);
+        ctx.beginPath();
+        ctx.arc(tx, ty, 3, 0, Math.PI * 2);
+        ctx.fillStyle = col.replace('1)', '0.5)');
+        ctx.fill();
       }
-      ctx.closePath();
-      
+
+      // Cell body (bright core)
       ctx.shadowColor = col;
-      ctx.shadowBlur = 30;
-      ctx.fillStyle = col;
-      ctx.fill();
-      
-      // Bright core
-      ctx.shadowBlur = 0;
-      const coreGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 20);
-      coreGrad.addColorStop(0, 'rgba(255,255,255,1)');
-      coreGrad.addColorStop(0.5, col.replace('1)', '0.8)'));
+      ctx.shadowBlur = 20;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 16, 0, Math.PI * 2);
+      const coreGrad = ctx.createRadialGradient(cx-3, cy-3, 0, cx, cy, 16);
+      coreGrad.addColorStop(0, '#ffffff');
+      coreGrad.addColorStop(0.3, col);
+      coreGrad.addColorStop(0.7, col.replace('1)', '0.7)'));
       coreGrad.addColorStop(1, col.replace('1)', '0)'));
       ctx.fillStyle = coreGrad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 20, 0, Math.PI * 2);
       ctx.fill();
-      
+
+      // Glowing nucleus
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fill();
+
       return canvas;
     }
 
-    const starCol = 'rgba(' + (c.r*255|0) + ',' + (c.g*255|0) + ',' + (c.b*255|0) + ',1)';
-    const starCanvas = makeStarTexture(info.points, starCol, starSize);
-    const starTex = new THREE.CanvasTexture(starCanvas);
-    const starMat = new THREE.SpriteMaterial({
-      map: starTex,
-      blending: THREE.AdditiveBlending,
-      transparent: true,
-      depthWrite: false,
-      opacity: 0.95
+    const texCanvas = makeNeuronTexture(colStr, info.dendrites);
+    const neuronTex = new THREE.CanvasTexture(texCanvas);
+    const neuronMat = new THREE.SpriteMaterial({
+      map: neuronTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 1.0
     });
-    const starSprite = new THREE.Sprite(starMat);
-    starSprite.scale.set(starSize * 2.5, starSize * 2.5, 1);
-    starSprite.userData.nodeId = node.id;
-    group.add(starSprite);
-    this.nodeMeshes.push(starSprite);
+    const neuronSprite = new THREE.Sprite(neuronMat);
+    neuronSprite.scale.set(neuronSize * 3.0, neuronSize * 3.0, 1);
+    neuronSprite.userData.nodeId = node.id;
+    group.add(neuronSprite);
+    this.nodeMeshes.push(neuronSprite);
 
-    // ===== Secondary outer glow =====
-    const glowCanvas = document.createElement('canvas');
-    glowCanvas.width = 96;
-    glowCanvas.height = 96;
-    const gctx = glowCanvas.getContext('2d');
-    const ggrad = gctx.createRadialGradient(48, 48, 0, 48, 48, 48);
-    ggrad.addColorStop(0, starCol.replace('1)', '0.5)'));
-    ggrad.addColorStop(0.3, starCol.replace('1)', '0.2)'));
-    ggrad.addColorStop(0.7, starCol.replace('1)', '0.05)'));
-    ggrad.addColorStop(1, 'rgba(0,0,0,0)');
-    gctx.fillStyle = ggrad;
-    gctx.fillRect(0, 0, 96, 96);
-    const glowTex = new THREE.CanvasTexture(glowCanvas);
-    const glowMat = new THREE.SpriteMaterial({
-      map: glowTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.7
+    // ===== Outer corona =====
+    const coronaCanvas = document.createElement('canvas');
+    coronaCanvas.width = 96; coronaCanvas.height = 96;
+    const cctx = coronaCanvas.getContext('2d');
+    const cgrad = cctx.createRadialGradient(48, 48, 5, 48, 48, 48);
+    cgrad.addColorStop(0, colDim);
+    cgrad.addColorStop(0.5, col.replace('1)', '0.08)'));
+    cgrad.addColorStop(1, 'rgba(0,0,0,0)');
+    cctx.fillStyle = cgrad;
+    cctx.fillRect(0, 0, 96, 96);
+    const coronaTex = new THREE.CanvasTexture(coronaCanvas);
+    const coronaMat = new THREE.SpriteMaterial({
+      map: coronaTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.8
     });
-    const glowSprite = new THREE.Sprite(glowMat);
-    glowSprite.scale.set(starSize * 5, starSize * 5, 1);
-    group.add(glowSprite);
+    const corona = new THREE.Sprite(coronaMat);
+    corona.scale.set(neuronSize * 5, neuronSize * 5, 1);
+    group.add(corona);
 
-    // ===== Small orbiting particles =====
-    for (let i = 0; i < 3; i++) {
-      const dot = document.createElement('canvas');
-      dot.width = 16; dot.height = 16;
-      const dctx = dot.getContext('2d');
-      const dgrad = dctx.createRadialGradient(8, 8, 0, 8, 8, 8);
-      dgrad.addColorStop(0, 'rgba(255,255,255,0.8)');
-      dgrad.addColorStop(0.5, starCol.replace('1)', '0.3)'));
-      dgrad.addColorStop(1, 'rgba(0,0,0,0)');
-      dctx.fillStyle = dgrad;
-      dctx.fillRect(0, 0, 16, 16);
-      const dotTex = new THREE.CanvasTexture(dot);
+    // ===== Orbiting synaptic particles =====
+    for (let i = 0; i < 4; i++) {
+      const dotCanvas = document.createElement('canvas');
+      dotCanvas.width = 16; dotCanvas.height = 16;
+      const dctx = dotCanvas.getContext('2d');
+      dctx.beginPath();
+      dctx.arc(8, 8, 4, 0, Math.PI * 2);
+      dctx.fillStyle = 'rgba(255,255,255,0.7)';
+      dctx.fill();
+      const dotTex = new THREE.CanvasTexture(dotCanvas);
       const dotMat = new THREE.SpriteMaterial({
-        map: dotTex, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.5
+        map: dotTex, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.6
       });
-      const dotSprite = new THREE.Sprite(dotMat);
-      const angle = (i / 3) * Math.PI * 2 + node.id * 0.5;
-      dotSprite.position.set(Math.cos(angle) * 0.6, Math.sin(angle) * 0.6, 0);
-      dotSprite.scale.set(0.12, 0.12, 1);
-      dotSprite.userData.isOrbit = true;
-      dotSprite.userData.orbitAngle = angle;
-      dotSprite.userData.orbitSpeed = 0.5 + i * 0.3;
-      dotSprite.userData.orbitRadius = 0.5 + i * 0.15;
-      group.add(dotSprite);
+      const dot = new THREE.Sprite(dotMat);
+      const angle = (i / 4) * Math.PI * 2 + node.id * 0.5;
+      dot.position.set(Math.cos(angle) * 0.7, Math.sin(angle) * 0.7, 0);
+      dot.scale.set(0.1, 0.1, 1);
+      dot.userData.isOrbit = true;
+      dot.userData.orbitAngle = angle;
+      dot.userData.orbitSpeed = 0.6 + i * 0.2;
+      dot.userData.orbitRadius = 0.5 + i * 0.12;
+      group.add(dot);
     }
 
-    // ===== Important node = extra bright star =====
+    // ===== Important node: extra glow ring =====
     if (node.important) {
-      const impGlow = glowSprite.clone();
-      impGlow.scale.set(starSize * 8, starSize * 8, 1);
-      impGlow.material = glowMat.clone();
-      impGlow.material.opacity = 0.5;
-      group.add(impGlow);
-      
-      // Extra ring
       const ringCanvas = document.createElement('canvas');
       ringCanvas.width = 128; ringCanvas.height = 128;
       const rctx = ringCanvas.getContext('2d');
-      rctx.strokeStyle = 'rgba(64,170,255,0.3)';
+      rctx.strokeStyle = col.replace('1)', '0.4)');
       rctx.lineWidth = 2;
       rctx.beginPath();
-      rctx.arc(64, 64, 50, 0, Math.PI * 2);
+      rctx.arc(64, 64, 48, 0, Math.PI * 2);
       rctx.stroke();
-      rctx.strokeStyle = 'rgba(64,170,255,0.1)';
+      rctx.strokeStyle = col.replace('1)', '0.15)');
+      rctx.lineWidth = 1;
       rctx.beginPath();
-      rctx.arc(64, 64, 40, 0, Math.PI * 2);
+      rctx.arc(64, 64, 36, 0, Math.PI * 2);
       rctx.stroke();
       const ringTex = new THREE.CanvasTexture(ringCanvas);
       const ringMat = new THREE.SpriteMaterial({
-        map: ringTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.6
+        map: ringTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.5
       });
-      const ringSprite = new THREE.Sprite(ringMat);
-      ringSprite.scale.set(starSize * 6, starSize * 6, 1);
-      group.add(ringSprite);
+      const ring = new THREE.Sprite(ringMat);
+      ring.scale.set(neuronSize * 6, neuronSize * 6, 1);
+      group.add(ring);
     }
 
     // ===== Label =====
@@ -485,19 +498,14 @@ export class Scene3D {
     lCanvas.height = 180;
     const lctx = lCanvas.getContext('2d');
     
+    // Glowing dot
     lctx.beginPath();
-    lctx.arc(70, 90, 18, 0, Math.PI * 2);
+    lctx.arc(70, 90, 16, 0, Math.PI * 2);
     lctx.fillStyle = '#' + c.getHexString();
     lctx.shadowColor = '#' + c.getHexString();
-    lctx.shadowBlur = 25;
+    lctx.shadowBlur = 20;
     lctx.fill();
     lctx.shadowBlur = 0;
-    
-    lctx.font = 'bold 22px monospace';
-    lctx.textAlign = 'center';
-    lctx.textBaseline = 'middle';
-    lctx.fillStyle = '#ffffff';
-    lctx.fillText('*', 70, 88);
     
     lctx.font = 'bold 20px monospace';
     lctx.textAlign = 'left';
@@ -505,7 +513,7 @@ export class Scene3D {
     lctx.fillStyle = '#ffffff';
     lctx.fillText(labelType.toUpperCase(), 105, 48);
     
-    lctx.font = 'bold 30px monospace';
+    lctx.font = 'bold 28px monospace';
     lctx.fillStyle = '#e0d0ff';
     lctx.shadowColor = 'rgba(0,0,0,0.8)';
     lctx.shadowBlur = 6;
@@ -528,11 +536,11 @@ export class Scene3D {
       map: lTex, transparent: true, depthTest: false, depthWrite: false, opacity: 0.9
     });
     const label = new THREE.Sprite(lMat);
-    label.position.y = -(starSize + 0.7);
-    label.scale.set(2.4, 0.85, 1);
+    label.position.y = -(neuronSize + 0.7);
+    label.scale.set(2.2, 0.8, 1);
     label.visible = true;
     group.add(label);
-    group.userData = { mesh: starSprite, label, color: c, nodeType: node.type, nodeId: node.id };
+    group.userData = { mesh: neuronSprite, label, color: c, nodeType: node.type, nodeId: node.id };
     this.nodeObjects.set(node.id, group);
     this.scene.add(group);
   }
@@ -544,29 +552,65 @@ export class Scene3D {
     if (!src || !tgt) return;
 
     const p1 = src.position, p2 = tgt.position;
-    const arr = [p1.x, p1.y, p1.z, p2.x, p2.y, p2.z];
+    const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2, z: (p1.z + p2.z) / 2 };
+    // Slight curve for organic feel
+    const ctrl = { x: mid.x + (Math.random() - 0.5) * 0.5, y: mid.y + (Math.random() - 0.5) * 0.5, z: mid.z + (Math.random() - 0.5) * 0.5 };
+    
+    // Use quadratic bezier curve
+    const curve = new THREE.QuadraticBezierCurve3(
+      new THREE.Vector3(p1.x, p1.y, p1.z),
+      new THREE.Vector3(ctrl.x, ctrl.y, ctrl.z),
+      new THREE.Vector3(p2.x, p2.y, p2.z)
+    );
+    const points = curve.getPoints(16);
+    const positions = [];
+    points.forEach(function(p) { positions.push(p.x, p.y, p.z); });
+    
     const isBlue = edge.sourcePort === 'unmapped';
     const col = isBlue ? 0x4488ff : 0xb080ff;
+    const colStr = isBlue ? 'rgba(68,136,255,' : 'rgba(176,128,255,';
 
-    // Glow line
+    // Glow line (thicker, transparent)
     const gGeo = new THREE.BufferGeometry();
-    gGeo.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3));
+    gGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     const gMat = new THREE.LineBasicMaterial({
-      color: col, transparent: true, opacity: 0.12
+      color: col, transparent: true, opacity: 0.08
     });
     const glow = new THREE.Line(gGeo, gMat);
     this.scene.add(glow);
     this.edgeGlows.set(edge.id, glow);
 
-    // Main line
+    // Main line (thinner, visible)
     const mGeo = new THREE.BufferGeometry();
-    mGeo.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3));
+    mGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     const mMat = new THREE.LineBasicMaterial({
-      color: col, transparent: true, opacity: 0.4
+      color: col, transparent: true, opacity: 0.35
     });
     const main = new THREE.Line(mGeo, mMat);
     this.scene.add(main);
     this.edgeLines.set(edge.id, main);
+
+    // Signal particle (travels along the connection)
+    const pCanvas = document.createElement('canvas');
+    pCanvas.width = 12; pCanvas.height = 12;
+    const pctx = pCanvas.getContext('2d');
+    pctx.beginPath();
+    pctx.arc(6, 6, 4, 0, Math.PI * 2);
+    pctx.fillStyle = 'rgba(255,255,255,0.9)';
+    pctx.fill();
+    const pTex = new THREE.CanvasTexture(pCanvas);
+    const pMat = new THREE.SpriteMaterial({
+      map: pTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false
+    });
+    const particle = new THREE.Sprite(pMat);
+    particle.scale.set(0.08, 0.08, 1);
+    this.scene.add(particle);
+    particle.userData.edgeId = edge.id;
+    particle.userData.progress = Math.random();
+    particle.userData.speed = 0.3 + Math.random() * 0.2;
+    particle.userData.curve = curve;
+    if (!this.signalParticles) this.signalParticles = [];
+    this.signalParticles.push(particle);
   }
 
   addNode(node) {
@@ -621,12 +665,21 @@ export class Scene3D {
       });
     }
 
-    // Pulse edges
+    // Pulse edges + move signal particles
     for (const [id, line] of this.edgeLines) {
-      line.material.opacity = 0.3 + Math.sin(time * 1.5 + id * 0.5) * 0.15;
+      line.material.opacity = 0.25 + Math.sin(time * 1.2 + id * 0.5) * 0.15;
     }
     for (const [id, glow] of this.edgeGlows) {
-      glow.material.opacity = 0.1 + Math.sin(time * 1.2 + id * 0.3) * 0.05;
+      glow.material.opacity = 0.06 + Math.sin(time * 1.0 + id * 0.3) * 0.04;
+    }
+    // Animate signal particles along curves
+    if (this.signalParticles) {
+      for (const p of this.signalParticles) {
+        p.userData.progress += 0.005 * p.userData.speed;
+        if (p.userData.progress > 1) p.userData.progress = 0;
+        const pt = p.userData.curve.getPoint(p.userData.progress);
+        p.position.set(pt.x, pt.y, pt.z);
+      }
     }
 
     this.renderer.render(this.scene, this.camera);
