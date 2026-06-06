@@ -511,6 +511,7 @@ html, body {
     const { typeSystem } = await import('./src/core/DataType.js');
     const { NodeFactory } = await import('./src/nodes/NodeFactory.js');
 
+    await loadAllNodes();
     window.alert = (msg) => modal.alert(msg);
     window.confirm = (msg) => modal.confirm(msg);
     window.prompt = (msg, def) => modal.prompt(msg, def);
