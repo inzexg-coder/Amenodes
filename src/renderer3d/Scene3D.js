@@ -392,97 +392,107 @@ export class Scene3D {
 
     // ===== Neuron body texture =====
     function makeNeuronTexture(col, dendriteCount) {
+      // Ultra-realistic star texture with Airy disk pattern and diffraction spikes
       var canvas = document.createElement('canvas');
-      canvas.width = 256;
-      canvas.height = 256;
+      canvas.width = 512;
+      canvas.height = 512;
       var ctx = canvas.getContext('2d');
-      var cx = 128, cy = 128;
-
-      // Multi-layer glow
-      for (var g = 3; g >= 0; g--) {
-        var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 100 + g * 20);
-        grad.addColorStop(0, col.replace('1)', String(0.15 - g * 0.03)));
-        grad.addColorStop(0.5, col.replace('1)', String(0.08 - g * 0.02)));
+      var cx = 256, cy = 256;
+      
+      // Extract RGB from rgba string
+      var rgbMatch = col.match(/rgba\((\d+),(\d+),(\d+)/);
+      var r = parseInt(rgbMatch[1]), g = parseInt(rgbMatch[2]), b = parseInt(rgbMatch[3]);
+      
+      // 1. Outer atmospheric glow (very large, very soft)
+      for (var g2 = 6; g2 >= 0; g2--) {
+        var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 120 + g2 * 30);
+        grad.addColorStop(0, 'rgba(' + r + ',' + g + ',' + b + ',' + (0.03 + g2 * 0.01) + ')');
+        grad.addColorStop(0.3, 'rgba(' + r + ',' + g + ',' + b + ',' + (0.02 + g2 * 0.005) + ')');
         grad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.arc(cx, cy, 100 + g * 20, 0, Math.PI * 2);
+        ctx.arc(cx, cy, 120 + g2 * 30, 0, Math.PI * 2);
         ctx.fill();
       }
-
-      // Dendrite tendrils
-      for (var i = 0; i < dendriteCount; i++) {
-        var angle = (i / dendriteCount) * Math.PI * 2 + (node.id * 0.3);
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        var len = 55 + Math.random() * 35;
-        var segments = 12;
-        for (var s = 1; s <= segments; s++) {
-          var t = s / segments;
-          var r = len * t;
-          var wave = Math.sin(t * Math.PI * 5) * 4 * t;
-          var x = cx + r * Math.cos(angle + wave * 0.03);
-          var y = cy + r * Math.sin(angle + wave * 0.03);
-          ctx.lineTo(x, y);
+      
+      // 2. Diffraction spikes (4-point cross pattern)
+      var spikeLen = 200;
+      var spikeWidth = [1.5, 3, 1.8, 0.8, 2.5, 1.2];
+      for (var s = 0; s < 4; s++) {
+        var angle = s * Math.PI / 2 + 0.05;
+        for (var w = 0; w < 6; w++) {
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          var ex = cx + spikeLen * Math.cos(angle + (w - 2.5) * 0.008);
+          var ey = cy + spikeLen * Math.sin(angle + (w - 2.5) * 0.008);
+          ctx.lineTo(ex, ey);
+          var alpha = 0.08 - w * 0.01;
+          if (alpha > 0) {
+            ctx.strokeStyle = 'rgba(255,255,255,' + alpha + ')';
+            ctx.lineWidth = spikeWidth[w] * 1.5;
+            ctx.stroke();
+          }
         }
-        ctx.strokeStyle = col.replace('1)', '0.4)');
-        ctx.lineWidth = 1.5 + (1 - i / dendriteCount) * 1.5;
-        ctx.stroke();
-
-        // Terminal spark
-        var tx = cx + len * Math.cos(angle);
-        var ty = cy + len * Math.sin(angle);
-        var sg = ctx.createRadialGradient(tx, ty, 0, tx, ty, 6);
-        sg.addColorStop(0, 'rgba(255,255,255,0.8)');
-        sg.addColorStop(0.5, col.replace('1)', '0.4)'));
-        sg.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = sg;
+      }
+      
+      // 3. Inner glow rings (Airy disk pattern - concentric rings with decreasing intensity)
+      for (var ri = 0; ri < 8; ri++) {
+        var radius = 10 + ri * 14;
+        var ringAlpha = 0.15 * Math.exp(-ri * 0.6) * Math.sin(ri * 1.2 + 1) * 0.5 + 0.5;
+        var grad2 = ctx.createRadialGradient(cx, cy, radius - 3, cx, cy, radius + 3);
+        var col2 = 'rgba(' + r + ',' + g + ',' + b + ',' + (ringAlpha * 0.1) + ')';
+        grad2.addColorStop(0, 'rgba(0,0,0,0)');
+        grad2.addColorStop(0.3, col2);
+        grad2.addColorStop(0.7, col2);
+        grad2.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad2;
         ctx.beginPath();
-        ctx.arc(tx, ty, 6, 0, Math.PI * 2);
+        ctx.arc(cx, cy, radius + 3, 0, Math.PI * 2);
         ctx.fill();
       }
-
-      // Random sparkle dots
-      for (var s = 0; s < 20; s++) {
-        var sa = Math.random() * Math.PI * 2;
-        var sr = 20 + Math.random() * 60;
-        var sx = cx + sr * Math.cos(sa);
-        var sy = cy + sr * Math.sin(sa);
-        var ss = 1 + Math.random() * 2;
-        ctx.beginPath();
-        ctx.arc(sx, sy, ss, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,' + (0.3 + Math.random() * 0.5) + ')';
-        ctx.fill();
-      }
-
-      // Cell body - multi-layer core
-      ctx.shadowColor = col;
-      ctx.shadowBlur = 40;
-      var coreGrad = ctx.createRadialGradient(cx-4, cy-4, 0, cx, cy, 28);
-      coreGrad.addColorStop(0, '#ffffff');
-      coreGrad.addColorStop(0.15, col.replace('1)', '1)'));
-      coreGrad.addColorStop(0.4, col.replace('1)', '0.8)'));
-      coreGrad.addColorStop(0.7, col.replace('1)', '0.3)'));
+      
+      // 4. Saturated core (bright white center bleeding into color)
+      ctx.shadowColor = 'rgba(' + r + ',' + g + ',' + b + ',1)';
+      ctx.shadowBlur = 60;
+      var coreGrad = ctx.createRadialGradient(cx-2, cy-2, 0, cx, cy, 35);
+      coreGrad.addColorStop(0, 'rgba(255,255,255,1)');
+      coreGrad.addColorStop(0.05, 'rgba(255,255,255,0.95)');
+      coreGrad.addColorStop(0.15, 'rgba(' + r + ',' + g + ',' + b + ',0.9)');
+      coreGrad.addColorStop(0.3, 'rgba(' + r + ',' + g + ',' + b + ',0.6)');
+      coreGrad.addColorStop(0.5, 'rgba(' + r + ',' + g + ',' + b + ',0.3)');
+      coreGrad.addColorStop(0.7, 'rgba(' + r + ',' + g + ',' + b + ',0.1)');
       coreGrad.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = coreGrad;
       ctx.beginPath();
-      ctx.arc(cx, cy, 28, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 35, 0, Math.PI * 2);
       ctx.fill();
-
-      // Bright inner nucleus
+      
+      // 5. Ultra-bright central pixel
       ctx.shadowBlur = 0;
-      var nucGrad = ctx.createRadialGradient(cx-2, cy-2, 0, cx, cy, 8);
-      nucGrad.addColorStop(0, '#ffffff');
-      nucGrad.addColorStop(0.5, 'rgba(255,255,255,0.9)');
-      nucGrad.addColorStop(1, 'rgba(255,255,255,0.2)');
-      ctx.fillStyle = nucGrad;
+      var hotGrad = ctx.createRadialGradient(cx-1, cy-1, 0, cx, cy, 6);
+      hotGrad.addColorStop(0, 'rgba(255,255,255,1)');
+      hotGrad.addColorStop(0.5, 'rgba(255,255,255,0.9)');
+      hotGrad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = hotGrad;
       ctx.beginPath();
-      ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 6, 0, Math.PI * 2);
       ctx.fill();
+      
+      // 6. Tiny sparkles around (simulating lens flare / nearby stars)
+      for (var sp = 0; sp < 12; sp++) {
+        var sa = Math.random() * Math.PI * 2;
+        var sr = 15 + Math.random() * 80;
+        var sx = cx + sr * Math.cos(sa);
+        var sy = cy + sr * Math.sin(sa);
+        var ss = 0.5 + Math.random() * 2;
+        ctx.beginPath();
+        ctx.arc(sx, sy, ss, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,' + (0.2 + Math.random() * 0.4) + ')';
+        ctx.fill();
+      }
 
       return canvas;
-    }
-    const texCanvas = makeNeuronTexture(colStr, dendrites);
+    }    const texCanvas = makeNeuronTexture(colStr, 0);
     const neuronTex = new THREE.CanvasTexture(texCanvas);
     neuronTex.needsUpdate = true;
     const neuronMat = new THREE.SpriteMaterial({
@@ -616,7 +626,7 @@ export class Scene3D {
     label.scale.set(2.2, 0.8, 1);
     label.visible = true;
     group.add(label);
-    var scale = neuronSize * 4.0;
+    var scale = neuronSize * 5.0;
     group.userData = { mesh: neuronSprite, label, color: c, nodeType: node.type, nodeId: node.id, baseScale: scale };
     this.nodeObjects.set(node.id, group);
     this.scene.add(group);

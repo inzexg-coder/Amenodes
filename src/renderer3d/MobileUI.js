@@ -389,22 +389,25 @@ export class MobileUI {
 
   // ---- Node config panel (shown on tap) ----
   _showNodeConfig(node) {
-    const panel = document.getElementById('nodeInfo');
-    if (!panel) return;
-    
-    // Fill header
-    document.getElementById('infoTitle').textContent = node.title || node.type || 'Node';
-    document.getElementById('infoType').textContent = node.type || '-';
-    
-    // Build dynamic config body
-    const body = document.getElementById('infoConfigBody');
-    if (!body) return;
-    body.innerHTML = this._getNodeConfigHTML(node);
-    
-    // Bind dynamic controls
-    this._bindNodeConfig(node);
-    
-    panel.classList.remove('hidden');
+    try {
+      const panel = document.getElementById('nodeInfo');
+      if (!panel) return;
+      
+      document.getElementById('infoTitle').textContent = node.title || node.type || 'Node';
+      document.getElementById('infoType').textContent = node.type || '-';
+      
+      const body = document.getElementById('infoConfigBody');
+      if (!body) return;
+      body.innerHTML = this._getNodeConfigHTML(node);
+      
+      panel.classList.remove('hidden');
+      
+      this._bindNodeConfig(node);
+    } catch(e) {
+      console.error('Config panel error:', e);
+      var badge = document.getElementById('mNodeCount');
+      if (badge) badge.textContent = 'PanErr:' + (e.message || '').slice(0, 20);
+    }
   }
   
   _hideNodeConfig() {
