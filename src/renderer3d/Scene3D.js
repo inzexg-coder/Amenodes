@@ -101,8 +101,8 @@ export class Scene3D {
   }
 
   async _ensureThreeJS() {
-    while (!window.THREE || typeof window.THREE.OrbitControls === 'undefined') {
-      await new Promise(r => setTimeout(r, 100));
+    while (!window._threeLoaded) {
+      await new Promise(r => setTimeout(r, 200));
     }
     this.THREE = window.THREE;
   }
