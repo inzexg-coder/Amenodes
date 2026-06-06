@@ -330,34 +330,39 @@ export class MobileUI {
   }
 
   _addNodeOfType(type) {
-    import('../nodes/NodeFactory.js').then(async ({ NodeFactory }) => {
+    var self = this;
+    import('../nodes/NodeFactory.js').then(async function(m) {
+      var NodeFactory = m.NodeFactory;
       try {
-        const node = await NodeFactory.createNode(type, {
+        var node = await NodeFactory.createNode(type, {
           x: 0, y: 0,
           title: type.charAt(0).toUpperCase() + type.slice(1)
         });
         if (node) {
-          this.graph.addNode(node);
-          this.graph.reevaluateAll();
-          this.scene.refresh();
-          this.app.updateNodeCount();
-          this.app.updateEdgeCount();
-          this.app.history.save();
+          self.graph.addNode(node);
+          self.graph.reevaluateAll();
+          self.scene.refresh();
+          self.app.updateNodeCount();
+          self.app.updateEdgeCount();
+          self.app.history.save();
           // Flash feedback
           var badge = document.getElementById('mNodeCount');
           if (badge) { badge.style.color = '#b090ff'; setTimeout(function() { badge.style.color = ''; }, 300); }
+        } else {
+          _showErr('NodeFactory returned null');
         }
       } catch (e) {
         console.error('Failed to create node:', e);
-        // Show error on screen for mobile users
-        var badge = document.getElementById('mNodeCount');
-        if (badge) { badge.textContent = 'ERR'; badge.style.color = '#ff6b7a'; setTimeout(function() { badge.textContent = '0'; badge.style.color = ''; }, 2000); }
+        _showErr(e.message || String(e));
       }
     }).catch(function(e) {
       console.error('Import failed:', e);
-      var badge = document.getElementById('mNodeCount');
-      if (badge) { badge.textContent = 'ERR'; badge.style.color = '#ff6b7a'; }
+      _showErr('Import: ' + (e.message || String(e)));
     });
+    function _showErr(msg) {
+      var badge = document.getElementById('mNodeCount');
+      if (badge) { badge.textContent = msg.slice(0, 40); badge.style.color = '#ff6b7a'; }
+    }
   }
 
   async _takeScreenshot() {
