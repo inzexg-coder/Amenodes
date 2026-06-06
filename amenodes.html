@@ -334,10 +334,15 @@ html, body {
 }
 .hint-text strong { color: rgba(180,160,240,0.6); }
 
-/* Long-press hint on status */
+/* Status badge - minimalist */
+.status-overlay {
+  pointer-events: none;
+}
 .status-badge {
   cursor: default;
   transition: all 0.2s;
+  font-size: 11px;
+  padding: 3px 10px;
 }
 .status-badge:active {
   background: rgba(120,80,200,0.2);
@@ -376,8 +381,8 @@ html, body {
     <div class="hint-text">Tap <strong>+</strong> to add your first neuron</div>
   </div>
 
-  <!-- Status Overlay (node count, etc) -->
-  <div class="status-overlay">
+  <!-- Status badge (auto-hides after a few seconds) -->
+  <div class="status-overlay" id="statusOverlay" style="opacity:0;transition:opacity 0.5s;">
     <span class="status-badge" id="mNodeCount">0 nodes</span>
   </div>
 
@@ -451,6 +456,12 @@ html, body {
           hint.classList.toggle('hidden', this.graph.nodes.length > 0);
         }
       });
+      
+      // Auto-show status on changes, fade after 3s
+      this.eventBus.on('nodeSelect', () => this._flashStatus());
+      
+      // Initial flash
+      setTimeout(() => this._flashStatus(), 500);
       }
 
       async initScene() {
@@ -516,6 +527,7 @@ html, body {
         if (el) {
           el.textContent = `${this.graph.nodes.length} node${this.graph.nodes.length !== 1 ? 's' : ''}`;
         }
+        this._flashStatus();
       }
 
       updateEdgeCount() {
@@ -547,6 +559,15 @@ html, body {
       openSettings() {
         // Simple alert for now - can expand later
         modal.alert('Amenodes 3D v2.7.0\n\nNeural Network Visualization\n\nBuilt with Three.js');
+      }
+
+      _flashStatus() {
+        const el = document.getElementById('statusOverlay');
+        if (el) {
+          el.style.opacity = '1';
+          clearTimeout(this._statusTimer);
+          this._statusTimer = setTimeout(() => { el.style.opacity = '0'; }, 3000);
+        }
       }
     }
 
