@@ -11,7 +11,7 @@ export const metadata = {
   canHaveIncomingEdges: false,
   canHaveOutgoingEdges: true,
   allowedInputTypes: [],
-  defaultValue: 0
+  defaultValue: 0,
   visual3d: { color: 0x9060ff, size: 0.55, dendrites: 5, glow: '#8866ff' },
 };
 

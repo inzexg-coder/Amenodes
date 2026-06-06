@@ -14,7 +14,7 @@ export const metadata = {
   canHaveIncomingEdges: true,
   canHaveOutgoingEdges: false,
   allowedInputTypes: ['num', 'array', 'uncert', 'list', 'wlist'],
-  defaultValue: null
+  defaultValue: null,
   visual3d: { color: 0x4090ff, size: 0.55, dendrites: 4, glow: '#4499ff' },
 };
 

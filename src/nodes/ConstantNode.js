@@ -13,7 +13,7 @@ export const metadata = {
   canHaveIncomingEdges: false,
   canHaveOutgoingEdges: true,
   allowedInputTypes: [],
-  defaultValue: 0
+  defaultValue: 0,
   visual3d: { color: 0x8060ff, size: 0.6, dendrites: 6, glow: '#7766ff' },
 };
 
