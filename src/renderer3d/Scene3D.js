@@ -432,7 +432,7 @@ export class Scene3D {
     const cctx = coronaCanvas.getContext('2d');
     const cgrad = cctx.createRadialGradient(48, 48, 5, 48, 48, 48);
     cgrad.addColorStop(0, colDim);
-    cgrad.addColorStop(0.5, col.replace('1)', '0.08)'));
+    cgrad.addColorStop(0.5, colStr.replace('1)', '0.08)'));
     cgrad.addColorStop(1, 'rgba(0,0,0,0)');
     cctx.fillStyle = cgrad;
     cctx.fillRect(0, 0, 96, 96);
@@ -473,12 +473,12 @@ export class Scene3D {
       const ringCanvas = document.createElement('canvas');
       ringCanvas.width = 128; ringCanvas.height = 128;
       const rctx = ringCanvas.getContext('2d');
-      rctx.strokeStyle = col.replace('1)', '0.4)');
+      rctx.strokeStyle = colStr.replace('1)', '0.4)');
       rctx.lineWidth = 2;
       rctx.beginPath();
       rctx.arc(64, 64, 48, 0, Math.PI * 2);
       rctx.stroke();
-      rctx.strokeStyle = col.replace('1)', '0.15)');
+      rctx.strokeStyle = colStr.replace('1)', '0.15)');
       rctx.lineWidth = 1;
       rctx.beginPath();
       rctx.arc(64, 64, 36, 0, Math.PI * 2);
