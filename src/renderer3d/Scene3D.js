@@ -237,9 +237,10 @@ export class Scene3D {
     // Card background (dark with color tint)
     this._drawRoundedRect(ctx, 0, 0, w, h, r);
     var grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, 'rgba('+cr+','+cg+','+cb+',0.30)');
-    grad.addColorStop(0.5, 'rgba(12,8,28,0.92)');
-    grad.addColorStop(1, 'rgba(8,6,18,0.95)');
+    grad.addColorStop(0, 'rgba('+cr+','+cg+','+cb+',0.60)');
+    grad.addColorStop(0.3, 'rgba('+cr+','+cg+','+cb+',0.25)');
+    grad.addColorStop(0.6, 'rgba(12,8,28,0.95)');
+    grad.addColorStop(1, 'rgba(8,6,18,0.98)');
     ctx.fillStyle = grad;
     ctx.fill();
 
@@ -338,12 +339,15 @@ export class Scene3D {
     this.nodeMeshes.push(sprite);
 
     // Glow behind card
+    var _cr = parseInt(hexColor.slice(1,3),16);
+    var _cg = parseInt(hexColor.slice(3,5),16);
+    var _cb = parseInt(hexColor.slice(5,7),16);
     var gCanvas = document.createElement('canvas');
     gCanvas.width = 64; gCanvas.height = 64;
     var gctx = gCanvas.getContext('2d');
     var grad = gctx.createRadialGradient(32, 32, 3, 32, 32, 32);
-    grad.addColorStop(0, hexColor + '44');
-    grad.addColorStop(0.5, hexColor + '22');
+    grad.addColorStop(0, 'rgba('+_cr+','+_cg+','+_cb+',0.25)');
+    grad.addColorStop(0.5, 'rgba('+_cr+','+_cg+','+_cb+',0.10)');
     grad.addColorStop(1, 'rgba(0,0,0,0)');
     gctx.fillStyle = grad;
     gctx.fillRect(0, 0, 64, 64);
@@ -367,8 +371,8 @@ export class Scene3D {
           var cctx = cc.getContext('2d');
           var bh = 15 + Math.sin(idx * 2.7) * 10 + 10;
           var gr = cctx.createLinearGradient(0, 60-bh, 0, 60);
-          gr.addColorStop(0, hexColor + '99');
-          gr.addColorStop(1, hexColor + '22');
+          gr.addColorStop(0, 'rgba('+_cr+','+_cg+','+_cb+',0.6)');
+          gr.addColorStop(1, 'rgba('+_cr+','+_cg+','+_cb+',0.15)');
           cctx.fillStyle = gr;
           // Rounded rect for bar
           cctx.beginPath();
