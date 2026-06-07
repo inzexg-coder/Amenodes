@@ -425,6 +425,7 @@ class Application {
       this.initNodeMenu();
       this.initSidebar();
       this.loadInitialState();
+      if (this.graph.nodes.length === 0) { this.loadDemoGraph(); }
       this.renderer.render();
       this.initDirtyIndicator();
       console.log(`[Application] Ready with ${nodeRegistry.size} node types`);
@@ -554,6 +555,33 @@ class Application {
     this.graph.updateAllOutputs();
     this.renderer.render();
     this.history.save();
+    this.updateNodeCount();
+    this.updateEdgeCount();
+  }
+  
+  loadDemoGraph() {
+    const demo = {
+      nodes: [
+        { id: 1, type: 'number', x: 0, y: 0, title: 'Input A', val: 42 },
+        { id: 2, type: 'number', x: 0, y: 0, title: 'Input B', val: 58 },
+        { id: 3, type: 'calc', x: 0, y: 0, title: 'Calculator', mode: 'sum' },
+        { id: 4, type: 'output', x: 0, y: 0, title: 'Result' }
+      ],
+      edges: [
+        { id: 1, source: 1, target: 3 },
+        { id: 2, source: 2, target: 3 },
+        { id: 3, source: 3, target: 4 }
+      ],
+      nextId: 5,
+      nextEdgeId: 4
+    };
+    this.graph.loadGraph(demo);
+    this.renderer.render();
+    this.history.save();
+    this.updateNodeCount();
+    this.updateEdgeCount();
+  }
+  
     this.updateNodeCount();
     this.updateEdgeCount();
   }
