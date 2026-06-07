@@ -163,86 +163,139 @@ export class Scene3D {
 
   _makeNodeSprite(node, color, pos) {
     const canvas = document.createElement('canvas');
-    canvas.width = 200;
-    canvas.height = 130;
+    canvas.width = 360;
+    canvas.height = 120;
     const ctx = canvas.getContext('2d');
     this._drawSprite(ctx, node, color);
 
     const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
     const mat = new THREE.SpriteMaterial({
       map: tex, transparent: true, depthTest: true, depthWrite: false, opacity: 0.95
     });
     const sprite = new THREE.Sprite(mat);
     sprite.position.set(pos.x, pos.y, pos.z);
-    sprite.scale.set(2.2, 1.4, 1);
+    sprite.scale.set(4.0, 1.3, 1);
     sprite.userData.nodeId = node.id;
     sprite.userData.isNode = true;
     return sprite;
   }
 
   _drawSprite(ctx, node, color) {
-    const w = 200, h = 130;
-    const cx = w / 2, cy = h / 2;
-    const rw = 86, rh = 52; // rectangle half-size
-    const rad = 12; // corner radius
+    const w = 360, h = 120;
+    const rad = 16;
     const c = '#' + color.toString(16).padStart(6, '0');
+    const margin = 3;
 
-    // Outer glow (rounded rect)
-    const glowGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(rw, rh) + 14);
-    glowGrad.addColorStop(0, c + '50');
-    glowGrad.addColorStop(0.6, c + '15');
-    glowGrad.addColorStop(1, c + '00');
+    // Border glow
     ctx.save();
-    ctx.shadowColor = 'transparent';
-    ctx.fillStyle = glowGrad;
-    this._roundRect(ctx, cx - rw - 10, cy - rh - 10, rw * 2 + 20, rh * 2 + 20, rad + 8);
+    ctx.shadowColor = c;
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = 'transparent';
+    this._roundRect(ctx, margin - 1, margin - 1, w - margin * 2 + 2, h - margin * 2 + 2, rad + 2);
     ctx.fill();
     ctx.restore();
 
-    // Body (rounded rect)
-    ctx.shadowColor = 'transparent';
-    ctx.fillStyle = '#080c18';
+    // Body background
+    ctx.fillStyle = '#1b2137';
     ctx.strokeStyle = c;
-    ctx.lineWidth = 2;
-    this._roundRect(ctx, cx - rw, cy - rh, rw * 2, rh * 2, rad);
+    ctx.lineWidth = 1.5;
+    this._roundRect(ctx, margin, margin, w - margin * 2, h - margin * 2, rad);
     ctx.fill();
     ctx.stroke();
 
-    // Inner subtle glow
-    const ig = ctx.createLinearGradient(cx, cy - rh, cx, cy + rh);
-    ig.addColorStop(0, 'rgba(255,255,255,0.05)');
-    ig.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = ig;
-    this._roundRect(ctx, cx - rw, cy - rh, rw * 2, rh * 2, rad);
+    // Header background (top 40px)
+    const hGrad = ctx.createLinearGradient(0, margin, 0, margin + 40);
+    hGrad.addColorStop(0, '#232a3f');
+    hGrad.addColorStop(1, '#1b2137');
+    ctx.fillStyle = hGrad;
+    this._roundRectTop(ctx, margin, margin, w - margin * 2, 40, rad);
     ctx.fill();
 
-    // Icon on the left
-    ctx.fillStyle = '#d0e4ff';
-    ctx.font = 'bold 32px sans-serif';
+    // Header separator
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(margin + 16, margin + 40);
+    ctx.lineTo(w - margin - 16, margin + 40);
+    ctx.stroke();
+
+    // Icon
+    ctx.fillStyle = '#b9c8ff';
+    ctx.font = 'bold 22px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(node.meta?.icon || '?', 16, margin + 20);
+
+    // Title
+    ctx.fillStyle = '#dcf0ff';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillText(node.title.substring(0, 22), 46, margin + 20);
+
+    // Close X
+    ctx.fillStyle = '#6678aa';
+    ctx.font = '16px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('✕', w - 14, margin + 20);
+
+    // --- Body ---
+    // Type badge
+    ctx.fillStyle = c + '30';
+    this._roundRect(ctx, 16, 52, 100, 26, 8);
+    ctx.fill();
+
+    ctx.fillStyle = c;
+    ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(node.meta?.icon || '?', cx - 50, cy - 2);
+    ctx.fillText((node.meta?.dataType || 'N/A').toUpperCase(), 66, 65);
 
-    // Title on the right
-    ctx.fillStyle = '#a0b8e0';
-    ctx.font = 'bold 18px sans-serif';
-    ctx.textAlign = 'left';
+    // Value / info
+    ctx.fillStyle = '#8899bb';
+    ctx.font = '14px monospace';
+    ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    ctx.fillText(node.title.substring(0, 12), cx - 18, cy - 12);
+    let info = '';
+    switch (node.type) {
+      case 'number': info = '= ' + (node.data.value ?? 0); break;
+      case 'constant': info = '= ' + (node.data.value ?? 0); break;
+      case 'group': info = '[' + (node.data.rows?.length || 0) + ']'; break;
+      case 'calc': info = node.data.mode || 'sum'; break;
+      case 'output': info = '→ result'; break;
+      case 'map': info = node.data.mode || 'linear'; break;
+      case 'mean': info = 'μ'; break;
+      case 'sem': info = 'σ/√n'; break;
+    }
+    ctx.fillText(info, w - 16, 65);
 
-    // Type label
-    ctx.fillStyle = '#5566aa';
-    ctx.font = '11px sans-serif';
+    // Editing hint
+    ctx.fillStyle = '#445577';
+    ctx.font = '10px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText((node.meta?.dataType || '').toUpperCase(), cx - 18, cy + 16);
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('tap to edit', 16, h - 6);
 
     // Important star
     if (node.important) {
       ctx.fillStyle = '#ffd700';
       ctx.font = '14px sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText('★', cx + rw - 8, cy - rh + 14);
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('★', w - 16, h - 6);
     }
+  }
+
+  _roundRectTop(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h);
+    ctx.lineTo(x, y + h);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
   }
 
   _roundRect(ctx, x, y, w, h, r) {
@@ -260,7 +313,7 @@ export class Scene3D {
   }
 
   _makeRing(color, pos) {
-    const geo = new THREE.RingGeometry(0.85, 1.05, 32);
+    const geo = new THREE.RingGeometry(1.0, 1.2, 32);
     const mat = new THREE.MeshBasicMaterial({
       color: 0x88bbff, side: THREE.DoubleSide,
       transparent: true, opacity: 0,
@@ -457,6 +510,10 @@ export class Scene3D {
     if (nodeId) {
       const obj = this.nodeMeshes.get(nodeId);
       if (obj) obj.ring.material.opacity = 0.6;
+      if (this.onNodeSelect) {
+        const node = this.graph.getNode(nodeId);
+        if (node) this.onNodeSelect(node);
+      }
     }
   }
 
