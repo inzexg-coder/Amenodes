@@ -38,13 +38,7 @@ class App {
       console.error('Init error:', err);
       const splash = document.getElementById('splashOverlay');
       if (splash) {
-        splash.innerHTML = `
-          <div style="text-align:center;padding:40px;color:#ff5555;">
-            <h2 style="color:#ff5555;">Error</h2>
-            <p style="color:#8899bb;font-size:14px;margin:16px 0;">${err.message}</p>
-            <p style="color:#6678aa;font-size:12px;">Check console for details</p>
-          </div>
-        `;
+        splash.innerHTML = '<div style="text-align:center;padding:40px;color:#ff5555;"><h2>Error</h2><p style="color:#8899bb;font-size:14px;margin:16px 0;">' + err.message + '</p><p style="color:#6678aa;font-size:12px;">Check console for details</p></div>';
       }
     }
   }

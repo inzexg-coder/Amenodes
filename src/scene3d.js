@@ -163,179 +163,86 @@ export class Scene3D {
 
   _makeNodeSprite(node, color, pos) {
     const canvas = document.createElement('canvas');
-    canvas.width = 380;
-    canvas.height = 110;
+    canvas.width = 200;
+    canvas.height = 130;
     const ctx = canvas.getContext('2d');
     this._drawSprite(ctx, node, color);
 
     const tex = new THREE.CanvasTexture(canvas);
-    tex.minFilter = THREE.LinearFilter;
-    tex.magFilter = THREE.LinearFilter;
     const mat = new THREE.SpriteMaterial({
-      map: tex, transparent: true, depthTest: true, depthWrite: false, opacity: 0.97
+      map: tex, transparent: true, depthTest: true, depthWrite: false, opacity: 0.95
     });
     const sprite = new THREE.Sprite(mat);
     sprite.position.set(pos.x, pos.y, pos.z);
-    sprite.scale.set(4.2, 1.2, 1);
+    sprite.scale.set(2.2, 1.4, 1);
     sprite.userData.nodeId = node.id;
     sprite.userData.isNode = true;
     return sprite;
   }
 
   _drawSprite(ctx, node, color) {
-    const w = 380, h = 110;
-    const rad = 16;
+    const w = 200, h = 130;
+    const cx = w / 2, cy = h / 2;
+    const rw = 86, rh = 52; // rectangle half-size
+    const rad = 12; // corner radius
     const c = '#' + color.toString(16).padStart(6, '0');
-    const pad = 0;
-    const headerH = 40;
 
-    // Outer shadow layer 1: dark spread shadow
+    // Outer glow (rounded rect)
+    const glowGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(rw, rh) + 14);
+    glowGrad.addColorStop(0, c + '50');
+    glowGrad.addColorStop(0.6, c + '15');
+    glowGrad.addColorStop(1, c + '00');
     ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.4)';
-    ctx.shadowBlur = 20;
-    ctx.shadowOffsetY = 8;
-    ctx.fillStyle = 'transparent';
-    this._roundRect(ctx, pad, pad, w - pad * 2, h - pad * 2, rad);
+    ctx.shadowColor = 'transparent';
+    ctx.fillStyle = glowGrad;
+    this._roundRect(ctx, cx - rw - 10, cy - rh - 10, rw * 2 + 20, rh * 2 + 20, rad + 8);
     ctx.fill();
     ctx.restore();
 
-    // Outer shadow layer 2: thin white border highlight
-    ctx.save();
-    ctx.shadowColor = 'rgba(255,255,255,0.08)';
-    ctx.shadowBlur = 1;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-    ctx.fillStyle = 'transparent';
-    this._roundRect(ctx, pad, pad, w - pad * 2, h - pad * 2, rad);
-    ctx.fill();
-    ctx.restore();
-
-    // Node type color glow around border
-    ctx.save();
-    ctx.shadowColor = c;
-    ctx.shadowBlur = 14;
-    ctx.fillStyle = 'transparent';
-    this._roundRect(ctx, pad, pad, w - pad * 2, h - pad * 2, rad);
-    ctx.fill();
-    ctx.restore();
-
-    // Card body background
-    ctx.fillStyle = '#232a3f';
+    // Body (rounded rect)
+    ctx.shadowColor = 'transparent';
+    ctx.fillStyle = '#080c18';
     ctx.strokeStyle = c;
-    ctx.lineWidth = 1.5;
-    this._roundRect(ctx, pad, pad, w - pad * 2, h - pad * 2, rad);
+    ctx.lineWidth = 2;
+    this._roundRect(ctx, cx - rw, cy - rh, rw * 2, rh * 2, rad);
     ctx.fill();
     ctx.stroke();
 
-    // Header background
-    const hGrad = ctx.createLinearGradient(0, pad, 0, pad + headerH);
-    hGrad.addColorStop(0, '#1b2137');
-    hGrad.addColorStop(1, '#1b2137');
-    ctx.fillStyle = hGrad;
-    this._roundRectTop(ctx, pad, pad, w - pad * 2, headerH, rad);
+    // Inner subtle glow
+    const ig = ctx.createLinearGradient(cx, cy - rh, cx, cy + rh);
+    ig.addColorStop(0, 'rgba(255,255,255,0.05)');
+    ig.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = ig;
+    this._roundRect(ctx, cx - rw, cy - rh, rw * 2, rh * 2, rad);
     ctx.fill();
 
-    // Header bottom border
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(pad + rad, pad + headerH);
-    ctx.lineTo(w - pad - rad, pad + headerH);
-    ctx.stroke();
+    // Icon on the left
+    ctx.fillStyle = '#d0e4ff';
+    ctx.font = 'bold 32px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(node.meta?.icon || '?', cx - 50, cy - 2);
 
-    // Icon (Font Awesome style character)
-    ctx.fillStyle = '#b9c8ff';
-    ctx.font = 'bold 20px sans-serif';
+    // Title on the right
+    ctx.fillStyle = '#a0b8e0';
+    ctx.font = 'bold 18px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(node.meta?.icon || '?', 16, pad + 20);
-
-    // Title
-    ctx.fillStyle = '#dcf0ff';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.fillText(node.title.substring(0, 20), 42, pad + 20);
-
-    // Close X
-    ctx.fillStyle = '#b9c8ff';
-    ctx.font = '16px sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText('\u2715', w - 14, pad + 20);
-
-    // --- Body area ---
-    const bodyY = pad + headerH + 8;
-    const bodyH = h - pad - headerH - 8;
-
-    // Node type color bar on left
-    ctx.fillStyle = c;
-    ctx.fillRect(pad + 4, bodyY + 2, 3, bodyH - 4);
+    ctx.fillText(node.title.substring(0, 12), cx - 18, cy - 12);
 
     // Type label
-    ctx.fillStyle = '#8899bb';
+    ctx.fillStyle = '#5566aa';
     ctx.font = '11px sans-serif';
     ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    const typeLabel = (node.meta?.dataType || 'N/A').toUpperCase();
-    ctx.fillText(typeLabel, pad + 14, bodyY + bodyH / 2);
-
-    // Value / info
-    ctx.fillStyle = '#dcf0ff';
-    ctx.font = 'bold 14px monospace';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    let info = '';
-    switch (node.type) {
-      case 'number': info = String(node.data.value ?? '0'); break;
-      case 'constant': info = String(node.data.value ?? '0'); break;
-      case 'group': info = '[' + (node.data.rows?.length || 0) + ']'; break;
-      case 'calc': info = node.data.mode || 'sum'; break;
-      case 'output': info = '\u2192 result'; break;
-      case 'map': info = node.data.mode || 'linear'; break;
-      case 'mean': info = '\u03bc = ...'; break;
-      case 'sem': info = '\u03c3/\u221an'; break;
-    }
-    ctx.fillText(info, w - 16, bodyY + bodyH / 2);
-
-    // Handle dots (left and right)
-    const handleR = 6;
-    // Left handle (output)
-    ctx.beginPath();
-    ctx.arc(pad, bodyY + bodyH / 2, handleR, 0, Math.PI * 2);
-    ctx.fillStyle = '#ffbb77';
-    ctx.strokeStyle = '#1e1f2c';
-    ctx.lineWidth = 2;
-    ctx.fill();
-    ctx.stroke();
-    // Right handle (input) - only if node can accept input
-    if (node.meta?.canInput) {
-      ctx.beginPath();
-      ctx.arc(w - pad, bodyY + bodyH / 2, handleR, 0, Math.PI * 2);
-      ctx.fillStyle = '#2288ff';
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.fill();
-      ctx.stroke();
-    }
+    ctx.fillText((node.meta?.dataType || '').toUpperCase(), cx - 18, cy + 16);
 
     // Important star
     if (node.important) {
-      ctx.fillStyle = '#00aaff';
-      ctx.font = '11px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'bottom';
-      ctx.fillText('\u2605', 32, h - 4);
+      ctx.fillStyle = '#ffd700';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText('★', cx + rw - 8, cy - rh + 14);
     }
-  }
-
-  _roundRectTop(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h);
-    ctx.lineTo(x, y + h);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
   }
 
   _roundRect(ctx, x, y, w, h, r) {
@@ -353,7 +260,7 @@ export class Scene3D {
   }
 
   _makeRing(color, pos) {
-    const geo = new THREE.RingGeometry(1.0, 1.2, 32);
+    const geo = new THREE.RingGeometry(0.85, 1.05, 32);
     const mat = new THREE.MeshBasicMaterial({
       color: 0x88bbff, side: THREE.DoubleSide,
       transparent: true, opacity: 0,

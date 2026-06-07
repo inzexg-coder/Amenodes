@@ -128,12 +128,12 @@ export class TouchControls {
 
     this._cleanup();
 
-    // Re-enable auto-rotate after short idle
+    // Re-enable auto-rotate after idle
     setTimeout(() => {
       if (!this.scene.isDragging && !this.scene.isDraggingEdge) {
         this.scene.autoRotate = true;
       }
-    }, 1500);
+    }, 3000);
   }
 
   _cancel() {
