@@ -229,68 +229,72 @@ export class Scene3D {
     var cg = parseInt(hexColor.slice(3,5),16);
     var cb = parseInt(hexColor.slice(5,7),16);
 
-    // Dark background with slight tint
+    // Very dark background
+    ctx.fillStyle = 'rgba(8,6,18,0.95)';
     this._drawRoundedRect(ctx, 0, 0, w, h, r);
-    var grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, 'rgba('+cr+','+cg+','+cb+',0.12)');
-    grad.addColorStop(0.2, 'rgba('+cr+','+cg+','+cb+',0.05)');
-    grad.addColorStop(0.5, 'rgba(6,4,14,0.95)');
-    grad.addColorStop(1, 'rgba(4,2,10,0.98)');
-    ctx.fillStyle = grad;
     ctx.fill();
 
-    // Outer neon glow
+    // Subtle tint gradient at top
+    var grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, 'rgba('+cr+','+cg+','+cb+',0.08)');
+    grad.addColorStop(0.3, 'rgba('+cr+','+cg+','+cb+',0.02)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    this._drawRoundedRect(ctx, 0, 0, w, h, r);
+    ctx.fill();
+
+    // Outer glow border (visible, not inner)
     ctx.shadowColor = hexColor;
-    ctx.shadowBlur = 35;
-    ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.1)';
+    ctx.shadowBlur = 25;
+    ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.3)';
     ctx.lineWidth = 1;
     this._drawRoundedRect(ctx, 1, 1, w-2, h-2, r-1);
     ctx.stroke();
     
-    // Inner crisp neon border
+    // Thin bright outer border
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.85)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.6)';
+    ctx.lineWidth = 1.5;
     this._drawRoundedRect(ctx, 1, 1, w-2, h-2, r-1);
     ctx.stroke();
 
-    // Top edge glow
-    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.35)';
-    ctx.fillRect(r+2, 1, w - r*2 - 4, 2);
+    // Top light accent
+    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.15)';
+    ctx.fillRect(r+2, 1, w - r*2 - 4, 1);
 
-    // Icon
+    // Icon 
     var icons = { number:'\u2726', constant:'\u25C6', calc:'\u26A1', mean:'\u03BC', sem:'\u03C3', output:'\u25CE', map:'\u229E', group:'\u229F' };
     var icon = icons[node.type] || '\u25C8';
-    ctx.font = 'bold 34px monospace';
+    ctx.font = 'bold 32px monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillStyle = hexColor;
     ctx.shadowColor = hexColor;
-    ctx.shadowBlur = 18;
+    ctx.shadowBlur = 15;
     ctx.fillText(icon, 18, 18);
     ctx.shadowBlur = 0;
 
-    // Type label
+    // Type
     ctx.font = 'bold 11px monospace';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
-    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.5)';
+    ctx.fillStyle = 'rgba(200,180,255,0.35)';
     ctx.fillText(node.type.toUpperCase(), w - 18, 20);
 
-    // Title - crisp white
-    ctx.font = 'bold 24px monospace';
+    // Title
+    ctx.font = 'bold 22px monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = 'rgba(0,0,0,0.8)';
-    ctx.shadowBlur = 4;
+    ctx.fillStyle = '#e8e0ff';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 3;
     var ttl = (node.title || node.type || 'Node').slice(0, 16);
-    ctx.fillText(ttl, 18, 90);
+    ctx.fillText(ttl, 18, 85);
 
     // Value
     ctx.shadowBlur = 0;
-    ctx.font = '18px monospace';
-    ctx.fillStyle = 'rgba(200,180,255,0.7)';
+    ctx.font = '16px monospace';
+    ctx.fillStyle = 'rgba(200,180,255,0.6)';
     var valStr = '\u2014';
     try {
       var v = node.getValue();
@@ -298,18 +302,18 @@ export class Scene3D {
         valStr = v.map(function(x) { return typeof x === 'number' ? x.toFixed(3) : x; }).join(', ').slice(0, 22);
       }
     } catch(e) {}
-    ctx.fillText('= ' + valStr, 18, 135);
+    ctx.fillText('= ' + valStr, 18, 130);
 
-    // Bottom accent
-    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.25)';
-    ctx.fillRect(18, h - 3, w - 36, 1);
+    // Bottom line
+    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.15)';
+    ctx.fillRect(18, h - 2, w - 36, 1);
 
-    // Important: stronger glow
+    // Important indicator
     if (node.important) {
       ctx.shadowColor = hexColor;
-      ctx.shadowBlur = 55;
-      ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.95)';
-      ctx.lineWidth = 3;
+      ctx.shadowBlur = 50;
+      ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.8)';
+      ctx.lineWidth = 2;
       this._drawRoundedRect(ctx, 0, 0, w, h, r);
       ctx.stroke();
     }
