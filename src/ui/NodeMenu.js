@@ -158,7 +158,12 @@ export class NodeMenu {
         
         subCard.onclick = async (e) => {
           e.stopPropagation();
-          await this.createNodeByType(category.type, subnode);
+          console.log('[NodeMenu] Subcard clicked:', subnode.type);
+          try {
+            await this.createNodeByType(category.type, subnode);
+          } catch (err) {
+            console.error('[NodeMenu] Error creating subnode:', err);
+          }
           this.close();
         };
         
@@ -205,12 +210,22 @@ export class NodeMenu {
     
     card.querySelector('.node-menu-card-add').onclick = async (e) => {
       e.stopPropagation();
-      await this.createNode(nodeType.type);
+      console.log('[NodeMenu] Card add clicked:', nodeType.type);
+      try {
+        await this.createNode(nodeType.type);
+      } catch (err) {
+        console.error('[NodeMenu] Error creating node:', err);
+      }
       this.close();
     };
     
     card.onclick = async () => {
-      await this.createNode(nodeType.type);
+      console.log('[NodeMenu] Card clicked:', nodeType.type);
+      try {
+        await this.createNode(nodeType.type);
+      } catch (err) {
+        console.error('[NodeMenu] Error creating node:', err);
+      }
       this.close();
     };
     
