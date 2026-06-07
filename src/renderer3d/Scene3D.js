@@ -52,8 +52,6 @@ export class Scene3D {
     this._edgePulseTime = 0;
     this._momentumX = 0;
     this._momentumY = 0;
-    this._previousNodeIds = new Set();
-    this._enteringNodes = new Map(); // nodeId -> { startPos, targetPos, progress }
     this._boundResize = () => this._onResize();
     this._boundPointerDown = (e) => this._onPointerDown(e);
     this._boundPointerMove = (e) => this._onPointerMove(e);
@@ -304,9 +302,6 @@ export class Scene3D {
   _rebuildNodes() {
     const THREE = this.THREE;
     
-    // Track current node IDs to detect new nodes
-    const currentNodeIds = new Set(this.graph.nodes.map(n => n.id));
-    
     for (const [id, obj] of this.nodeObjects) {
       if (obj.css2d) {
         this.scene.remove(obj.css2d);
@@ -314,16 +309,9 @@ export class Scene3D {
           obj.css2d.element.parentNode.removeChild(obj.css2d.element);
         }
       }
-      if (obj.mesh) this.scene.remove(obj.mesh);
       if (obj.ring) this.scene.remove(obj.ring);
-      if (obj.glow) this.scene.remove(obj.glow);
     }
     this.nodeObjects.clear();
-
-    // Clear entering nodes that no longer exist
-    for (const id of this._enteringNodes.keys()) {
-      if (!currentNodeIds.has(id)) this._enteringNodes.delete(id);
-    }
 
     this.graph.nodes.forEach((node, idx) => {
       const pos = this._getNodePosition(idx);
@@ -334,39 +322,12 @@ export class Scene3D {
       el.style.top = '';
       el.style.zIndex = '';
 
-      // Add neon border glow class
-      el.classList.add('node-3d');
-
       const css2d = new THREE.CSS2DObject(el);
-      
-      // Check if this is a new node (not in previous frame)
-      const isNew = !this._previousNodeIds.has(node.id) && this._previousNodeIds.size > 0;
-      
-      if (isNew) {
-        // Start from camera position (in front of viewer)
-        const camDir = new THREE.Vector3();
-        this.camera.getWorldDirection(camDir);
-        const startPos = new THREE.Vector3(
-          this.camera.position.x + camDir.x * 100,
-          this.camera.position.y + camDir.y * 100,
-          this.camera.position.z + camDir.z * 100
-        );
-        css2d.position.copy(startPos);
-        this._enteringNodes.set(node.id, {
-          startPos: startPos.clone(),
-          targetPos: new THREE.Vector3(pos.x, pos.y, pos.z),
-          progress: 0
-        });
-        // Start with invisible node, fade in
-        el.style.opacity = '0';
-        el.style.transform = 'scale(0.5)';
-      } else {
-        css2d.position.set(pos.x, pos.y, pos.z);
-      }
-      
+      css2d.position.set(pos.x, pos.y, pos.z);
       css2d.userData.nodeId = node.id;
       this.scene.add(css2d);
 
+      // Selection ring
       const ringGeo = new THREE.RingGeometry(28, 32, 32);
       const ringMat = new THREE.MeshBasicMaterial({
         color: 0x6688ff,
@@ -380,26 +341,8 @@ export class Scene3D {
       ring.userData.nodeId = node.id;
       this.scene.add(ring);
 
-      const glowMap = this._createGlowTexture();
-      const glowColor = node.important ? 0xff8844 : 0x6688ff;
-      const glowMat = new THREE.SpriteMaterial({
-        map: glowMap,
-        color: glowColor,
-        transparent: true,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        opacity: 0.4
-      });
-      const glow = new THREE.Sprite(glowMat);
-      glow.position.set(pos.x, pos.y, pos.z);
-      glow.scale.set(80, 80, 1);
-      glow.userData.nodeId = node.id;
-      this.scene.add(glow);
-
-      this.nodeObjects.set(node.id, { css2d, ring, glow, el });
+      this.nodeObjects.set(node.id, { css2d, ring, el });
     });
-
-    this._previousNodeIds = currentNodeIds;
   }
 
   _createRendererProxy(node) {
@@ -575,25 +518,6 @@ export class Scene3D {
     });
   }
 
-  _createGlowTexture() {
-    const THREE = this.THREE;
-    const canvas = document.createElement('canvas');
-    canvas.width = 128;
-    canvas.height = 128;
-    const ctx = canvas.getContext('2d');
-    
-    // Bright multi-layer glow
-    const grad1 = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-    grad1.addColorStop(0, 'rgba(255,255,255,1)');
-    grad1.addColorStop(0.1, 'rgba(200,200,255,0.9)');
-    grad1.addColorStop(0.4, 'rgba(140,100,255,0.5)');
-    grad1.addColorStop(0.7, 'rgba(80,40,200,0.2)');
-    grad1.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = grad1;
-    ctx.fillRect(0, 0, 128, 128);
-    
-    return new THREE.CanvasTexture(canvas);
-  }
 
   attachEvents() {
     const el = this.container;
@@ -705,51 +629,12 @@ export class Scene3D {
     
     const time = Date.now() * 0.001;
     
-    // Update node glow and effects
+    // Update ring billboards
     for (const [id, obj] of this.nodeObjects) {
       if (obj.ring) {
         const dir = new THREE.Vector3();
         this.camera.getWorldDirection(dir);
         obj.ring.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, -1), dir);
-      }
-      // Pulsing glow
-      if (obj.glow) {
-        const pulse = 0.5 + 0.5 * Math.sin(time * 1.5 + id * 0.7);
-        obj.glow.material.opacity = 0.15 + pulse * 0.35;
-        const scale = 50 + pulse * 20;
-        obj.glow.scale.set(scale, scale, 1);
-      }
-    }
-    
-    // Animate entering nodes (new nodes flying in)
-    for (const [id, entry] of this._enteringNodes) {
-      const obj = this.nodeObjects.get(id);
-      if (!obj) continue;
-      
-      entry.progress = Math.min(1, entry.progress + 0.025);
-      // Ease out cubic
-      const t = 1 - Math.pow(1 - entry.progress, 3);
-      
-      // Interpolate position
-      obj.css2d.position.lerpVectors(entry.startPos, entry.targetPos, t);
-      
-      // Fade in and scale up
-      if (obj.el) {
-        obj.el.style.opacity = Math.min(1, t * 2);
-        obj.el.style.transform = 'scale(' + (0.5 + t * 0.5) + ')';
-      }
-      
-      // Update ring and glow positions to follow
-      if (obj.ring) obj.ring.position.copy(obj.css2d.position);
-      if (obj.glow) obj.glow.position.copy(obj.css2d.position);
-      
-      // Remove when done
-      if (entry.progress >= 1) {
-        obj.el.style.opacity = '1';
-        obj.el.style.transform = '';
-        obj.ring.position.copy(entry.targetPos);
-        obj.glow.position.copy(entry.targetPos);
-        this._enteringNodes.delete(id);
       }
     }
     
