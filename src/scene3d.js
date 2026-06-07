@@ -163,8 +163,8 @@ export class Scene3D {
 
   _makeNodeSprite(node, color, pos) {
     const canvas = document.createElement('canvas');
-    canvas.width = 360;
-    canvas.height = 120;
+    canvas.width = 380;
+    canvas.height = 110;
     const ctx = canvas.getContext('2d');
     this._drawSprite(ctx, node, color);
 
@@ -172,117 +172,157 @@ export class Scene3D {
     tex.minFilter = THREE.LinearFilter;
     tex.magFilter = THREE.LinearFilter;
     const mat = new THREE.SpriteMaterial({
-      map: tex, transparent: true, depthTest: true, depthWrite: false, opacity: 0.95
+      map: tex, transparent: true, depthTest: true, depthWrite: false, opacity: 0.97
     });
     const sprite = new THREE.Sprite(mat);
     sprite.position.set(pos.x, pos.y, pos.z);
-    sprite.scale.set(4.0, 1.3, 1);
+    sprite.scale.set(4.2, 1.2, 1);
     sprite.userData.nodeId = node.id;
     sprite.userData.isNode = true;
     return sprite;
   }
 
   _drawSprite(ctx, node, color) {
-    const w = 360, h = 120;
+    const w = 380, h = 110;
     const rad = 16;
     const c = '#' + color.toString(16).padStart(6, '0');
-    const margin = 3;
+    const pad = 0;
+    const headerH = 40;
 
-    // Border glow
+    // Outer shadow layer 1: dark spread shadow
     ctx.save();
-    ctx.shadowColor = c;
-    ctx.shadowBlur = 18;
+    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.shadowBlur = 20;
+    ctx.shadowOffsetY = 8;
     ctx.fillStyle = 'transparent';
-    this._roundRect(ctx, margin - 1, margin - 1, w - margin * 2 + 2, h - margin * 2 + 2, rad + 2);
+    this._roundRect(ctx, pad, pad, w - pad * 2, h - pad * 2, rad);
     ctx.fill();
     ctx.restore();
 
-    // Body background
-    ctx.fillStyle = '#1b2137';
+    // Outer shadow layer 2: thin white border highlight
+    ctx.save();
+    ctx.shadowColor = 'rgba(255,255,255,0.08)';
+    ctx.shadowBlur = 1;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.fillStyle = 'transparent';
+    this._roundRect(ctx, pad, pad, w - pad * 2, h - pad * 2, rad);
+    ctx.fill();
+    ctx.restore();
+
+    // Node type color glow around border
+    ctx.save();
+    ctx.shadowColor = c;
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = 'transparent';
+    this._roundRect(ctx, pad, pad, w - pad * 2, h - pad * 2, rad);
+    ctx.fill();
+    ctx.restore();
+
+    // Card body background
+    ctx.fillStyle = '#232a3f';
     ctx.strokeStyle = c;
     ctx.lineWidth = 1.5;
-    this._roundRect(ctx, margin, margin, w - margin * 2, h - margin * 2, rad);
+    this._roundRect(ctx, pad, pad, w - pad * 2, h - pad * 2, rad);
     ctx.fill();
     ctx.stroke();
 
-    // Header background (top 40px)
-    const hGrad = ctx.createLinearGradient(0, margin, 0, margin + 40);
-    hGrad.addColorStop(0, '#232a3f');
+    // Header background
+    const hGrad = ctx.createLinearGradient(0, pad, 0, pad + headerH);
+    hGrad.addColorStop(0, '#1b2137');
     hGrad.addColorStop(1, '#1b2137');
     ctx.fillStyle = hGrad;
-    this._roundRectTop(ctx, margin, margin, w - margin * 2, 40, rad);
+    this._roundRectTop(ctx, pad, pad, w - pad * 2, headerH, rad);
     ctx.fill();
 
-    // Header separator
-    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    // Header bottom border
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(margin + 16, margin + 40);
-    ctx.lineTo(w - margin - 16, margin + 40);
+    ctx.moveTo(pad + rad, pad + headerH);
+    ctx.lineTo(w - pad - rad, pad + headerH);
     ctx.stroke();
 
-    // Icon
+    // Icon (Font Awesome style character)
     ctx.fillStyle = '#b9c8ff';
-    ctx.font = 'bold 22px sans-serif';
+    ctx.font = 'bold 20px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(node.meta?.icon || '?', 16, margin + 20);
+    ctx.fillText(node.meta?.icon || '?', 16, pad + 20);
 
     // Title
     ctx.fillStyle = '#dcf0ff';
-    ctx.font = 'bold 15px sans-serif';
-    ctx.fillText(node.title.substring(0, 22), 46, margin + 20);
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText(node.title.substring(0, 20), 42, pad + 20);
 
     // Close X
-    ctx.fillStyle = '#6678aa';
+    ctx.fillStyle = '#b9c8ff';
     ctx.font = '16px sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText('✕', w - 14, margin + 20);
+    ctx.fillText('\u2715', w - 14, pad + 20);
 
-    // --- Body ---
-    // Type badge
-    ctx.fillStyle = c + '30';
-    this._roundRect(ctx, 16, 52, 100, 26, 8);
-    ctx.fill();
+    // --- Body area ---
+    const bodyY = pad + headerH + 8;
+    const bodyH = h - pad - headerH - 8;
 
+    // Node type color bar on left
     ctx.fillStyle = c;
-    ctx.font = 'bold 11px sans-serif';
-    ctx.textAlign = 'center';
+    ctx.fillRect(pad + 4, bodyY + 2, 3, bodyH - 4);
+
+    // Type label
+    ctx.fillStyle = '#8899bb';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText((node.meta?.dataType || 'N/A').toUpperCase(), 66, 65);
+    const typeLabel = (node.meta?.dataType || 'N/A').toUpperCase();
+    ctx.fillText(typeLabel, pad + 14, bodyY + bodyH / 2);
 
     // Value / info
-    ctx.fillStyle = '#8899bb';
-    ctx.font = '14px monospace';
+    ctx.fillStyle = '#dcf0ff';
+    ctx.font = 'bold 14px monospace';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     let info = '';
     switch (node.type) {
-      case 'number': info = '= ' + (node.data.value ?? 0); break;
-      case 'constant': info = '= ' + (node.data.value ?? 0); break;
+      case 'number': info = String(node.data.value ?? '0'); break;
+      case 'constant': info = String(node.data.value ?? '0'); break;
       case 'group': info = '[' + (node.data.rows?.length || 0) + ']'; break;
       case 'calc': info = node.data.mode || 'sum'; break;
-      case 'output': info = '→ result'; break;
+      case 'output': info = '\u2192 result'; break;
       case 'map': info = node.data.mode || 'linear'; break;
-      case 'mean': info = 'μ'; break;
-      case 'sem': info = 'σ/√n'; break;
+      case 'mean': info = '\u03bc = ...'; break;
+      case 'sem': info = '\u03c3/\u221an'; break;
     }
-    ctx.fillText(info, w - 16, 65);
+    ctx.fillText(info, w - 16, bodyY + bodyH / 2);
 
-    // Editing hint
-    ctx.fillStyle = '#445577';
-    ctx.font = '10px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'bottom';
-    ctx.fillText('tap to edit', 16, h - 6);
+    // Handle dots (left and right)
+    const handleR = 6;
+    // Left handle (output)
+    ctx.beginPath();
+    ctx.arc(pad, bodyY + bodyH / 2, handleR, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffbb77';
+    ctx.strokeStyle = '#1e1f2c';
+    ctx.lineWidth = 2;
+    ctx.fill();
+    ctx.stroke();
+    // Right handle (input) - only if node can accept input
+    if (node.meta?.canInput) {
+      ctx.beginPath();
+      ctx.arc(w - pad, bodyY + bodyH / 2, handleR, 0, Math.PI * 2);
+      ctx.fillStyle = '#2288ff';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+    }
 
     // Important star
     if (node.important) {
-      ctx.fillStyle = '#ffd700';
-      ctx.font = '14px sans-serif';
-      ctx.textAlign = 'right';
+      ctx.fillStyle = '#00aaff';
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'left';
       ctx.textBaseline = 'bottom';
-      ctx.fillText('★', w - 16, h - 6);
+      ctx.fillText('\u2605', 32, h - 4);
     }
   }
 
@@ -293,20 +333,6 @@ export class Scene3D {
     ctx.quadraticCurveTo(x + w, y, x + w, y + r);
     ctx.lineTo(x + w, y + h);
     ctx.lineTo(x, y + h);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
-  }
-
-  _roundRect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
     ctx.lineTo(x, y + r);
     ctx.quadraticCurveTo(x, y, x + r, y);
     ctx.closePath();
