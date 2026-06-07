@@ -13,8 +13,7 @@ export const metadata = {
   canHaveIncomingEdges: true,
   canHaveOutgoingEdges: true,
   allowedInputTypes: ['num', 'array', 'uncert', 'list', 'wlist'],
-  defaultValue: [],
-  visual3d: { color: 0x40d090, size: 0.55, dendrites: 6, glow: '#44dd99' },
+  defaultValue: []
 };
 
 export class MapNode extends Node {
@@ -63,67 +62,6 @@ export class MapNode extends Node {
 
   getMinHeight() {
     return Math.max(80, 80 + this.maps.length * 45);
-  }
-
-  bindConfig(doc, node, app) {
-    // Unmapped mode
-    doc.querySelectorAll('[data-umode]').forEach(function(btn) {
-      btn.onclick = function() {
-        node.unmappedMode = this.dataset.umode;
-        doc.querySelectorAll('[data-umode]').forEach(function(b) { b.classList.remove('active'); });
-        this.classList.add('active');
-        app.graph.reevaluateAll();
-        app.scene.refresh();
-        app.graph.setDirty(true);
-      };
-    });
-    // Add mapping
-    var mapAdd = doc.getElementById('cfgMapAdd');
-    if (mapAdd) mapAdd.onclick = function() {
-      if (!node.maps) node.maps = [];
-      node.maps.push({ x: 0, y: 0 });
-      app.mobileUI._showNodeConfig(node);
-      app.graph.setDirty(true);
-    };
-    // Edit mappings
-    if (node.maps) {
-      node.maps.forEach(function(m, idx) {
-        var xInp = doc.getElementById('cfgMX_' + idx);
-        if (xInp) xInp.onchange = function() { node.maps[idx].x = parseFloat(this.value) || 0; app.graph.reevaluateAll(); app.scene.refresh(); app.graph.setDirty(true); };
-        var yInp = doc.getElementById('cfgMY_' + idx);
-        if (yInp) yInp.onchange = function() { node.maps[idx].y = parseFloat(this.value) || 0; app.graph.reevaluateAll(); app.scene.refresh(); app.graph.setDirty(true); };
-        var delBtn = doc.getElementById('cfgMDel_' + idx);
-        if (delBtn) delBtn.onclick = function() { node.maps.splice(idx, 1); app.mobileUI._showNodeConfig(node); app.graph.reevaluateAll(); app.scene.refresh(); app.graph.setDirty(true); };
-      });
-    }
-  }
-
-  getConfigHTML() {
-    var maps = this.maps || [];
-    var html = '<div class="info-field"><label class="info-label">Mappings (' + maps.length + ')</label>';
-    html += '<div class="info-list" id="cfgMapList">';
-    for (var i = 0; i < maps.length; i++) {
-      var m = maps[i];
-      html += '<div class="info-list-item">';
-      html += '<span class="info-list-idx">#' + (i+1) + '</span>';
-      html += '<input class="info-input-sm" id="cfgMX_' + i + '" type="number" step="any" value="' + (m.x ?? 0) + '" placeholder="from" style="flex:0.8" />';
-      html += '<span style="color:rgba(160,140,220,0.3)">→</span>';
-      html += '<input class="info-input-sm" id="cfgMY_' + i + '" type="number" step="any" value="' + (m.y ?? 0) + '" placeholder="to" style="flex:0.8" />';
-      html += '<button class="info-list-del" id="cfgMDel_' + i + '">✕</button>';
-      html += '</div>';
-    }
-    html += '</div>';
-    html += '<button class="cfg-btn cfg-btn-add" id="cfgMapAdd">+ Add Mapping</button>';
-    html += '</div>';
-    html += '<div class="info-field"><label class="info-label">Unmapped Mode</label><div class="info-btn-group">';
-    var umodes = ['passthrough', 'drop'];
-    for (var u = 0; u < umodes.length; u++) {
-      var um = umodes[u];
-      var cls = (this.unmappedMode || 'passthrough') === um ? 'cfg-btn active' : 'cfg-btn';
-      html += '<button class="' + cls + '" data-umode="' + um + '">' + um + '</button>';
-    }
-    html += '</div></div>';
-    return html;
   }
 
   onAttach(graph) {

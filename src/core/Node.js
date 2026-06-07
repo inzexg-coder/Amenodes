@@ -97,10 +97,6 @@ export class Node {
     return 80;
   }
 
-  getConfigHTML() {
-    return '<div class="info-row"><span class="info-label">Value</span><span class="info-value dim">—</span></div>';
-  }
-
   createBaseDiv(graph, renderer, headerClass = 'node-header') {
     const div = document.createElement('div');
     div.className = 'node';
@@ -121,29 +117,7 @@ export class Node {
     const titleContainer = document.createElement('div');
     titleContainer.style.display = 'flex';
     titleContainer.style.alignItems = 'center';
-    titleContainer.style.gap = '8px';
-
-    // Nebula type icon
-    const typeIcon = document.createElement('span');
-    const iconMap = {
-      number: '✦',
-      constant: '◆',
-      calc: '⚡',
-      mean: 'μ',
-      sem: 'σ',
-      output: '◎',
-      map: '⊞',
-      group: '⊟',
-      interval: '⟐'
-    };
-    typeIcon.textContent = iconMap[this.type] || '◈';
-    typeIcon.style.fontSize = '14px';
-    typeIcon.style.opacity = '0.7';
-    typeIcon.style.color = '#b090ff';
-    typeIcon.style.textShadow = '0 0 6px rgba(160,120,255,0.3)';
-    typeIcon.style.width = '20px';
-    typeIcon.style.textAlign = 'center';
-    titleContainer.appendChild(typeIcon);
+    titleContainer.style.gap = '6px';
 
     let displayTitle = this.title;
     

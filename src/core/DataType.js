@@ -25,25 +25,18 @@ export class TypeSystem {
   }
 
   getNodeType(node) {
-    // Try constructor metadata first
-    const meta = node.constructor && node.constructor.metadata;
+    console.log('Node:', node.type);
+    console.log('Constructor metadata:', node.constructor.metadata);
+    const meta = node.constructor.metadata;
     if (meta && meta.dataType) {
+      console.log('Returning dataType:', meta.dataType);
       return meta.dataType;
     }
-    // Fallback: try node.type from registry
-    if (node.type && this.typeRegistry) {
-      const reg = this.typeRegistry.get(node.type);
-      if (reg && reg.metadata && reg.metadata.dataType) {
-        return reg.metadata.dataType;
-      }
-    }
-    // Last resort: derive from node type name
-    const fallbackMap = { number: 'num', constant: 'num', calc: 'uncert', mean: 'num', sem: 'num', output: 'array', map: 'array', group: 'array' };
-    return fallbackMap[node.type] || 'unknown';
+    console.log('No metadata or dataType, returning unknown');
+    return 'unknown';
   }
 
   initFromNodeRegistry(nodeRegistry) {
-    this.typeRegistry = nodeRegistry;
     for (const [type, { metadata }] of nodeRegistry.entries()) {
       if (metadata.dataType) {
         this.registerType(metadata.dataType, {
