@@ -442,19 +442,23 @@ export class Scene3D {
       ctx.quadraticCurveTo(0, 0, r, 0);
       ctx.closePath();
       
+      // Dark base background
+      ctx.fillStyle = 'rgba(8,6,18,0.90)';
+      ctx.fill();
+      
       // Background gradient
       var grad = ctx.createLinearGradient(0, 0, 0, h);
-      grad.addColorStop(0, 'rgba(' + cr + ',' + cg + ',' + cb + ',0.25)');
-      grad.addColorStop(0.3, 'rgba(' + cr + ',' + cg + ',' + cb + ',0.15)');
-      grad.addColorStop(0.7, 'rgba(' + cr + ',' + cg + ',' + cb + ',0.08)');
-      grad.addColorStop(1, 'rgba(' + cr + ',' + cg + ',' + cb + ',0.03)');
+      grad.addColorStop(0, 'rgba(' + cr + ',' + cg + ',' + cb + ',0.85)');
+      grad.addColorStop(0.3, 'rgba(' + cr + ',' + cg + ',' + cb + ',0.60)');
+      grad.addColorStop(0.7, 'rgba(' + cr + ',' + cg + ',' + cb + ',0.40)');
+      grad.addColorStop(1, 'rgba(' + cr + ',' + cg + ',' + cb + ',0.20)');
       ctx.fillStyle = grad;
       ctx.fill();
       
       // Border glow
       ctx.shadowBlur = 0;
-      ctx.strokeStyle = 'rgba(' + cr + ',' + cg + ',' + cb + ',0.4)';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(' + cr + ',' + cg + ',' + cb + ',0.8)';
+      ctx.lineWidth = 3;
       ctx.stroke();
       
       // Important node: extra border glow
@@ -477,12 +481,12 @@ export class Scene3D {
       ctx.font = 'bold 36px monospace';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      ctx.fillStyle = 'rgba(' + cr + ',' + cg + ',' + cb + ',0.8)';
+      ctx.fillStyle = 'rgba(' + cr + ',' + cg + ',' + cb + ',1.0)';
       ctx.fillText(icon, 20, 18);
       
       // Type label
       ctx.font = 'bold 14px monospace';
-      ctx.fillStyle = 'rgba(200,180,255,0.5)';
+      ctx.fillStyle = 'rgba(220,200,255,0.8)';
       ctx.textAlign = 'right';
       ctx.textBaseline = 'top';
       ctx.fillText(type.toUpperCase(), w - 20, 18);
@@ -491,7 +495,7 @@ export class Scene3D {
       ctx.font = 'bold 28px monospace';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillStyle = 'rgba(220,200,255,0.9)';
+      ctx.fillStyle = 'rgba(240,220,255,1.0)';
       ctx.shadowColor = 'rgba(0,0,0,0.5)';
       ctx.shadowBlur = 8;
       var displayTitle = (title || type || 'Node').length > 16 ? (title || type || 'Node').slice(0, 14) + '..' : (title || type || 'Node');
@@ -500,7 +504,7 @@ export class Scene3D {
       // Value display
       ctx.shadowBlur = 0;
       ctx.font = '22px monospace';
-      ctx.fillStyle = 'rgba(180,160,240,0.6)';
+      ctx.fillStyle = 'rgba(200,180,255,0.9)';
       var displayVal = '';
       try {
         var v = node.getValue();
@@ -527,10 +531,9 @@ export class Scene3D {
     
     var cardMat = new THREE.SpriteMaterial({
       map: cardTex,
-      blending: THREE.AdditiveBlending,
       transparent: true,
       depthWrite: false,
-      opacity: 0.95
+      opacity: 1.0
     });
     var cardSprite = new THREE.Sprite(cardMat);
     cardSprite.scale.set(cardWidth, cardWidth * 0.625, 1);
@@ -634,7 +637,7 @@ export class Scene3D {
       mdctx.font = 'bold 18px monospace';
       mdctx.textAlign = 'center';
       mdctx.textBaseline = 'middle';
-      mdctx.fillStyle = 'rgba(200,180,255,0.5)';
+      mdctx.fillStyle = 'rgba(220,200,255,0.8)';
       mdctx.fillText((node.operation || 'sum').toUpperCase(), 64, 20);
       var mdTex = new THREE.CanvasTexture(mdCanvas);
       var mdMat = new THREE.SpriteMaterial({
