@@ -3224,3 +3224,52 @@ input[type=number] {
 .node-menu {
   z-index: 9999 !important;
 }
+
+
+/* === Mobile FAB Button === */
+.mobile-fab {
+  display: none;
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(100,60,220,0.95), rgba(60,30,160,0.98));
+  border: 2px solid rgba(160,120,255,0.5);
+  box-shadow: 0 4px 24px rgba(80,40,200,0.5), 0 0 40px rgba(80,40,200,0.2);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 28px;
+  color: #fff;
+  transition: transform 0.2s, box-shadow 0.3s;
+}
+
+.mobile-fab:active {
+  transform: translateX(-50%) scale(0.92);
+  box-shadow: 0 2px 12px rgba(80,40,200,0.4);
+}
+
+@media (max-width: 768px) {
+  .mobile-fab {
+    display: flex !important;
+  }
+  .top-bar { display: none !important; }
+  .left-sidebar, .right-sidebar { display: none !important; }
+  .status-bar { display: none !important; }
+  .workspace { margin-top: 0 !important; top: 0 !important; }
+  .node-menu-panel {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 100px !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    max-height: 60vh !important;
+    border-radius: 20px !important;
+    z-index: 999 !important;
+  }
+}}

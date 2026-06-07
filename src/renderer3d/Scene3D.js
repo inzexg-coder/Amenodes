@@ -12,7 +12,9 @@ export class Scene3D {
     this.edgeLines = new Map();
     this.animFrame = null;
     this.autoRotate = true;
-    this.rotationSpeed = 0.003;
+    this.rotationSpeed = 0.004;
+    this._wobbleAmplitude = 0.2;
+    this._wobbleSpeed = 0.008;
     this.sphereRadius = 400;
     this.initialized = false;
     this.selectedNode = null;
@@ -164,24 +166,8 @@ export class Scene3D {
         script.src = urls[tried++];
         script.onload = () => {
           this.THREE = window.THREE;
-          const css2dUrls = [
-            'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js',
-            'https://unpkg.com/three@0.128.0/examples/js/renderers/CSS2DRenderer.js'
-          ];
-          let css2dTried = 0;
-          const tryCSS2D = () => {
-            if (css2dTried >= css2dUrls.length) {
-              this._injectCSS2DRenderer();
-              resolve();
-              return;
-            }
-            const s = document.createElement('script');
-            s.src = css2dUrls[css2dTried++];
-            s.onload = () => resolve();
-            s.onerror = () => tryCSS2D();
-            document.head.appendChild(s);
-          };
-          tryCSS2D();
+          this._injectCSS2DRenderer();
+          resolve();
         };
         script.onerror = () => tryLoad();
         document.head.appendChild(script);
@@ -192,7 +178,6 @@ export class Scene3D {
 
   _injectCSS2DRenderer() {
     const THREE = window.THREE;
-    if (THREE.CSS2DRenderer) return;
     THREE.CSS2DObject = function(element) {
       THREE.Object3D.call(this);
       this.element = element || document.createElement('div');
@@ -217,6 +202,8 @@ export class Scene3D {
         _domElement.style.height = height + 'px';
       };
       this.render = function(scene, camera) {
+        const w = _domElement.clientWidth || window.innerWidth || 1;
+        const h = _domElement.clientHeight || window.innerHeight || 1;
         const renderList = [];
         scene.traverseVisible(obj => {
           if (obj.isCSS2DObject) {
@@ -231,8 +218,8 @@ export class Scene3D {
         renderList.forEach(obj => {
           const element = obj.element;
           _vector3.copy(obj.position).project(camera);
-          const x = (_vector3.x * 0.5 + 0.5) * _domElement.clientWidth;
-          const y = (_vector3.y * -0.5 + 0.5) * _domElement.clientHeight;
+          const x = (_vector3.x * 0.5 + 0.5) * w;
+          const y = (_vector3.y * -0.5 + 0.5) * h;
           element.style.transform = 'translate(-50%, -50%) translate(' + x + 'px,' + y + 'px)';
           element.style.display = _vector3.z < 1 ? '' : 'none';
           if (!element.parentNode) {
@@ -246,32 +233,73 @@ export class Scene3D {
   _createStarField() {
     const THREE = this.THREE;
     const geo = new THREE.BufferGeometry();
-    const count = 3000;
+    const count = 5000;
     const pos = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
+    const sizes = new Float32Array(count);
     for (let i = 0; i < count; i++) {
-      const r = 800 + Math.random() * 1200;
+      const r = 600 + Math.random() * 1800;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
       pos[i*3] = r * Math.sin(phi) * Math.cos(theta);
       pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
       pos[i*3+2] = r * Math.cos(phi);
-      const c = 0.5 + Math.random() * 0.5;
-      colors[i*3] = c;
-      colors[i*3+1] = c;
-      colors[i*3+2] = c + Math.random() * 0.2;
+      const brightness = 0.3 + Math.random() * 0.7;
+      const tint = Math.random();
+      if (tint < 0.3) {
+        // Blue-white stars
+        colors[i*3] = brightness * 0.8;
+        colors[i*3+1] = brightness * 0.9;
+        colors[i*3+2] = brightness;
+      } else if (tint < 0.6) {
+        // Yellow stars
+        colors[i*3] = brightness;
+        colors[i*3+1] = brightness * 0.9;
+        colors[i*3+2] = brightness * 0.6;
+      } else {
+        // White/purple stars
+        colors[i*3] = brightness;
+        colors[i*3+1] = brightness * 0.85;
+        colors[i*3+2] = brightness;
+      }
+      sizes[i] = 0.3 + Math.random() * 1.2;
     }
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
     const mat = new THREE.PointsMaterial({
       size: 0.8,
       vertexColors: true,
       transparent: true,
-      opacity: 0.8,
+      opacity: 0.9,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      sizeAttenuation: true
+    });
+    this.scene.add(new THREE.Points(geo, mat));
+    
+    // Second layer of distant faint stars
+    const geo2 = new THREE.BufferGeometry();
+    const count2 = 2000;
+    const pos2 = new Float32Array(count2 * 3);
+    for (let i = 0; i < count2; i++) {
+      const r = 2000 + Math.random() * 3000;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      pos2[i*3] = r * Math.sin(phi) * Math.cos(theta);
+      pos2[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+      pos2[i*3+2] = r * Math.cos(phi);
+    }
+    geo2.setAttribute('position', new THREE.BufferAttribute(pos2, 3));
+    const mat2 = new THREE.PointsMaterial({
+      color: 0x446688,
+      size: 0.3,
+      transparent: true,
+      opacity: 0.4,
       blending: THREE.AdditiveBlending,
       depthWrite: false
     });
-    this.scene.add(new THREE.Points(geo, mat));
+    this.scene.add(new THREE.Points(geo2, mat2));
   }
 
   _fibonacciIndex = 0;
@@ -311,14 +339,14 @@ export class Scene3D {
     if (this.autoRotate && !this._isDragging) {
       this._targetTheta += this.rotationSpeed;
       // Gentle wobble on phi for organic feel
-      this._wobbleTime += 0.005;
-      const wobble = Math.sin(this._wobbleTime) * this._wobbleAmount;
-      this._targetPhi += (Math.PI / 2 + wobble - this._targetPhi) * 0.002;
+      this._wobbleTime += this._wobbleSpeed;
+      const wobble = Math.sin(this._wobbleTime) * this._wobbleAmplitude;
+      this._targetPhi += (Math.PI / 2 + wobble - this._targetPhi) * 0.003;
     }
     // Momentum decay after drag
     if (!this._isDragging && !this.autoRotate) {
-      this._momentumX *= 0.97;
-      this._momentumY *= 0.97;
+      this._momentumX *= 0.99;
+      this._momentumY *= 0.99;
       this._targetTheta += this._momentumX;
       this._targetPhi += this._momentumY;
       if (Math.abs(this._momentumX) < 0.0001 && Math.abs(this._momentumY) < 0.0001) {
@@ -372,13 +400,14 @@ export class Scene3D {
       this.scene.add(css2d);
 
       // Selection ring
-      const ringGeo = new THREE.RingGeometry(28, 32, 32);
+      const ringGeo = new THREE.RingGeometry(30, 38, 48);
       const ringMat = new THREE.MeshBasicMaterial({
-        color: 0x6688ff,
+        color: 0x88bbff,
         side: THREE.DoubleSide,
         transparent: true,
         opacity: 0,
-        depthWrite: false
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
       });
       const ring = new THREE.Mesh(ringGeo, ringMat);
       ring.position.set(pos.x, pos.y, pos.z);
@@ -528,7 +557,7 @@ export class Scene3D {
       const glowMat = new THREE.LineBasicMaterial({
         color: edgeColor,
         transparent: true,
-        opacity: 0.12,
+        opacity: 0.25,
         blending: THREE.AdditiveBlending
       });
       const glowLine = new THREE.Line(geo.clone(), glowMat);
@@ -596,8 +625,8 @@ export class Scene3D {
       const dy = event.clientY - this._prevPointer.y;
       this._targetTheta -= dx * 0.005;
       this._targetPhi = Math.max(0.1, Math.min(Math.PI - 0.1, this._targetPhi + dy * 0.005));
-      this._momentumX = dx * 0.0008;
-      this._momentumY = dy * 0.0008;
+      this._momentumX = dx * 0.001;
+      this._momentumY = dy * 0.001;
       this._prevPointer.x = event.clientX;
       this._prevPointer.y = event.clientY;
       this.autoRotate = false;
@@ -686,9 +715,9 @@ export class Scene3D {
     const edgePulse = 0.5 + 0.5 * Math.sin(time * 0.8);
     for (const [edgeId, line] of this.edgeLines) {
       if (typeof edgeId === 'string' && edgeId.startsWith('glow-')) {
-        line.material.opacity = 0.05 + edgePulse * 0.15;
+        line.material.opacity = 0.1 + edgePulse * 0.25;
       } else if (typeof edgeId === 'number') {
-        line.material.opacity = 0.2 + edgePulse * 0.3;
+        line.material.opacity = 0.3 + edgePulse * 0.4;
       }
     }
     
