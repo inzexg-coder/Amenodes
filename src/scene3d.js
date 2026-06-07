@@ -163,8 +163,8 @@ export class Scene3D {
 
   _makeNodeSprite(node, color, pos) {
     const canvas = document.createElement('canvas');
-    canvas.width = 160;
-    canvas.height = 160;
+    canvas.width = 200;
+    canvas.height = 130;
     const ctx = canvas.getContext('2d');
     this._drawSprite(ctx, node, color);
 
@@ -174,68 +174,93 @@ export class Scene3D {
     });
     const sprite = new THREE.Sprite(mat);
     sprite.position.set(pos.x, pos.y, pos.z);
-    sprite.scale.set(1.5, 1.5, 1);
+    sprite.scale.set(2.2, 1.4, 1);
     sprite.userData.nodeId = node.id;
     sprite.userData.isNode = true;
     return sprite;
   }
 
   _drawSprite(ctx, node, color) {
-    const w = 160, h = 160;
+    const w = 200, h = 130;
     const cx = w / 2, cy = h / 2;
-    const r = 52;
+    const rw = 86, rh = 52; // rectangle half-size
+    const rad = 12; // corner radius
     const c = '#' + color.toString(16).padStart(6, '0');
 
-    // Outer glow
-    const grad = ctx.createRadialGradient(cx, cy, r - 4, cx, cy, r + 12);
-    grad.addColorStop(0, c + '60');
-    grad.addColorStop(0.5, c + '20');
-    grad.addColorStop(1, c + '00');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r + 12, 0, Math.PI * 2);
+    // Outer glow (rounded rect)
+    const glowGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(rw, rh) + 14);
+    glowGrad.addColorStop(0, c + '50');
+    glowGrad.addColorStop(0.6, c + '15');
+    glowGrad.addColorStop(1, c + '00');
+    ctx.save();
+    ctx.shadowColor = 'transparent';
+    ctx.fillStyle = glowGrad;
+    this._roundRect(ctx, cx - rw - 10, cy - rh - 10, rw * 2 + 20, rh * 2 + 20, rad + 8);
     ctx.fill();
+    ctx.restore();
 
-    // Body
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    // Body (rounded rect)
+    ctx.shadowColor = 'transparent';
     ctx.fillStyle = '#080c18';
-    ctx.fill();
     ctx.strokeStyle = c;
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 2;
+    this._roundRect(ctx, cx - rw, cy - rh, rw * 2, rh * 2, rad);
+    ctx.fill();
     ctx.stroke();
 
-    // Inner glow
-    const ig = ctx.createRadialGradient(cx-10, cy-10, 0, cx, cy, r);
-    ig.addColorStop(0, 'rgba(255,255,255,0.06)');
+    // Inner subtle glow
+    const ig = ctx.createLinearGradient(cx, cy - rh, cx, cy + rh);
+    ig.addColorStop(0, 'rgba(255,255,255,0.05)');
     ig.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = ig;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    this._roundRect(ctx, cx - rw, cy - rh, rw * 2, rh * 2, rad);
     ctx.fill();
 
-    // Icon
+    // Icon on the left
     ctx.fillStyle = '#d0e4ff';
-    ctx.font = 'bold 40px sans-serif';
+    ctx.font = 'bold 32px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(node.meta?.icon || '?', cx, cy - 14);
+    ctx.fillText(node.meta?.icon || '?', cx - 50, cy - 2);
 
-    // Title
+    // Title on the right
     ctx.fillStyle = '#a0b8e0';
     ctx.font = 'bold 18px sans-serif';
-    ctx.fillText(node.title.substring(0, 10), cx, cy + 44);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(node.title.substring(0, 12), cx - 18, cy - 12);
+
+    // Type label
+    ctx.fillStyle = '#5566aa';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText((node.meta?.dataType || '').toUpperCase(), cx - 18, cy + 16);
 
     // Important star
     if (node.important) {
       ctx.fillStyle = '#ffd700';
-      ctx.font = '16px sans-serif';
-      ctx.fillText('★', cx + r - 12, cy - r + 12);
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText('★', cx + rw - 8, cy - rh + 14);
     }
   }
 
+  _roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
   _makeRing(color, pos) {
-    const geo = new THREE.RingGeometry(0.75, 0.9, 32);
+    const geo = new THREE.RingGeometry(0.85, 1.05, 32);
     const mat = new THREE.MeshBasicMaterial({
       color: 0x88bbff, side: THREE.DoubleSide,
       transparent: true, opacity: 0,
