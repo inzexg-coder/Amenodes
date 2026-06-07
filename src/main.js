@@ -13,26 +13,40 @@ class App {
   }
 
   async _init() {
-    const container = document.getElementById('scene-container');
-    if (!container) return;
+    try {
+      const container = document.getElementById('scene-container');
+      if (!container) throw new Error('scene-container not found');
 
-    this.scene = new Scene3D(container, this.graph);
-    await this.scene.init();
+      this.scene = new Scene3D(container, this.graph);
+      await this.scene.init();
 
-    this.touch = new TouchControls(this.scene, this);
-    this.scene.onNodeSelect = (node) => this._onNodeSelect(node);
+      this.touch = new TouchControls(this.scene, this);
+      this.scene.onNodeSelect = (node) => this._onNodeSelect(node);
 
-    this._setupUI();
-    this._setupDirtyTracking();
+      this._setupUI();
+      this._setupDirtyTracking();
 
-    // Load or demo
-    if (!this.graph.loadFromStorage()) {
-      this._loadDemo();
+      // Load or demo
+      if (!this.graph.loadFromStorage()) {
+        this._loadDemo();
+      }
+      this.history.save();
+      this.scene.rebuild();
+      this._updateUI();
+      this._dismissSplash();
+    } catch (err) {
+      console.error('Init error:', err);
+      const splash = document.getElementById('splashOverlay');
+      if (splash) {
+        splash.innerHTML = `
+          <div style="text-align:center;padding:40px;color:#ff5555;">
+            <h2 style="color:#ff5555;">Error</h2>
+            <p style="color:#8899bb;font-size:14px;margin:16px 0;">${err.message}</p>
+            <p style="color:#6678aa;font-size:12px;">Check console for details</p>
+          </div>
+        `;
+      }
     }
-    this.history.save();
-    this.scene.rebuild();
-    this._updateUI();
-    this._dismissSplash();
   }
 
   _dismissSplash() {
