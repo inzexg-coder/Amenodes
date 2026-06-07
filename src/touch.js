@@ -88,11 +88,11 @@ export class TouchControls {
 
     // Rotation drag
     if (this._draggingFrom === 'empty' && this._moved) {
-      this.scene._targetTheta -= dx * 0.008;
+      this.scene._targetTheta -= dx * 0.003;
       this.scene._targetPhi = Math.max(0.1, Math.min(Math.PI - 0.1,
-        this.scene._targetPhi + dy * 0.008));
-      this.scene.momentum.x = dx * 0.001;
-      this.scene.momentum.y = dy * 0.001;
+        this.scene._targetPhi + dy * 0.003));
+      this.scene.momentum.x = dx * 0.0004;
+      this.scene.momentum.y = dy * 0.0004;
     }
   }
 

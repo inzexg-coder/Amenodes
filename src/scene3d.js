@@ -163,100 +163,161 @@ export class Scene3D {
 
   _makeNodeSprite(node, color, pos) {
     const canvas = document.createElement('canvas');
-    canvas.width = 200;
-    canvas.height = 130;
+    canvas.width = 380;
+    canvas.height = 110;
     const ctx = canvas.getContext('2d');
     this._drawSprite(ctx, node, color);
 
     const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
     const mat = new THREE.SpriteMaterial({
-      map: tex, transparent: true, depthTest: true, depthWrite: false, opacity: 0.95
+      map: tex, transparent: true, depthTest: true, depthWrite: false, opacity: 0.97
     });
     const sprite = new THREE.Sprite(mat);
     sprite.position.set(pos.x, pos.y, pos.z);
-    sprite.scale.set(2.2, 1.4, 1);
+    sprite.scale.set(4.2, 1.2, 1);
     sprite.userData.nodeId = node.id;
     sprite.userData.isNode = true;
     return sprite;
   }
 
   _drawSprite(ctx, node, color) {
-    const w = 200, h = 130;
-    const cx = w / 2, cy = h / 2;
-    const rw = 86, rh = 52; // rectangle half-size
-    const rad = 12; // corner radius
+    // Main branch design: header + body layout, no emojis
+    const w = 380, h = 110;
+    const rad = 16;
+    const headerH = 40;
+    const margin = 3;
     const c = '#' + color.toString(16).padStart(6, '0');
 
-    // Outer glow (rounded rect)
-    const glowGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(rw, rh) + 14);
-    glowGrad.addColorStop(0, c + '50');
-    glowGrad.addColorStop(0.6, c + '15');
-    glowGrad.addColorStop(1, c + '00');
+    // Single neutral glow (no per-type color)
     ctx.save();
-    ctx.shadowColor = 'transparent';
-    ctx.fillStyle = glowGrad;
-    this._roundRect(ctx, cx - rw - 10, cy - rh - 10, rw * 2 + 20, rh * 2 + 20, rad + 8);
+    ctx.shadowColor = 'rgba(100, 140, 255, 0.35)';
+    ctx.shadowBlur = 18;
+    ctx.shadowOffsetY = 4;
+    ctx.fillStyle = 'transparent';
+    this._roundRect(ctx, margin, margin, w - margin * 2, h - margin * 2, rad);
     ctx.fill();
     ctx.restore();
 
-    // Body (rounded rect)
-    ctx.shadowColor = 'transparent';
-    ctx.fillStyle = '#080c18';
+    // Card body background
+    ctx.fillStyle = '#232a3f';
     ctx.strokeStyle = c;
-    ctx.lineWidth = 2;
-    this._roundRect(ctx, cx - rw, cy - rh, rw * 2, rh * 2, rad);
+    ctx.lineWidth = 1.5;
+    this._roundRect(ctx, margin, margin, w - margin * 2, h - margin * 2, rad);
     ctx.fill();
     ctx.stroke();
 
-    // Inner subtle glow
-    const ig = ctx.createLinearGradient(cx, cy - rh, cx, cy + rh);
-    ig.addColorStop(0, 'rgba(255,255,255,0.05)');
-    ig.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = ig;
-    this._roundRect(ctx, cx - rw, cy - rh, rw * 2, rh * 2, rad);
+    // Header background
+    const hGrad = ctx.createLinearGradient(0, margin, 0, margin + headerH);
+    hGrad.addColorStop(0, '#1b2137');
+    hGrad.addColorStop(1, '#1b2137');
+    ctx.fillStyle = hGrad;
+    this._roundRectTop(ctx, margin, margin, w - margin * 2, headerH, rad);
     ctx.fill();
 
-    // Icon on the left
-    ctx.fillStyle = '#d0e4ff';
-    ctx.font = 'bold 32px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(node.meta?.icon || '?', cx - 50, cy - 2);
+    // Header separator
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(margin + rad, margin + headerH);
+    ctx.lineTo(w - margin - rad, margin + headerH);
+    ctx.stroke();
 
-    // Title on the right
-    ctx.fillStyle = '#a0b8e0';
+    // Icon (simple text, no emoji)
+    const iconMap = { number: '#', constant: 'π', group: '[]', calc: '∑', output: '→', map: '⇄', mean: 'μ', sem: 'σ' };
+    ctx.fillStyle = '#b9c8ff';
     ctx.font = 'bold 18px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(node.title.substring(0, 12), cx - 18, cy - 12);
+    ctx.fillText(iconMap[node.type] || '?', 16, margin + 20);
+
+    // Title
+    ctx.fillStyle = '#dcf0ff';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText(node.title.substring(0, 20), 42, margin + 20);
+
+    // Close X
+    ctx.fillStyle = '#b9c8ff';
+    ctx.font = '16px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('×', w - 14, margin + 20);
+
+    // Body area
+    const bodyY = margin + headerH + 8;
+    const bodyH = h - margin - headerH - 8;
+    const bodyMid = bodyY + bodyH / 2;
+
+    // Type color bar on left
+    ctx.fillStyle = c;
+    ctx.fillRect(margin + 4, bodyY + 2, 3, bodyH - 4);
 
     // Type label
-    ctx.fillStyle = '#5566aa';
+    ctx.fillStyle = '#8899bb';
     ctx.font = '11px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText((node.meta?.dataType || '').toUpperCase(), cx - 18, cy + 16);
+    ctx.textBaseline = 'middle';
+    const typeLabel = (node.meta?.dataType || 'N/A').toUpperCase();
+    ctx.fillText(typeLabel, margin + 14, bodyMid);
+
+    // Value / info
+    ctx.fillStyle = '#dcf0ff';
+    ctx.font = 'bold 14px monospace';
+    ctx.textAlign = 'right';
+    let info = '';
+    switch (node.type) {
+      case 'number': info = String(node.data.value ?? '0'); break;
+      case 'constant': info = String(node.data.value ?? '0'); break;
+      case 'group': info = '[' + (node.data.rows?.length || 0) + ']'; break;
+      case 'calc': info = node.data.mode || 'sum'; break;
+      case 'output': info = '→ result'; break;
+      case 'map': info = node.data.mode || 'linear'; break;
+      case 'mean': info = 'μ = ...'; break;
+      case 'sem': info = 'σ/√n'; break;
+    }
+    ctx.fillText(info, w - margin - 16, bodyMid);
+
+    // Handle dots (left=output, right=input if canInput)
+    const hr = 6;
+    ctx.beginPath();
+    ctx.arc(margin, bodyMid, hr, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffbb77';
+    ctx.strokeStyle = '#1e1f2c';
+    ctx.lineWidth = 2;
+    ctx.fill(); ctx.stroke();
+
+    if (node.meta?.canInput) {
+      ctx.beginPath();
+      ctx.arc(w - margin, bodyMid, hr, 0, Math.PI * 2);
+      ctx.fillStyle = '#2288ff';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.fill(); ctx.stroke();
+    }
 
     // Important star
     if (node.important) {
-      ctx.fillStyle = '#ffd700';
-      ctx.font = '14px sans-serif';
-      ctx.textAlign = 'right';
-      ctx.fillText('★', cx + rw - 8, cy - rh + 14);
+      ctx.fillStyle = '#00aaff';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('★', margin + 22, h - margin - 4);
     }
   }
 
-  _roundRect(ctx, x, y, w, h, r) {
+  _roundRectTop(ctx, x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
     ctx.lineTo(x + w - r, y);
     ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x + w, y + h);
+    ctx.lineTo(x, y + h);
     ctx.lineTo(x, y + r);
     ctx.quadraticCurveTo(x, y, x + r, y);
     ctx.closePath();
+  }
+
+  _roundRect(ctx, x, y, w, h, r) {
   }
 
   _makeRing(color, pos) {
