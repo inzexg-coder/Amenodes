@@ -219,82 +219,68 @@ export class Scene3D {
     ctx.closePath();
   }
 
-  _makeCardTexture(node, hexColor) {
+  _makeCardTexture(node, hexColor, editMode) {
     var c = document.createElement('canvas');
-    c.width = 400; c.height = 250;
+    c.width = 400; c.height = editMode ? 320 : 240;
     var ctx = c.getContext('2d');
-    var w = 400, h = 250, r = 14;
+    var w = 400, h = c.height, r = 12;
 
     var cr = parseInt(hexColor.slice(1,3),16);
     var cg = parseInt(hexColor.slice(3,5),16);
     var cb = parseInt(hexColor.slice(5,7),16);
 
-    // Card shadow
-    ctx.shadowColor = 'rgba(0,0,0,0.6)';
-    ctx.shadowBlur = 25;
-    ctx.shadowOffsetY = 5;
+    // Shadow
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 20;
+    ctx.shadowOffsetY = 4;
     
-    // Card body background (dark)
-    ctx.fillStyle = 'rgba(15,12,28,0.97)';
+    // Card body
+    ctx.fillStyle = 'rgba(10,8,22,0.97)';
     this._drawRoundedRect(ctx, 0, 0, w, h, r);
     ctx.fill();
-
-    // Header background (slightly lighter, like old 2D nodes)
     ctx.shadowBlur = 0;
-    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.08)';
+
+    // Header
+    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.06)';
     ctx.beginPath();
-    ctx.moveTo(r, 0);
-    ctx.lineTo(w - r, 0);
+    ctx.moveTo(r, 0); ctx.lineTo(w - r, 0);
     ctx.quadraticCurveTo(w, 0, w, r);
-    ctx.lineTo(w, 52);
-    ctx.lineTo(0, 52);
-    ctx.lineTo(0, r);
-    ctx.quadraticCurveTo(0, 0, r, 0);
+    ctx.lineTo(w, 44); ctx.lineTo(0, 44);
+    ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0);
     ctx.closePath();
     ctx.fill();
 
-    // Header bottom line
-    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.2)';
-    ctx.fillRect(0, 50, w, 1);
+    // Header divider
+    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.15)';
+    ctx.fillRect(0, 43, w, 1);
 
-    // Outer border (subtle)
-    ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.3)';
+    // Subtle border
+    ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.2)';
     ctx.lineWidth = 1;
     this._drawRoundedRect(ctx, 0, 0, w, h, r);
     ctx.stroke();
 
-    // Type icon in header
+    // Icon
     var icons = { number:'\u2726', constant:'\u25C6', calc:'\u26A1', mean:'\u03BC', sem:'\u03C3', output:'\u25CE', map:'\u229E', group:'\u229F' };
     var icon = icons[node.type] || '\u25C8';
-    ctx.font = 'bold 28px monospace';
+    ctx.font = 'bold 22px monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = hexColor;
-    ctx.shadowColor = hexColor;
-    ctx.shadowBlur = 10;
-    ctx.fillText(icon, 14, 25);
-    ctx.shadowBlur = 0;
+    ctx.fillText(icon, 14, 22);
 
-    // Title in header
-    ctx.font = 'bold 16px monospace';
+    // Title
+    ctx.font = 'bold 14px monospace';
     ctx.fillStyle = '#dce0ff';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    var ttl = (node.title || node.type || 'Node').slice(0, 18);
-    ctx.fillText(ttl, 50, 25);
+    ctx.fillText((node.title || node.type || 'Node').slice(0, 18), 44, 22);
 
-    // Type badge in header right
-    ctx.font = '10px monospace';
-    ctx.fillStyle = 'rgba(200,180,255,0.35)';
+    // Type
+    ctx.font = '9px monospace';
+    ctx.fillStyle = 'rgba(200,180,255,0.3)';
     ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(node.type.toUpperCase(), w - 14, 25);
+    ctx.fillText(node.type.toUpperCase(), w - 14, 22);
 
-    // Value area (body)
-    ctx.font = '15px monospace';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillStyle = 'rgba(200,190,255,0.6)';
+    // Value
     var valStr = '\u2014';
     try {
       var v = node.getValue();
@@ -302,15 +288,98 @@ export class Scene3D {
         valStr = v.map(function(x) { return typeof x === 'number' ? x.toFixed(3) : x; }).join(', ').slice(0, 28);
       }
     } catch(e) {}
-    ctx.fillText('= ' + valStr, 16, 66);
 
-    // Important indicator
-    if (node.important) {
-      ctx.shadowColor = hexColor;
-      ctx.shadowBlur = 40;
-      ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.7)';
+    if (editMode) {
+      // Edit mode: larger card with interactive zones
+      ctx.font = 'bold 18px monospace';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = '#e8e0ff';
+      ctx.fillText('= ' + valStr, 16, 54);
+      
+      // Edit hint
+      ctx.font = '11px monospace';
+      ctx.fillStyle = 'rgba(200,180,255,0.3)';
+      ctx.fillText('tap value to edit', 16, 86);
+      
+      // Action buttons based on type
+      var yBtn = 120;
+      if (node.type === 'number' || node.type === 'constant') {
+        // Value button
+        this._drawRoundedRect(ctx, 12, yBtn, w - 24, 36, 8);
+        ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.3)';
+        ctx.stroke();
+        ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.08)';
+        ctx.fill();
+        ctx.font = 'bold 14px monospace';
+        ctx.fillStyle = 'rgba(220,200,255,0.7)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('[ Edit Value: ' + valStr.slice(0,10) + ' ]', w/2, yBtn + 18);
+      }
+      if (node.type === 'group') {
+        // Add row button
+        this._drawRoundedRect(ctx, 12, yBtn, w - 24, 36, 8);
+        ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.3)';
+        ctx.stroke();
+        ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.08)';
+        ctx.fill();
+        ctx.font = 'bold 14px monospace';
+        ctx.fillStyle = 'rgba(220,200,255,0.7)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('[ + Add Row ]', w/2, yBtn + 18);
+        
+        // Existing rows
+        if (node.values) {
+          ctx.font = '11px monospace';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+          for (var ri = 0; ri < node.values.length && ri < 4; ri++) {
+            ctx.fillStyle = 'rgba(200,180,255,0.5)';
+            ctx.fillText(node.values[ri].name + ': ' + node.values[ri].val, 20, yBtn + 48 + ri * 18);
+          }
+        }
+      }
+      if (node.type === 'output' || node.type === 'map') {
+        this._drawRoundedRect(ctx, 12, yBtn, w - 24, 36, 8);
+        ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.3)';
+        ctx.stroke();
+        ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.08)';
+        ctx.fill();
+        ctx.font = 'bold 14px monospace';
+        ctx.fillStyle = 'rgba(220,200,255,0.7)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('[ + Add Row ]', w/2, yBtn + 18);
+      }
+      if (node.type === 'calc') {
+        var opLabel = (node.operation || 'div3').toUpperCase();
+        this._drawRoundedRect(ctx, 12, yBtn, w - 24, 36, 8);
+        ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.3)';
+        ctx.stroke();
+        ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.08)';
+        ctx.fill();
+        ctx.font = 'bold 14px monospace';
+        ctx.fillStyle = 'rgba(220,200,255,0.7)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('[ Mode: ' + opLabel + ' ]', w/2, yBtn + 18);
+      }
+    } else {
+      // Normal mode: compact card
+      ctx.font = '14px monospace';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = 'rgba(200,190,255,0.5)';
+      ctx.fillText('= ' + valStr, 16, 55);
+    }
+
+    // Important indicator (subtle)
+    if (node.important && !editMode) {
+      ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.5)';
       ctx.lineWidth = 2;
-      this._drawRoundedRect(ctx, 0, 0, w, h, r);
+      this._drawRoundedRect(ctx, 1, 1, w-2, h-2, r-1);
       ctx.stroke();
     }
 
@@ -323,12 +392,12 @@ export class Scene3D {
     group.position.set(pos.x, pos.y, pos.z);
 
     var hexColor = this._getCardColor(node.type);
-    var texCanvas = this._makeCardTexture(node, hexColor);
+    var cardW = 2.0;
+    var cardH = cardW * 0.6;
+    
+    var texCanvas = this._makeCardTexture(node, hexColor, false);
     var tex = new THREE.CanvasTexture(texCanvas);
     tex.needsUpdate = true;
-
-    var cardW = 2.0;
-    var cardH = cardW * 0.625;
 
     var mat = new THREE.SpriteMaterial({
       map: tex, transparent: true, depthWrite: false
@@ -336,29 +405,11 @@ export class Scene3D {
     var sprite = new THREE.Sprite(mat);
     sprite.scale.set(cardW, cardH, 1);
     sprite.userData.nodeId = node.id;
+    sprite.userData.editMode = false;
     group.add(sprite);
     this.nodeMeshes.push(sprite);
 
-    // Glow behind card
-    var _cr = parseInt(hexColor.slice(1,3),16);
-    var _cg = parseInt(hexColor.slice(3,5),16);
-    var _cb = parseInt(hexColor.slice(5,7),16);
-    var gCanvas = document.createElement('canvas');
-    gCanvas.width = 64; gCanvas.height = 64;
-    var gctx = gCanvas.getContext('2d');
-    var grad = gctx.createRadialGradient(32, 32, 3, 32, 32, 32);
-    grad.addColorStop(0, 'rgba('+_cr+','+_cg+','+_cb+',0.25)');
-    grad.addColorStop(0.5, 'rgba('+_cr+','+_cg+','+_cb+',0.10)');
-    grad.addColorStop(1, 'rgba(0,0,0,0)');
-    gctx.fillStyle = grad;
-    gctx.fillRect(0, 0, 64, 64);
-    var gTex = new THREE.CanvasTexture(gCanvas);
-    var gMat = new THREE.SpriteMaterial({
-      map: gTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.5
-    });
-    var gSprite = new THREE.Sprite(gMat);
-    gSprite.scale.set(cardW * 2.2, cardH * 2.2, 1);
-    group.add(gSprite);
+
 
     // Group/Output: column indicators
     if (node.type === 'group' || node.type === 'output') {
@@ -448,10 +499,11 @@ export class Scene3D {
     var hsl = {};
     cObj.getHSL(hsl);
     group.userData = {
-      mesh: sprite, glow: gSprite, color: cObj,
+      mesh: sprite, color: cObj,
       nodeType: node.type, nodeId: node.id,
       baseScale: cardW, baseHue: hsl.h,
       cardW: cardW, cardH: cardH,
+      cardTexCanvas: texCanvas, cardTexture: tex,
       hexColor: hexColor
     };
     if (node.type === 'map') group.userData.bluePortVisible = false;
@@ -629,41 +681,92 @@ export class Scene3D {
     if (this.selectedNode && this.selectedNode.id !== nodeId) {
       this._deselectNode();
     } else if (this.selectedNode && this.selectedNode.id === nodeId) {
-      if (this.selectedNode.type === 'map') this._toggleMapBluePort(this.selectedNode);
-      if (this.eventBus && this.eventBus.emit) this.eventBus.emit('nodeSelect', this.selectedNode);
+      // Same node tapped again - handle edit actions
+      this._handleNodeAction(this.selectedNode);
       return;
     }
     var node = this.graph.getNode(nodeId);
     if (!node) return;
     this.selectedNode = node;
-    var obj = this.nodeObjects.get(nodeId);
-    if (obj) {
-      var card = obj.userData.mesh;
-      if (card) {
-        card.scale.set(obj.userData.cardW * 1.3, obj.userData.cardH * 1.3, 1);
-        card.material.opacity = 1.0;
-      }
-      var glow = obj.userData.glow;
-      if (glow) {
-        glow.scale.set(obj.userData.cardW * 2.8, obj.userData.cardH * 2.8, 1);
-        glow.material.opacity = 1.0;
+    this._switchEditMode(node, true);
+    if (this.eventBus && this.eventBus.emit) this.eventBus.emit('nodeSelect', node);
+  }
+  
+  _switchEditMode(node, enable) {
+    var obj = this.nodeObjects.get(node.id);
+    if (!obj) return;
+    var card = obj.userData.mesh;
+    if (!card) return;
+    var hexColor = obj.userData.hexColor;
+    var texCanvas = this._makeCardTexture(node, hexColor, enable);
+    var tex = new THREE.CanvasTexture(texCanvas);
+    tex.needsUpdate = true;
+    card.material.map = tex;
+    card.material.needsUpdate = true;
+    card.material.opacity = 1.0;
+    card.userData.editMode = enable;
+    // Store for later updates
+    obj.userData.cardTexCanvas = texCanvas;
+    obj.userData.cardTexture = tex;
+    if (enable) {
+      card.scale.set(obj.userData.cardW * 1.5, obj.userData.cardW * 0.6 * 1.5 * (320/240), 1);
+    } else {
+      card.scale.set(obj.userData.cardW, obj.userData.cardW * 0.6, 1);
+    }
+  }
+  
+  _handleNodeAction(node) {
+    var obj = this.nodeObjects.get(node.id);
+    if (!obj) return;
+    var card = obj.userData.mesh;
+    if (!card || !card.userData.editMode) return;
+    
+    // Simple: prompt for value change on number/constant
+    if (node.type === 'number' || node.type === 'constant') {
+      var newVal = prompt('Edit value:', node.value || 0);
+      if (newVal !== null && newVal !== '') {
+        node.value = parseFloat(newVal) || 0;
+        this.graph.reevaluateAll();
+        this.graph.setDirty(true);
+        this._switchEditMode(node, true); // refresh texture
+        this.eventBus.emit('graphChanged');
       }
     }
-    if (this.eventBus && this.eventBus.emit) this.eventBus.emit('nodeSelect', node);
+    // Group: add row
+    if (node.type === 'group') {
+      if (!node.values) node.values = [];
+      node.values.push({ val: 0, name: '' });
+      this.graph.setDirty(true);
+      this._switchEditMode(node, true);
+      this.eventBus.emit('graphChanged');
+    }
+    // Output/Map: add row
+    if (node.type === 'output' || node.type === 'map') {
+      if (!node.rows) node.rows = [];
+      node.rows.push({ param: 'V' + (node.rows.length+1), value: '0' });
+      this.graph.setDirty(true);
+      this._switchEditMode(node, true);
+      this.eventBus.emit('graphChanged');
+    }
+    // Calc: cycle operation
+    if (node.type === 'calc') {
+      var ops = ['div3','div_sqrt12','sqrt_sum_sq','quadratic_sum','multiply_by_constant'];
+      var idx = ops.indexOf(node.operation || 'div3');
+      node.operation = ops[(idx + 1) % ops.length];
+      this.graph.reevaluateAll();
+      this.graph.setDirty(true);
+      this._switchEditMode(node, true);
+      this.eventBus.emit('graphChanged');
+    }
   }
 
   _deselectNode() {
     if (!this.selectedNode) return;
+    this._switchEditMode(this.selectedNode, false);
     var obj = this.nodeObjects.get(this.selectedNode.id);
     if (obj) {
-      var card = obj.userData.mesh;
-      if (card) {
-        card.scale.set(obj.userData.cardW, obj.userData.cardH, 1);
-        card.material.opacity = 1.0;
-      }
       var glow = obj.userData.glow;
       if (glow) {
-        glow.scale.set(obj.userData.cardW * 2.2, obj.userData.cardH * 2.2, 1);
         glow.material.opacity = 0.5;
       }
     }

@@ -246,17 +246,11 @@ export class MobileUI {
           document.getElementById('mConnections').classList.remove('active');
           if (this.scene.controls) this.scene.controls.enableRotate = true;
         }
-      } else {
-        this._showNodeConfig(node);
       }
     });
-    // Deselect = hide config
+    // Deselect - just update UI
     this.scene.eventBus.on('nodeDeselect', () => {
-      const panel = document.getElementById('nodeInfo');
-      if (panel && !panel.classList.contains('hidden')) {
-        panel.classList.add('hidden');
-        this._configNode = null;
-      }
+      // Inline editing handled in Scene3D
     });
   }
 
