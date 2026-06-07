@@ -3158,3 +3158,69 @@ input[type=number] {
   color: #ffb347;
   border-left: 2px solid #ffb347;
 }
+
+
+/* === MOBILE SIMPLIFIED LAYOUT === */
+@media (max-width: 768px) {
+  /* Hide top bar completely */
+  .top-bar { display: none !important; }
+  
+  /* Hide sidebars */
+  .left-sidebar, .right-sidebar { display: none !important; }
+  
+  /* Hide status bar */
+  .status-bar { display: none !important; }
+  
+  
+  
+  /* Workspace fills entire screen */
+  .workspace { margin-top: 0 !important; top: 0 !important; }
+  
+  /* Floating Add Node button - prominent, centered bottom */
+  #addNodeBtn {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 30px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 1000 !important;
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, rgba(100,60,220,0.9), rgba(60,30,160,0.95)) !important;
+    border: 2px solid rgba(160,120,255,0.4) !important;
+    box-shadow: 0 4px 20px rgba(80,40,200,0.4), 0 0 30px rgba(80,40,200,0.15) !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    font-size: 28px !important;
+    color: #fff !important;
+    transition: transform 0.2s, box-shadow 0.2s !important;
+  }
+  
+  #addNodeBtn:hover, #addNodeBtn:active {
+    transform: translateX(-50%) scale(1.1) !important;
+    box-shadow: 0 6px 30px rgba(100,60,220,0.6), 0 0 40px rgba(80,40,200,0.2) !important;
+  }
+  
+  #addNodeBtn span { display: none !important; }
+  #addNodeBtn i { margin: 0 !important; font-size: 28px !important; }
+  
+  /* Node menu panel - full screen on mobile */
+  .node-menu-panel {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 100px !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    max-height: 60vh !important;
+    border-radius: 20px !important;
+    z-index: 999 !important;
+  }
+}
+
+/* Context menu fix for mobile */
+.node-menu {
+  z-index: 9999 !important;
+}
