@@ -365,11 +365,15 @@ export class Scene3D {
     const total = Math.max(nodes.length, 1);
     const THREE = this.THREE;
 
-    // Create neurons
+    // Create neurons with error resilience
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
       const pos = this._fibonacciSphere(i, total, this.sphereRadius);
-      this._createNeuron(node, pos);
+      try {
+        this._createNeuron(node, pos);
+      } catch(e) {
+        console.error('Failed to create neuron for node', node.id, node.type, ':', e);
+      }
     }
 
     // Create edge connections
