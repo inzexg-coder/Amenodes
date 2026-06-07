@@ -47,7 +47,10 @@ export class NodeMenu {
     if (this.menuElement) this.close();
     
     const types = NodeFactory.getAvailableNodeTypes();
-    if (!types.length) return;
+    window._nodeMenuTypes = types;
+    console.log('[NodeMenu] open() called, types count:', types.length);
+    if (!types.length) { console.warn('[NodeMenu] No node types available!'); return; }
+    console.log('[NodeMenu] First type:', types[0]?.type);
     
     const overlay = document.createElement('div');
     overlay.className = 'node-menu-overlay';
@@ -252,14 +255,21 @@ export class NodeMenu {
 
   async createNode(type) {
     try {
+      console.log('[NodeMenu] createNode called with type:', type);
       const { x, y } = this.getCenterPosition();
+      console.log('[NodeMenu] position:', x, y);
       const options = { x, y };
       
       const node = await NodeFactory.createNode(type, options);
+      console.log('[NodeMenu] node created:', node?.id, node?.type);
       
       if (node) {
         this.graph.addNode(node);
+        console.log('[NodeMenu] node added to graph, total:', this.graph.nodes.length);
         this.finishNodeCreation();
+        console.log('[NodeMenu] finishNodeCreation completed');
+      } else {
+        console.warn('[NodeMenu] node is null/undefined');
       }
     } catch (err) {
       console.error('[NodeMenu] Failed to create node:', err);
