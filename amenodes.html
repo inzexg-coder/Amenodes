@@ -736,8 +736,8 @@ html, body {
         this.updateNodeCount();
         this.updateEdgeCount();
         
-        // Create example graph if no saved data
-        if (!saved && !savedOld && this.graph.nodes.length === 0) {
+        // Create example graph for first-time testing
+        if (this.graph.nodes.length === 0) {
           this._createExampleGraph().catch(function(e) { console.error('Example:', e); });
         }
       }

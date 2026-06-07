@@ -221,98 +221,94 @@ export class Scene3D {
 
   _makeCardTexture(node, hexColor) {
     var c = document.createElement('canvas');
-    c.width = 400; c.height = 240;
+    c.width = 400; c.height = 250;
     var ctx = c.getContext('2d');
-    var w = 400, h = 240, r = 16;
+    var w = 400, h = 250, r = 14;
 
     var cr = parseInt(hexColor.slice(1,3),16);
     var cg = parseInt(hexColor.slice(3,5),16);
     var cb = parseInt(hexColor.slice(5,7),16);
 
-    // Very dark background
-    ctx.fillStyle = 'rgba(8,6,18,0.95)';
-    this._drawRoundedRect(ctx, 0, 0, w, h, r);
-    ctx.fill();
-
-    // Subtle tint gradient at top
-    var grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, 'rgba('+cr+','+cg+','+cb+',0.08)');
-    grad.addColorStop(0.3, 'rgba('+cr+','+cg+','+cb+',0.02)');
-    grad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = grad;
-    this._drawRoundedRect(ctx, 0, 0, w, h, r);
-    ctx.fill();
-
-    // Outer glow border (visible, not inner)
-    ctx.shadowColor = hexColor;
+    // Card shadow
+    ctx.shadowColor = 'rgba(0,0,0,0.6)';
     ctx.shadowBlur = 25;
+    ctx.shadowOffsetY = 5;
+    
+    // Card body background (dark)
+    ctx.fillStyle = 'rgba(15,12,28,0.97)';
+    this._drawRoundedRect(ctx, 0, 0, w, h, r);
+    ctx.fill();
+
+    // Header background (slightly lighter, like old 2D nodes)
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.08)';
+    ctx.beginPath();
+    ctx.moveTo(r, 0);
+    ctx.lineTo(w - r, 0);
+    ctx.quadraticCurveTo(w, 0, w, r);
+    ctx.lineTo(w, 52);
+    ctx.lineTo(0, 52);
+    ctx.lineTo(0, r);
+    ctx.quadraticCurveTo(0, 0, r, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    // Header bottom line
+    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.2)';
+    ctx.fillRect(0, 50, w, 1);
+
+    // Outer border (subtle)
     ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.3)';
     ctx.lineWidth = 1;
-    this._drawRoundedRect(ctx, 1, 1, w-2, h-2, r-1);
-    ctx.stroke();
-    
-    // Thin bright outer border
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.6)';
-    ctx.lineWidth = 1.5;
-    this._drawRoundedRect(ctx, 1, 1, w-2, h-2, r-1);
+    this._drawRoundedRect(ctx, 0, 0, w, h, r);
     ctx.stroke();
 
-    // Top light accent
-    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.15)';
-    ctx.fillRect(r+2, 1, w - r*2 - 4, 1);
-
-    // Icon 
+    // Type icon in header
     var icons = { number:'\u2726', constant:'\u25C6', calc:'\u26A1', mean:'\u03BC', sem:'\u03C3', output:'\u25CE', map:'\u229E', group:'\u229F' };
     var icon = icons[node.type] || '\u25C8';
-    ctx.font = 'bold 32px monospace';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillStyle = hexColor;
-    ctx.shadowColor = hexColor;
-    ctx.shadowBlur = 15;
-    ctx.fillText(icon, 18, 18);
-    ctx.shadowBlur = 0;
-
-    // Type
-    ctx.font = 'bold 11px monospace';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'top';
-    ctx.fillStyle = 'rgba(200,180,255,0.35)';
-    ctx.fillText(node.type.toUpperCase(), w - 18, 20);
-
-    // Title
-    ctx.font = 'bold 22px monospace';
+    ctx.font = 'bold 28px monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#e8e0ff';
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = 3;
-    var ttl = (node.title || node.type || 'Node').slice(0, 16);
-    ctx.fillText(ttl, 18, 85);
-
-    // Value
+    ctx.fillStyle = hexColor;
+    ctx.shadowColor = hexColor;
+    ctx.shadowBlur = 10;
+    ctx.fillText(icon, 14, 25);
     ctx.shadowBlur = 0;
-    ctx.font = '16px monospace';
-    ctx.fillStyle = 'rgba(200,180,255,0.6)';
+
+    // Title in header
+    ctx.font = 'bold 16px monospace';
+    ctx.fillStyle = '#dce0ff';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    var ttl = (node.title || node.type || 'Node').slice(0, 18);
+    ctx.fillText(ttl, 50, 25);
+
+    // Type badge in header right
+    ctx.font = '10px monospace';
+    ctx.fillStyle = 'rgba(200,180,255,0.35)';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(node.type.toUpperCase(), w - 14, 25);
+
+    // Value area (body)
+    ctx.font = '15px monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = 'rgba(200,190,255,0.6)';
     var valStr = '\u2014';
     try {
       var v = node.getValue();
       if (v && v.length > 0) {
-        valStr = v.map(function(x) { return typeof x === 'number' ? x.toFixed(3) : x; }).join(', ').slice(0, 22);
+        valStr = v.map(function(x) { return typeof x === 'number' ? x.toFixed(3) : x; }).join(', ').slice(0, 28);
       }
     } catch(e) {}
-    ctx.fillText('= ' + valStr, 18, 130);
-
-    // Bottom line
-    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.15)';
-    ctx.fillRect(18, h - 2, w - 36, 1);
+    ctx.fillText('= ' + valStr, 16, 66);
 
     // Important indicator
     if (node.important) {
       ctx.shadowColor = hexColor;
-      ctx.shadowBlur = 50;
-      ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.8)';
+      ctx.shadowBlur = 40;
+      ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.7)';
       ctx.lineWidth = 2;
       this._drawRoundedRect(ctx, 0, 0, w, h, r);
       ctx.stroke();
@@ -332,7 +328,7 @@ export class Scene3D {
     tex.needsUpdate = true;
 
     var cardW = 2.0;
-    var cardH = cardW * 0.6;
+    var cardH = cardW * 0.625;
 
     var mat = new THREE.SpriteMaterial({
       map: tex, transparent: true, depthWrite: false
