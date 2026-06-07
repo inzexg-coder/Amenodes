@@ -236,7 +236,11 @@ export class Scene3D {
     if (this.selectedNode && this.selectedNode.id !== nodeId) {
       this._deselectNode();
     } else if (this.selectedNode && this.selectedNode.id === nodeId) {
-      // Same node tapped again - just re-emit
+      // Same node tapped again - check for Map double-click
+      var node = this.selectedNode;
+      if (node && node.type === 'map') {
+        this._toggleMapBluePort(node);
+      }
       if (this.eventBus && this.eventBus.emit) {
         this.eventBus.emit('nodeSelect', this.selectedNode);
       }
@@ -247,31 +251,41 @@ export class Scene3D {
     this.selectedNode = node;
     const obj = this.nodeObjects.get(nodeId);
     if (obj) {
-      const star = obj.userData.mesh;
-      if (star) {
-        star.scale.set(4.5, 4.5, 1);
-        star.material.opacity = 1.0;
+      const card = obj.userData.mesh;
+      if (card) {
+        card.scale.set(obj.userData.baseScale * 1.2, obj.userData.baseScale * 0.625 * 1.2, 1);
+        card.material.opacity = 1.0;
       }
-      // Highlight corona glow
-      obj.children.forEach(c => {
-        if (c.isSprite && c.material && c.userData.isOrbit) return;
-        if (c.isSprite && c.material && c.material.map) {
-          // Skip label sprite (detected by large canvas size or label property)
-          if (c === obj.userData.label) return;
-          // Big glow stays big, enhance it
-          c.scale.set(c.scale.x * 1.6, c.scale.y * 1.6, 1);
-          c.material.opacity = 1.0;
-        }
-      });
+      // Highlight glow
+      const glow = obj.userData.glow;
+      if (glow) {
+        glow.scale.set(obj.userData.cardWidth * 2.5, obj.userData.cardWidth * 1.5, 1);
+        glow.material.opacity = 1.0;
+      }
+      // Show label
       const label = obj.userData.label;
       if (label) {
-        label.visible = true;
         label.material.opacity = 1.0;
-        label.scale.set(3.5, 1.2, 1);
+        label.scale.set(1.5, 0.35, 1);
       }
     }
     if (this.eventBus && this.eventBus.emit) {
       this.eventBus.emit('nodeSelect', node);
+    }
+  }
+  
+  _toggleMapBluePort(node) {
+    var obj = this.nodeObjects.get(node.id);
+    if (!obj || !obj.userData.bluePort) return;
+    var bp = obj.userData.bluePort;
+    obj.userData.bluePortVisible = !obj.userData.bluePortVisible;
+    bp.visible = obj.userData.bluePortVisible;
+    // Flash feedback
+    var card = obj.userData.mesh;
+    if (card) {
+      card.material.opacity = 0.5;
+      var self = this;
+      setTimeout(function() { if (card) card.material.opacity = 1.0; }, 150);
     }
   }
 
@@ -279,25 +293,19 @@ export class Scene3D {
     if (!this.selectedNode) return;
     const obj = this.nodeObjects.get(this.selectedNode.id);
     if (obj) {
-      const color = obj.userData.color;
-      // Star sprite - reset
-      const star = obj.userData.mesh;
-      if (star) {
-        star.scale.set(1, 1, 1);
-        star.material.opacity = 0.95;
+      const card = obj.userData.mesh;
+      if (card) {
+        card.scale.set(obj.userData.baseScale, obj.userData.baseScale * 0.625, 1);
+        card.material.opacity = 0.95;
       }
-      // Glow sprites - reset
-      obj.children.forEach(c => {
-        if (c.isSprite && c.material && c.material.map) {
-          if (c.userData.isOrbit) return; // skip orbiting dots
-          if (c.scale.x >= 4) return; // big glows stay big
-          c.scale.set(c.scale.x / 1.4, c.scale.y / 1.4, 1);
-          c.material.opacity = 0.7;
-        }
-      });
+      const glow = obj.userData.glow;
+      if (glow) {
+        glow.scale.set(obj.userData.cardWidth * 2.0, obj.userData.cardWidth * 1.2, 1);
+        glow.material.opacity = 0.6;
+      }
       const label = obj.userData.label;
       if (label) {
-        label.material.opacity = 0.9;
+        label.material.opacity = 0;
       }
     }
     this.selectedNode = null;
@@ -396,244 +404,284 @@ export class Scene3D {
     
     const color = this._getTypeColor(node.type);
     const c = new THREE.Color(color);
-    const neuronSize = visual3d.size + (node.important ? 0.15 : 0);
-    const dendrites = visual3d.dendrites || 4;
-    const colStr = 'rgba(' + (c.r*255|0) + ',' + (c.g*255|0) + ',' + (c.b*255|0) + ',1)';
-    const colDim = 'rgba(' + (c.r*255|0) + ',' + (c.g*255|0) + ',' + (c.b*255|0) + ',0.3)';
-
-    // ===== Neuron body texture =====
-    function makeNeuronTexture(col, dendriteCount) {
-      // Ultra-realistic star texture - point-like with smooth glow
+    const cardWidth = visual3d.size * 3.5 + (node.important ? 0.3 : 0);
+    const cardHeight = cardWidth * 0.6;
+    
+    // Generate card texture based on node type
+    function makeCardTexture(type, col, title, val, isImportant) {
       var canvas = document.createElement('canvas');
-      canvas.width = 1024;
-      canvas.height = 1024;
+      canvas.width = 512;
+      canvas.height = 320;
       var ctx = canvas.getContext('2d');
-      var cx = 512, cy = 512;
+      var w = 512, h = 320;
+      var r = 24;
       
       // Extract RGB
       var rgbMatch = col.match(/rgba\((\d+),(\d+),(\d+)/);
-      var r = parseInt(rgbMatch[1]), g = parseInt(rgbMatch[2]), b = parseInt(rgbMatch[3]);
+      var cr = parseInt(rgbMatch[1]), cg = parseInt(rgbMatch[2]), cb = parseInt(rgbMatch[3]);
       
-      // 1. Soft outer halo (very faint, large radius)
-      var haloGrad = ctx.createRadialGradient(cx, cy, 80, cx, cy, 500);
-      haloGrad.addColorStop(0, 'rgba(' + r + ',' + g + ',' + b + ',0.015)');
-      haloGrad.addColorStop(0.3, 'rgba(' + r + ',' + g + ',' + b + ',0.01)');
-      haloGrad.addColorStop(0.6, 'rgba(' + r + ',' + g + ',' + b + ',0.005)');
-      haloGrad.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = haloGrad;
-      ctx.fillRect(0, 0, 1024, 1024);
+      // Shadow
+      ctx.shadowColor = 'rgba(' + cr + ',' + cg + ',' + cb + ',0.4)';
+      ctx.shadowBlur = 30;
+      ctx.shadowOffsetY = 4;
       
-      // 2. Chromatic aberration - slightly offset color channels
-      for (var ch = 0; ch < 3; ch++) {
-        var chR = r, chG = g, chB = b;
-        if (ch === 0) { chR *= 1.0; chG *= 0.6; chB *= 0.3; }  // Red tint
-        else if (ch === 1) { chR *= 0.7; chG *= 1.0; chB *= 0.5; }  // Green tint
-        else { chR *= 0.5; chG *= 0.5; chB *= 1.0; }  // Blue tint
-        var offsetX = (ch - 1) * 2.5;
-        var offsetY = (ch - 1) * 1.5;
-        var abGrad = ctx.createRadialGradient(cx + offsetX, cy + offsetY, 0, cx + offsetX, cy + offsetY, 120);
-        abGrad.addColorStop(0, 'rgba(' + (chR|0) + ',' + (chG|0) + ',' + (chB|0) + ',0.08)');
-        abGrad.addColorStop(0.2, 'rgba(' + (chR|0) + ',' + (chG|0) + ',' + (chB|0) + ',0.04)');
-        abGrad.addColorStop(0.5, 'rgba(' + (chR|0) + ',' + (chG|0) + ',' + (chB|0) + ',0.02)');
-        abGrad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = abGrad;
-        ctx.beginPath();
-        ctx.arc(cx, cy, 120, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      
-      // 3. Bright inner glow (smooth falloff)
-      var innerGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 200);
-      innerGrad.addColorStop(0, 'rgba(' + r + ',' + g + ',' + b + ',0.3)');
-      innerGrad.addColorStop(0.05, 'rgba(' + r + ',' + g + ',' + b + ',0.25)');
-      innerGrad.addColorStop(0.15, 'rgba(' + r + ',' + g + ',' + b + ',0.15)');
-      innerGrad.addColorStop(0.3, 'rgba(' + r + ',' + g + ',' + b + ',0.08)');
-      innerGrad.addColorStop(0.5, 'rgba(' + r + ',' + g + ',' + b + ',0.03)');
-      innerGrad.addColorStop(0.8, 'rgba(' + r + ',' + g + ',' + b + ',0.01)');
-      innerGrad.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = innerGrad;
+      // Rounded rectangle background
       ctx.beginPath();
-      ctx.arc(cx, cy, 200, 0, Math.PI * 2);
+      ctx.moveTo(r, 0);
+      ctx.lineTo(w - r, 0);
+      ctx.quadraticCurveTo(w, 0, w, r);
+      ctx.lineTo(w, h - r);
+      ctx.quadraticCurveTo(w, h, w - r, h);
+      ctx.lineTo(r, h);
+      ctx.quadraticCurveTo(0, h, 0, h - r);
+      ctx.lineTo(0, r);
+      ctx.quadraticCurveTo(0, 0, r, 0);
+      ctx.closePath();
+      
+      // Background gradient
+      var grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, 'rgba(' + cr + ',' + cg + ',' + cb + ',0.25)');
+      grad.addColorStop(0.3, 'rgba(' + cr + ',' + cg + ',' + cb + ',0.15)');
+      grad.addColorStop(0.7, 'rgba(' + cr + ',' + cg + ',' + cb + ',0.08)');
+      grad.addColorStop(1, 'rgba(' + cr + ',' + cg + ',' + cb + ',0.03)');
+      ctx.fillStyle = grad;
       ctx.fill();
       
-      // 4. Very bright core (hot white center, extremely small)
-      ctx.shadowColor = 'rgba(' + r + ',' + g + ',' + b + ',1)';
-      ctx.shadowBlur = 80;
-      var coreGrad = ctx.createRadialGradient(cx - 1, cy - 1, 0, cx, cy, 25);
-      coreGrad.addColorStop(0, 'rgba(255,255,255,1)');
-      coreGrad.addColorStop(0.05, 'rgba(255,255,255,0.95)');
-      coreGrad.addColorStop(0.15, 'rgba(255,255,255,0.7)');
-      coreGrad.addColorStop(0.3, 'rgba(' + r + ',' + g + ',' + b + ',0.5)');
-      coreGrad.addColorStop(0.5, 'rgba(' + r + ',' + g + ',' + b + ',0.2)');
-      coreGrad.addColorStop(0.7, 'rgba(0,0,0,0)');
-      coreGrad.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = coreGrad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 25, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // 5. Central pinpoint (brightest point)
+      // Border glow
       ctx.shadowBlur = 0;
-      var pointGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 5);
-      pointGrad.addColorStop(0, 'rgba(255,255,255,1)');
-      pointGrad.addColorStop(0.5, 'rgba(255,255,255,0.9)');
-      pointGrad.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = pointGrad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 5, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.strokeStyle = 'rgba(' + cr + ',' + cg + ',' + cb + ',0.4)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
       
-      // 6. Diffraction spikes (very subtle cross pattern)
-      ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-      ctx.lineWidth = 1.5;
-      for (var s = 0; s < 4; s++) {
-        var angle = s * Math.PI / 2 + 0.02;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        var ex = cx + 350 * Math.cos(angle);
-        var ey = cy + 350 * Math.sin(angle);
-        ctx.lineTo(ex, ey);
+      // Important node: extra border glow
+      if (isImportant) {
+        ctx.shadowColor = 'rgba(' + cr + ',' + cg + ',' + cb + ',0.8)';
+        ctx.shadowBlur = 40;
+        ctx.strokeStyle = 'rgba(' + cr + ',' + cg + ',' + cb + ',0.6)';
+        ctx.lineWidth = 3;
         ctx.stroke();
+        ctx.shadowBlur = 0;
       }
+      
+      // Type icon at top-left
+      var icons = {
+        number: '\u2726', constant: '\u25C6', calc: '\u26A1',
+        mean: '\u03BC', sem: '\u03C3', output: '\u25CE',
+        map: '\u229E', group: '\u229F'
+      };
+      var icon = icons[type] || '\u25C8';
+      ctx.font = 'bold 36px monospace';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = 'rgba(' + cr + ',' + cg + ',' + cb + ',0.8)';
+      ctx.fillText(icon, 20, 18);
+      
+      // Type label
+      ctx.font = 'bold 14px monospace';
+      ctx.fillStyle = 'rgba(200,180,255,0.5)';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'top';
+      ctx.fillText(type.toUpperCase(), w - 20, 18);
+      
+      // Title
+      ctx.font = 'bold 28px monospace';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(220,200,255,0.9)';
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 8;
+      var displayTitle = (title || type || 'Node').length > 16 ? (title || type || 'Node').slice(0, 14) + '..' : (title || type || 'Node');
+      ctx.fillText(displayTitle, 20, 90);
+      
+      // Value display
+      ctx.shadowBlur = 0;
+      ctx.font = '22px monospace';
+      ctx.fillStyle = 'rgba(180,160,240,0.6)';
+      var displayVal = '';
+      try {
+        var v = node.getValue();
+        if (v && v.length > 0) {
+          var vStr = v.map(function(x) { return typeof x === 'number' ? x.toFixed(2) : String(x); }).join(', ');
+          displayVal = vStr.length > 22 ? vStr.slice(0, 20) + '..' : vStr;
+        } else {
+          displayVal = '\u2014';
+        }
+      } catch(e) { displayVal = '\u2014'; }
+      ctx.fillText('= ' + displayVal, 20, 150);
+      
+      // Bottom accent line
+      ctx.fillStyle = 'rgba(' + cr + ',' + cg + ',' + cb + ',0.3)';
+      ctx.fillRect(20, h - 4, w - 40, 2);
       
       return canvas;
-    }    const texCanvas = makeNeuronTexture(colStr, 0);
-    const neuronTex = new THREE.CanvasTexture(texCanvas);
-    neuronTex.needsUpdate = true;
-    const neuronMat = new THREE.SpriteMaterial({
-      map: neuronTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 1.0
-    });
-    const neuronSprite = new THREE.Sprite(neuronMat);
-    neuronSprite.scale.set(neuronSize * 3.0, neuronSize * 3.0, 1);
-    neuronSprite.userData.nodeId = node.id;
-    group.add(neuronSprite);
-    this.nodeMeshes.push(neuronSprite);
-    
-    // ===== Outer corona =====
-    const coronaCanvas = document.createElement('canvas');
-    coronaCanvas.width = 96; coronaCanvas.height = 96;
-    const cctx = coronaCanvas.getContext('2d');
-    const cgrad = cctx.createRadialGradient(48, 48, 5, 48, 48, 48);
-    cgrad.addColorStop(0, colDim);
-    cgrad.addColorStop(0.5, colStr.replace('1)', '0.08)'));
-    cgrad.addColorStop(1, 'rgba(0,0,0,0)');
-    cctx.fillStyle = cgrad;
-    cctx.fillRect(0, 0, 96, 96);
-    const coronaTex = new THREE.CanvasTexture(coronaCanvas);
-    const coronaMat = new THREE.SpriteMaterial({
-      map: coronaTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.8
-    });
-    const corona = new THREE.Sprite(coronaMat);
-    corona.scale.set(neuronSize * 5, neuronSize * 5, 1);
-    group.add(corona);
-
-    // ===== Orbiting synaptic particles =====
-    for (let i = 0; i < 4; i++) {
-      const dotCanvas = document.createElement('canvas');
-      dotCanvas.width = 16; dotCanvas.height = 16;
-      const dctx = dotCanvas.getContext('2d');
-      dctx.beginPath();
-      dctx.arc(8, 8, 4, 0, Math.PI * 2);
-      dctx.fillStyle = 'rgba(255,255,255,0.7)';
-      dctx.fill();
-      const dotTex = new THREE.CanvasTexture(dotCanvas);
-      const dotMat = new THREE.SpriteMaterial({
-        map: dotTex, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.6
-      });
-      const dot = new THREE.Sprite(dotMat);
-      const angle = (i / 4) * Math.PI * 2 + node.id * 0.5;
-      dot.position.set(Math.cos(angle) * 0.7, Math.sin(angle) * 0.7, 0);
-      dot.scale.set(0.1, 0.1, 1);
-      dot.userData.isOrbit = true;
-      dot.userData.orbitAngle = angle;
-      dot.userData.orbitSpeed = 0.6 + i * 0.2;
-      dot.userData.orbitRadius = 0.5 + i * 0.12;
-      group.add(dot);
     }
-
-    // ===== Important node: extra glow ring =====
-    if (node.important) {
-      const ringCanvas = document.createElement('canvas');
-      ringCanvas.width = 128; ringCanvas.height = 128;
-      const rctx = ringCanvas.getContext('2d');
-      rctx.strokeStyle = colStr.replace('1)', '0.4)');
-      rctx.lineWidth = 2;
-      rctx.beginPath();
-      rctx.arc(64, 64, 48, 0, Math.PI * 2);
-      rctx.stroke();
-      rctx.strokeStyle = colStr.replace('1)', '0.15)');
-      rctx.lineWidth = 1;
-      rctx.beginPath();
-      rctx.arc(64, 64, 36, 0, Math.PI * 2);
-      rctx.stroke();
-      const ringTex = new THREE.CanvasTexture(ringCanvas);
-      const ringMat = new THREE.SpriteMaterial({
-        map: ringTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.5
-      });
-      const ring = new THREE.Sprite(ringMat);
-      ring.scale.set(neuronSize * 6, neuronSize * 6, 1);
-      group.add(ring);
-    }
-
-    // ===== Label =====
-    const labelTitle = node.title || node.type || 'Node';
-    const labelType = node.type || '';
-    const lCanvas = document.createElement('canvas');
-    lCanvas.width = 512;
-    lCanvas.height = 180;
-    const lctx = lCanvas.getContext('2d');
     
-    lctx.beginPath();
-    lctx.arc(70, 90, 16, 0, Math.PI * 2);
-    lctx.fillStyle = '#' + c.getHexString();
-    lctx.shadowColor = '#' + c.getHexString();
-    lctx.shadowBlur = 20;
-    lctx.fill();
-    lctx.shadowBlur = 0;
+    var colStr = 'rgba(' + (c.r*255|0) + ',' + (c.g*255|0) + ',' + (c.b*255|0) + ',1)';
+    var texCanvas = makeCardTexture(node.type, colStr, node.title, null, node.important);
+    var cardTex = new THREE.CanvasTexture(texCanvas);
+    cardTex.needsUpdate = true;
     
-    lctx.font = 'bold 20px monospace';
-    lctx.textAlign = 'left';
-    lctx.textBaseline = 'middle';
-    lctx.fillStyle = '#ffffff';
-    lctx.fillText(labelType.toUpperCase(), 105, 48);
+    var cardMat = new THREE.SpriteMaterial({
+      map: cardTex,
+      blending: THREE.AdditiveBlending,
+      transparent: true,
+      depthWrite: false,
+      opacity: 0.95
+    });
+    var cardSprite = new THREE.Sprite(cardMat);
+    cardSprite.scale.set(cardWidth, cardWidth * 0.625, 1);
+    cardSprite.userData.nodeId = node.id;
+    group.add(cardSprite);
+    this.nodeMeshes.push(cardSprite);
     
-    lctx.font = 'bold 28px monospace';
-    lctx.fillStyle = '#e0d0ff';
-    lctx.shadowColor = 'rgba(0,0,0,0.8)';
-    lctx.shadowBlur = 6;
-    const displayTitle = labelTitle.length > 14 ? labelTitle.slice(0, 12) + '..' : labelTitle;
-    lctx.fillText(displayTitle, 105, 96);
-
-    try {
-      const val = node.getValue();
-      if (val && val.length > 0) {
-        const valStr = val.map(function(x) { return typeof x === 'number' ? x.toFixed(2) : x; }).join(', ');
-        const displayVal = valStr.length > 18 ? valStr.slice(0, 16) + '..' : valStr;
-        lctx.font = '16px monospace';
-        lctx.fillStyle = 'rgba(180,160,240,0.4)';
-        lctx.fillText('= ' + displayVal, 105, 140);
+    // Glow behind card
+    var glowCanvas = document.createElement('canvas');
+    glowCanvas.width = 128; glowCanvas.height = 80;
+    var gctx = glowCanvas.getContext('2d');
+    var gGrad = gctx.createRadialGradient(64, 40, 5, 64, 40, 64);
+    gGrad.addColorStop(0, colStr.replace('1)', '0.15)'));
+    gGrad.addColorStop(0.5, colStr.replace('1)', '0.05)'));
+    gGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    gctx.fillStyle = gGrad;
+    gctx.fillRect(0, 0, 128, 80);
+    var glowTex = new THREE.CanvasTexture(glowCanvas);
+    var glowMat = new THREE.SpriteMaterial({
+      map: glowTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.6
+    });
+    var glowSprite = new THREE.Sprite(glowMat);
+    glowSprite.scale.set(cardWidth * 2.0, cardWidth * 1.2, 1);
+    group.add(glowSprite);
+    
+    // For Group and Output: add column indicators (expand on proximity)
+    if (node.type === 'group' || node.type === 'output') {
+      var colCount = 3;
+      if (node.type === 'group' && node.values) colCount = Math.min(node.values.length, 6);
+      if (node.type === 'output' && node.rows) colCount = Math.min(node.rows.length, 6);
+      
+      for (var ci = 0; ci < colCount; ci++) {
+        (function(idx) {
+          var colCanvas = document.createElement('canvas');
+          colCanvas.width = 24; colCanvas.height = 80;
+          var cctx = colCanvas.getContext('2d');
+          var barH = 20 + Math.sin(idx * 2.7) * 15 + 15;
+          var gradBar = cctx.createLinearGradient(0, 80 - barH, 0, 80);
+          gradBar.addColorStop(0, colStr.replace('1)', '0.6)'));
+          gradBar.addColorStop(1, colStr.replace('1)', '0.1)'));
+          cctx.fillStyle = gradBar;
+          cctx.beginPath();
+                    // Manual rounded rect (top corners only)
+          var bx = 2, by = 80 - barH, bw = 20, bh = barH, br = 3;
+          cctx.beginPath();
+          cctx.moveTo(bx + br, by);
+          cctx.lineTo(bx + bw - br, by);
+          cctx.quadraticCurveTo(bx + bw, by, bx + bw, by + br);
+          cctx.lineTo(bx + bw, by + bh);
+          cctx.lineTo(bx, by + bh);
+          cctx.lineTo(bx, by + br);
+          cctx.quadraticCurveTo(bx, by, bx + br, by);
+          cctx.closePath();
+          cctx.fill();
+          
+          var colTex = new THREE.CanvasTexture(colCanvas);
+          var colMat = new THREE.SpriteMaterial({
+            map: colTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.8
+          });
+          var colSprite = new THREE.Sprite(colMat);
+          var colSpan = (colCount - 1) * 0.5;
+          colSprite.position.set((idx - colSpan) * 0.5, -(cardWidth * 0.625 * 0.5 + 0.15), 0);
+          colSprite.scale.set(0.15, 0.5, 1);
+          colSprite.userData.isColumn = true;
+          colSprite.userData.baseY = colSprite.position.y;
+          colSprite.userData.expandSpeed = 0.5 + idx * 0.1;
+          group.add(colSprite);
+        })(ci);
       }
-    } catch(e) {}
-
+    }
+    
+    // Map node: blue port indicator
+    if (node.type === 'map') {
+      var bpCanvas = document.createElement('canvas');
+      bpCanvas.width = 32; bpCanvas.height = 32;
+      var bpctx = bpCanvas.getContext('2d');
+      bpctx.beginPath();
+      bpctx.arc(16, 16, 10, 0, Math.PI * 2);
+      bpctx.fillStyle = 'rgba(68,136,255,0.6)';
+      bpctx.shadowColor = 'rgba(68,136,255,0.8)';
+      bpctx.shadowBlur = 15;
+      bpctx.fill();
+      var bpTex = new THREE.CanvasTexture(bpCanvas);
+      var bpMat = new THREE.SpriteMaterial({
+        map: bpTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.5
+      });
+      var bpSprite = new THREE.Sprite(bpMat);
+      bpSprite.position.set(0, cardWidth * 0.625 * 0.5 + 0.15, 0);
+      bpSprite.scale.set(0.2, 0.2, 1);
+      bpSprite.visible = false; // hidden by default, toggle on double-click
+      bpSprite.userData.isBluePort = true;
+      group.add(bpSprite);
+      group.userData.bluePort = bpSprite;
+    }
+    
+    // Calc node: mode indicator
+    if (node.type === 'calc') {
+      var mdCanvas = document.createElement('canvas');
+      mdCanvas.width = 128; mdCanvas.height = 40;
+      var mdctx = mdCanvas.getContext('2d');
+      mdctx.font = 'bold 18px monospace';
+      mdctx.textAlign = 'center';
+      mdctx.textBaseline = 'middle';
+      mdctx.fillStyle = 'rgba(200,180,255,0.5)';
+      mdctx.fillText((node.operation || 'sum').toUpperCase(), 64, 20);
+      var mdTex = new THREE.CanvasTexture(mdCanvas);
+      var mdMat = new THREE.SpriteMaterial({
+        map: mdTex, transparent: true, depthWrite: false, opacity: 0.7
+      });
+      var mdSprite = new THREE.Sprite(mdMat);
+      mdSprite.position.set(0, -(cardWidth * 0.625 * 0.5 + 0.15), 0);
+      mdSprite.scale.set(0.6, 0.2, 1);
+      mdSprite.userData.isModeIndicator = true;
+      group.add(mdSprite);
+    }
+    
+    // Label
+    const labelTitle = node.title || node.type || 'Node';
+    const lCanvas = document.createElement('canvas');
+    lCanvas.width = 256;
+    lCanvas.height = 48;
+    const lctx = lCanvas.getContext('2d');
+    lctx.font = 'bold 20px monospace';
+    lctx.textAlign = 'center';
+    lctx.textBaseline = 'middle';
+    lctx.fillStyle = '#e0d0ff';
+    var displayLabel = labelTitle.length > 20 ? labelTitle.slice(0, 18) + '..' : labelTitle;
+    lctx.fillText(displayLabel, 128, 24);
     const lTex = new THREE.CanvasTexture(lCanvas);
     const lMat = new THREE.SpriteMaterial({
-      map: lTex, transparent: true, depthTest: false, depthWrite: false, opacity: 0.9
+      map: lTex, transparent: true, depthTest: false, depthWrite: false, opacity: 0
     });
     const label = new THREE.Sprite(lMat);
-    label.position.y = -(neuronSize + 0.7);
-    label.scale.set(2.2, 0.8, 1);
+    label.position.y = -(cardWidth * 0.625 * 0.5 + 0.3);
+    label.scale.set(1.2, 0.3, 1);
     label.visible = true;
     group.add(label);
-    var scale = neuronSize * 5.0;
-    // Store base hue for flame color animation
+    
+    // Store data
     var hsl = {};
     c.getHSL(hsl);
-    group.userData = { mesh: neuronSprite, label, color: c, nodeType: node.type, nodeId: node.id, baseScale: scale, baseHue: hsl.h };
+    group.userData.mesh = cardSprite;
+    group.userData.label = label;
+    group.userData.color = c;
+    group.userData.nodeType = node.type;
+    group.userData.nodeId = node.id;
+    group.userData.baseScale = cardWidth;
+    group.userData.baseHue = hsl.h;
+    group.userData.cardWidth = cardWidth;
+    group.userData.glow = glowSprite;
+    if (node.type === 'map') group.userData.bluePortVisible = false;
+    
     this.nodeObjects.set(node.id, group);
     this.scene.add(group);
-  }
-
-  _createEdge(edge) {
+  }  _createEdge(edge) {
     const THREE = this.THREE;
     const src = this.nodeObjects.get(edge.sourceId);
     const tgt = this.nodeObjects.get(edge.targetId);
@@ -742,32 +790,56 @@ export class Scene3D {
       this.nebula.rotation.x += 0.00004;
     }
 
-    // Twinkle stars with organic flame-like animation
+    // Animate cards with glow pulse and proximity-based expansion
+    var cameraPos = this.camera ? this.camera.position : null;
     for (const [id, obj] of this.nodeObjects) {
-      var star = obj.userData.mesh;
-      if (star) {
-        // Multi-layer twinkle for organic feel
-        var twinkle = 0.75 
-          + Math.sin(time * 1.3 + id * 2.1) * 0.12 
-          + Math.sin(time * 3.7 + id * 1.3) * 0.08
-          + Math.sin(time * 7.1 + id * 0.5) * 0.05;
+      var card = obj.userData.mesh;
+      if (card) {
+        // Gentle pulse
+        var pulse = 0.95 + Math.sin(time * 0.8 + id * 1.3) * 0.05;
         var baseScale = obj.userData.baseScale || 1;
-        star.scale.set(baseScale * twinkle, baseScale * twinkle, 1);
-        // Opacity oscillates more dramatically
-        star.material.opacity = 0.5 + Math.sin(time * 2.1 + id * 1.7) * 0.3 + Math.sin(time * 5.3 + id * 0.8) * 0.2;
+        card.scale.set(baseScale * pulse, baseScale * 0.625 * pulse, 1);
+        card.material.opacity = 0.85 + Math.sin(time * 1.2 + id * 0.9) * 0.1;
         
-        // Flame-like color shifting with multiple harmonics
+        // Color pulse
         var color = obj.userData.color;
         if (color && obj.userData.baseHue !== undefined) {
-          var hueShift = Math.sin(time * 0.8 + id * 0.7) * 0.02 + Math.sin(time * 2.2 + id * 1.1) * 0.01;
+          var hueShift = Math.sin(time * 0.5 + id * 0.7) * 0.01;
           var newHue = obj.userData.baseHue + hueShift;
           if (newHue < 0) newHue += 1;
           if (newHue > 1) newHue -= 1;
-          // Also shift saturation and lightness for a "living flame" effect
-          var satShift = Math.sin(time * 1.5 + id * 1.2) * 0.08;
-          var lightShift = Math.sin(time * 1.8 + id * 0.9) * 0.12;
-          color.setHSL(newHue, 0.85 + satShift, 0.55 + lightShift);
-          star.material.color.set(color);
+          var lightShift = Math.sin(time * 1.0 + id * 0.9) * 0.05;
+          color.setHSL(newHue, 0.8, 0.5 + lightShift);
+          if (card.material && card.material.map) {
+            // Card uses canvas texture - we don't update it per frame
+            // But the glow behind can change
+          }
+        }
+        
+        // Glow behind card
+        var glow = obj.userData.glow;
+        if (glow) {
+          glow.material.opacity = 0.4 + Math.sin(time * 0.7 + id * 1.1) * 0.2;
+        }
+        
+        // Proximity: expand columns for Group/Output nodes
+        if (cameraPos && (obj.userData.nodeType === 'group' || obj.userData.nodeType === 'output')) {
+          var dx = cameraPos.x - obj.position.x;
+          var dy = cameraPos.y - obj.position.y;
+          var dz = cameraPos.z - obj.position.z;
+          var dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+          var proximity = Math.max(0, 1 - (dist - 3) / 8);
+          
+          obj.children.forEach(function(child) {
+            if (child.userData && child.userData.isColumn && child.isSprite) {
+              var expand = 0.3 + proximity * 0.7;
+              var targetScaleX = 0.15 * expand;
+              var targetScaleY = 0.5 * expand;
+              child.scale.x += (targetScaleX - child.scale.x) * 0.05;
+              child.scale.y += (targetScaleY - child.scale.y) * 0.05;
+              child.material.opacity = 0.3 + proximity * 0.6;
+            }
+          });
         }
       }
     }
