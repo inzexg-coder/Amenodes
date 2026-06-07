@@ -151,6 +151,7 @@ export class Scene3D {
   _ensureThreeJS() {
     if (window.THREE && window.THREE.Scene) {
       this.THREE = window.THREE;
+      this._injectCSS2DRenderer();
       return Promise.resolve();
     }
     return new Promise((resolve, reject) => {
