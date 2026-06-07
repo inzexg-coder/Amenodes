@@ -218,29 +218,36 @@ export class NodeMenu {
   }
 
   async createNodeByType(categoryType, subnode) {
-    const { x, y } = this.getCenterPosition();
-    
-    const options = { x, y };
-    Object.assign(options, subnode);
-    
-    const node = await NodeFactory.createNode(categoryType, options);
-    
-    if (node) {
-      this.graph.addNode(node);
-      this.finishNodeCreation();
+    try {
+      const { x, y } = this.getCenterPosition();
+      
+      const options = { x, y };
+      Object.assign(options, subnode);
+      
+      const node = await NodeFactory.createNode(categoryType, options);
+      
+      if (node) {
+        this.graph.addNode(node);
+        this.finishNodeCreation();
+      }
+    } catch (err) {
+      console.error('[NodeMenu] Failed to create node by type:', err);
     }
   }
 
   async createNode(type) {
-    const { x, y } = this.getCenterPosition();
-    const options = { x, y };
-    
-    // Всегда используем фабрику с async/await
-    const node = await NodeFactory.createNode(type, options);
-    
-    if (node) {
-      this.graph.addNode(node);
-      this.finishNodeCreation();
+    try {
+      const { x, y } = this.getCenterPosition();
+      const options = { x, y };
+      
+      const node = await NodeFactory.createNode(type, options);
+      
+      if (node) {
+        this.graph.addNode(node);
+        this.finishNodeCreation();
+      }
+    } catch (err) {
+      console.error('[NodeMenu] Failed to create node:', err);
     }
   }
 
