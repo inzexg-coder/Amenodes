@@ -687,6 +687,7 @@ body {
   transition: var(--transition);
   border: 1px solid rgba(255,255,255,0.06);
   animation: borderGlow 3s ease-in-out infinite alternate;
+  pointer-events: auto;
 }
 
 @keyframes borderGlow {
@@ -3272,4 +3273,5 @@ input[type=number] {
     border-radius: 20px !important;
     z-index: 999 !important;
   }
-}}
+
+}

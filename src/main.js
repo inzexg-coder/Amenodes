@@ -232,6 +232,8 @@ class Application {
     if (importBtn) importBtn.onclick = () => this.import();
     if (clearStorageBtn) clearStorageBtn.onclick = () => this.clearStorage();
     if (addNodeBtn) addNodeBtn.onclick = () => this.openNodeMenu();
+    const mobileFab = document.getElementById('mobileFabBtn');
+    if (mobileFab) mobileFab.onclick = () => this.openNodeMenu();
     if (canvasSettingsBtn) canvasSettingsBtn.onclick = () => this.openCanvasSettings();
     if (optToggleBtn) {
       optToggleBtn.onclick = () => {
