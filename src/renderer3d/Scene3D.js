@@ -69,18 +69,43 @@ export class Scene3D {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x080610);
 
-    const aspect = this.container.clientWidth / this.container.clientHeight;
+    // Wait for container to have actual size
+    let w = this.container.clientWidth;
+    let h = this.container.clientHeight;
+    if (w === 0 || h === 0) {
+      // Try to find the container by waiting a bit and polling
+      for (let i = 0; i < 20; i++) {
+        await new Promise(r => setTimeout(r, 100));
+        w = this.container.clientWidth;
+        h = this.container.clientHeight;
+        if (w > 0 && h > 0) break;
+      }
+      if (w === 0) w = window.innerWidth;
+      if (h === 0) h = window.innerHeight;
+    }
+
+    const aspect = w / h || 1;
     this.camera = new THREE.PerspectiveCamera(45, aspect, 1, 5000);
     this._updateCamera();
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-    this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+    this.renderer.setSize(w || 1, h || 1);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setClearColor(0x080610, 1);
     this.container.appendChild(this.renderer.domElement);
 
+    // Handle WebGL context loss - recreate renderer
+    this.renderer.domElement.addEventListener('webglcontextlost', (event) => {
+      event.preventDefault();
+      console.warn('WebGL context lost, recreating...');
+      setTimeout(() => this._recreateRenderer(), 100);
+    });
+    this.renderer.domElement.addEventListener('webglcontextrestored', () => {
+      console.log('WebGL context restored');
+    });
+
     this.css2DRenderer = new THREE.CSS2DRenderer();
-    this.css2DRenderer.setSize(this.container.clientWidth, this.container.clientHeight);
+    this.css2DRenderer.setSize(w || 1, h || 1);
     this.css2DRenderer.domElement.style.position = 'absolute';
     this.css2DRenderer.domElement.style.top = '0';
     this.css2DRenderer.domElement.style.pointerEvents = 'none';
@@ -100,6 +125,25 @@ export class Scene3D {
 
     this.initialized = true;
     this._startAnimation();
+  }
+
+  _recreateRenderer() {
+    if (this.renderer) {
+      this.renderer.dispose();
+      this.renderer.domElement.remove();
+    }
+    const THREE = this.THREE;
+    const w = this.container.clientWidth || window.innerWidth || 1;
+    const h = this.container.clientHeight || window.innerHeight || 1;
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    this.renderer.setSize(w, h);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setClearColor(0x080610, 1);
+    this.container.insertBefore(this.renderer.domElement, this.css2DRenderer.domElement);
+    this.renderer.domElement.addEventListener('webglcontextlost', (event) => {
+      event.preventDefault();
+      setTimeout(() => this._recreateRenderer(), 100);
+    });
   }
 
   _ensureThreeJS() {
@@ -656,9 +700,10 @@ export class Scene3D {
   }
 
   _onResize() {
-    if (!this.initialized) return;
-    const w = this.container.clientWidth;
-    const h = this.container.clientHeight;
+    if (!this.initialized || !this.container) return;
+    const w = this.container.clientWidth || window.innerWidth || 1;
+    const h = this.container.clientHeight || window.innerHeight || 1;
+    if (w === 0 || h === 0) return;
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);

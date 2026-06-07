@@ -313,6 +313,11 @@ class Application {
           setTimeout(() => {
             splashOverlay.style.display = 'none';
             appContainer.classList.remove('hidden');
+            // Force 3D renderer resize after container becomes visible
+            if (window.app && window.app.renderer && typeof window.app.renderer._onResize === 'function') {
+              setTimeout(() => window.app.renderer._onResize(), 350);
+              setTimeout(() => window.app.renderer._onResize(), 1000);
+            }
           }, 300);
         }
       };
@@ -340,6 +345,10 @@ class Application {
                   setTimeout(() => {
                     splashOverlay.style.display = 'none';
                     appContainer.classList.remove('hidden');
+                    if (window.app && window.app.renderer && typeof window.app.renderer._onResize === 'function') {
+                      setTimeout(() => window.app.renderer._onResize(), 350);
+                      setTimeout(() => window.app.renderer._onResize(), 1000);
+                    }
                   }, 300);
                 }
               }
@@ -359,6 +368,9 @@ class Application {
     } else if (splashOverlay && appContainer) {
       splashOverlay.style.display = 'none';
       appContainer.classList.remove('hidden');
+      if (window.app && window.app.renderer && typeof window.app.renderer._onResize === 'function') {
+        setTimeout(() => window.app.renderer._onResize(), 100);
+      }
     }
   }
 
