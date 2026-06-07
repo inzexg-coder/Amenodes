@@ -298,16 +298,16 @@ export class Scene3D {
     if (!this.edgePreviewLine) return;
     const srcPos = this.getNodeWorldPos(this.edgeSourceId);
     if (!srcPos) return;
-    // Project mouse to 3D
+    // Project pointer to 3D
     const rect = this.renderer.domElement.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
     const x = ((clientX - rect.left) / rect.width) * 2 - 1;
     const y = -((clientY - rect.top) / rect.height) * 2 + 1;
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(new THREE.Vector2(x, y), this.camera);
-    // Project onto sphere surface
     const dir = raycaster.ray.direction.clone().normalize();
     const origin = raycaster.ray.origin.clone();
-    // Line-sphere intersection: find point on sphere at SPHERE_RADIUS
+    // Project onto sphere surface
     const oc = origin.clone();
     const a = dir.dot(dir);
     const b = 2 * oc.dot(dir);
@@ -318,7 +318,8 @@ export class Scene3D {
       const t = (-b - Math.sqrt(disc)) / (2 * a);
       targetPos = origin.clone().add(dir.clone().multiplyScalar(t));
     } else {
-      targetPos = origin.clone().add(dir.clone().multiplyScalar(SPHERE_RADIUS * 2));
+      // Fallback: project to distance
+      targetPos = origin.clone().add(dir.clone().multiplyScalar(SPHERE_RADIUS * 3));
     }
 
     const positions = this.edgePreviewLine.geometry.attributes.position.array;
@@ -328,13 +329,19 @@ export class Scene3D {
   }
 
   endEdgeDrag(targetNodeId) {
+    // Remove preview line
     if (this.edgePreviewLine) {
       this.scene.remove(this.edgePreviewLine);
+      this.edgePreviewLine.geometry.dispose();
+      this.edgePreviewLine.material.dispose();
       this.edgePreviewLine = null;
     }
     this.isDraggingEdge = false;
+    // Try to create edge
     if (targetNodeId && targetNodeId !== this.edgeSourceId) {
-      return this.graph.addEdge(this.edgeSourceId, targetNodeId);
+      const edge = this.graph.addEdge(this.edgeSourceId, targetNodeId);
+      this.edgeSourceId = null;
+      return edge;
     }
     this.edgeSourceId = null;
     return null;
