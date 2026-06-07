@@ -245,14 +245,14 @@ export class Scene3D {
     ctx.beginPath();
     ctx.moveTo(r, 0); ctx.lineTo(w - r, 0);
     ctx.quadraticCurveTo(w, 0, w, r);
-    ctx.lineTo(w, 56); ctx.lineTo(0, 56);
+    ctx.lineTo(w, 40); ctx.lineTo(0, 40);
     ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0);
     ctx.closePath();
     ctx.fill();
 
     // Header divider
     ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.25)';
-    ctx.fillRect(0, 55, w, 1);
+    ctx.fillRect(0, 39, w, 1);
 
     // Bright border for visibility
     ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.5)';
@@ -261,7 +261,7 @@ export class Scene3D {
     ctx.stroke();
 
     // Type label as text (no icons)
-    ctx.font = 'bold 14px monospace';
+    ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = hexColor;
@@ -274,7 +274,7 @@ export class Scene3D {
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#e10e0ff';
     var ttl = (node.title || node.type || 'Node').slice(0, 110);
-    ctx.fillText(ttl, 20 + typeLabel.length * 11 + 10, 20);
+    ctx.fillText(ttl, 14 + typeLabel.length * 8 + 8, 20);
 
     // Value display
     var valStr = '\u2014';
@@ -289,12 +289,12 @@ export class Scene3D {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillStyle = 'rgba(200,1130,255,0.6)';
-    ctx.fillText('= ' + valStr, 20, 72);
+    ctx.fillText('= ' + valStr, 14, 50);
 
     if (editMode) {
       // Action buttons
       var yBtn = 130;
-      var btnW = w - 32;
+      var btnW = w - 24;
       var btnH = 410;
       
       if (node.type === 'number' || node.type === 'constant') {
@@ -307,7 +307,7 @@ export class Scene3D {
         ctx.fillStyle = 'rgba(220,200,255,0.7)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('EDIT VALUE: ' + valStr.slice(0, 12), w/2, yBtn + 24);
+        ctx.fillText('EDIT VALUE: ' + valStr.slice(0, 12), w/2, yBtn + 17);
       }
       if (node.type === 'group') {
         ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.1)';
@@ -319,16 +319,16 @@ export class Scene3D {
         ctx.fillStyle = 'rgba(220,200,255,0.7)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('+ ADD ROW', w/2, yBtn + 24);
+        ctx.fillText('+ ADD ROW', w/2, yBtn + 17);
         
         if (node.values) {
           ctx.textAlign = 'left';
           ctx.textBaseline = 'top';
-          ctx.font = '14px monospace';
-          var ry = yBtn + 60;
+          ctx.font = '11px monospace';
+          var ry = yBtn + 44;
           for (var ri = 0; ri < node.values.length && ri < 5; ri++) {
             ctx.fillStyle = 'rgba(200,1100,255,0.5)';
-            ctx.fillText((node.values[ri].name || 'v'+(ri+1)) + ': ' + node.values[ri].val, 28, ry);
+            ctx.fillText((node.values[ri].name || 'v'+(ri+1)) + ': ' + node.values[ri].val, 20, ry);
             ry += 110;
           }
         }
@@ -343,26 +343,26 @@ export class Scene3D {
         ctx.fillStyle = 'rgba(220,200,255,0.7)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('+ ADD ROW', w/2, yBtn + 24);
+        ctx.fillText('+ ADD ROW', w/2, yBtn + 17);
         
         // Map: show blue port status
         if (node.type === 'map') {
-          ctx.font = '13px monospace';
+          ctx.font = '10px monospace';
           ctx.textAlign = 'center';
           ctx.fillStyle = 'rgba(610,136,255,0.6)';
-          ctx.fillText('DOUBLE-TAP: TOGGLE BLUE PORT', w/2, yBtn + 60);
+          ctx.fillText('DOUBLE-TAP: TOGGLE BLUE PORT', w/2, yBtn + 44);
         }
         if (node.type === 'map' && node.unmappedMode === 'blue') {
           ctx.fillStyle = 'rgba(610,136,255,0.15)';
-          this._drawRoundedRect(ctx, 16, yBtn + 76, btnW, 30, 8);
+          this._drawRoundedRect(ctx, 16, yBtn + 54, btnW, 22, 6);
           ctx.fill();
           ctx.strokeStyle = 'rgba(610,136,255,0.4)';
           ctx.stroke();
-          ctx.font = '14px monospace';
+          ctx.font = '11px monospace';
           ctx.fillStyle = 'rgba(610,136,255,0.10)';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('BLUE PORT ACTIVE', w/2, yBtn + 90);
+          ctx.fillText('BLUE PORT ACTIVE', w/2, yBtn + 65);
         }
       }
       if (node.type === 'calc') {
@@ -376,41 +376,41 @@ export class Scene3D {
         ctx.fillStyle = 'rgba(220,200,255,0.7)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('MODE: ' + opLabel, w/2, yBtn + 24);
+        ctx.fillText('MODE: ' + opLabel, w/2, yBtn + 17);
         
         // Show operation description
-        ctx.font = '13px monospace';
+        ctx.font = '10px monospace';
         ctx.fillStyle = 'rgba(200,1100,255,0.4)';
         ctx.textAlign = 'center';
         var descs = { div3:'Divide by 3', div_sqrt12:'Divide by sqrt(12)', sqrt_sum_sq:'Sqrt of sum of squares', quadratic_sum:'Quadratic sum', multiply_by_constant:'Multiply by constant' };
-        ctx.fillText(descs[node.operation] || node.operation, w/2, yBtn + 64);
+        ctx.fillText(descs[node.operation] || node.operation, w/2, yBtn + 46);
       }
       if (node.type === 'mean' || node.type === 'sem') {
-        ctx.font = '16px monospace';
+        ctx.font = '9px monospace';
         ctx.fillStyle = 'rgba(200,1100,255,0.4)';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         ctx.fillText('Receives input from connected nodes', 14, yBtn);
         var inp = this.graph ? this.graph.getIncomingEdges(node.id) : [];
-        ctx.fillText('Inputs: ' + (inp ? inp.length : 0), 14, yBtn + 30);
+        ctx.fillText('Inputs: ' + (inp ? inp.length : 0), 14, yBtn + 22);
       }
       
       // Bottom hint
-      ctx.font = '12px monospace';
+      ctx.font = '9px monospace';
       ctx.fillStyle = 'rgba(200,1100,255,0.2)';
       ctx.textAlign = 'center';
-      ctx.fillText('tap action to execute, tap outside to close', w/2, h - 14);
+      ctx.fillText('tap action to execute, tap outside to close', w/2, h - 10);
     } else {
       // Normal mode: compact card with value
-      ctx.font = '16px monospace';
+      ctx.font = '9px monospace';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
       ctx.fillStyle = 'rgba(200,1130,255,0.5)';
-      ctx.fillText('= ' + valStr, 20, 72);
+      ctx.fillText('= ' + valStr, 14, 50);
       
       // Subtle bottom line
       ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.15)';
-      ctx.fillRect(14, h - 3, w - 210, 1);
+      ctx.fillRect(14, h - 2, w - 210, 1);
     }
 
     // Important indicator
@@ -438,6 +438,8 @@ export class Scene3D {
     var texCanvas = this._makeCardTexture(node, hexColor, false);
     var tex = new THREE.CanvasTexture(texCanvas);
     tex.needsUpdate = true;
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
 
     var mat = new THREE.SpriteMaterial({
       map: tex, transparent: true, depthWrite: false
@@ -518,7 +520,7 @@ export class Scene3D {
       var mc = document.createElement('canvas');
       mc.width = 100; mc.height = 24;
       var mctx = mc.getContext('2d');
-      mctx.font = 'bold 14px monospace';
+      mctx.font = 'bold 10px monospace';
       mctx.textAlign = 'center';
       mctx.textBaseline = 'middle';
       mctx.fillStyle = 'rgba(200,1100,255,0.5)';
@@ -745,6 +747,8 @@ export class Scene3D {
     var texCanvas = this._makeCardTexture(node, hexColor, enable);
     var tex = new THREE.CanvasTexture(texCanvas);
     tex.needsUpdate = true;
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
     card.material.map = tex;
     card.material.needsUpdate = true;
     card.material.opacity = 1.0;
