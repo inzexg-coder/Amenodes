@@ -735,6 +735,51 @@ html, body {
         this.scene3d.refresh();
         this.updateNodeCount();
         this.updateEdgeCount();
+        
+        // Create example graph if no saved data
+        if (!saved && !savedOld && this.graph.nodes.length === 0) {
+          this._createExampleGraph();
+        }
+      }
+      
+      async _createExampleGraph() {
+        var nodes = [];
+        var types = ['number','constant','calc','mean','sem','output','map','group'];
+        
+        // Create nodes
+        for (var i = 0; i < types.length; i++) {
+          var type = types[i];
+          var opts = { x: 100 + i * 120, y: 150 + Math.sin(i * 1.5) * 60 };
+          if (type === 'number') opts.val = 42;
+          if (type === 'constant') opts.val = 3.14159;
+          if (type === 'calc') opts.operation = 'div3';
+          if (type === 'group') opts.values = [{val:12,name:'A'},{val:25,name:'B'},{val:37,name:'C'}];
+          if (type === 'output') opts.rows = [{param:'Value',value:'—'}];
+          
+          var node = await NodeFactory.createNode(type, opts);
+          if (node) {
+            this.graph.addNode(node);
+            nodes.push(node);
+          }
+        }
+        
+        // Connect Number -> Calc
+        if (nodes.length >= 2) {
+          this.graph._tryEdge(nodes[0].id, nodes[2].id);
+        }
+        // Connect Constant -> Calc
+        if (nodes.length >= 3) {
+          this.graph._tryEdge(nodes[1].id, nodes[2].id);
+        }
+        // Connect Calc -> Output
+        if (nodes.length >= 6) {
+          this.graph._tryEdge(nodes[2].id, nodes[5].id);
+        }
+        
+        this.graph.reevaluateAll();
+        this.graph.clearDirty();
+        this.scene3d.refresh();
+        this.updateNodeCount();
       }
 
       initI18n() {
