@@ -221,7 +221,7 @@ export class Scene3D {
 
   _makeCardTexture(node, hexColor, editMode) {
     var c = document.createElement('canvas');
-    c.width = 400; c.height = editMode ? 320 : 240;
+    c.width = 400; c.height = editMode ? 340 : 220;
     var ctx = c.getContext('2d');
     var w = 400, h = c.height, r = 12;
 
@@ -229,155 +229,195 @@ export class Scene3D {
     var cg = parseInt(hexColor.slice(3,5),16);
     var cb = parseInt(hexColor.slice(5,7),16);
 
-    // Shadow
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = 20;
-    ctx.shadowOffsetY = 4;
+    // Strong shadow for depth
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 30;
+    ctx.shadowOffsetY = 6;
     
-    // Card body
-    ctx.fillStyle = 'rgba(10,8,22,0.97)';
+    // Card body - dark but distinguishable from background
+    ctx.fillStyle = 'rgba(14,10,30,0.98)';
     this._drawRoundedRect(ctx, 0, 0, w, h, r);
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Header
-    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.06)';
+    // Header with stronger color tint
+    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.12)';
     ctx.beginPath();
     ctx.moveTo(r, 0); ctx.lineTo(w - r, 0);
     ctx.quadraticCurveTo(w, 0, w, r);
-    ctx.lineTo(w, 44); ctx.lineTo(0, 44);
+    ctx.lineTo(w, 40); ctx.lineTo(0, 40);
     ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0);
     ctx.closePath();
     ctx.fill();
 
     // Header divider
-    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.15)';
-    ctx.fillRect(0, 43, w, 1);
+    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.25)';
+    ctx.fillRect(0, 39, w, 1);
 
-    // Subtle border
-    ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.2)';
-    ctx.lineWidth = 1;
+    // Bright border for visibility
+    ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.5)';
+    ctx.lineWidth = 1.5;
     this._drawRoundedRect(ctx, 0, 0, w, h, r);
     ctx.stroke();
 
-    // Icon
-    var icons = { number:'\u2726', constant:'\u25C6', calc:'\u26A1', mean:'\u03BC', sem:'\u03C3', output:'\u25CE', map:'\u229E', group:'\u229F' };
-    var icon = icons[node.type] || '\u25C8';
-    ctx.font = 'bold 22px monospace';
+    // Type label as text (no icons)
+    ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = hexColor;
-    ctx.fillText(icon, 14, 22);
+    var typeLabel = node.type.toUpperCase();
+    ctx.fillText(typeLabel, 14, 20);
 
     // Title
-    ctx.font = 'bold 14px monospace';
-    ctx.fillStyle = '#dce0ff';
-    ctx.fillText((node.title || node.type || 'Node').slice(0, 18), 44, 22);
+    ctx.font = 'bold 13px monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#e8e0ff';
+    var ttl = (node.title || node.type || 'Node').slice(0, 18);
+    ctx.fillText(ttl, 14 + typeLabel.length * 8 + 8, 20);
 
-    // Type
-    ctx.font = '9px monospace';
-    ctx.fillStyle = 'rgba(200,180,255,0.3)';
-    ctx.textAlign = 'right';
-    ctx.fillText(node.type.toUpperCase(), w - 14, 22);
-
-    // Value
+    // Value display
     var valStr = '\u2014';
     try {
       var v = node.getValue();
       if (v && v.length > 0) {
-        valStr = v.map(function(x) { return typeof x === 'number' ? x.toFixed(3) : x; }).join(', ').slice(0, 28);
+        valStr = v.map(function(x) { return typeof x === 'number' ? x.toFixed(4) : x; }).join(', ').slice(0, 30);
       }
     } catch(e) {}
 
+    ctx.font = '13px monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = 'rgba(200,190,255,0.6)';
+    ctx.fillText('= ' + valStr, 14, 50);
+
     if (editMode) {
-      // Edit mode: larger card with interactive zones
-      ctx.font = 'bold 18px monospace';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
-      ctx.fillStyle = '#e8e0ff';
-      ctx.fillText('= ' + valStr, 16, 54);
+      // Action buttons
+      var yBtn = 90;
+      var btnW = w - 24;
+      var btnH = 34;
       
-      // Edit hint
-      ctx.font = '11px monospace';
-      ctx.fillStyle = 'rgba(200,180,255,0.3)';
-      ctx.fillText('tap value to edit', 16, 86);
-      
-      // Action buttons based on type
-      var yBtn = 120;
       if (node.type === 'number' || node.type === 'constant') {
-        // Value button
-        this._drawRoundedRect(ctx, 12, yBtn, w - 24, 36, 8);
+        ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.1)';
+        this._drawRoundedRect(ctx, 12, yBtn, btnW, btnH, 8);
+        ctx.fill();
         ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.3)';
         ctx.stroke();
-        ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.08)';
-        ctx.fill();
-        ctx.font = 'bold 14px monospace';
+        ctx.font = '13px monospace';
         ctx.fillStyle = 'rgba(220,200,255,0.7)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('[ Edit Value: ' + valStr.slice(0,10) + ' ]', w/2, yBtn + 18);
+        ctx.fillText('EDIT VALUE: ' + valStr.slice(0, 12), w/2, yBtn + 17);
       }
       if (node.type === 'group') {
-        // Add row button
-        this._drawRoundedRect(ctx, 12, yBtn, w - 24, 36, 8);
+        ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.1)';
+        this._drawRoundedRect(ctx, 12, yBtn, btnW, btnH, 8);
+        ctx.fill();
         ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.3)';
         ctx.stroke();
-        ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.08)';
-        ctx.fill();
-        ctx.font = 'bold 14px monospace';
+        ctx.font = '13px monospace';
         ctx.fillStyle = 'rgba(220,200,255,0.7)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('[ + Add Row ]', w/2, yBtn + 18);
+        ctx.fillText('+ ADD ROW', w/2, yBtn + 17);
         
-        // Existing rows
         if (node.values) {
-          ctx.font = '11px monospace';
           ctx.textAlign = 'left';
           ctx.textBaseline = 'top';
-          for (var ri = 0; ri < node.values.length && ri < 4; ri++) {
+          ctx.font = '11px monospace';
+          var ry = yBtn + 44;
+          for (var ri = 0; ri < node.values.length && ri < 5; ri++) {
             ctx.fillStyle = 'rgba(200,180,255,0.5)';
-            ctx.fillText(node.values[ri].name + ': ' + node.values[ri].val, 20, yBtn + 48 + ri * 18);
+            ctx.fillText((node.values[ri].name || 'v'+(ri+1)) + ': ' + node.values[ri].val, 20, ry);
+            ry += 18;
           }
         }
       }
       if (node.type === 'output' || node.type === 'map') {
-        this._drawRoundedRect(ctx, 12, yBtn, w - 24, 36, 8);
+        ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.1)';
+        this._drawRoundedRect(ctx, 12, yBtn, btnW, btnH, 8);
+        ctx.fill();
         ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.3)';
         ctx.stroke();
-        ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.08)';
-        ctx.fill();
-        ctx.font = 'bold 14px monospace';
+        ctx.font = '13px monospace';
         ctx.fillStyle = 'rgba(220,200,255,0.7)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('[ + Add Row ]', w/2, yBtn + 18);
+        ctx.fillText('+ ADD ROW', w/2, yBtn + 17);
+        
+        // Map: show blue port status
+        if (node.type === 'map') {
+          ctx.font = '10px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = 'rgba(68,136,255,0.6)';
+          ctx.fillText('DOUBLE-TAP: TOGGLE BLUE PORT', w/2, yBtn + 44);
+        }
+        if (node.type === 'map' && node.unmappedMode === 'blue') {
+          ctx.fillStyle = 'rgba(68,136,255,0.15)';
+          this._drawRoundedRect(ctx, 12, yBtn + 54, btnW, 22, 6);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(68,136,255,0.4)';
+          ctx.stroke();
+          ctx.font = '11px monospace';
+          ctx.fillStyle = 'rgba(68,136,255,0.8)';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('BLUE PORT ACTIVE', w/2, yBtn + 65);
+        }
       }
       if (node.type === 'calc') {
         var opLabel = (node.operation || 'div3').toUpperCase();
-        this._drawRoundedRect(ctx, 12, yBtn, w - 24, 36, 8);
+        ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.1)';
+        this._drawRoundedRect(ctx, 12, yBtn, btnW, btnH, 8);
+        ctx.fill();
         ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.3)';
         ctx.stroke();
-        ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.08)';
-        ctx.fill();
-        ctx.font = 'bold 14px monospace';
+        ctx.font = '13px monospace';
         ctx.fillStyle = 'rgba(220,200,255,0.7)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('[ Mode: ' + opLabel + ' ]', w/2, yBtn + 18);
+        ctx.fillText('MODE: ' + opLabel, w/2, yBtn + 17);
+        
+        // Show operation description
+        ctx.font = '10px monospace';
+        ctx.fillStyle = 'rgba(200,180,255,0.4)';
+        ctx.textAlign = 'center';
+        var descs = { div3:'Divide by 3', div_sqrt12:'Divide by sqrt(12)', sqrt_sum_sq:'Sqrt of sum of squares', quadratic_sum:'Quadratic sum', multiply_by_constant:'Multiply by constant' };
+        ctx.fillText(descs[node.operation] || node.operation, w/2, yBtn + 46);
       }
+      if (node.type === 'mean' || node.type === 'sem') {
+        ctx.font = '12px monospace';
+        ctx.fillStyle = 'rgba(200,180,255,0.4)';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText('Receives input from connected nodes', 14, yBtn);
+        var inp = this.graph ? this.graph.getIncomingEdges(node.id) : [];
+        ctx.fillText('Inputs: ' + (inp ? inp.length : 0), 14, yBtn + 22);
+      }
+      
+      // Bottom hint
+      ctx.font = '9px monospace';
+      ctx.fillStyle = 'rgba(200,180,255,0.2)';
+      ctx.textAlign = 'center';
+      ctx.fillText('tap action to execute, tap outside to close', w/2, h - 10);
     } else {
-      // Normal mode: compact card
-      ctx.font = '14px monospace';
+      // Normal mode: compact card with value
+      ctx.font = '12px monospace';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
       ctx.fillStyle = 'rgba(200,190,255,0.5)';
-      ctx.fillText('= ' + valStr, 16, 55);
+      ctx.fillText('= ' + valStr, 14, 50);
+      
+      // Subtle bottom line
+      ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.15)';
+      ctx.fillRect(14, h - 2, w - 28, 1);
     }
 
-    // Important indicator (subtle)
+    // Important indicator
     if (node.important && !editMode) {
-      ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.5)';
+      ctx.shadowColor = hexColor;
+      ctx.shadowBlur = 30;
+      ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.6)';
       ctx.lineWidth = 2;
       this._drawRoundedRect(ctx, 1, 1, w-2, h-2, r-1);
       ctx.stroke();
@@ -618,8 +658,12 @@ export class Scene3D {
   _toggleMapBluePort(node) {
     var obj = this.nodeObjects.get(node.id);
     if (!obj || !obj.userData.bluePort) return;
-    obj.userData.bluePortVisible = !obj.userData.bluePortVisible;
+    // Toggle both visual and data state
+    node.unmappedMode = (node.unmappedMode === 'blue') ? 'normal' : 'blue';
+    obj.userData.bluePortVisible = (node.unmappedMode === 'blue');
     obj.userData.bluePort.visible = obj.userData.bluePortVisible;
+    this.graph.setDirty(true);
+    if (this.eventBus) this.eventBus.emit('graphChanged');
   }
 
   _onResize() {
@@ -716,21 +760,31 @@ export class Scene3D {
   }
   
   _handleNodeAction(node) {
+    var self = this;
     var obj = this.nodeObjects.get(node.id);
     if (!obj) return;
     var card = obj.userData.mesh;
     if (!card || !card.userData.editMode) return;
     
-    // Simple: prompt for value change on number/constant
+    // Map: double-tap toggles blue port
+    if (node.type === 'map') {
+      self._toggleMapBluePort(node);
+      self._switchEditMode(node, true);
+      return;
+    }
+    
+    // Number/Constant: prompt for value change
     if (node.type === 'number' || node.type === 'constant') {
-      var newVal = prompt('Edit value:', node.value || 0);
+      var oldVal = node.value !== undefined ? node.value : 0;
+      var newVal = prompt('Edit value (' + node.type + '):', oldVal);
       if (newVal !== null && newVal !== '') {
         node.value = parseFloat(newVal) || 0;
         this.graph.reevaluateAll();
         this.graph.setDirty(true);
-        this._switchEditMode(node, true); // refresh texture
-        this.eventBus.emit('graphChanged');
+        this._switchEditMode(node, true);
+        if (this.eventBus) this.eventBus.emit('graphChanged');
       }
+      return;
     }
     // Group: add row
     if (node.type === 'group') {
@@ -738,15 +792,17 @@ export class Scene3D {
       node.values.push({ val: 0, name: '' });
       this.graph.setDirty(true);
       this._switchEditMode(node, true);
-      this.eventBus.emit('graphChanged');
+      if (this.eventBus) this.eventBus.emit('graphChanged');
+      return;
     }
-    // Output/Map: add row
-    if (node.type === 'output' || node.type === 'map') {
+    // Output: add row
+    if (node.type === 'output') {
       if (!node.rows) node.rows = [];
       node.rows.push({ param: 'V' + (node.rows.length+1), value: '0' });
       this.graph.setDirty(true);
       this._switchEditMode(node, true);
-      this.eventBus.emit('graphChanged');
+      if (this.eventBus) this.eventBus.emit('graphChanged');
+      return;
     }
     // Calc: cycle operation
     if (node.type === 'calc') {
@@ -756,7 +812,13 @@ export class Scene3D {
       this.graph.reevaluateAll();
       this.graph.setDirty(true);
       this._switchEditMode(node, true);
-      this.eventBus.emit('graphChanged');
+      if (this.eventBus) this.eventBus.emit('graphChanged');
+      return;
+    }
+    // Mean/SEM: cycle operation if available
+    if (node.type === 'mean' || node.type === 'sem') {
+      this.graph.reevaluateAll();
+      this._switchEditMode(node, true);
     }
   }
 

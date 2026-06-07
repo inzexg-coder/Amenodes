@@ -252,6 +252,11 @@ export class MobileUI {
     this.scene.eventBus.on('nodeDeselect', () => {
       // Inline editing handled in Scene3D
     });
+    // Graph changed - update counts
+    this.scene.eventBus.on('graphChanged', () => {
+      this.updateCounts();
+      if (this.app && this.app.updateNodeCount) this.app.updateNodeCount();
+    });
   }
 
   _toggleNodeMenu() {
