@@ -608,19 +608,20 @@ body {
   cursor: grabbing;
 }
 
-.canvas-container {
+#scene-container {
   position: absolute;
-  width: 10000px;
-  height: 10000px;
-  transform-origin: 0 0;
-  overflow: visible;
-}
-
-.nodes-layer {
-  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  overflow: visible;
+  overflow: hidden;
+  z-index: 1;
+}
+
+#scene-container canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 /* STATUS BAR */
@@ -1281,15 +1282,7 @@ body {
 
 /* BENCHMARK */
 
-.webgl-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 5;
-  pointer-events: none;
-}
+
 
 .benchmark-status {
   position: fixed;

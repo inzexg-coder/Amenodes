@@ -1,6 +1,5 @@
 import { Graph } from './core/Graph.js';
-import { Viewport } from './renderer/Viewport.js';
-import { DomRenderer } from './renderer/DomRenderer.js';
+import { Scene3D } from './renderer3d/Scene3D.js';
 import { History } from './core/History.js';
 import { PersistenceService } from './services/PersistenceService.js';
 import { EventBus } from './services/EventBus.js';
@@ -32,95 +31,35 @@ class Application {
     this.ctrlZoomOnly = localStorage.getItem('ctrl_zoom_only') === 'true';
     this.invertZoomDirection = localStorage.getItem('invert_zoom_direction') === 'true';
 
-    this.initRenderer();
     this.initHistory();
     this.initViewport();
     this.initUI();
     this.initOptimizationPanel();
-    this.initNodeMenu();
     this.initEvents();
     this.initI18n();
-    this.initSidebar();
     
     this.initNodesAndStart();
   }
 
-  initRenderer() {
-    const viewportEl = document.getElementById('viewport');
-    const canvasContainer = document.getElementById('canvasContainer');
-    const nodesLayer = document.getElementById('nodesLayer');
-    
-    this.viewport = new Viewport(viewportEl, canvasContainer);
-    this.renderer = new DomRenderer(this.graph, nodesLayer, viewportEl, this.eventBus);
-    this.renderer.setViewport(this.viewport);
-    this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
-    this.viewport.onChange = () => {
-      this.renderer.render();
-      this.updateCoordIndicator();
+  async initRenderer() {
+    const container = document.getElementById('scene-container');
+    this.renderer = new Scene3D(this.graph, container, this.eventBus);
+    await this.renderer.init();
+    this.renderer.onNodeSelect = (node) => {
+      this.updatePropertiesPanel(node);
     };
-    
+    this.renderer.setHistory(this.history);
+    this.renderer.attachEvents();
     window._renderer = this.renderer;
   }
 
   initHistory() {
     this.history = new History(this.graph);
-    this.renderer.setHistory(this.history);
     window._history = this.history;
   }
 
   initViewport() {
-    let currentZoom = 1;
-    const viewportEl = document.getElementById('viewport');
-    
-    const setZoom = (z, centerX = null, centerY = null) => {
-      const oldZoom = currentZoom;
-      currentZoom = Math.min(3, Math.max(0.3, z));
-      window.currentZoom = currentZoom;
-      
-      if (centerX !== null && centerY !== null && oldZoom !== currentZoom) {
-        const offset = this.viewport.getOffset();
-        const rect = viewportEl.getBoundingClientRect();
-        const worldX = (centerX - rect.left - offset.x) / oldZoom;
-        const worldY = (centerY - rect.top - offset.y) / oldZoom;
-        const newOffsetX = centerX - rect.left - worldX * currentZoom;
-        const newOffsetY = centerY - rect.top - worldY * currentZoom;
-        this.viewport.setOffset(newOffsetX, newOffsetY);
-      } else {
-        this.viewport.update();
-      }
-      
-      this.renderer.render();
-      this.updateZoomIndicator();
-    };
-    
-    viewportEl.addEventListener('wheel', (e) => {
-      if (this.ctrlZoomOnly && !e.ctrlKey) {
-        return;
-      }
-      e.preventDefault();
-      
-      let delta = e.deltaY > 0 ? -0.05 : 0.05;
-      if (this.invertZoomDirection) {
-        delta = -delta;
-      }
-      
-      const rect = viewportEl.getBoundingClientRect();
-      const mouseX = e.clientX;
-      const mouseY = e.clientY;
-      
-      const newZoom = currentZoom * (1 + delta);
-      setZoom(newZoom, mouseX, mouseY);
-    }, { passive: false });
-    
-    viewportEl.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      return false;
-    });
-    
-    window.setZoom = setZoom;
-    window.currentZoom = currentZoom;
-    window.applyDesignQuality = (p) => this.applyDesignQuality(p);
-    this.applyCanvasSettings();
+    // 3D viewport — camera controls handled by Scene3D
   }
 
   applyDesignQuality(percent) {
@@ -132,29 +71,7 @@ class Application {
     else if (percent <= 80) document.body.classList.add('design-quality-2');
   }
 
-  applyCanvasSettings() {
-    const viewport = document.getElementById('viewport');
-    if (!viewport) return;
-    
-    switch(this.gridStyle) {
-      case 'dots':
-        viewport.style.backgroundImage = `radial-gradient(circle, rgba(255, 179, 71, 0.15) 1px, transparent 1px)`;
-        viewport.style.backgroundSize = `${this.gridSize}px ${this.gridSize}px`;
-        break;
-      case 'lines':
-        viewport.style.backgroundImage = `linear-gradient(to right, rgba(255, 179, 71, 0.1) 1px, transparent 1px),
-                                          linear-gradient(to bottom, rgba(255, 179, 71, 0.1) 1px, transparent 1px)`;
-        viewport.style.backgroundSize = `${this.gridSize}px ${this.gridSize}px`;
-        break;
-      case 'cross':
-        viewport.style.backgroundImage = `radial-gradient(circle, rgba(255, 179, 71, 0.2) 2px, transparent 2px)`;
-        viewport.style.backgroundSize = `${this.gridSize * 2}px ${this.gridSize * 2}px`;
-        break;
-      case 'none':
-        viewport.style.backgroundImage = 'none';
-        break;
-    }
-  }
+
 
   openCanvasSettings() {
     const modalEl = document.getElementById('canvasSettingsModal');
@@ -355,10 +272,10 @@ class Application {
         localStorage.setItem('invert_zoom_direction', this.invertZoomDirection.toString());
         
         if (this.renderer) {
-          this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
+          if (typeof this.renderer.setSnapToGrid === 'function') this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
         }
         
-        this.applyCanvasSettings();
+        if (typeof this.applyCanvasSettings === 'function') this.applyCanvasSettings();
         if (this.renderer) this.renderer.render();
         
         this.closeCanvasSettings();
@@ -376,10 +293,7 @@ class Application {
           this.graph.nextId = 1;
           this.graph.nextEdgeId = 1;
           
-          if (this.viewport) {
-            this.viewport.setOffset(0, 0);
-            window.setZoom(1);
-          }
+          // No viewport reset in 3D mode
           
           if (window.applyDesignQuality) {
             window.applyDesignQuality(100);
@@ -474,6 +388,9 @@ class Application {
   }
 
   initNodeMenu() {
+    // 3D mode: dummy viewport shim
+    this.viewport = { getOffset: () => ({ x: 0, y: 0 }), getRect: () => ({ w: 800, h: 600 }) };
+    window.currentZoom = 1;
     this.nodeMenu = new NodeMenu(this.graph, this.renderer, this.viewport);
     this.nodeMenu.init();
   }
@@ -490,12 +407,18 @@ class Application {
       typeSystem.initFromNodeRegistry(nodeRegistry);
       this.updateUITitles();
       this.populateNodesLibrary();
+      await this.initRenderer();
+      this.initNodeMenu();
+      this.initSidebar();
       this.loadInitialState();
       this.renderer.render();
       this.initDirtyIndicator();
       console.log(`[Application] Ready with ${nodeRegistry.size} node types`);
     } catch (err) {
       console.error('[Application] Failed to initialize nodes:', err);
+      await this.initRenderer();
+      this.initNodeMenu();
+      this.initSidebar();
       this.loadInitialState();
       this.renderer.render();
       this.initDirtyIndicator();
@@ -586,8 +509,8 @@ class Application {
   }
   
   snapToGridValue(value) {
-    if (!this.snapToGrid) return value;
-    return Math.round(value / this.gridSize) * this.gridSize;
+    // 3D mode: no grid snapping
+    return value;
   }
 
   async createNodeAtCenter(type, subnode = null) {
@@ -681,20 +604,10 @@ class Application {
   }
   
   updateZoomIndicator() {
-    const zoomIndicator = document.getElementById('zoomIndicator');
-    if (zoomIndicator) {
-      const percent = Math.round((window.currentZoom || 1) * 100);
-      zoomIndicator.textContent = `${percent}%`;
-    }
+    // 3D mode: no 2D zoom indicator
   }
   
-  updateCoordIndicator() {
-    const indicator = document.getElementById('coordIndicator');
-    if (indicator && this.viewport) {
-      const offset = this.viewport.getOffset();
-      indicator.textContent = `X: ${Math.round(offset.x)} | Y: ${Math.round(offset.y)}`;
-    }
-  }
+  updateCoordIndicator() {}
 
   undo() {
     this.history.undo();
@@ -749,11 +662,6 @@ class Application {
   }
 
   initEvents() {
-    window.addEventListener('mousemove', (e) => this.renderer.onGlobalMove(e));
-    window.addEventListener('mouseup', (e) => this.renderer.onGlobalUp(e));
-    window.addEventListener('mousemove', (e) => this.renderer.onGlobalMoveEdge(e));
-    window.addEventListener('mouseup', (e) => this.renderer.onGlobalUpEdge(e));
-    
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         this.renderer.closeMenu();
