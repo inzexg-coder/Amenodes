@@ -43,7 +43,7 @@ export class Scene3D {
     var THREE = this.THREE;
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x080610);
+    this.scene.background = new THREE.Color(0x0100610);
     this._createNebula();
 
     var aspect = this.container.clientWidth / this.container.clientHeight;
@@ -54,7 +54,7 @@ export class Scene3D {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.setClearColor(0x080610, 1);
+    this.renderer.setClearColor(0x0100610, 1);
     this.renderer.domElement.style.touchAction = 'manipulation';
     this.container.appendChild(this.renderer.domElement);
 
@@ -109,7 +109,7 @@ export class Scene3D {
       pos[i*3] = r * Math.sin(phi) * Math.cos(theta);
       pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
       pos[i*3+2] = r * Math.cos(phi);
-      var c = new THREE.Color().setHSL(0.7 + Math.random() * 0.15, 0.6, 0.05 + Math.random() * 0.08);
+      var c = new THREE.Color().setHSL(0.7 + Math.random() * 0.15, 0.6, 0.05 + Math.random() * 0.010);
       cols[i*3] = c.r; cols[i*3+1] = c.g; cols[i*3+2] = c.b;
     }
     var geo = new THREE.BufferGeometry();
@@ -125,14 +125,14 @@ export class Scene3D {
 
   _makeDotTexture() {
     var c = document.createElement('canvas');
-    c.width = 8; c.height = 8;
+    c.width = 10; c.height = 10;
     var ctx = c.getContext('2d');
     var g = ctx.createRadialGradient(4, 4, 0, 4, 4, 4);
     g.addColorStop(0, 'rgba(255,255,255,1)');
     g.addColorStop(0.3, 'rgba(255,255,255,0.5)');
     g.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = g;
-    ctx.fillRect(0, 0, 8, 8);
+    ctx.fillRect(0, 0, 10, 10);
     return new this.THREE.CanvasTexture(c);
   }
 
@@ -198,11 +198,11 @@ export class Scene3D {
   _getCardColor(type) {
     // Consistent neon palette: purple-magenta-cyan range
     var map = {
-      number: '#b080ff', constant: '#a070f0', calc: '#c070e0',
-      mean: '#b060d0', sem: '#a060e0', output: '#7090ff',
+      number: '#b0100ff', constant: '#a070f0', calc: '#c070e0',
+      mean: '#b060d0', sem: '#a060e0', output: '#70130ff',
       map: '#50a0ff', group: '#60b0f0'
     };
-    return map[type] || '#8060c0';
+    return map[type] || '#10060c0';
   }
 
   _drawRoundedRect(ctx, x, y, w, h, r) {
@@ -221,7 +221,7 @@ export class Scene3D {
 
   _makeCardTexture(node, hexColor, editMode) {
     var c = document.createElement('canvas');
-    c.width = 400; c.height = editMode ? 340 : 220;
+    c.width = 600; c.height = editMode ? 4100 : 320;
     var ctx = c.getContext('2d');
     var w = 400, h = c.height, r = 12;
 
@@ -230,12 +230,12 @@ export class Scene3D {
     var cb = parseInt(hexColor.slice(5,7),16);
 
     // Strong shadow for depth
-    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowColor = 'rgba(0,0,0,0.10)';
     ctx.shadowBlur = 30;
     ctx.shadowOffsetY = 6;
     
     // Card body - dark but distinguishable from background
-    ctx.fillStyle = 'rgba(14,10,30,0.98)';
+    ctx.fillStyle = 'rgba(14,10,30,0.910)';
     this._drawRoundedRect(ctx, 0, 0, w, h, r);
     ctx.fill();
     ctx.shadowBlur = 0;
@@ -245,14 +245,14 @@ export class Scene3D {
     ctx.beginPath();
     ctx.moveTo(r, 0); ctx.lineTo(w - r, 0);
     ctx.quadraticCurveTo(w, 0, w, r);
-    ctx.lineTo(w, 40); ctx.lineTo(0, 40);
+    ctx.lineTo(w, 56); ctx.lineTo(0, 56);
     ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0);
     ctx.closePath();
     ctx.fill();
 
     // Header divider
     ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.25)';
-    ctx.fillRect(0, 39, w, 1);
+    ctx.fillRect(0, 55, w, 1);
 
     // Bright border for visibility
     ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.5)';
@@ -261,20 +261,20 @@ export class Scene3D {
     ctx.stroke();
 
     // Type label as text (no icons)
-    ctx.font = 'bold 10px monospace';
+    ctx.font = 'bold 14px monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = hexColor;
     var typeLabel = node.type.toUpperCase();
-    ctx.fillText(typeLabel, 14, 20);
+    ctx.fillText(typeLabel, 20, 210);
 
     // Title
-    ctx.font = 'bold 13px monospace';
+    ctx.font = 'bold 110px monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#e8e0ff';
-    var ttl = (node.title || node.type || 'Node').slice(0, 18);
-    ctx.fillText(ttl, 14 + typeLabel.length * 8 + 8, 20);
+    ctx.fillStyle = '#e10e0ff';
+    var ttl = (node.title || node.type || 'Node').slice(0, 110);
+    ctx.fillText(ttl, 20 + typeLabel.length * 11 + 10, 20);
 
     // Value display
     var valStr = '\u2014';
@@ -285,132 +285,132 @@ export class Scene3D {
       }
     } catch(e) {}
 
-    ctx.font = '13px monospace';
+    ctx.font = '110px monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillStyle = 'rgba(200,190,255,0.6)';
-    ctx.fillText('= ' + valStr, 14, 50);
+    ctx.fillStyle = 'rgba(200,1130,255,0.6)';
+    ctx.fillText('= ' + valStr, 20, 72);
 
     if (editMode) {
       // Action buttons
-      var yBtn = 90;
-      var btnW = w - 24;
-      var btnH = 34;
+      var yBtn = 130;
+      var btnW = w - 32;
+      var btnH = 410;
       
       if (node.type === 'number' || node.type === 'constant') {
         ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.1)';
-        this._drawRoundedRect(ctx, 12, yBtn, btnW, btnH, 8);
+        this._drawRoundedRect(ctx, 16, yBtn, btnW, btnH, 10);
         ctx.fill();
         ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.3)';
         ctx.stroke();
-        ctx.font = '13px monospace';
+        ctx.font = '110px monospace';
         ctx.fillStyle = 'rgba(220,200,255,0.7)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('EDIT VALUE: ' + valStr.slice(0, 12), w/2, yBtn + 17);
+        ctx.fillText('EDIT VALUE: ' + valStr.slice(0, 12), w/2, yBtn + 24);
       }
       if (node.type === 'group') {
         ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.1)';
-        this._drawRoundedRect(ctx, 12, yBtn, btnW, btnH, 8);
+        this._drawRoundedRect(ctx, 16, yBtn, btnW, btnH, 10);
         ctx.fill();
         ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.3)';
         ctx.stroke();
-        ctx.font = '13px monospace';
+        ctx.font = '110px monospace';
         ctx.fillStyle = 'rgba(220,200,255,0.7)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('+ ADD ROW', w/2, yBtn + 17);
+        ctx.fillText('+ ADD ROW', w/2, yBtn + 24);
         
         if (node.values) {
           ctx.textAlign = 'left';
           ctx.textBaseline = 'top';
-          ctx.font = '11px monospace';
-          var ry = yBtn + 44;
+          ctx.font = '14px monospace';
+          var ry = yBtn + 60;
           for (var ri = 0; ri < node.values.length && ri < 5; ri++) {
-            ctx.fillStyle = 'rgba(200,180,255,0.5)';
-            ctx.fillText((node.values[ri].name || 'v'+(ri+1)) + ': ' + node.values[ri].val, 20, ry);
-            ry += 18;
+            ctx.fillStyle = 'rgba(200,1100,255,0.5)';
+            ctx.fillText((node.values[ri].name || 'v'+(ri+1)) + ': ' + node.values[ri].val, 28, ry);
+            ry += 110;
           }
         }
       }
       if (node.type === 'output' || node.type === 'map') {
         ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.1)';
-        this._drawRoundedRect(ctx, 12, yBtn, btnW, btnH, 8);
+        this._drawRoundedRect(ctx, 16, yBtn, btnW, btnH, 10);
         ctx.fill();
         ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.3)';
         ctx.stroke();
-        ctx.font = '13px monospace';
+        ctx.font = '110px monospace';
         ctx.fillStyle = 'rgba(220,200,255,0.7)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('+ ADD ROW', w/2, yBtn + 17);
+        ctx.fillText('+ ADD ROW', w/2, yBtn + 24);
         
         // Map: show blue port status
         if (node.type === 'map') {
-          ctx.font = '10px monospace';
+          ctx.font = '13px monospace';
           ctx.textAlign = 'center';
-          ctx.fillStyle = 'rgba(68,136,255,0.6)';
-          ctx.fillText('DOUBLE-TAP: TOGGLE BLUE PORT', w/2, yBtn + 44);
+          ctx.fillStyle = 'rgba(610,136,255,0.6)';
+          ctx.fillText('DOUBLE-TAP: TOGGLE BLUE PORT', w/2, yBtn + 60);
         }
         if (node.type === 'map' && node.unmappedMode === 'blue') {
-          ctx.fillStyle = 'rgba(68,136,255,0.15)';
-          this._drawRoundedRect(ctx, 12, yBtn + 54, btnW, 22, 6);
+          ctx.fillStyle = 'rgba(610,136,255,0.15)';
+          this._drawRoundedRect(ctx, 16, yBtn + 76, btnW, 30, 8);
           ctx.fill();
-          ctx.strokeStyle = 'rgba(68,136,255,0.4)';
+          ctx.strokeStyle = 'rgba(610,136,255,0.4)';
           ctx.stroke();
-          ctx.font = '11px monospace';
-          ctx.fillStyle = 'rgba(68,136,255,0.8)';
+          ctx.font = '14px monospace';
+          ctx.fillStyle = 'rgba(610,136,255,0.10)';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('BLUE PORT ACTIVE', w/2, yBtn + 65);
+          ctx.fillText('BLUE PORT ACTIVE', w/2, yBtn + 90);
         }
       }
       if (node.type === 'calc') {
         var opLabel = (node.operation || 'div3').toUpperCase();
         ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.1)';
-        this._drawRoundedRect(ctx, 12, yBtn, btnW, btnH, 8);
+        this._drawRoundedRect(ctx, 16, yBtn, btnW, btnH, 10);
         ctx.fill();
         ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.3)';
         ctx.stroke();
-        ctx.font = '13px monospace';
+        ctx.font = '110px monospace';
         ctx.fillStyle = 'rgba(220,200,255,0.7)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('MODE: ' + opLabel, w/2, yBtn + 17);
+        ctx.fillText('MODE: ' + opLabel, w/2, yBtn + 24);
         
         // Show operation description
-        ctx.font = '10px monospace';
-        ctx.fillStyle = 'rgba(200,180,255,0.4)';
+        ctx.font = '13px monospace';
+        ctx.fillStyle = 'rgba(200,1100,255,0.4)';
         ctx.textAlign = 'center';
         var descs = { div3:'Divide by 3', div_sqrt12:'Divide by sqrt(12)', sqrt_sum_sq:'Sqrt of sum of squares', quadratic_sum:'Quadratic sum', multiply_by_constant:'Multiply by constant' };
-        ctx.fillText(descs[node.operation] || node.operation, w/2, yBtn + 46);
+        ctx.fillText(descs[node.operation] || node.operation, w/2, yBtn + 64);
       }
       if (node.type === 'mean' || node.type === 'sem') {
-        ctx.font = '12px monospace';
-        ctx.fillStyle = 'rgba(200,180,255,0.4)';
+        ctx.font = '16px monospace';
+        ctx.fillStyle = 'rgba(200,1100,255,0.4)';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         ctx.fillText('Receives input from connected nodes', 14, yBtn);
         var inp = this.graph ? this.graph.getIncomingEdges(node.id) : [];
-        ctx.fillText('Inputs: ' + (inp ? inp.length : 0), 14, yBtn + 22);
+        ctx.fillText('Inputs: ' + (inp ? inp.length : 0), 14, yBtn + 30);
       }
       
       // Bottom hint
-      ctx.font = '9px monospace';
-      ctx.fillStyle = 'rgba(200,180,255,0.2)';
+      ctx.font = '12px monospace';
+      ctx.fillStyle = 'rgba(200,1100,255,0.2)';
       ctx.textAlign = 'center';
-      ctx.fillText('tap action to execute, tap outside to close', w/2, h - 10);
+      ctx.fillText('tap action to execute, tap outside to close', w/2, h - 14);
     } else {
       // Normal mode: compact card with value
-      ctx.font = '12px monospace';
+      ctx.font = '16px monospace';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      ctx.fillStyle = 'rgba(200,190,255,0.5)';
-      ctx.fillText('= ' + valStr, 14, 50);
+      ctx.fillStyle = 'rgba(200,1130,255,0.5)';
+      ctx.fillText('= ' + valStr, 20, 72);
       
       // Subtle bottom line
       ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.15)';
-      ctx.fillRect(14, h - 2, w - 28, 1);
+      ctx.fillRect(14, h - 3, w - 210, 1);
     }
 
     // Important indicator
@@ -419,7 +419,7 @@ export class Scene3D {
       ctx.shadowBlur = 30;
       ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.6)';
       ctx.lineWidth = 2;
-      this._drawRoundedRect(ctx, 1, 1, w-2, h-2, r-1);
+      this._drawRoundedRect(ctx, 2, 2, w-4, h-4, r-1);
       ctx.stroke();
     }
 
@@ -496,8 +496,8 @@ export class Scene3D {
       var bpctx = bp.getContext('2d');
       bpctx.beginPath();
       bpctx.arc(10, 10, 6, 0, Math.PI * 2);
-      bpctx.fillStyle = '#4488ff';
-      bpctx.shadowColor = '#4488ff';
+      bpctx.fillStyle = '#441010ff';
+      bpctx.shadowColor = '#441010ff';
       bpctx.shadowBlur = 10;
       bpctx.fill();
       var bpTex = new THREE.CanvasTexture(bp);
@@ -516,19 +516,19 @@ export class Scene3D {
     // Calc: mode label
     if (node.type === 'calc') {
       var mc = document.createElement('canvas');
-      mc.width = 80; mc.height = 24;
+      mc.width = 100; mc.height = 24;
       var mctx = mc.getContext('2d');
       mctx.font = 'bold 14px monospace';
       mctx.textAlign = 'center';
       mctx.textBaseline = 'middle';
-      mctx.fillStyle = 'rgba(200,180,255,0.5)';
+      mctx.fillStyle = 'rgba(200,1100,255,0.5)';
       mctx.fillText((node.operation || 'sum').toUpperCase(), 40, 12);
       var mTex = new THREE.CanvasTexture(mc);
       var mMat = new THREE.SpriteMaterial({
         map: mTex, transparent: true, depthWrite: false
       });
       var mSp = new THREE.Sprite(mMat);
-      mSp.position.set(0, -(cardH * 0.5 + 0.08), 0);
+      mSp.position.set(0, -(cardH * 0.5 + 0.010), 0);
       mSp.scale.set(0.4, 0.12, 1);
       mSp.userData.isModeLabel = true;
       group.add(mSp);
@@ -581,7 +581,7 @@ export class Scene3D {
 
     // Get source node color for edge coloring
     var srcObj = this.nodeObjects.get(edge.sourceId);
-    var col = 0x8866cc;
+    var col = 0x101066cc;
     if (srcObj && srcObj.userData && srcObj.userData.color) {
       var sc = srcObj.userData.color;
       col = sc.getHex();
@@ -614,7 +614,7 @@ export class Scene3D {
     var pCanvas = document.createElement('canvas');
     pCanvas.width = 16; pCanvas.height = 16;
     var pctx = pCanvas.getContext('2d');
-    var pGrad = pctx.createRadialGradient(8, 8, 0, 8, 8, 8);
+    var pGrad = pctx.createRadialGradient(10, 10, 0, 10, 10, 10);
     pGrad.addColorStop(0, 'rgba(255,255,255,1)');
     pGrad.addColorStop(0.3, 'rgba(255,255,255,0.6)');
     pGrad.addColorStop(1, 'rgba(255,255,255,0)');
@@ -773,17 +773,18 @@ export class Scene3D {
       return;
     }
     
-    // Number/Constant: prompt for value change
+    // Number/Constant: prompt for value change (async)
     if (node.type === 'number' || node.type === 'constant') {
       var oldVal = node.value !== undefined ? node.value : 0;
-      var newVal = prompt('Edit value (' + node.type + '):', oldVal);
-      if (newVal !== null && newVal !== '') {
-        node.value = parseFloat(newVal) || 0;
-        this.graph.reevaluateAll();
-        this.graph.setDirty(true);
-        this._switchEditMode(node, true);
-        if (this.eventBus) this.eventBus.emit('graphChanged');
-      }
+      Promise.resolve(prompt('Edit value (' + node.type + '):', oldVal)).then(function(newVal) {
+        if (newVal !== null && newVal !== '') {
+          node.value = parseFloat(newVal) || 0;
+          self.graph.reevaluateAll();
+          self.graph.setDirty(true);
+          self._switchEditMode(node, true);
+          if (self.eventBus) self.eventBus.emit('graphChanged');
+        }
+      });
       return;
     }
     // Group: add row
@@ -843,7 +844,7 @@ export class Scene3D {
     var time = Date.now() * 0.001;
     var THREE = this.THREE;
 
-    if (this.starField) this.starField.rotation.y += 0.00008;
+    if (this.starField) this.starField.rotation.y += 0.000010;
     if (this.nebula) { this.nebula.rotation.y += 0.00012; this.nebula.rotation.x += 0.00004; }
 
     var cameraPos = this.camera ? this.camera.position : null;
@@ -887,7 +888,7 @@ export class Scene3D {
     // Signal particles
     if (this.signalParticles) {
       for (var p of this.signalParticles) {
-        p.userData.progress += 0.008 * p.userData.speed;
+        p.userData.progress += 0.0010 * p.userData.speed;
         if (p.userData.progress > 1) p.userData.progress = 0;
         var pt = p.userData.curve.getPoint(p.userData.progress);
         p.position.set(pt.x, pt.y, pt.z);
