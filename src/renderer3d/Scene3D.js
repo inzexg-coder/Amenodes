@@ -46,6 +46,12 @@ export class Scene3D {
     this._edgeSourcePort = null;
     this._tempLine = null;
 
+    this._wobbleTime = 0;
+    this._wobbleAmount = 0.15;
+    this._glowPulseTime = 0;
+    this._edgePulseTime = 0;
+    this._momentumX = 0;
+    this._momentumY = 0;
     this._boundResize = () => this._onResize();
     this._boundPointerDown = (e) => this._onPointerDown(e);
     this._boundPointerMove = (e) => this._onPointerMove(e);
@@ -260,6 +266,20 @@ export class Scene3D {
   _autoRotateCamera() {
     if (this.autoRotate && !this._isDragging) {
       this._targetTheta += this.rotationSpeed;
+      // Gentle wobble on phi for organic feel
+      this._wobbleTime += 0.005;
+      const wobble = Math.sin(this._wobbleTime) * this._wobbleAmount;
+      this._targetPhi += (Math.PI / 2 + wobble - this._targetPhi) * 0.002;
+    }
+    // Momentum decay after drag
+    if (!this._isDragging && !this.autoRotate) {
+      this._momentumX *= 0.97;
+      this._momentumY *= 0.97;
+      this._targetTheta += this._momentumX;
+      this._targetPhi += this._momentumY;
+      if (Math.abs(this._momentumX) < 0.0001 && Math.abs(this._momentumY) < 0.0001) {
+        this.autoRotate = true;
+      }
     }
   }
 
@@ -322,17 +342,18 @@ export class Scene3D {
       this.scene.add(ring);
 
       const glowMap = this._createGlowTexture();
+      const glowColor = node.important ? 0xff8844 : 0x6688ff;
       const glowMat = new THREE.SpriteMaterial({
         map: glowMap,
-        color: node.important ? 0xff8844 : 0x4466ff,
+        color: glowColor,
         transparent: true,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
-        opacity: 0.3
+        opacity: 0.4
       });
       const glow = new THREE.Sprite(glowMat);
       glow.position.set(pos.x, pos.y, pos.z);
-      glow.scale.set(60, 60, 1);
+      glow.scale.set(80, 80, 1);
       glow.userData.nodeId = node.id;
       this.scene.add(glow);
 
@@ -441,58 +462,95 @@ export class Scene3D {
       const sourcePos = this._getSpherePosition(edge.sourceId);
       const targetPos = this._getSpherePosition(edge.targetId);
 
-      const mid = {
-        x: (sourcePos.x + targetPos.x) / 2,
-        y: (sourcePos.y + targetPos.y) / 2,
-        z: (sourcePos.z + targetPos.z) / 2
-      };
-      const len = Math.sqrt(mid.x*mid.x + mid.y*mid.y + mid.z*mid.z);
-      if (len > 0) {
-        mid.x *= 1.2;
-        mid.y *= 1.2;
-        mid.z *= 1.2;
-      }
+      const sx = sourcePos.x, sy = sourcePos.y, sz = sourcePos.z;
+      const tx = targetPos.x, ty = targetPos.y, tz = targetPos.z;
 
+      // Middle point pulled outward from sphere center for arc effect
+      const mx = (sx + tx) / 2, my = (sy + ty) / 2, mz = (sz + tz) / 2;
+      const ml = Math.sqrt(mx*mx + my*my + mz*mz);
+      const pull = 1.3 + 0.3 * Math.sin(edge.id * 2.5);
+      const cpx = ml > 0 ? mx / ml * this.sphereRadius * pull : 0;
+      const cpy = ml > 0 ? my / ml * this.sphereRadius * pull : 0;
+      const cpz = ml > 0 ? mz / ml * this.sphereRadius * pull : 0;
+
+      // Multi-segment curve for organic look
       const curve = new THREE.QuadraticBezierCurve3(
-        new THREE.Vector3(sourcePos.x, sourcePos.y, sourcePos.z),
-        new THREE.Vector3(mid.x, mid.y, mid.z),
-        new THREE.Vector3(targetPos.x, targetPos.y, targetPos.z)
+        new THREE.Vector3(sx, sy, sz),
+        new THREE.Vector3(cpx, cpy, cpz),
+        new THREE.Vector3(tx, ty, tz)
       );
-      const points = curve.getPoints(20);
+      const points = curve.getPoints(30);
       const geo = new THREE.BufferGeometry().setFromPoints(points);
+
+      // Color based on node types
+      const sourceNode = this.graph.getNode(edge.sourceId);
+      const edgeColor = sourceNode && sourceNode.important ? 0xff8844 : 0x4488ff;
+
+      // Main line with gradient-like color
       const mat = new THREE.LineBasicMaterial({
-        color: 0x4488ff,
+        color: edgeColor,
         transparent: true,
-        opacity: 0.4
+        opacity: 0.5
       });
       const line = new THREE.Line(geo, mat);
       this.scene.add(line);
       this.edgeLines.set(edge.id, line);
 
+      // Outer glow tube
       const glowMat = new THREE.LineBasicMaterial({
-        color: 0x4488ff,
+        color: edgeColor,
         transparent: true,
-        opacity: 0.1,
+        opacity: 0.12,
         blending: THREE.AdditiveBlending
       });
       const glowLine = new THREE.Line(geo.clone(), glowMat);
+      glowLine.scale.set(1, 1, 1);
       this.scene.add(glowLine);
       this.edgeLines.set('glow-' + edge.id, glowLine);
+
+      // Dotted particle trail along edge
+      if (edge.id % 2 === 0) {
+        const dotCount = 8;
+        const dotPositions = [];
+        for (let i = 0; i < dotCount; i++) {
+          const t = (i + 1) / (dotCount + 1) + 0.05 * Math.sin(edge.id + i);
+          const pt = curve.getPoint(t);
+          dotPositions.push(pt.x, pt.y, pt.z);
+        }
+        const dotGeo = new THREE.BufferGeometry();
+        dotGeo.setAttribute('position', new THREE.Float32BufferAttribute(dotPositions, 3));
+        const dotMat = new THREE.PointsMaterial({
+          color: edgeColor,
+          size: 3,
+          transparent: true,
+          opacity: 0.4,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        });
+        const dots = new THREE.Points(dotGeo, dotMat);
+        this.scene.add(dots);
+        this.edgeLines.set('dots-' + edge.id, dots);
+      }
     });
   }
 
   _createGlowTexture() {
     const THREE = this.THREE;
     const canvas = document.createElement('canvas');
-    canvas.width = 64;
-    canvas.height = 64;
+    canvas.width = 128;
+    canvas.height = 128;
     const ctx = canvas.getContext('2d');
-    const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-    grad.addColorStop(0, 'rgba(255,255,255,1)');
-    grad.addColorStop(0.3, 'rgba(200,200,255,0.6)');
-    grad.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 64, 64);
+    
+    // Bright multi-layer glow
+    const grad1 = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    grad1.addColorStop(0, 'rgba(255,255,255,1)');
+    grad1.addColorStop(0.1, 'rgba(200,200,255,0.9)');
+    grad1.addColorStop(0.4, 'rgba(140,100,255,0.5)');
+    grad1.addColorStop(0.7, 'rgba(80,40,200,0.2)');
+    grad1.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = grad1;
+    ctx.fillRect(0, 0, 128, 128);
+    
     return new THREE.CanvasTexture(canvas);
   }
 
@@ -529,6 +587,8 @@ export class Scene3D {
       const dy = event.clientY - this._prevPointer.y;
       this._targetTheta -= dx * 0.005;
       this._targetPhi = Math.max(0.1, Math.min(Math.PI - 0.1, this._targetPhi + dy * 0.005));
+      this._momentumX = dx * 0.0008;
+      this._momentumY = dy * 0.0008;
       this._prevPointer.x = event.clientX;
       this._prevPointer.y = event.clientY;
       this.autoRotate = false;
@@ -601,14 +661,35 @@ export class Scene3D {
 
   _animateFrame() {
     if (!this.initialized) return;
+    
+    const time = Date.now() * 0.001;
+    
+    // Update node glow and effects
     for (const [id, obj] of this.nodeObjects) {
       if (obj.ring) {
-        // Ring always faces camera
         const dir = new THREE.Vector3();
         this.camera.getWorldDirection(dir);
         obj.ring.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, -1), dir);
       }
+      // Pulsing glow
+      if (obj.glow) {
+        const pulse = 0.5 + 0.5 * Math.sin(time * 1.5 + id * 0.7);
+        obj.glow.material.opacity = 0.15 + pulse * 0.35;
+        const scale = 50 + pulse * 20;
+        obj.glow.scale.set(scale, scale, 1);
+      }
     }
+    
+    // Animate edges with pulsing glow
+    const edgePulse = 0.5 + 0.5 * Math.sin(time * 0.8);
+    for (const [edgeId, line] of this.edgeLines) {
+      if (typeof edgeId === 'string' && edgeId.startsWith('glow-')) {
+        line.material.opacity = 0.05 + edgePulse * 0.15;
+      } else if (typeof edgeId === 'number') {
+        line.material.opacity = 0.2 + edgePulse * 0.3;
+      }
+    }
+    
     this._autoRotateCamera();
     this._lerpCamera();
     this.renderer.render(this.scene, this.camera);
