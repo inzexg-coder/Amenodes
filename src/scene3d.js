@@ -1,18 +1,27 @@
-// ─── 3D Scene ────────────────────────────────────────────────
 const SPHERE_RADIUS = 5;
-const STAR_COUNT = 3000;
+const STAR_COUNT = 5000;
+
+let THREE; // set after load
 
 export class Scene3D {
   constructor(container, graph) {
     this.container = container;
     this.graph = graph;
-    this.nodeMeshes = new Map();   // nodeId -> {mesh, label, ring}
-    this.edgeLines = new Map();    // edgeId -> line3D
+    this.nodeMeshes = new Map();   // nodeId -> {sprite, ring, label, canvas}
+    this.edgeLines = new Map();    // edgeId -> {line, glow}
+    this.handleMeshes = new Map(); // nodeId -> [handleSprite, ...]
     this.selectedNode = null;
     this.onNodeSelect = null;
-    this.onNodeContext = null;
     this.autoRotate = true;
-    this.THREE = null;
+
+    this.isDragging = false;
+    this.isDraggingEdge = false;
+    this.edgeSourceId = null;
+    this.edgePreviewLine = null;
+    this.prevPointer = { x: 0, y: 0 };
+    this.touchStart = { x: 0, y: 0, t: 0 };
+    this.momentum = { x: 0, y: 0 };
+    this.moved = false;
 
     this._theta = 0;
     this._phi = Math.PI / 2;
@@ -20,43 +29,37 @@ export class Scene3D {
     this._targetTheta = 0;
     this._targetPhi = Math.PI / 2;
     this._targetDist = 12;
-    this._momentum = { x: 0, y: 0 };
-    this._isDragging = false;
-    this._prevTouch = { x: 0, y: 0 };
-    this._touchStart = { x: 0, y: 0, t: 0 };
-    this._pinchDist = 0;
-    this._animId = null;
 
-    this._onResize = () => this._resize();
+    this._animId = null;
+    this._resizeHandler = () => this._resize();
+    this._pointerHandler = (e, type) => this._handlePointer(e, type);
   }
 
   async init() {
     await this._loadThree();
-    const T = this.THREE;
+    THREE = this.THREE;
 
-    this.scene = new T.Scene();
-    this.scene.background = new T.Color(0x05050f);
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x05050f);
 
     const w = this.container.clientWidth || window.innerWidth;
     const h = this.container.clientHeight || window.innerHeight;
-    this.camera = new T.PerspectiveCamera(50, w / h, 0.1, 200);
+    this.camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 200);
     this._updateCam();
 
-    this.renderer = new T.WebGLRenderer({ antialias: true });
+    this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(w, h);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setClearColor(0x05050f);
     this.container.appendChild(this.renderer.domElement);
 
-    // Lights
-    const amb = new T.AmbientLight(0x334466, 0.8);
-    this.scene.add(amb);
-    const dir = new T.DirectionalLight(0xffffff, 1.0);
+    this.scene.add(new THREE.AmbientLight(0x334466, 0.8));
+    const dir = new THREE.DirectionalLight(0xffffff, 1.0);
     dir.position.set(5, 10, 7);
     this.scene.add(dir);
 
     this._makeStars();
-    window.addEventListener('resize', this._onResize);
+    window.addEventListener('resize', this._resizeHandler);
     this._animate();
   }
 
@@ -70,7 +73,6 @@ export class Scene3D {
       s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
       s.onload = () => { this.THREE = window.THREE; resolve(); };
       s.onerror = () => {
-        // fallback
         const s2 = document.createElement('script');
         s2.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js';
         s2.onload = () => { this.THREE = window.THREE; resolve(); };
@@ -82,36 +84,30 @@ export class Scene3D {
   }
 
   _makeStars() {
-    const T = this.THREE;
-    const geo = new T.BufferGeometry();
-    const count = STAR_COUNT;
-    const pos = new Float32Array(count * 3);
-    const colors = new Float32Array(count * 3);
-    const sizes = new Float32Array(count);
-    for (let i = 0; i < count; i++) {
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(STAR_COUNT * 3);
+    const colors = new Float32Array(STAR_COUNT * 3);
+    for (let i = 0; i < STAR_COUNT; i++) {
       const r = 20 + Math.random() * 80;
       const th = Math.random() * Math.PI * 2;
       const ph = Math.acos(2 * Math.random() - 1);
       pos[i*3] = r * Math.sin(ph) * Math.cos(th);
       pos[i*3+1] = r * Math.sin(ph) * Math.sin(th);
       pos[i*3+2] = r * Math.cos(ph);
-      const b = 0.3 + Math.random() * 0.7;
-      colors[i*3] = b * (0.8 + Math.random() * 0.2);
-      colors[i*3+1] = b * (0.8 + Math.random() * 0.2);
+      const b = 0.2 + Math.random() * 0.8;
+      colors[i*3] = b * (0.7 + Math.random() * 0.3);
+      colors[i*3+1] = b * (0.7 + Math.random() * 0.3);
       colors[i*3+2] = b;
-      sizes[i] = 0.05 + Math.random() * 0.2;
     }
-    geo.setAttribute('position', new T.BufferAttribute(pos, 3));
-    geo.setAttribute('color', new T.BufferAttribute(colors, 3));
-    geo.setAttribute('size', new T.BufferAttribute(sizes, 1));
-    const mat = new T.PointsMaterial({
-      size: 0.12, vertexColors: true, transparent: true, opacity: 0.9,
-      blending: T.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const mat = new THREE.PointsMaterial({
+      size: 0.1, vertexColors: true, transparent: true, opacity: 0.9,
+      blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
     });
-    this.scene.add(new T.Points(geo, mat));
+    this.scene.add(new THREE.Points(geo, mat));
   }
 
-  // ─── Node Placement ───────────────────────────────────────
   _getNodePos(node, idx) {
     const n = this.graph.nodes.length;
     const golden = Math.PI * (3 - Math.sqrt(5));
@@ -126,6 +122,11 @@ export class Scene3D {
     };
   }
 
+  getNodeWorldPos(nodeId) {
+    const obj = this.nodeMeshes.get(nodeId);
+    return obj ? obj.sprite.position.clone() : null;
+  }
+
   // ─── Build / Rebuild ──────────────────────────────────────
   rebuild() {
     this._rebuildNodes();
@@ -133,97 +134,119 @@ export class Scene3D {
   }
 
   _rebuildNodes() {
-    const T = this.THREE;
     // Clear old
     for (const [id, obj] of this.nodeMeshes) {
-      this.scene.remove(obj.mesh);
+      this.scene.remove(obj.sprite);
       this.scene.remove(obj.ring);
     }
+    for (const [id, handles] of this.handleMeshes) {
+      handles.forEach(h => this.scene.remove(h));
+    }
     this.nodeMeshes.clear();
+    this.handleMeshes.clear();
 
     this.graph.nodes.forEach((node, idx) => {
       const pos = this._getNodePos(node, idx);
       const color = node.meta?.color || 0x4488ff;
 
-      // Main sprite
-      const canvas = document.createElement('canvas');
-      canvas.width = 128;
-      canvas.height = 128;
-      const ctx = canvas.getContext('2d');
-      this._drawNodeSprite(ctx, node, color);
-      const tex = new T.CanvasTexture(canvas);
-      const mat = new T.SpriteMaterial({
-        map: tex,
-        transparent: true,
-        depthTest: true,
-        depthWrite: false,
-        opacity: 0.95
-      });
-      const sprite = new T.Sprite(mat);
-      sprite.position.set(pos.x, pos.y, pos.z);
-      sprite.scale.set(1.2, 1.2, 1);
-      sprite.userData.nodeId = node.id;
+      // Create sprite with canvas texture
+      const sprite = this._makeNodeSprite(node, color, pos);
 
       // Selection ring
-      const ringGeo = new T.RingGeometry(0.7, 0.85, 32);
-      const ringMat = new T.MeshBasicMaterial({
-        color: 0x88bbff,
-        side: T.DoubleSide,
-        transparent: true,
-        opacity: 0,
-        depthWrite: false,
-        blending: T.AdditiveBlending
-      });
-      const ring = new T.Mesh(ringGeo, ringMat);
-      ring.position.set(pos.x, pos.y, pos.z);
-      ring.lookAt(0, 0, 0); // face outward
+      const ring = this._makeRing(color, pos);
 
       this.scene.add(sprite);
       this.scene.add(ring);
-      this.nodeMeshes.set(node.id, { mesh: sprite, ring, canvas, ctx, color });
+      this.nodeMeshes.set(node.id, { sprite, ring });
     });
   }
 
-  _drawNodeSprite(ctx, node, color) {
-    const w = 128, h = 128;
-    const cx = w / 2, cy = h / 2;
-    const r = 50;
+  _makeNodeSprite(node, color, pos) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 160;
+    canvas.height = 160;
+    const ctx = canvas.getContext('2d');
+    this._drawSprite(ctx, node, color);
 
-    // Glow
-    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r + 8);
+    const tex = new THREE.CanvasTexture(canvas);
+    const mat = new THREE.SpriteMaterial({
+      map: tex, transparent: true, depthTest: true, depthWrite: false, opacity: 0.95
+    });
+    const sprite = new THREE.Sprite(mat);
+    sprite.position.set(pos.x, pos.y, pos.z);
+    sprite.scale.set(1.5, 1.5, 1);
+    sprite.userData.nodeId = node.id;
+    sprite.userData.isNode = true;
+    return sprite;
+  }
+
+  _drawSprite(ctx, node, color) {
+    const w = 160, h = 160;
+    const cx = w / 2, cy = h / 2;
+    const r = 52;
     const c = '#' + color.toString(16).padStart(6, '0');
-    grad.addColorStop(0, c + '80');
-    grad.addColorStop(0.5, c + '40');
+
+    // Outer glow
+    const grad = ctx.createRadialGradient(cx, cy, r - 4, cx, cy, r + 12);
+    grad.addColorStop(0, c + '60');
+    grad.addColorStop(0.5, c + '20');
     grad.addColorStop(1, c + '00');
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.arc(cx, cy, r + 8, 0, Math.PI * 2);
+    ctx.arc(cx, cy, r + 12, 0, Math.PI * 2);
     ctx.fill();
 
-    // Main circle
+    // Body
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = '#0a0e1a';
+    ctx.fillStyle = '#080c18';
     ctx.fill();
     ctx.strokeStyle = c;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.stroke();
 
+    // Inner glow
+    const ig = ctx.createRadialGradient(cx-10, cy-10, 0, cx, cy, r);
+    ig.addColorStop(0, 'rgba(255,255,255,0.06)');
+    ig.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = ig;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+
     // Icon
-    ctx.fillStyle = '#d0e0ff';
-    ctx.font = 'bold 36px sans-serif';
+    ctx.fillStyle = '#d0e4ff';
+    ctx.font = 'bold 40px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(node.meta?.icon || '?', cx, cy - 8);
+    ctx.fillText(node.meta?.icon || '?', cx, cy - 14);
 
-    // Label
-    ctx.fillStyle = '#b0c8ff';
+    // Title
+    ctx.fillStyle = '#a0b8e0';
     ctx.font = 'bold 18px sans-serif';
-    ctx.fillText(node.title.substring(0, 8), cx, cy + 40);
+    ctx.fillText(node.title.substring(0, 10), cx, cy + 44);
+
+    // Important star
+    if (node.important) {
+      ctx.fillStyle = '#ffd700';
+      ctx.font = '16px sans-serif';
+      ctx.fillText('★', cx + r - 12, cy - r + 12);
+    }
+  }
+
+  _makeRing(color, pos) {
+    const geo = new THREE.RingGeometry(0.75, 0.9, 32);
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0x88bbff, side: THREE.DoubleSide,
+      transparent: true, opacity: 0,
+      depthWrite: false, blending: THREE.AdditiveBlending
+    });
+    const ring = new THREE.Mesh(geo, mat);
+    ring.position.set(pos.x, pos.y, pos.z);
+    return ring;
   }
 
   _rebuildEdges() {
-    const T = this.THREE;
     for (const [id, obj] of this.edgeLines) {
       this.scene.remove(obj.line);
       if (obj.glow) this.scene.remove(obj.glow);
@@ -231,52 +254,90 @@ export class Scene3D {
     this.edgeLines.clear();
 
     this.graph.edges.forEach(edge => {
-      const src = this._getMeshPos(edge.sourceId);
-      const tgt = this._getMeshPos(edge.targetId);
-      if (!src || !tgt) return;
+      const srcPos = this.getNodeWorldPos(edge.sourceId);
+      const tgtPos = this.getNodeWorldPos(edge.targetId);
+      if (!srcPos || !tgtPos) return;
 
-      const mid = {
-        x: (src.x + tgt.x) / 2,
-        y: (src.y + tgt.y) / 2,
-        z: (src.z + tgt.z) / 2
-      };
-      const ml = Math.sqrt(mid.x*mid.x + mid.y*mid.y + mid.z*mid.z);
-      const pull = 1.4;
-      const cpx = ml > 0 ? mid.x / ml * SPHERE_RADIUS * pull : 0;
-      const cpy = ml > 0 ? mid.y / ml * SPHERE_RADIUS * pull : 0;
-      const cpz = ml > 0 ? mid.z / ml * SPHERE_RADIUS * pull : 0;
-
-      const curve = new T.QuadraticBezierCurve3(
-        new T.Vector3(src.x, src.y, src.z),
-        new T.Vector3(cpx, cpy, cpz),
-        new T.Vector3(tgt.x, tgt.y, tgt.z)
+      const mid = new THREE.Vector3(
+        (srcPos.x + tgtPos.x) / 2,
+        (srcPos.y + tgtPos.y) / 2,
+        (srcPos.z + tgtPos.z) / 2
       );
-      const points = curve.getPoints(24);
-      const geo = new T.BufferGeometry().setFromPoints(points);
+      const ml = mid.length();
+      const pull = 1.4;
+      const cp = ml > 0 ? mid.clone().multiplyScalar(SPHERE_RADIUS * pull / ml) : new THREE.Vector3(0, 0, SPHERE_RADIUS * pull);
+
+      const curve = new THREE.QuadraticBezierCurve3(srcPos, cp, tgtPos);
+      const points = curve.getPoints(20);
+      const geo = new THREE.BufferGeometry().setFromPoints(points);
 
       const srcNode = this.graph.getNode(edge.sourceId);
-      const edgeColor = srcNode?.important ? 0xff8844 : 0x4488ff;
+      const ec = srcNode?.important ? 0xff8844 : 0x4488ff;
 
-      const mat = new T.LineBasicMaterial({
-        color: edgeColor, transparent: true, opacity: 0.5
-      });
-      const line = new T.Line(geo, mat);
-
-      const glowMat = new T.LineBasicMaterial({
-        color: edgeColor, transparent: true, opacity: 0.15,
-        blending: T.AdditiveBlending
-      });
-      const glow = new T.Line(geo.clone(), glowMat);
-
+      const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: ec, transparent: true, opacity: 0.5 }));
+      const glow = new THREE.Line(geo.clone(), new THREE.LineBasicMaterial({ color: ec, transparent: true, opacity: 0.15, blending: THREE.AdditiveBlending }));
       this.scene.add(line);
       this.scene.add(glow);
       this.edgeLines.set(edge.id, { line, glow });
     });
   }
 
-  _getMeshPos(nodeId) {
-    const obj = this.nodeMeshes.get(nodeId);
-    return obj ? obj.mesh.position : null;
+  // ─── Edge dragging preview ────────────────────────────────
+  startEdgeDrag(sourceId) {
+    this.isDraggingEdge = true;
+    this.edgeSourceId = sourceId;
+    // Create preview line
+    const geo = new THREE.BufferGeometry();
+    const positions = new Float32Array(6);
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    this.edgePreviewLine = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x88bbff, transparent: true, opacity: 0.6 }));
+    this.scene.add(this.edgePreviewLine);
+  }
+
+  updateEdgeDrag(clientX, clientY) {
+    if (!this.edgePreviewLine) return;
+    const srcPos = this.getNodeWorldPos(this.edgeSourceId);
+    if (!srcPos) return;
+    // Project mouse to 3D
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    const y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(new THREE.Vector2(x, y), this.camera);
+    // Project onto sphere surface
+    const dir = raycaster.ray.direction.clone().normalize();
+    const origin = raycaster.ray.origin.clone();
+    // Line-sphere intersection: find point on sphere at SPHERE_RADIUS
+    const oc = origin.clone();
+    const a = dir.dot(dir);
+    const b = 2 * oc.dot(dir);
+    const c = oc.dot(oc) - SPHERE_RADIUS * SPHERE_RADIUS;
+    const disc = b * b - 4 * a * c;
+    let targetPos;
+    if (disc >= 0) {
+      const t = (-b - Math.sqrt(disc)) / (2 * a);
+      targetPos = origin.clone().add(dir.clone().multiplyScalar(t));
+    } else {
+      targetPos = origin.clone().add(dir.clone().multiplyScalar(SPHERE_RADIUS * 2));
+    }
+
+    const positions = this.edgePreviewLine.geometry.attributes.position.array;
+    positions[0] = srcPos.x; positions[1] = srcPos.y; positions[2] = srcPos.z;
+    positions[3] = targetPos.x; positions[4] = targetPos.y; positions[5] = targetPos.z;
+    this.edgePreviewLine.geometry.attributes.position.needsUpdate = true;
+  }
+
+  endEdgeDrag(targetNodeId) {
+    if (this.edgePreviewLine) {
+      this.scene.remove(this.edgePreviewLine);
+      this.edgePreviewLine = null;
+    }
+    this.isDraggingEdge = false;
+    if (targetNodeId && targetNodeId !== this.edgeSourceId) {
+      return this.graph.addEdge(this.edgeSourceId, targetNodeId);
+    }
+    this.edgeSourceId = null;
+    return null;
   }
 
   // ─── Camera ────────────────────────────────────────────────
@@ -290,25 +351,21 @@ export class Scene3D {
 
   // ─── Animation ─────────────────────────────────────────────
   _animate() {
-    if (this._animId) cancelAnimationFrame(this._animId);
     const loop = () => {
       const time = Date.now() * 0.001;
 
       // Auto-rotate
-      if (this.autoRotate && !this._isDragging) {
+      if (this.autoRotate && !this.isDragging && !this.isDraggingEdge) {
         this._targetTheta += 0.003;
         this._phi += (Math.PI / 2 + Math.sin(time * 0.4) * 0.1 - this._phi) * 0.002;
       }
 
       // Momentum
-      if (this._isDragging) {
-        this._momentum.x *= 0.95;
-        this._momentum.y *= 0.95;
-      } else {
-        this._targetTheta += this._momentum.x;
-        this._targetPhi += this._momentum.y;
-        this._momentum.x *= 0.98;
-        this._momentum.y *= 0.98;
+      if (!this.isDragging) {
+        this._targetTheta += this.momentum.x;
+        this._targetPhi += this.momentum.y;
+        this.momentum.x *= 0.97;
+        this.momentum.y *= 0.97;
       }
 
       // Smooth camera
@@ -318,12 +375,12 @@ export class Scene3D {
       this._dist += (this._targetDist - this._dist) * 0.08;
       this._updateCam();
 
-      // Pulse rings
+      // Pulse selected ring
       const pulse = 0.5 + 0.5 * Math.sin(time * 0.6);
       for (const [id, obj] of this.nodeMeshes) {
         if (id === this.selectedNode) {
           obj.ring.material.opacity = 0.4 + pulse * 0.3;
-          obj.ring.scale.setScalar(1 + pulse * 0.05);
+          obj.ring.scale.setScalar(1 + pulse * 0.04);
         }
       }
 
@@ -340,30 +397,26 @@ export class Scene3D {
     loop();
   }
 
-  // ─── Interaction ───────────────────────────────────────────
-  getIntersection(clientX, clientY) {
-    const T = this.THREE;
+  // ─── Hit testing ───────────────────────────────────────────
+  getIntersection(clientX, clientY, filterSprite = false) {
     const rect = this.renderer.domElement.getBoundingClientRect();
     const x = ((clientX - rect.left) / rect.width) * 2 - 1;
     const y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(new THREE.Vector2(x, y), this.camera);
 
-    const raycaster = new T.Raycaster();
-    raycaster.setFromCamera(new T.Vector2(x, y), this.camera);
-
-    const sprites = [];
+    const targets = [];
     for (const [id, obj] of this.nodeMeshes) {
-      sprites.push(obj.mesh);
+      targets.push(obj.sprite);
     }
-    const hits = raycaster.intersectObjects(sprites);
+    const hits = raycaster.intersectObjects(targets);
     if (hits.length > 0) {
-      const hit = hits[0].object;
-      return hit.userData.nodeId;
+      return hits[0].object.userData.nodeId;
     }
     return null;
   }
 
   selectNode(nodeId) {
-    // Deselect old
     if (this.selectedNode) {
       const old = this.nodeMeshes.get(this.selectedNode);
       if (old) old.ring.material.opacity = 0;
@@ -372,15 +425,12 @@ export class Scene3D {
     if (nodeId) {
       const obj = this.nodeMeshes.get(nodeId);
       if (obj) obj.ring.material.opacity = 0.6;
-      if (this.onNodeSelect) this.onNodeSelect(this.graph.getNode(nodeId));
-    } else {
-      if (this.onNodeSelect) this.onNodeSelect(null);
     }
   }
 
   // ─── Resize ────────────────────────────────────────────────
   _resize() {
-    if (!this.renderer) return;
+    if (!this.renderer || !this.container) return;
     const w = this.container.clientWidth || window.innerWidth;
     const h = this.container.clientHeight || window.innerHeight;
     if (w === 0 || h === 0) return;
@@ -389,13 +439,9 @@ export class Scene3D {
     this.renderer.setSize(w, h);
   }
 
-  // ─── Disposal ─────────────────────────────────────────────
   dispose() {
     if (this._animId) cancelAnimationFrame(this._animId);
-    window.removeEventListener('resize', this._onResize);
-    if (this.renderer) {
-      this.renderer.dispose();
-      this.renderer.domElement.remove();
-    }
+    window.removeEventListener('resize', this._resizeHandler);
+    if (this.renderer) { this.renderer.dispose(); this.renderer.domElement.remove(); }
   }
 }

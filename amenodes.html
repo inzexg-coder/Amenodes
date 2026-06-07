@@ -12,24 +12,46 @@
 <div id="splashOverlay">
   <div class="spinner"></div>
   <h1>@Amenodes</h1>
-  <p>Visual Programming</p>
+  <p>Loading neural network...</p>
+  <div class="splash-actions">
+    <button class="splash-btn" id="splashNewBtn">✨ New Canvas</button>
+    <button class="splash-btn" id="splashLoadBtn">📂 Load Canvas</button>
+  </div>
 </div>
 
 <!-- App -->
 <div id="appContainer" class="hidden">
   <div id="scene-container"></div>
   
+  <!-- Top bar -->
   <div class="top-bar">
-    <div class="logo">@Amenodes</div>
-    <div class="counts" id="nodeCount">0 nodes</div>
+    <div class="top-left">
+      <span class="logo">@Amenodes</span>
+      <span class="dirty-dot" id="dirtyIndicator"></span>
+    </div>
+    <div class="top-center">
+      <span class="count" id="nodeCount">0</span>
+      <span class="count-sep">·</span>
+      <span class="count" id="edgeCount">0</span>
+    </div>
+    <div class="top-right">
+      <button class="top-btn" id="undoBtn" title="Undo">↩</button>
+      <button class="top-btn" id="redoBtn" title="Redo">↪</button>
+      <button class="top-btn" id="menuBtn" title="Menu">⋯</button>
+    </div>
   </div>
   
+  <!-- FAB -->
   <button id="fabBtn">+</button>
 </div>
 
 <!-- Bottom Sheet -->
-<div class="sheet-overlay" id="sheetOverlay"></div>
+<div class="sheet-overlay"></div>
 <div id="bottomSheet"><div class="sheet-body"></div></div>
+<div id="toast"></div>
+
+<!-- File input -->
+<input type="file" id="fileInput" accept=".amnk" style="display:none">
 
 <script type="module" src="./src/main.js"></script>
 </body>

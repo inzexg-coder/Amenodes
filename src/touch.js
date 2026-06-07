@@ -1,113 +1,116 @@
-// ─── Touch Controls ──────────────────────────────────────────
 export class TouchControls {
-  constructor(scene) {
+  constructor(scene, app) {
     this.scene = scene;
-    this._onDown = (e) => this._down(e);
-    this._onMove = (e) => this._move(e);
-    this._onUp = (e) => this._up(e);
-    this._onWheel = (e) => this._wheel(e);
-
-    this._touches = [];
-    this._startDist = 0;
+    this.app = app;
+    this.longPressTimer = null;
     this._moved = false;
+    this._pinned = false;
 
     const el = scene.container;
-    el.addEventListener('pointerdown', this._onDown);
-    window.addEventListener('pointermove', this._onMove);
-    window.addEventListener('pointerup', this._onUp);
-    window.addEventListener('pointercancel', this._onUp);
-    el.addEventListener('wheel', this._onWheel, { passive: false });
+    el.addEventListener('pointerdown', (e) => this._down(e));
+    window.addEventListener('pointermove', (e) => this._move(e));
+    window.addEventListener('pointerup', (e) => this._up(e));
+    window.addEventListener('pointercancel', (e) => this._up(e));
+    el.addEventListener('wheel', (e) => this._wheel(e), { passive: false });
   }
 
   _down(e) {
-    this._touches = [{ x: e.clientX, y: e.clientY }];
-    this._startDist = 0;
     this._moved = false;
-    this.scene._touchStart = { x: e.clientX, y: e.clientY, t: Date.now() };
-    this.scene._prevTouch = { x: e.clientX, y: e.clientY };
-    this.scene._isDragging = false;
+    this.scene.touchStart = { x: e.clientX, y: e.clientY, t: Date.now() };
+    this.scene.prevPointer = { x: e.clientX, y: e.clientY };
     this.scene.autoRotate = false;
 
-    // Check for node tap
+    // Check for node hit
     const nodeId = this.scene.getIntersection(e.clientX, e.clientY);
     if (nodeId !== null) {
       this.scene.selectNode(nodeId);
-      this._touches = []; // don't rotate
+      this._pinned = true;
+      // Long press for context menu
+      this.longPressTimer = setTimeout(() => {
+        if (!this._moved && this.app) {
+          this.app.showContextMenu(nodeId);
+        }
+      }, 600);
       return;
     }
-    this.scene._isDragging = true;
+
+    // Check for handle hit (edge corner areas)
+    // For now, all sprite edges can be start of a connection
+    this.scene.selectNode(null);
+    this._pinned = false;
+    this.scene.isDragging = true;
   }
 
   _move(e) {
-    if (!this._touches.length) return;
-
-    const dt = Date.now() - this.scene._touchStart.t;
-
-    // Multi-touch (pinch)
-    if (e.touches && e.touches.length >= 2) {
-      const t = e.touches;
-      const dx = t[0].clientX - t[1].clientX;
-      const dy = t[0].clientY - t[1].clientY;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (this._startDist > 0) {
-        const scale = this._startDist / dist;
-        this.scene._targetDist = Math.max(4, Math.min(30, this.scene._targetDist * scale));
-      }
-      this._startDist = dist;
+    const dx = e.clientX - this.scene.prevPointer.x;
+    const dy = e.clientY - this.scene.prevPointer.y;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
       this._moved = true;
+      clearTimeout(this.longPressTimer);
+
+      // If dragging from a pinned (selected) node, start edge drag
+      if (this._pinned && this.scene.selectedNode != null && !this.scene.isDraggingEdge) {
+        this.scene.startEdgeDrag(this.scene.selectedNode);
+        this.scene._isDragging = false; // stop rotation
+      }
+    }
+
+    if (this.scene.isDraggingEdge) {
+      this.scene.updateEdgeDrag(e.clientX, e.clientY);
       return;
     }
 
-    const dx = e.clientX - this.scene._prevTouch.x;
-    const dy = e.clientY - this.scene._prevTouch.y;
-    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) this._moved = true;
-
-    if (this.scene._isDragging) {
+    if (this.scene.isDragging && !this._pinned) {
       this.scene._targetTheta -= dx * 0.008;
       this.scene._targetPhi = Math.max(0.1, Math.min(Math.PI - 0.1,
         this.scene._targetPhi + dy * 0.008));
-      this.scene._momentum.x = dx * 0.001;
-      this.scene._momentum.y = dy * 0.001;
+      this.scene.momentum.x = dx * 0.001;
+      this.scene.momentum.y = dy * 0.001;
     }
 
-    this.scene._prevTouch = { x: e.clientX, y: e.clientY };
+    this.scene.prevPointer = { x: e.clientX, y: e.clientY };
   }
 
   _up(e) {
-    // Tap on empty space
-    if (!this._moved && this._touches.length) {
-      const dt = Date.now() - this.scene._touchStart.t;
+    clearTimeout(this.longPressTimer);
+
+    if (this.scene.isDraggingEdge) {
+      const targetId = this.scene.getIntersection(e.clientX, e.clientY);
+      const edge = this.scene.endEdgeDrag(targetId);
+      if (edge && this.app) {
+        this.app.onEdgeCreated(edge);
+      } else if (this.app && targetId) {
+        this.app.showToast('Cannot connect these nodes');
+      }
+      this._pinned = false;
+      return;
+    }
+
+    // Short tap on empty space = deselect
+    if (!this._moved && !this._pinned) {
+      const dt = Date.now() - this.scene.touchStart.t;
       if (dt < 300) {
-        // Check if not tapping a node
         const nodeId = this.scene.getIntersection(e.clientX, e.clientY);
         if (nodeId === null) {
           this.scene.selectNode(null);
-          return;
+          if (this.app) this.app.onNodeDeselected();
         }
       }
     }
 
-    this._touches = [];
-    this._startDist = 0;
-    this.scene._isDragging = false;
+    this.scene.isDragging = false;
+    this._pinned = false;
     setTimeout(() => {
-      if (!this.scene._isDragging) this.scene.autoRotate = true;
-    }, 2500);
+      if (!this.scene.isDragging && !this.scene.isDraggingEdge) {
+        this.scene.autoRotate = true;
+      }
+    }, 3000);
   }
 
   _wheel(e) {
     e.preventDefault();
     this.scene._targetDist = Math.max(4, Math.min(30, this.scene._targetDist + e.deltaY * 0.02));
     this.scene.autoRotate = false;
-    setTimeout(() => { if (!this.scene._isDragging) this.scene.autoRotate = true; }, 2000);
-  }
-
-  dispose() {
-    const el = this.scene.container;
-    el.removeEventListener('pointerdown', this._onDown);
-    window.removeEventListener('pointermove', this._onMove);
-    window.removeEventListener('pointerup', this._onUp);
-    window.removeEventListener('pointercancel', this._onUp);
-    el.removeEventListener('wheel', this._onWheel);
+    setTimeout(() => { if (!this.scene.isDragging) this.scene.autoRotate = true; }, 2000);
   }
 }

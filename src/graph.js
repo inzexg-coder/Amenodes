@@ -1,7 +1,6 @@
-// Simple ID generator
 let _nextId = 1;
-function nextId() { return _nextId++; }
-function resetIds() { _nextId = 1; }
+export function nextId() { return _nextId++; }
+export function resetIds() { _nextId = 1; }
 
 // ─── Node Types ──────────────────────────────────────────────
 export const NODE_TYPES = {
@@ -10,58 +9,80 @@ export const NODE_TYPES = {
     color: 0x44aaff, dataType: 'num',
     canInput: false, canOutput: true,
     allowedInputs: [],
-    create: (opts) => ({ value: opts?.value ?? 0 })
+    create: (opts) => ({ value: opts?.value ?? 0 }),
+    desc: 'A single numeric value'
   },
   constant: {
     type: 'constant', label: 'Constant', icon: 'π',
     color: 0xaa66ff, dataType: 'num',
     canInput: false, canOutput: true,
     allowedInputs: [],
-    create: (opts) => ({ value: opts?.value ?? 3.14159, label: opts?.label ?? 'pi' })
+    create: (opts) => ({ value: opts?.value ?? 3.14159, label: opts?.label ?? 'pi' }),
+    desc: 'A named constant value'
   },
   group: {
     type: 'group', label: 'Group', icon: '{}',
     color: 0x66cc88, dataType: 'array',
     canInput: false, canOutput: true,
     allowedInputs: [],
-    create: (opts) => ({ rows: opts?.rows ?? [{ name: 'a', value: 0 }] })
+    create: (opts) => ({ rows: opts?.rows ?? [{ name: 'a', value: 0 }] }),
+    desc: 'Collection of named values'
   },
   calc: {
     type: 'calc', label: 'Calc', icon: '∑',
     color: 0xff8844, dataType: 'uncert',
     canInput: true, canOutput: true,
     allowedInputs: ['num', 'array', 'uncert'],
-    create: (opts) => ({ mode: opts?.mode ?? 'sum' })
+    create: (opts) => ({ mode: opts?.mode ?? 'sum' }),
+    desc: 'Mathematical operation'
   },
   output: {
     type: 'output', label: 'Output', icon: '📊',
     color: 0xff4488, dataType: 'auto',
     canInput: true, canOutput: false,
     allowedInputs: ['num', 'array', 'uncert', 'list'],
-    create: (opts) => ({})
+    create: (opts) => ({}),
+    desc: 'Display computed values'
   },
   map: {
     type: 'map', label: 'Map', icon: '🔄',
     color: 0x44ddff, dataType: 'list',
     canInput: true, canOutput: true,
     allowedInputs: ['num', 'array', 'uncert', 'list'],
-    create: (opts) => ({ mode: opts?.mode ?? 'linear', params: opts?.params ?? {} })
+    create: (opts) => ({ mode: opts?.mode ?? 'linear', params: opts?.params ?? {} }),
+    desc: 'Data transformation'
   },
   mean: {
     type: 'mean', label: 'Mean', icon: 'x̄',
     color: 0xffcc44, dataType: 'num',
     canInput: true, canOutput: true,
     allowedInputs: ['num', 'array', 'list', 'uncert'],
-    create: (opts) => ({})
+    create: (opts) => ({}),
+    desc: 'Arithmetic mean'
   },
   sem: {
     type: 'sem', label: 'SEM', icon: 'σ',
     color: 0x44ffaa, dataType: 'num',
     canInput: true, canOutput: true,
     allowedInputs: ['num', 'array', 'list'],
-    create: (opts) => ({})
+    create: (opts) => ({}),
+    desc: 'Standard error of mean'
   }
 };
+
+export function getTypeDisplay(typeKey) {
+  const t = NODE_TYPES[typeKey];
+  if (t) return t.label;
+  return typeKey.charAt(0).toUpperCase() + typeKey.slice(1);
+}
+
+export function canTypesConnect(sourceType, targetType) {
+  const tgt = NODE_TYPES[targetType];
+  if (!tgt) return false;
+  if (!tgt.canInput) return false;
+  if (tgt.allowedInputs.length === 0) return true;
+  return tgt.allowedInputs.includes(sourceType);
+}
 
 // ─── Node ────────────────────────────────────────────────────
 export class Node {
@@ -71,7 +92,6 @@ export class Node {
     this.title = opts.title || NODE_TYPES[type]?.label || type;
     this.data = NODE_TYPES[type]?.create(opts) || {};
     this.important = false;
-    // Sphere position (phi, theta on sphere, radius from center)
     this.phi = opts.phi ?? 0;
     this.theta = opts.theta ?? 0;
   }
@@ -92,16 +112,58 @@ export class Node {
 
 // ─── Edge ────────────────────────────────────────────────────
 export class Edge {
-  constructor(sourceId, targetId, port = 'main') {
+  constructor(sourceId, targetId, sourcePort = 'main') {
     this.id = nextId();
     this.sourceId = sourceId;
     this.targetId = targetId;
-    this.sourcePort = port;
+    this.sourcePort = sourcePort;
   }
 
   toJSON() {
     return { id: this.id, sourceId: this.sourceId, targetId: this.targetId, sourcePort: this.sourcePort };
   }
+}
+
+// ─── History (Undo/Redo) ────────────────────────────────────
+export class History {
+  constructor(graph) {
+    this.graph = graph;
+    this.stack = [];
+    this.index = -1;
+    this.maxSize = 50;
+  }
+
+  save() {
+    const state = JSON.stringify(this.graph.toJSON());
+    // Remove redo states
+    this.stack = this.stack.slice(0, this.index + 1);
+    this.stack.push(state);
+    if (this.stack.length > this.maxSize) this.stack.shift();
+    this.index = this.stack.length - 1;
+  }
+
+  undo() {
+    if (this.index <= 0) return false;
+    this.index--;
+    this._restore();
+    return true;
+  }
+
+  redo() {
+    if (this.index >= this.stack.length - 1) return false;
+    this.index++;
+    this._restore();
+    return true;
+  }
+
+  _restore() {
+    if (this.index >= 0 && this.index < this.stack.length) {
+      this.graph.loadJSON(JSON.parse(this.stack[this.index]));
+    }
+  }
+
+  canUndo() { return this.index > 0; }
+  canRedo() { return this.index < this.stack.length - 1; }
 }
 
 // ─── Graph ───────────────────────────────────────────────────
@@ -111,14 +173,29 @@ export class Graph {
     this.edges = [];
     this._nodeMap = new Map();
     this._edgeMap = new Map();
+    this.isDirty = false;
+    this._dirtyCbs = [];
     this.onChange = null;
+  }
+
+  onDirtyChange(cb) {
+    this._dirtyCbs.push(cb);
+    return () => { this._dirtyCbs = this._dirtyCbs.filter(c => c !== cb); };
+  }
+
+  _setDirty(v = true) {
+    if (this.isDirty !== v) {
+      this.isDirty = v;
+      this._dirtyCbs.forEach(cb => cb(v));
+    }
   }
 
   addNode(type, opts = {}) {
     const node = new Node(type, opts);
     this.nodes.push(node);
     this._nodeMap.set(node.id, node);
-    this._changed();
+    this._setDirty(true);
+    if (this.onChange) this.onChange();
     return node;
   }
 
@@ -130,42 +207,47 @@ export class Graph {
     this.edges = this.edges.filter(e => e.sourceId !== id && e.targetId !== id);
     this.edges.forEach(e => this._edgeMap.delete(e.id));
     this._rebuildEdgeMap();
-    this._changed();
+    this._setDirty(true);
+    if (this.onChange) this.onChange();
   }
 
   getNode(id) { return this._nodeMap.get(id); }
 
-  canConnect(sourceId, targetId, port = 'main') {
+  canConnect(sourceId, targetId) {
     const src = this._nodeMap.get(sourceId);
     const tgt = this._nodeMap.get(targetId);
-    if (!src || !tgt) return false;
-    if (src.id === tgt.id) return false;
-    if (!tgt.meta.canInput) return false;
-    if (!src.meta.canOutput) return false;
-    // Check allowedInputs
-    if (tgt.meta.allowedInputs.length > 0) {
-      if (!tgt.meta.allowedInputs.includes(src.meta.dataType)) return false;
+    if (!src || !tgt) return { ok: false, msg: 'Node not found' };
+    if (src.id === tgt.id) return { ok: false, msg: 'Cannot connect to self' };
+    if (!tgt.meta?.canInput) return { ok: false, msg: 'Target cannot accept connections' };
+    if (!src.meta?.canOutput) return { ok: false, msg: 'Source has no output' };
+    if (tgt.meta.allowedInputs.length > 0 && !tgt.meta.allowedInputs.includes(src.meta.dataType)) {
+      return { ok: false, msg: `Cannot connect ${src.meta.label} → ${tgt.meta.label}` };
     }
-    // Check for existing edge
-    if (this.edges.some(e => e.sourceId === sourceId && e.targetId === targetId)) return false;
-    // Check for cycles
-    if (this._wouldCycle(sourceId, targetId)) return false;
-    return true;
+    if (this.edges.some(e => e.sourceId === sourceId && e.targetId === targetId)) {
+      return { ok: false, msg: 'Already connected' };
+    }
+    if (this._wouldCycle(sourceId, targetId)) {
+      return { ok: false, msg: 'Would create a cycle' };
+    }
+    return { ok: true };
   }
 
-  addEdge(sourceId, targetId, port = 'main') {
-    if (!this.canConnect(sourceId, targetId, port)) return null;
-    const edge = new Edge(sourceId, targetId, port);
+  addEdge(sourceId, targetId, sourcePort = 'main') {
+    const check = this.canConnect(sourceId, targetId);
+    if (!check.ok) return null;
+    const edge = new Edge(sourceId, targetId, sourcePort);
     this.edges.push(edge);
     this._edgeMap.set(edge.id, edge);
-    this._changed();
+    this._setDirty(true);
+    if (this.onChange) this.onChange();
     return edge;
   }
 
   removeEdge(id) {
     this.edges = this.edges.filter(e => e.id !== id);
     this._edgeMap.delete(id);
-    this._changed();
+    this._setDirty(true);
+    if (this.onChange) this.onChange();
   }
 
   getIncoming(id) { return this.edges.filter(e => e.targetId === id); }
@@ -184,6 +266,10 @@ export class Graph {
     return values;
   }
 
+  getNodeValue(node) {
+    return this._getNodeValue(node);
+  }
+
   _getNodeValue(node) {
     switch (node.type) {
       case 'number': return [node.data.value ?? 0];
@@ -193,7 +279,7 @@ export class Graph {
       case 'output': return this.getMergedInput(node.id);
       case 'mean': return this._meanValue(node);
       case 'sem': return this._semValue(node);
-      case 'map': return this._mapValue(node);
+      case 'map': return this.getMergedInput(node.id);
       default: return [];
     }
   }
@@ -228,10 +314,6 @@ export class Graph {
     return [stdDev / Math.sqrt(inputs.length)];
   }
 
-  _mapValue(node) {
-    return this.getMergedInput(node.id);
-  }
-
   _wouldCycle(sourceId, targetId) {
     if (sourceId === targetId) return true;
     const visited = new Set();
@@ -252,8 +334,12 @@ export class Graph {
     this.edges.forEach(e => this._edgeMap.set(e.id, e));
   }
 
-  _changed() {
-    if (this.onChange) this.onChange();
+  reconcileIds() {
+    // Fix gaps in node/edge IDs
+    let maxId = 0;
+    for (const n of this.nodes) maxId = Math.max(maxId, n.id);
+    for (const e of this.edges) maxId = Math.max(maxId, e.id);
+    _nextId = maxId + 1;
   }
 
   toJSON() {
@@ -281,19 +367,62 @@ export class Graph {
       this.edges.push(edge);
       this._edgeMap.set(edge.id, edge);
     }
-    this._changed();
+    this._setDirty(false);
+    if (this.onChange) this.onChange();
   }
 
-  save() {
-    try { localStorage.setItem('amenodes_graph', JSON.stringify(this.toJSON())); }
-    catch(e) { console.warn('Save failed:', e); }
+  clear() {
+    this.nodes = [];
+    this.edges = [];
+    this._nodeMap.clear();
+    this._edgeMap.clear();
+    _nextId = 1;
+    this._setDirty(true);
+    if (this.onChange) this.onChange();
   }
 
-  load() {
+  exportJSON() {
+    return this.toJSON();
+  }
+
+  exportToFile() {
+    const json = JSON.stringify(this.exportJSON(), null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `amenodes-${Date.now()}.amnk`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  importFromFile(file) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          this.loadJSON(data);
+          resolve(true);
+        } catch (_) { resolve(false); }
+      };
+      reader.onerror = () => resolve(false);
+      reader.readAsText(file);
+    });
+  }
+
+  saveToStorage() {
+    try {
+      localStorage.setItem('amenodes_graph', JSON.stringify(this.toJSON()));
+      this._setDirty(false);
+    } catch (e) { console.warn('Save failed:', e); }
+  }
+
+  loadFromStorage() {
     try {
       const raw = localStorage.getItem('amenodes_graph');
       if (raw) { this.loadJSON(JSON.parse(raw)); return true; }
-    } catch(e) { console.warn('Load failed:', e); }
+    } catch (e) { console.warn('Load failed:', e); }
     return false;
   }
 }
