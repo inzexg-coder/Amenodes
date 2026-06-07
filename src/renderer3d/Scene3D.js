@@ -196,10 +196,11 @@ export class Scene3D {
   }
 
   _getCardColor(type) {
+    // Consistent neon palette: purple-magenta-cyan range
     var map = {
-      number: '#b080ff', constant: '#9060ff', calc: '#e040a0',
-      mean: '#d040b0', sem: '#c040c0', output: '#4090ff',
-      map: '#40d090', group: '#30b080'
+      number: '#b080ff', constant: '#a070f0', calc: '#c070e0',
+      mean: '#b060d0', sem: '#a060e0', output: '#7090ff',
+      map: '#50a0ff', group: '#60b0f0'
     };
     return map[type] || '#8060c0';
   }
@@ -224,90 +225,90 @@ export class Scene3D {
     var ctx = c.getContext('2d');
     var w = 400, h = 240, r = 16;
 
-    // Parse hex to rgb
     var cr = parseInt(hexColor.slice(1,3),16);
     var cg = parseInt(hexColor.slice(3,5),16);
     var cb = parseInt(hexColor.slice(5,7),16);
 
-    // Shadow
-    ctx.shadowColor = 'rgba('+cr+','+cg+','+cb+',0.5)';
-    ctx.shadowBlur = 20;
-    ctx.shadowOffsetY = 3;
-
-    // Card background (dark with color tint)
+    // Dark background with slight tint
     this._drawRoundedRect(ctx, 0, 0, w, h, r);
     var grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, 'rgba('+cr+','+cg+','+cb+',0.60)');
-    grad.addColorStop(0.3, 'rgba('+cr+','+cg+','+cb+',0.25)');
-    grad.addColorStop(0.6, 'rgba(12,8,28,0.95)');
-    grad.addColorStop(1, 'rgba(8,6,18,0.98)');
+    grad.addColorStop(0, 'rgba('+cr+','+cg+','+cb+',0.12)');
+    grad.addColorStop(0.2, 'rgba('+cr+','+cg+','+cb+',0.05)');
+    grad.addColorStop(0.5, 'rgba(6,4,14,0.95)');
+    grad.addColorStop(1, 'rgba(4,2,10,0.98)');
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // Border
+    // Outer neon glow
+    ctx.shadowColor = hexColor;
+    ctx.shadowBlur = 35;
+    ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.1)';
+    ctx.lineWidth = 1;
+    this._drawRoundedRect(ctx, 1, 1, w-2, h-2, r-1);
+    ctx.stroke();
+    
+    // Inner crisp neon border
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.5)';
+    ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.85)';
     ctx.lineWidth = 2;
-    this._drawRoundedRect(ctx, 0, 0, w, h, r);
+    this._drawRoundedRect(ctx, 1, 1, w-2, h-2, r-1);
     ctx.stroke();
 
-    // Top accent line
-    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.6)';
-    ctx.fillRect(r, 0, w - r*2, 3);
-
-    // Icons
-    var icons = { number:'✦', constant:'◆', calc:'⚡', mean:'μ', sem:'σ', output:'◎', map:'⊞', group:'⊟' };
-    var icon = icons[node.type] || '◈';
+    // Top edge glow
+    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.35)';
+    ctx.fillRect(r+2, 1, w - r*2 - 4, 2);
 
     // Icon
-    ctx.font = 'bold 32px monospace';
+    var icons = { number:'\u2726', constant:'\u25C6', calc:'\u26A1', mean:'\u03BC', sem:'\u03C3', output:'\u25CE', map:'\u229E', group:'\u229F' };
+    var icon = icons[node.type] || '\u25C8';
+    ctx.font = 'bold 34px monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillStyle = hexColor;
     ctx.shadowColor = hexColor;
-    ctx.shadowBlur = 12;
-    ctx.fillText(icon, 16, 16);
+    ctx.shadowBlur = 18;
+    ctx.fillText(icon, 18, 18);
     ctx.shadowBlur = 0;
 
-    // Type badge
+    // Type label
     ctx.font = 'bold 11px monospace';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
-    ctx.fillStyle = 'rgba(200,180,255,0.4)';
-    ctx.fillText(node.type.toUpperCase(), w - 16, 18);
+    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.5)';
+    ctx.fillText(node.type.toUpperCase(), w - 18, 20);
 
-    // Title
+    // Title - crisp white
     ctx.font = 'bold 24px monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#e0d0ff';
-    ctx.shadowColor = 'rgba(0,0,0,0.6)';
-    ctx.shadowBlur = 6;
-    var ttl = (node.title || node.type || 'Node').slice(0, 18);
-    ctx.fillText(ttl, 16, 80);
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 4;
+    var ttl = (node.title || node.type || 'Node').slice(0, 16);
+    ctx.fillText(ttl, 18, 90);
 
     // Value
     ctx.shadowBlur = 0;
     ctx.font = '18px monospace';
-    ctx.fillStyle = 'rgba(180,160,240,0.7)';
-    var valStr = '—';
+    ctx.fillStyle = 'rgba(200,180,255,0.7)';
+    var valStr = '\u2014';
     try {
       var v = node.getValue();
       if (v && v.length > 0) {
-        valStr = v.map(function(x) { return typeof x === 'number' ? x.toFixed(2) : x; }).join(', ').slice(0, 24);
+        valStr = v.map(function(x) { return typeof x === 'number' ? x.toFixed(3) : x; }).join(', ').slice(0, 22);
       }
     } catch(e) {}
-    ctx.fillText('= ' + valStr, 16, 130);
+    ctx.fillText('= ' + valStr, 18, 135);
 
     // Bottom accent
-    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.2)';
-    ctx.fillRect(16, h - 4, w - 32, 1);
+    ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+',0.25)';
+    ctx.fillRect(18, h - 3, w - 36, 1);
 
-    // Important glow
+    // Important: stronger glow
     if (node.important) {
       ctx.shadowColor = hexColor;
-      ctx.shadowBlur = 40;
-      ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.7)';
+      ctx.shadowBlur = 55;
+      ctx.strokeStyle = 'rgba('+cr+','+cg+','+cb+',0.95)';
       ctx.lineWidth = 3;
       this._drawRoundedRect(ctx, 0, 0, w, h, r);
       ctx.stroke();
@@ -389,8 +390,8 @@ export class Scene3D {
           });
           var cSp = new THREE.Sprite(cMat);
           var span = (colN - 1) * 0.4;
-          cSp.position.set((idx - span) * 0.4, -(cardH * 0.5 + 0.1), 0);
-          cSp.scale.set(0.12, 0.35, 1);
+          cSp.position.set((idx - span) * 0.4, -(cardH * 0.5 - 0.2), 0.01);
+          cSp.scale.set(0.15, 0.40, 1);
           cSp.userData.isColumn = true;
           group.add(cSp);
         })(ci);
@@ -466,48 +467,76 @@ export class Scene3D {
     if (!src || !tgt) return;
 
     var p1 = src.position, p2 = tgt.position;
-    var mid = { x: (p1.x+p2.x)/2, y: (p1.y+p2.y)/2, z: (p1.z+p2.z)/2 };
-    var ctrl = { x: mid.x + (Math.random()-0.5)*0.5, y: mid.y + (Math.random()-0.5)*0.5, z: mid.z + (Math.random()-0.5)*0.5 };
+    var dx = p2.x - p1.x, dy = p2.y - p1.y, dz = p2.z - p1.z;
+    var dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+    // Control point offset for organic curve
+    var perpX = -dy * 0.15, perpY = dx * 0.15;
+    var ctrl = {
+      x: (p1.x+p2.x)/2 + perpX + (Math.random()-0.5)*0.3,
+      y: (p1.y+p2.y)/2 + perpY + (Math.random()-0.5)*0.3,
+      z: (p1.z+p2.z)/2 + (Math.random()-0.5)*0.3
+    };
 
     var curve = new THREE.QuadraticBezierCurve3(
       new THREE.Vector3(p1.x, p1.y, p1.z),
       new THREE.Vector3(ctrl.x, ctrl.y, ctrl.z),
       new THREE.Vector3(p2.x, p2.y, p2.z)
     );
-    var pts = curve.getPoints(16);
+    var nPts = Math.max(12, Math.floor(dist * 3));
+    var pts = curve.getPoints(nPts);
     var positions = [];
     pts.forEach(function(p) { positions.push(p.x, p.y, p.z); });
 
-    var col = 0xb080ff;
-    // Glow
+    // Get source node color for edge coloring
+    var srcObj = this.nodeObjects.get(edge.sourceId);
+    var col = 0x8866cc;
+    if (srcObj && srcObj.userData && srcObj.userData.color) {
+      var sc = srcObj.userData.color;
+      col = sc.getHex();
+    }
+    
+    // Outer glow (thick, very transparent)
     var gGeo = new THREE.BufferGeometry();
     gGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    var gMat = new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.08 });
-    this.scene.add(new THREE.Line(gGeo, gMat));
+    var gMat = new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.06 });
+    var gLine = new THREE.Line(gGeo, gMat);
+    gLine.scale.set(1, 1, 1);
+    this.scene.add(gLine);
+    this.edgeGlows.set(edge.id, gLine);
 
-    // Main
+    // Middle glow
     var mGeo = new THREE.BufferGeometry();
     mGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    var mMat = new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.3 });
-    var main = new THREE.Line(mGeo, mMat);
+    var mMat = new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.12 });
+    this.scene.add(new THREE.Line(mGeo, mMat));
+
+    // Core line (thin, bright)
+    var cGeo = new THREE.BufferGeometry();
+    cGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    var cMat = new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.35 });
+    var main = new THREE.Line(cGeo, cMat);
     this.scene.add(main);
     this.edgeLines.set(edge.id, main);
 
     // Signal particle
     var pCanvas = document.createElement('canvas');
-    pCanvas.width = 12; pCanvas.height = 12;
+    pCanvas.width = 16; pCanvas.height = 16;
     var pctx = pCanvas.getContext('2d');
-    pctx.beginPath(); pctx.arc(6, 6, 4, 0, Math.PI*2);
-    pctx.fillStyle = 'rgba(255,255,255,0.9)'; pctx.fill();
+    var pGrad = pctx.createRadialGradient(8, 8, 0, 8, 8, 8);
+    pGrad.addColorStop(0, 'rgba(255,255,255,1)');
+    pGrad.addColorStop(0.3, 'rgba(255,255,255,0.6)');
+    pGrad.addColorStop(1, 'rgba(255,255,255,0)');
+    pctx.fillStyle = pGrad;
+    pctx.fillRect(0, 0, 16, 16);
     var pTex = new THREE.CanvasTexture(pCanvas);
     var pMat = new THREE.SpriteMaterial({
       map: pTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false
     });
     var pSp = new THREE.Sprite(pMat);
-    pSp.scale.set(0.08, 0.08, 1);
+    pSp.scale.set(0.12, 0.12, 1);
     pSp.userData.edgeId = edge.id;
     pSp.userData.progress = Math.random();
-    pSp.userData.speed = 0.3 + Math.random() * 0.2;
+    pSp.userData.speed = 0.2 + Math.random() * 0.15;
     pSp.userData.curve = curve;
     this.scene.add(pSp);
     if (!this.signalParticles) this.signalParticles = [];
@@ -587,9 +616,13 @@ export class Scene3D {
     if (hits.length > 0) {
       var nodeId = hits[0].object.userData.nodeId;
       if (nodeId !== undefined) this._selectNode(nodeId);
+      // Pause auto-rotation on node select
+      if (this.controls) this.controls.autoRotate = false;
       return;
     }
     this._deselectNode();
+    // Resume auto-rotation on empty space click
+    if (this.controls) this.controls.autoRotate = this.autoRotate;
   }
 
   _selectNode(nodeId) {
