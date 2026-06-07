@@ -685,14 +685,32 @@ body {
   cursor: move;
   z-index: 10;
   transition: var(--transition);
-  border: 1px solid rgba(120,90,220,0.12);
+  border: 1.5px solid rgba(120,90,220,0.2);
   animation: nodeGlow 4s ease-in-out infinite alternate;
 }
 
+.node-3d {
+  border: 1.5px solid rgba(140,100,240,0.3) !important;
+  box-shadow: 
+    var(--node-shadow), 
+    0 0 15px rgba(100,70,220,0.15),
+    0 0 30px rgba(80,50,200,0.08),
+    inset 0 0 15px rgba(100,70,220,0.05) !important;
+}
+
 @keyframes nodeGlow {
-  0% { box-shadow: var(--node-shadow), 0 0 15px rgba(80,60,200,0.05); border-color: rgba(120,90,220,0.1); }
-  50% { box-shadow: var(--node-shadow), 0 0 35px rgba(100,70,220,0.12); border-color: rgba(140,100,240,0.2); }
-  100% { box-shadow: var(--node-shadow), 0 0 20px rgba(80,60,200,0.08); border-color: rgba(120,90,220,0.12); }
+  0% { 
+    border-color: rgba(120,90,220,0.15); 
+    box-shadow: var(--node-shadow), 0 0 10px rgba(80,60,200,0.08), 0 0 25px rgba(80,50,200,0.04); 
+  }
+  50% { 
+    border-color: rgba(160,120,255,0.35); 
+    box-shadow: var(--node-shadow), 0 0 20px rgba(100,70,220,0.18), 0 0 40px rgba(80,50,200,0.1), inset 0 0 10px rgba(100,70,220,0.06); 
+  }
+  100% { 
+    border-color: rgba(120,90,220,0.2); 
+    box-shadow: var(--node-shadow), 0 0 15px rgba(80,60,200,0.1), 0 0 30px rgba(80,50,200,0.05); 
+  }
 }
 
 .node:hover {
