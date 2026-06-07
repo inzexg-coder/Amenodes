@@ -3366,3 +3366,36 @@ input[type=number] {
   color: #ffb347;
   border-left: 2px solid #ffb347;
 }
+
+/* ===== 3D View ===== */
+.view3d-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #080610;
+  display: none;
+}
+.view3d-overlay.active {
+  display: block;
+}
+.view3d-overlay .close-3d-btn {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 10000;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #e0d0ff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+.view3d-overlay .close-3d-btn:active {
+  background: rgba(255,255,255,0.2);
+}
+.top-btn.active {
+  color: #b090ff;
+  background: rgba(120,80,200,0.15);
+}

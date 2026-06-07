@@ -56,6 +56,7 @@
       <div class="zoom-indicator" id="zoomIndicator">100%</div>
       <button id="addNodeBtn" class="top-btn primary" title="Add Node"><i class="fas fa-plus"></i> <span data-i18n="editor.addNode">Add node</span></button>
       <button id="optToggleBtn" class="top-btn" title="Optimizations"><i class="fas fa-tachometer-alt"></i> <span data-i18n="editor.optimize">Optimizations</span></button>
+      <button id="view3dBtn" class="top-btn" title="3D View"><i class="fas fa-cube"></i> <span>3D</span></button>
       <div class="divider"></div>
       <button id="clearStorageBtn" class="top-btn danger" title="Clear Storage"><i class="fas fa-trash-alt"></i> <span data-i18n="editor.clearStorage">Clear storage</span></button>
     </div>
@@ -615,5 +616,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 1500);
 });
 </script>
+
+  <!-- 3D View Overlay -->
+  <div class="view3d-overlay" id="view3dOverlay">
+    <button class="close-3d-btn" id="close3dBtn">✕ Close 3D</button>
+    <div id="scene-container" style="position:absolute;inset:0;width:100%;height:100%"></div>
+  </div>
+
 </body>
 </html>

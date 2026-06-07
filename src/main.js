@@ -322,6 +322,12 @@ class Application {
         if (panel) panel.classList.toggle('hidden');
       };
     }
+    var view3dBtn = document.getElementById('view3dBtn');
+    if (view3dBtn) {
+      view3dBtn.onclick = () => {
+        if (window.app) window.app.toggle3DView();
+      };
+    }
     if (fileInput) fileInput.onchange = (e) => this.handleFileImport(e);
     
     if (collapseLeft && leftSidebar) {
@@ -858,10 +864,34 @@ class Application {
       </div>
     `;
   }
+  
+  async toggle3DView() {
+    var overlay = document.getElementById('view3dOverlay');
+    if (!overlay) return;
+    
+    if (overlay.classList.contains('active')) {
+      overlay.classList.remove('active');
+      document.getElementById('view3dBtn').classList.remove('active');
+      if (this._scene3d) { this._scene3d.destroy(); this._scene3d = null; }
+      return;
+    }
+    
+    overlay.classList.add('active');
+    document.getElementById('view3dBtn').classList.add('active');
+    
+    if (!this._scene3d) {
+      var { Scene3D } = await import('./renderer3d/Scene3D.js');
+      var container = document.getElementById('scene-container');
+      this._scene3d = new Scene3D(this.graph, container, this.eventBus || new (await import('./services/EventBus.js')).EventBus());
+      await this._scene3d.init();
+    }
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   window.app = new Application();
+  document.getElementById('close3dBtn').addEventListener('click', () => window.app.toggle3DView());
+
 });
 
 export default Application;
