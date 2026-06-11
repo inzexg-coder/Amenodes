@@ -235,7 +235,6 @@ export class NodeMenu {
     const { x, y } = this.getCenterPosition();
     const options = { x, y };
     
-    // Всегда используем фабрику с async/await
     const node = await NodeFactory.createNode(type, options);
     
     if (node) {

@@ -16,7 +16,6 @@ export class ToolbarController {
   init() {
     this.updateButtonTexts();
 
-    // Проверяем существование элементов перед добавлением обработчиков
     const undoBtn = document.getElementById('undoBtn');
     if (undoBtn) undoBtn.onclick = () => this.undo();
     
@@ -35,7 +34,6 @@ export class ToolbarController {
     const fileInput = document.getElementById('fileInput');
     if (fileInput) fileInput.onchange = (e) => this.handleFileImport(e);
     
-    // Добавляем контейнер для переключателя языка, если его нет
     const fileGroup = document.querySelector('.file-group');
     if (fileGroup && !document.getElementById('languageSwitcherContainer')) {
       const langContainer = document.createElement('div');

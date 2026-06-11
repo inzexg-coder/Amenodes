@@ -133,7 +133,6 @@ export class CustomModal {
 
   alert(message, title = null) {
     return new Promise((resolve) => {
-      // Импортируем i18n динамически, чтобы избежать циклических зависимостей
       import('../i18n/LanguageManager.js').then(({ t }) => {
         const modalTitle = title || t('modal.notification');
         this.showModal({

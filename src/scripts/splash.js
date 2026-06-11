@@ -119,7 +119,6 @@ export class SplashManager {
       viewport.style.background = this.backgroundColor;
     }
     
-    // Apply grid style
     this.applyGridStyle();
     
     this.closeCanvasSettings();
