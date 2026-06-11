@@ -750,9 +750,13 @@ class Application {
 
   initEvents() {
     window.addEventListener('mousemove', (e) => this.renderer.onGlobalMove(e));
+    window.addEventListener('touchmove', (e) => this.renderer.onGlobalMove(e), { passive: false });
     window.addEventListener('mouseup', (e) => this.renderer.onGlobalUp(e));
+    window.addEventListener('touchend', (e) => this.renderer.onGlobalUp(e));
     window.addEventListener('mousemove', (e) => this.renderer.onGlobalMoveEdge(e));
+    window.addEventListener('touchmove', (e) => this.renderer.onGlobalMoveEdge(e), { passive: false });
     window.addEventListener('mouseup', (e) => this.renderer.onGlobalUpEdge(e));
+    window.addEventListener('touchend', (e) => this.renderer.onGlobalUpEdge(e));
     
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {

@@ -778,6 +778,151 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!isMobile() && sheetOpen) closeSheet();
   });
 
+
+  // ----- NODE SELECTION (tap to select) -----
+  var nodesLayer = document.getElementById("nodesLayer");
+  var selectedNodeId = null;
+  
+  function selectNode(nodeId) {
+    selectedNodeId = nodeId;
+    
+    // Remove previous selection
+    document.querySelectorAll(".node.selected-for-edit").forEach(function(el) {
+      el.classList.remove("selected-for-edit");
+    });
+    
+    if (nodeId === null) {
+      if (isMobile()) openSheet("properties"); // show empty state
+      return;
+    }
+    
+    // Highlight node
+    var nodeEl = document.querySelector(".node[data-id=\"" + nodeId + "\"]");
+    if (nodeEl) nodeEl.classList.add("selected-for-edit");
+    
+    // Show properties in sheet
+    if (isMobile() && window.app && window.app.graph) {
+      var node = window.app.graph.getNode(nodeId);
+      if (node) {
+        sheetTitle.innerHTML = "<i class=\"fas fa-info-circle\"></i> <span>Node #" + nodeId + "</span>";
+        sheetContent.innerHTML = [
+          "<div class=\"property-group\">",
+            "<div class=\"property-label\">Type</div>",
+            "<div class=\"property-value\">" + (node.type || "unknown") + "</div>",
+          "</div>",
+          "<div class=\"property-group\">",
+            "<div class=\"property-label\">ID</div>",
+            "<div class=\"property-value\">" + node.id + "</div>",
+          "</div>",
+          "<div class=\"property-group\">",
+            "<div class=\"property-label\">Position</div>",
+            "<div class=\"property-value\">X: " + Math.round(node.x) + ", Y: " + Math.round(node.y) + "</div>",
+          "</div>",
+          "<button class=\"node-delete-btn\" id=\"mobileNodeDelete\">",
+            "<i class=\"fas fa-trash-alt\"></i> Delete Node",
+          "</button>",
+        ].join("");
+        
+        document.getElementById("mobileNodeDelete").addEventListener("click", function() {
+          if (window.app && window.app.graph) {
+            window.app.graph.removeNode(nodeId);
+            if (window.app.renderer) window.app.renderer.render();
+            selectedNodeId = null;
+            closeSheet();
+            if (window.app.updateNodeCount) window.app.updateNodeCount();
+            if (window.app.updateEdgeCount) window.app.updateEdgeCount();
+          }
+        });
+        
+        if (!sheetOpen) {
+          sheet.classList.add("open");
+          sheetOverlay.classList.add("open");
+          sheetOpen = true;
+          document.body.style.overflow = "hidden";
+        }
+      }
+    }
+  }
+  
+  // Delegated tap on nodes (via pointerdown for cross-device)
+  if (nodesLayer) {
+    nodesLayer.addEventListener("pointerdown", function(e) {
+      if (!isMobile()) return;
+      if (e.pointerType !== "touch") return;
+      
+      var nodeEl = e.target.closest(".node");
+      if (!nodeEl) return;
+      
+      // Ignore handles, buttons, inputs
+      if (e.target.closest(".node-handle, .node-actions, input, button, select, .title-editable")) return;
+      
+      var nodeId = parseInt(nodeEl.getAttribute("data-id"));
+      if (!isNaN(nodeId)) {
+        e.preventDefault();
+        if (selectedNodeId === nodeId) {
+          selectNode(null); // deselect
+        } else {
+          selectNode(nodeId);
+        }
+      }
+    });
+  }
+  
+  // Deselect on canvas tap
+  var viewport = document.getElementById("viewport");
+  if (viewport) {
+    viewport.addEventListener("pointerdown", function(e) {
+      if (!isMobile() || e.pointerType !== "touch") return;
+      if (e.target.closest(".node, .mobile-bottom-sheet, .mobile-fab, .mobile-mini-toolbar")) return;
+      setTimeout(function() {
+        if (!selectedNodeId) selectNode(null);
+      }, 200);
+    });
+  }
+  
+  // ----- NODE CREATION FROM LIBRARY -----
+  function setupLibraryCreation() {
+    var sheetContent = document.getElementById("sheetContent");
+    if (!sheetContent) return;
+    
+    // Add create button at the bottom of library
+    var createBtn = document.createElement("button");
+    createBtn.className = "sheet-add-node-btn";
+    createBtn.innerHTML = "<i class=\"fas fa-plus-circle\"></i> Create Node at Center";
+    createBtn.addEventListener("click", function() {
+      if (window.app && window.app.graph) {
+        var centerX = window.innerWidth / 2;
+        var centerY = window.innerHeight / 2;
+        var offset = { x: 0, y: 0 };
+        if (window._viewport) offset = window._viewport.getOffset();
+        var zoom = window.currentZoom || 1;
+        var worldX = (centerX - offset.x) / zoom - 140;
+        var worldY = (centerY - offset.y) / zoom - 40;
+        
+        var node = window.app.graph.addNode("connected", worldX, worldY);
+        if (node) {
+          if (window.app.renderer) window.app.renderer.render();
+          selectNode(node.id);
+          closeSheet();
+        }
+      }
+    });
+    
+    // Only add if not already present
+    if (!sheetContent.querySelector(".sheet-add-node-btn")) {
+      sheetContent.appendChild(createBtn);
+    }
+  }
+  
+  // Watch for sheet content changes to add create button
+  var sheetContentObserver = new MutationObserver(function() {
+    if (currentSheet === "library") setupLibraryCreation();
+  });
+  var sheetContentEl = document.getElementById("sheetContent");
+  if (sheetContentEl) {
+    sheetContentObserver.observe(sheetContentEl, { childList: true, subtree: true });
+  }
+
   console.log('[Mobile] Editor initialized');
 })();
 </script>

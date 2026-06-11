@@ -215,7 +215,8 @@ export class DomRenderer {
       dot.className = `node-handle handle-${position}`;
       dot.setAttribute('data-source-id', nodeId);
       dot.setAttribute('data-port', 'main');
-      dot.addEventListener('mousedown', this.onHandleDown.bind(this));
+      dot.addEventListener("mousedown", this.onHandleDown.bind(this));
+      dot.addEventListener("touchstart", this.onHandleDown.bind(this), { passive: false });
       container.appendChild(dot);
     }
     
@@ -226,7 +227,8 @@ export class DomRenderer {
       blueHandle.style.top = 'calc(50% + 20px)';
       blueHandle.setAttribute('data-source-id', nodeId);
       blueHandle.setAttribute('data-port', 'unmapped');
-      blueHandle.addEventListener('mousedown', this.onHandleDown.bind(this));
+      blueHandle.addEventListener("mousedown", this.onHandleDown.bind(this));
+      blueHandle.addEventListener("touchstart", this.onHandleDown.bind(this), { passive: false });
       container.appendChild(blueHandle);
     }
   }
@@ -238,27 +240,40 @@ export class DomRenderer {
     
     const sourceId = parseInt(handle.getAttribute('data-source-id'));
     const port = handle.getAttribute('data-port') || 'main';
-    const startX = event.clientX;
-    const startY = event.clientY;
+    const startX = event.clientX || (event.touches && event.touches[0].clientX) || 0;
+    const startY = event.clientY || (event.touches && event.touches[0].clientY) || 0;
     let moved = false;
+    const isTouch = event.type === 'touchstart';
     
-    const onMouseMove = (moveEvent) => {
-      if (!moved && (Math.abs(moveEvent.clientX - startX) > 5 || Math.abs(moveEvent.clientY - startY) > 5)) {
+    const onMove = (moveEvent) => {
+      const cx = moveEvent.clientX || (moveEvent.touches && moveEvent.touches[0].clientX) || 0;
+      const cy = moveEvent.clientY || (moveEvent.touches && moveEvent.touches[0].clientY) || 0;
+      if (!moved && (Math.abs(cx - startX) > 5 || Math.abs(cy - startY) > 5)) {
         moved = true;
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('mouseup', onMouseUp);
-        this.startDragEdge(sourceId, port, moveEvent.clientX, moveEvent.clientY);
+        cleanup();
+        this.startDragEdge(sourceId, port, cx, cy);
       }
     };
     
-    const onMouseUp = () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+    const onEnd = () => {
+      cleanup();
       if (!moved) this.showMenu(startX, startY, sourceId);
     };
     
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+    const cleanup = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onEnd);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onEnd);
+    };
+    
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+    if (isTouch) {
+      event.preventDefault();
+      window.addEventListener('touchmove', onMove, { passive: false });
+      window.addEventListener('touchend', onEnd);
+    }
   }
 
   startDragEdge(sourceId, port, clientX, clientY) {
@@ -294,9 +309,21 @@ export class DomRenderer {
     document.body.style.cursor = 'crosshair';
   }
 
+  getClientX(event) {
+    return event.clientX !== undefined ? event.clientX : 
+      (event.touches && event.touches[0] ? event.touches[0].clientX : 
+      (event.changedTouches && event.changedTouches[0] ? event.changedTouches[0].clientX : 0));
+  }
+
+  getClientY(event) {
+    return event.clientY !== undefined ? event.clientY : 
+      (event.touches && event.touches[0] ? event.touches[0].clientY : 
+      (event.changedTouches && event.changedTouches[0] ? event.changedTouches[0].clientY : 0));
+  }
+
   onGlobalMoveEdge(event) {
     if (this.isDraggingEdge && this.tempLine) {
-      const point = this.getCanvasCoords(event.clientX, event.clientY);
+      const point = this.getCanvasCoords(this.getClientX(event), this.getClientY(event));
       this.tempLine.setAttribute("x2", point.x);
       this.tempLine.setAttribute("y2", point.y);
     }
@@ -305,7 +332,9 @@ export class DomRenderer {
   onGlobalUpEdge(event) {
     if (!this.isDraggingEdge) return;
     
-    const targetElement = document.elementsFromPoint(event.clientX, event.clientY)
+    const cx = this.getClientX(event);
+    const cy = this.getClientY(event);
+    const targetElement = document.elementsFromPoint(cx, cy)
       .find(el => el.classList && el.classList.contains('node'));
     const targetId = targetElement ? parseInt(targetElement.getAttribute('data-id')) : null;
     
@@ -352,13 +381,14 @@ export class DomRenderer {
     document.querySelectorAll('.node').forEach(element => {
       const header = element.querySelector('.node-header, .output-header, .calc-header, .map-header, .group-header');
       if (header) {
-        header.addEventListener('mousedown', this.onNodeDown.bind(this));
+        header.addEventListener("mousedown", this.onNodeDown.bind(this));
+        header.addEventListener("touchstart", this.onNodeDown.bind(this), { passive: false });
       }
     });
   }
 
   onNodeDown(event) {
-    if (event.button !== 0) return;
+    if (event.button !== 0 && event.button !== undefined) return;
     if (event.target.closest('.node-handle') ||
         event.target.closest('.node-actions') ||
         event.target.closest('input') ||
@@ -375,8 +405,8 @@ export class DomRenderer {
     if (!node) return;
     
     this.dragNode = node;
-    this.dragStartX = event.clientX;
-    this.dragStartY = event.clientY;
+    this.dragStartX = this.getClientX(event);
+    this.dragStartY = this.getClientY(event);
     this.dragNodeStartX = node.x;
     this.dragNodeStartY = node.y;
     
@@ -386,8 +416,10 @@ export class DomRenderer {
 
   onGlobalMove(event) {
     if (this.dragNode) {
-      const deltaX = (event.clientX - this.dragStartX) / (window.currentZoom || 1);
-      const deltaY = (event.clientY - this.dragStartY) / (window.currentZoom || 1);
+      const cx = this.getClientX(event);
+      const cy = this.getClientY(event);
+      const deltaX = (cx - this.dragStartX) / (window.currentZoom || 1);
+      const deltaY = (cy - this.dragStartY) / (window.currentZoom || 1);
       
       let newX = this.dragNodeStartX + deltaX;
       let newY = this.dragNodeStartY + deltaY;
