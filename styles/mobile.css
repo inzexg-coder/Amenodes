@@ -15,6 +15,10 @@
   display: none;
 }
 
+.mobile-mini-toolbar {
+  display: none;
+}
+
 .mobile-fab {
   display: none;
 }

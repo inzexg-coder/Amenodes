@@ -275,7 +275,10 @@ class AmenodesAPI {
         if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
         const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Request failed');
+        if (!response.ok) {
+          const errMsg = data.error || data.message || `HTTP ${response.status}`;
+          throw new Error(errMsg);
+        }
         return data;
     }
     async register(username, email, password) {
@@ -954,16 +957,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Undo / Redo
   if (mmtUndo) {
     mmtUndo.addEventListener('click', function() {
-      if (window.app && window.app.graph && window.app.graph.undo) {
-        window.app.graph.undo();
+      if (window.app && window.app.undo) {
+        window.app.undo();
         if (window.app.renderer) window.app.renderer.render();
       }
     });
   }
   if (mmtRedo) {
     mmtRedo.addEventListener('click', function() {
-      if (window.app && window.app.graph && window.app.graph.redo) {
-        window.app.graph.redo();
+      if (window.app && window.app.redo) {
+        window.app.redo();
         if (window.app.renderer) window.app.renderer.render();
       }
     });
