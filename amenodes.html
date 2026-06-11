@@ -17,6 +17,28 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/mobile.css">
+<script>
+(function(){var c;function init(){if(c)return;c=document.createElement('div');
+c.id='errConsole';c.style.cssText='position:fixed;bottom:0;left:0;right:0;background:rgba(10,0,0,0.92);color:#ff6b6b;font-family:monospace;font-size:13px;z-index:99999;padding:12px 16px;max-height:40vh;overflow-y:auto;border-top:2px solid #ff3333;display:none';
+var h=document.createElement('div');h.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:bold;color:#ff4444';
+h.innerHTML='<span>\u26a0 JS Errors</span>';
+var btn=document.createElement('button');btn.textContent='Hide';
+btn.style.cssText='background:#442;border:none;color:#ff6b6b;cursor:pointer;font-size:12px;padding:2px 10px;border-radius:4px';
+btn.onclick=function(){c.style.display='none'};h.appendChild(btn);c.appendChild(h);
+var b=document.createElement('div');b.id='errConsoleBody';c.appendChild(b);
+document.body.appendChild(c)}
+function addErr(m,u,l,col,e){init();var b=document.getElementById('errConsoleBody');
+var d=document.createElement('div');
+d.style.cssText='padding:6px 8px;margin-bottom:4px;background:rgba(255,0,0,0.1);border-left:3px solid #ff3333;border-radius:3px;white-space:pre-wrap;word-break:break-all';
+var t=m||'Unknown error';if(u)t+='\n  at '+u+':'+l;
+if(e&&e.stack)t+='\n'+e.stack.split('\n').slice(0,4).join('\n');
+d.textContent=t;b.appendChild(d);c.style.display='block';c.scrollTop=c.scrollHeight}
+window.onerror=function(m,u,l,col,e){addErr(m,u,l,col,e);return false};
+window.addEventListener('unhandledrejection',function(e){var r=e.reason;
+addErr(r&&r.message?r.message:String(r),'',0,0,r)});
+console.log('[ErrConsole] ready');
+})();
+</script>
 </head>
 <body>
 
