@@ -20,7 +20,7 @@ body {
   --node-hover-shadow: 0 12px 28px rgba(0,0,0,.5), 0 0 0 1px #6d8ae0;
   --header-bg-start: #1b2137;
   --backdrop-blur: blur(2px);
-  --transition: all 0.1s;
+  --transition: all 0.3s ease;
   --toolbar-bg: rgba(30,35,48,.9);
   --opt-panel-bg: rgba(20,24,36,0.98);
   --border-light: 1px solid rgba(255,255,255,.15);
@@ -879,7 +879,7 @@ body {
   cursor: crosshair;
   z-index: 25;
   box-shadow: var(--handle-shadow);
-  transition: transform 0.1s;
+  transition: transform 0.3s ease;
 }
 
 .node-handle:hover {
@@ -941,7 +941,7 @@ body {
   font-size: 13px;
   cursor: pointer;
   color: #ffefcf;
-  transition: background 0.1s;
+  transition: background 0.3s ease;
 }
 
 .node-menu-item:hover {
@@ -980,7 +980,7 @@ body {
 
 .edge-line {
   cursor: pointer;
-  transition: stroke 0.1s, stroke-width 0.05s;
+  transition: stroke 0.3s ease, stroke-width 0.3s ease;
 }
 
 .edge-line:hover {
