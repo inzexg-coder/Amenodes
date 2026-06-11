@@ -619,6 +619,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 <!-- Mobile Mini-Toolbar (hidden on desktop) -->
 <div class="mobile-mini-toolbar" id="mobileMiniToolbar">
   <div class="mmt-left">
+    <button class="mmt-btn" id="mmtMenuBtn" title="Menu"><i class="fas fa-bars"></i></button>
     <div class="mmt-logo">
       <i class="fas fa-project-diagram"></i><span>@Amenodes</span>
     </div>
@@ -628,8 +629,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       <button class="mmt-btn" id="mmtUndo" title="Undo"><i class="fas fa-undo-alt"></i></button>
       <button class="mmt-btn" id="mmtRedo" title="Redo"><i class="fas fa-redo-alt"></i></button>
     </div>
-    <button class="mmt-btn" id="mmtProperties" title="Properties"><i class="fas fa-info-circle"></i></button>
     <span class="mmt-node-count" id="mmtNodeCount">0</span>
+    <button class="mmt-btn" id="mmtUserBtn" title="Profile"><i class="fas fa-user-circle"></i></button>
+  </div>
+</div>
+
+<!-- Mobile Menu Overlay -->
+<div class="mobile-menu-overlay" id="mobileMenuOverlay">
+  <div class="mobile-menu-panel">
+    <div class="mobile-menu-header">
+      <span class="mobile-menu-title">Menu</span>
+      <button class="mobile-menu-close" id="mobileMenuClose">&times;</button>
+    </div>
+    <div class="mobile-menu-body">
+      <div class="mobile-menu-section">
+        <div class="mobile-menu-section-title">Pages</div>
+        <a href="amenodes.html" class="mobile-menu-item active"><i class="fas fa-project-diagram"></i> Editor</a>
+        <a href="templates.html" class="mobile-menu-item"><i class="fas fa-cube"></i> Templates</a>
+        <a href="profile.html" class="mobile-menu-item"><i class="fas fa-user"></i> Profile</a>
+        <a href="moderate.html" class="mobile-menu-item"><i class="fas fa-shield-alt"></i> Moderate</a>
+      </div>
+      <div class="mobile-menu-section" id="mobileMenuAuth">
+        <div class="mobile-menu-section-title">Account</div>
+        <div id="mobileAuthContent">
+          <button class="mobile-menu-auth-btn" id="mobileLoginBtn"><i class="fas fa-sign-in-alt"></i> Login / Register</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -676,8 +702,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const sheetClose = document.getElementById('sheetClose');
   const mmtUndo = document.getElementById('mmtUndo');
   const mmtRedo = document.getElementById('mmtRedo');
-  const mmtProps = document.getElementById('mmtProperties');
   const mmtNodeCount = document.getElementById('mmtNodeCount');
+  const mmtMenuBtn = document.getElementById('mmtMenuBtn');
+  const mmtUserBtn = document.getElementById('mmtUserBtn');
+  const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+  const mobileMenuClose = document.getElementById('mobileMenuClose');
 
   // ----- BOTTOM SHEET -----
   function openSheet(type) {
@@ -871,11 +900,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     sheetOverlay.addEventListener('click', closeSheet);
   }
 
-  // Properties button in mini-toolbar no longer opens properties (removed on mobile)
-  // Instead, on mobile it just deselects current node
-  if (mmtProps) {
-    mmtProps.addEventListener('click', function() {
-      deselectAll();
+  // Menu button
+  if (mmtMenuBtn) {
+    mmtMenuBtn.addEventListener('click', function() {
+      mobileMenuOverlay.classList.add('open');
+    });
+  }
+  if (mobileMenuClose) {
+    mobileMenuClose.addEventListener('click', function() {
+      mobileMenuOverlay.classList.remove('open');
+    });
+  }
+  if (mobileMenuOverlay) {
+    mobileMenuOverlay.addEventListener('click', function(e) {
+      if (e.target === mobileMenuOverlay) mobileMenuOverlay.classList.remove('open');
+    });
+  }
+  // User button → open profile or auth
+  if (mmtUserBtn) {
+    mmtUserBtn.addEventListener('click', function() {
+      var token = localStorage.getItem('auth_token');
+      if (token) {
+        window.location.href = 'profile.html';
+      } else {
+        if (typeof window.showAuthModal === 'function') {
+          window.showAuthModal();
+        } else {
+          window.location.href = 'amenodes.html';
+        }
+      }
+    });
+  }
+  // Login button in mobile menu
+  var mobileLoginBtn = document.getElementById('mobileLoginBtn');
+  if (mobileLoginBtn) {
+    mobileLoginBtn.addEventListener('click', function() {
+      if (typeof window.showAuthModal === 'function') {
+        window.showAuthModal();
+      }
+      mobileMenuOverlay.classList.remove('open');
     });
   }
 

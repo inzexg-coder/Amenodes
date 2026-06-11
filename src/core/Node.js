@@ -28,6 +28,10 @@ export class Node {
   }
 
   canAcceptEdge(source, port = 'main') {
+    const meta = this.constructor && this.constructor.metadata;
+    if (meta && meta.canHaveIncomingEdges === false) {
+      return { ok: false, message: 'This node cannot accept incoming connections' };
+    }
     return { ok: true };
   }
 
