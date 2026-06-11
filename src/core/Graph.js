@@ -171,12 +171,6 @@ export class Graph {
     return values;
   }
 
-      }
-    }
-    
-    const valid = pairs.filter(v => v !== null);
-    return { ok: valid.length > 0, res: valid };
-  }
 
   reevaluateAll() {
     for (const node of this.nodes) {
