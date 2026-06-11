@@ -1,0 +1,1173 @@
+/* ==============================================
+   MOBILE ADAPTATIONS — Amenodes
+   ==============================================
+   Активируется на ширине до 768px.
+   Для страниц: Editor, Templates, Profile, Moderate.
+   ============================================== */
+
+/* --- Mobile shared components (скрыты на десктопе) --- */
+
+.mobile-bottom-nav {
+  display: none;
+}
+
+.mobile-bottom-sheet {
+  display: none;
+}
+
+.mobile-fab {
+  display: none;
+}
+
+.mobile-filters-toggle {
+  display: none;
+}
+
+.mobile-load-more {
+  display: none;
+}
+
+.moderate-review-card {
+  display: none;
+}
+
+/* ==============================================
+   BREAKPOINT: ≤ 768px (планшеты и телефоны)
+   ============================================== */
+@media (max-width: 768px) {
+  html {
+    font-size: 15px;
+  }
+
+  body {
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ------ ГЛОБАЛЬНЫЕ ПЕРЕОПРЕДЕЛЕНИЯ ------ */
+
+  .header {
+    padding: 10px 16px !important;
+    gap: 8px !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .header .nav-links {
+    display: none !important;  /* заменяется bottom-nav */
+  }
+
+  .header .logo {
+    font-size: 18px !important;
+  }
+
+  .header .logo i {
+    font-size: 22px !important;
+  }
+
+  .header .logo span {
+    font-size: 16px !important;
+  }
+
+  .user-panel {
+    padding: 4px 10px !important;
+    gap: 6px !important;
+    font-size: 12px !important;
+  }
+
+  .user-panel .user-name {
+    font-size: 11px !important;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .user-panel .user-points {
+    font-size: 10px !important;
+  }
+
+  .user-panel .mod-badge {
+    font-size: 8px !important;
+    padding: 1px 5px !important;
+  }
+
+  .user-panel button {
+    font-size: 11px !important;
+    padding: 4px 8px !important;
+  }
+
+  /* Toast — выше bottom-nav */
+  .toast {
+    bottom: 64px !important;
+    right: 12px !important;
+    left: 12px !important;
+    font-size: 12px !important;
+    padding: 10px 14px !important;
+  }
+
+  /* ==============================================
+     BOTTOM NAVIGATION
+     ============================================== */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: rgba(15, 18, 34, 0.97);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(46, 56, 92, 0.6);
+    z-index: 9999;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 4px;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .mobile-bottom-nav a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    color: #6a7a9a;
+    text-decoration: none;
+    font-size: 10px;
+    padding: 6px 10px;
+    border-radius: 12px;
+    transition: all 0.15s;
+    min-width: 56px;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+  }
+
+  .mobile-bottom-nav a i {
+    font-size: 20px;
+    transition: all 0.15s;
+  }
+
+  .mobile-bottom-nav a:active {
+    transform: scale(0.92);
+  }
+
+  .mobile-bottom-nav a.active {
+    color: #ffb347;
+  }
+
+  .mobile-bottom-nav a.active i {
+    color: #ffb347;
+    text-shadow: 0 0 6px rgba(255, 179, 71, 0.3);
+  }
+
+  .mobile-bottom-nav a.active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 2px;
+    background: #ffb347;
+    border-radius: 0 0 2px 2px;
+  }
+
+  /* ==============================================
+     PAGE: TEMPLATES (вариант B)
+     ============================================== */
+  .templates-container {
+    padding: 12px 12px 64px 12px !important; /* отступ для bottom-nav */
+  }
+
+  .templates-container .filter-tabs {
+    display: none !important;  /* табы уходят в bottom-nav */
+  }
+
+  .templates-container .search-section {
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .templates-container .search-input {
+    width: 100% !important;
+  }
+
+  .templates-container .search-input input {
+    font-size: 14px !important;
+    padding: 10px 12px 10px 36px !important;
+    border-radius: 10px !important;
+  }
+
+  .templates-container .search-input i {
+    left: 12px !important;
+    font-size: 14px !important;
+  }
+
+  .templates-container .filters {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .templates-container .filters .filter-select {
+    flex: 1;
+    font-size: 13px !important;
+    padding: 8px 10px !important;
+    border-radius: 8px !important;
+    background: #151a2c !important;
+    border: 1px solid rgba(46, 56, 92, 0.6) !important;
+    color: #eef2ff !important;
+  }
+
+  .templates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .template-card {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .template-card .template-content {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .template-card .template-info .template-title {
+    font-size: 14px !important;
+  }
+
+  .template-card .template-info .template-desc {
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+  }
+
+  .template-card .template-info .template-meta {
+    font-size: 11px !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .template-card .template-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+    justify-content: stretch !important;
+  }
+
+  .template-card .template-actions .btn,
+  .template-card .template-actions .btn-secondary,
+  .template-card .template-actions button {
+    flex: 1 !important;
+    font-size: 13px !important;
+    padding: 10px 12px !important;
+    text-align: center !important;
+    border-radius: 10px !important;
+    min-height: 40px;
+  }
+
+  /* moderate actions in template cards */
+  .template-card .template-actions .mod-btn {
+    flex: 1;
+    font-size: 12px !important;
+    padding: 8px 10px !important;
+  }
+
+  .template-card .template-actions select.mod-select {
+    width: 100% !important;
+    margin-bottom: 4px !important;
+    font-size: 12px !important;
+    padding: 8px !important;
+    border-radius: 8px !important;
+    background: #1a1f30 !important;
+    border: 1px solid #2e385c !important;
+    color: #eef2ff !important;
+  }
+
+  /* Пагинация → Load More */
+  .pagination {
+    display: none !important;
+  }
+
+  .mobile-load-more {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    margin: 12px 0 8px 0;
+    background: #1a1f30;
+    border: 1px solid #2e385c;
+    border-radius: 12px;
+    color: #ffb347;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-load-more:active {
+    background: #2e385c;
+    transform: scale(0.98);
+  }
+
+  .mobile-load-more .spinner {
+    display: inline-block;
+    animation: spin 0.8s linear infinite;
+    margin-right: 8px;
+  }
+
+  /* ==============================================
+     PAGE: PROFILE (вариант A)
+     ============================================== */
+  .profile-container {
+    padding: 12px 12px 64px 12px !important;
+  }
+
+  .profile-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 0 16px 0 !important;
+    padding: 24px 16px !important;
+    border-radius: 20px !important;
+  }
+
+  .profile-card .cp-number {
+    font-size: 44px !important;
+  }
+
+  .profile-card .cp-label {
+    font-size: 13px !important;
+  }
+
+  .profile-card .username-badge {
+    font-size: 14px !important;
+    padding: 4px 12px !important;
+  }
+
+  .profile-container .tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 0 0 12px 0;
+    margin-bottom: 12px;
+  }
+
+  .profile-container .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .profile-container .tabs .tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 8px 16px;
+    font-size: 13px;
+    border-radius: 20px;
+    border: 1px solid #2e385c;
+    background: transparent;
+    color: #aabbdd;
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .profile-container .tabs .tab:active {
+    transform: scale(0.95);
+  }
+
+  .profile-container .tabs .tab.active {
+    background: #ffb347;
+    color: #1a1f30;
+    border-color: #ffb347;
+    font-weight: 600;
+  }
+
+  .profile-container #templatesContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .profile-container .template-card {
+    width: 100% !important;
+  }
+
+  /* ==============================================
+     PAGE: MODERATE (вариант B — stepper/review)
+     ============================================== */
+  .mod-container {
+    padding: 12px 12px 64px 12px !important;
+  }
+
+  /* Прячем таблицу на мобилках */
+  .mod-table-container,
+  .mod-table,
+  .stats-bar {
+    display: none !important;
+  }
+
+  /* Карточка ревью */
+  .moderate-review-card {
+    display: block;
+    background: linear-gradient(135deg, #1a1f30, #0f1222);
+    border: 1px solid #2e385c;
+    border-radius: 20px;
+    padding: 20px;
+    margin: 8px 0;
+    animation: reviewFadeIn 0.3s ease;
+    touch-action: pan-y;
+  }
+
+  @keyframes reviewFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .moderate-review-card .review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .moderate-review-card .review-header h3 {
+    margin: 0;
+    font-size: 17px;
+    color: #ffefcf;
+    line-height: 1.3;
+    flex: 1;
+    word-break: break-word;
+  }
+
+  .moderate-review-card .review-id {
+    font-size: 11px;
+    color: #6a7a9a;
+    background: #0a0c14;
+    padding: 2px 8px;
+    border-radius: 8px;
+    white-space: nowrap;
+    margin-left: 8px;
+  }
+
+  .moderate-review-card .review-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 12px;
+    color: #8899bb;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(46, 56, 92, 0.4);
+  }
+
+  .moderate-review-card .review-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .moderate-review-card .review-desc {
+    font-size: 13px;
+    color: #99aabb;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+    max-height: 80px;
+    overflow-y: auto;
+  }
+
+  .moderate-review-card .review-level-select {
+    margin-bottom: 16px;
+  }
+
+  .moderate-review-card .review-level-select label {
+    display: block;
+    font-size: 12px;
+    color: #8899bb;
+    margin-bottom: 6px;
+  }
+
+  .moderate-review-card .review-level-select select {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    background: #0a0c14;
+    border: 1px solid #2e385c;
+    border-radius: 10px;
+    color: #eef2ff;
+  }
+
+  .moderate-review-card .review-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .moderate-review-card .review-actions button {
+    flex: 1;
+    padding: 14px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .moderate-review-card .review-actions button:active {
+    transform: scale(0.95);
+  }
+
+  .moderate-review-card .review-actions .review-preview {
+    background: #2d3a5e;
+    color: #eef2ff;
+    flex: 0.6;
+  }
+
+  .moderate-review-card .review-actions .review-approve {
+    background: #2e7d32;
+    color: #fff;
+  }
+
+  .moderate-review-card .review-actions .review-reject {
+    background: #c62828;
+    color: #fff;
+  }
+
+  .moderate-review-card .review-empty {
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .moderate-review-card .review-empty i {
+    font-size: 48px;
+    color: #2e7d32;
+    margin-bottom: 16px;
+  }
+
+  .moderate-review-card .review-empty h3 {
+    color: #ffefcf;
+    margin: 0 0 8px 0;
+  }
+
+  .moderate-review-card .review-empty p {
+    color: #8899bb;
+    font-size: 13px;
+    margin: 0;
+  }
+
+  /* прогресс-бар ревью */
+  .moderate-review-card .review-progress {
+    margin-bottom: 16px;
+  }
+
+  .moderate-review-card .review-progress .progress-bar {
+    height: 4px;
+    background: #0a0c14;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+
+  .moderate-review-card .review-progress .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffb347, #ff8c47);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+
+  .moderate-review-card .review-progress .progress-label {
+    font-size: 11px;
+    color: #6a7a9a;
+    text-align: right;
+  }
+
+  /* Свайп-подсказка */
+  .review-swipe-hint {
+    text-align: center;
+    font-size: 11px;
+    color: #4a5a7a;
+    margin-top: 12px;
+    animation: hintPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes hintPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+  }
+
+  /* ==============================================
+     PAGE: EDITOR (вариант C — полноэкранный)
+     ============================================== */
+
+  /* Полноэкранный canvas */
+  #appContainer {
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    overflow: hidden !important;
+  }
+
+  /* Прячем десктопные панели */
+  #appContainer .top-bar {
+    display: none !important;
+  }
+
+  #appContainer .left-sidebar {
+    display: none !important;
+  }
+
+  #appContainer .right-sidebar {
+    display: none !important;
+  }
+
+  #appContainer .status-bar {
+    display: none !important;
+  }
+
+  .workspace {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .viewport-container {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .viewport {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* Splash — компактный */
+  .splash-card {
+    padding: 28px 24px !important;
+    border-radius: 24px !important;
+    margin: 0 16px !important;
+    max-width: 340px !important;
+  }
+
+  .splash-logo {
+    font-size: 24px !important;
+    gap: 8px !important;
+  }
+
+  .splash-logo i {
+    font-size: 36px !important;
+  }
+
+  .splash-actions {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .splash-actions .splash-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 14px 20px !important;
+    font-size: 15px !important;
+    border-radius: 14px !important;
+  }
+
+  .splash-footer {
+    font-size: 11px !important;
+    gap: 12px !important;
+    margin-top: 20px !important;
+  }
+
+  /* ===== MOBILE FAB ===== */
+  .mobile-fab {
+    display: flex;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffb347, #ff8c47);
+    color: #1a1f30;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    box-shadow: 0 4px 16px rgba(255, 179, 71, 0.4), 0 0 0 1px rgba(255, 179, 71, 0.2);
+    cursor: pointer;
+    z-index: 8000;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    border: none;
+    touch-action: manipulation;
+  }
+
+  .mobile-fab:active {
+    transform: scale(0.9);
+    box-shadow: 0 2px 8px rgba(255, 179, 71, 0.3);
+  }
+
+  /* ===== MOBILE MINI-TOOLBAR (верх) ===== */
+  .mobile-mini-toolbar {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    padding: 0 12px;
+    padding-top: env(safe-area-inset-top, 0);
+    background: rgba(15, 18, 34, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(46, 56, 92, 0.3);
+    z-index: 8000;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .mobile-mini-toolbar .mmt-left,
+  .mobile-mini-toolbar .mmt-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .mobile-mini-toolbar .mmt-logo {
+    font-size: 14px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ffb347, #ff8c00);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mobile-mini-toolbar .mmt-logo i {
+    font-size: 18px;
+    color: #ffb347;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+  }
+
+  .mobile-mini-toolbar .mmt-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: #aabbdd;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-mini-toolbar .mmt-btn:active {
+    background: rgba(255, 179, 71, 0.15);
+    color: #ffb347;
+  }
+
+  .mobile-mini-toolbar .mmt-node-count {
+    font-size: 11px;
+    color: #6a7a9a;
+    padding: 0 4px;
+  }
+
+  /* ===== MOBILE BOTTOM SHEET ===== */
+  .mobile-bottom-sheet {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 70vh;
+    background: rgba(15, 18, 34, 0.98);
+    backdrop-filter: blur(20px);
+    border-radius: 20px 20px 0 0;
+    border-top: 1px solid rgba(255, 179, 71, 0.15);
+    z-index: 9000;
+    flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.5);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .mobile-bottom-sheet.open {
+    transform: translateY(0);
+  }
+
+  .mobile-bottom-sheet .sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: #3a4a6a;
+    border-radius: 4px;
+    margin: 8px auto 4px auto;
+    flex-shrink: 0;
+  }
+
+  .mobile-bottom-sheet .sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px 12px 16px;
+    flex-shrink: 0;
+  }
+
+  .mobile-bottom-sheet .sheet-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #ffefcf;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mobile-bottom-sheet .sheet-header h3 i {
+    color: #ffb347;
+    font-size: 18px;
+  }
+
+  .mobile-bottom-sheet .sheet-header .sheet-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.06);
+    color: #8899bb;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-bottom-sheet .sheet-header .sheet-close:active {
+    background: rgba(255, 179, 71, 0.2);
+    color: #ffb347;
+  }
+
+  .mobile-bottom-sheet .sheet-content {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 16px 16px 16px;
+  }
+
+  /* Overlay для bottom sheet */
+  .mobile-sheet-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 8999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .mobile-sheet-overlay.open {
+    display: block;
+    opacity: 1;
+  }
+
+  /* Адаптация нод-меню для мобильного bottom sheet */
+  .mobile-bottom-sheet .node-menu-panel {
+    position: static !important;
+    width: 100% !important;
+    max-height: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+
+  .mobile-bottom-sheet .node-menu-search {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .mobile-bottom-sheet .node-menu-list {
+    max-height: none !important;
+  }
+
+  /* Свойства в bottom sheet */
+  .mobile-bottom-sheet #propertiesPanel {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  /* Кнопки Undo/Redo в мини-тулбаре */
+  .mmt-undo-group {
+    display: flex;
+    gap: 2px;
+  }
+
+  /* ==============================================
+     EDITOR: Canvas Settings Modal (mobile)
+     ============================================== */
+  .modal-overlay .modal-content {
+    margin: 0 12px !important;
+    max-width: none !important;
+    width: auto !important;
+    border-radius: 20px !important;
+    padding: 20px !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+  }
+
+  .modal-overlay .modal-content .setting-group label {
+    font-size: 13px !important;
+  }
+
+  .modal-overlay .modal-content .grid-style-btn {
+    font-size: 12px !important;
+    padding: 8px 12px !important;
+  }
+
+  /* Оптимизации панель */
+  #optPanel {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 70vh !important;
+    z-index: 9000 !important;
+    border: none !important;
+    border-top: 1px solid rgba(255, 179, 71, 0.15) !important;
+  }
+
+  /* Auth modal */
+  .auth-modal .auth-modal-content {
+    width: 92% !important;
+    max-width: 380px !important;
+    padding: 24px !important;
+    border-radius: 24px !important;
+    margin: 0 16px !important;
+  }
+
+  .auth-modal .auth-modal-content .auth-tabs button {
+    font-size: 13px !important;
+    padding: 10px 16px !important;
+  }
+
+  .auth-modal .auth-modal-content input {
+    font-size: 14px !important;
+    padding: 12px !important;
+  }
+
+  /* Save template modal */
+  .save-template-modal {
+    padding: 24px !important;
+    width: 92% !important;
+    max-width: 380px !important;
+    border-radius: 24px !important;
+  }
+
+  /* ==============================================
+     PREVIEW MODAL (mobile)
+     ============================================== */
+  .mod-preview-modal .mod-preview-content {
+    width: 92% !important;
+    max-width: 380px !important;
+    border-radius: 20px !important;
+    padding: 20px !important;
+  }
+
+  .mod-preview-modal .mod-preview-content h3 {
+    font-size: 16px !important;
+  }
+
+  .mod-preview-modal .mod-preview-content p {
+    font-size: 13px !important;
+  }
+}
+
+/* ==============================================
+   BREAKPOINT: ≤ 480px (узкие телефоны)
+   ============================================== */
+@media (max-width: 480px) {
+  html {
+    font-size: 14px;
+  }
+
+  .splash-card {
+    padding: 20px 16px !important;
+    margin: 0 12px !important;
+  }
+
+  .splash-logo {
+    font-size: 20px !important;
+  }
+
+  .splash-logo i {
+    font-size: 28px !important;
+  }
+
+  .splash-actions .splash-btn {
+    padding: 12px 16px !important;
+    font-size: 14px !important;
+  }
+
+  .mobile-bottom-nav {
+    height: 50px;
+  }
+
+  .mobile-bottom-nav a {
+    font-size: 9px;
+    min-width: 48px;
+    padding: 4px 6px;
+  }
+
+  .mobile-bottom-nav a i {
+    font-size: 18px;
+  }
+
+  .mobile-fab {
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+    bottom: 16px;
+    right: 16px;
+  }
+
+  .mobile-mini-toolbar {
+    height: 40px;
+    padding: 0 8px;
+  }
+
+  .mobile-mini-toolbar .mmt-logo {
+    font-size: 13px;
+  }
+
+  .mobile-mini-toolbar .mmt-logo i {
+    font-size: 16px;
+  }
+
+  .mobile-mini-toolbar .mmt-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .moderate-review-card {
+    padding: 16px;
+  }
+
+  .moderate-review-card .review-actions button {
+    padding: 12px 10px;
+    font-size: 13px;
+  }
+
+  .profile-card {
+    padding: 18px 12px !important;
+  }
+
+  .profile-card .cp-number {
+    font-size: 36px !important;
+  }
+
+  .profile-container .tabs .tab {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .template-card .template-content .template-title {
+    font-size: 13px !important;
+  }
+
+  .template-card .template-actions .btn,
+  .template-card .template-actions button {
+    font-size: 12px !important;
+    padding: 8px 10px !important;
+  }
+}
+
+/* ==============================================
+   LANDSCAPE PHONES
+   ============================================== */
+@media (max-height: 500px) and (orientation: landscape) {
+  .mobile-bottom-nav {
+    height: 44px;
+  }
+
+  .mobile-bottom-nav a i {
+    font-size: 16px;
+  }
+
+  .mobile-bottom-nav a {
+    font-size: 8px;
+  }
+
+  .mobile-bottom-sheet {
+    max-height: 85vh !important;
+  }
+
+  .splash-card {
+    padding: 16px 20px !important;
+  }
+
+  .splash-actions .splash-btn {
+    padding: 10px 16px !important;
+    font-size: 13px !important;
+  }
+
+  .splash-footer {
+    display: none !important;
+  }
+}
+
+/* ==============================================
+   SAFE AREA для iPhone X+
+   ============================================== */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .mobile-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ==============================================
+   УЛУЧШЕНИЯ ДЛЯ touch-устройств
+   ============================================== */
+@media (hover: none) and (pointer: coarse) {
+  /* Увеличиваем tap-targets */
+  .template-card .template-actions button,
+  .profile-container .tabs .tab,
+  .moderate-review-card .review-actions button,
+  .mobile-fab,
+  .mobile-bottom-nav a,
+  .splash-actions .splash-btn {
+    min-height: 44px;
+  }
+
+  /* Отключаем hover-эффекты */
+  .template-card:hover,
+  .node-menu-card:hover,
+  .filter-tab:hover {
+    transform: none !important;
+  }
+}

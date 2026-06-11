@@ -7,6 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/mobile.css">
 </head>
 <body>
 
@@ -166,5 +167,100 @@
         }
     })();
 </script>
+<script>
+// Mobile moderate: review cards stepper
+(function() {
+  'use strict';
+  function isMobile() { return window.innerWidth <= 768; }
+  
+  function buildReviewCards() {
+    if (!isMobile()) return;
+    var container = document.getElementById('templatesContainer');
+    if (!container) return;
+    var table = container.querySelector('.mod-table');
+    if (!table || container.querySelector('.moderate-review-card')) return;
+    
+    var rows = table.querySelectorAll('tbody tr');
+    if (rows.length === 0) return;
+    
+    var tableContainer = container.querySelector('.mod-table-container');
+    if (tableContainer) tableContainer.style.display = 'none';
+    
+    var cardsContainer = document.createElement('div');
+    cardsContainer.className = 'moderate-review-cards';
+    
+    var total = rows.length;
+    rows.forEach(function(row, index) {
+      var cells = row.querySelectorAll('td');
+      var id = cells[0].textContent.trim();
+      var title = cells[1].querySelector('strong') ? cells[1].querySelector('strong').textContent.trim() : '';
+      var descEl = cells[1].querySelector('small');
+      var desc = descEl ? descEl.textContent.trim() : '';
+      var author = cells[2].textContent.trim();
+      var created = cells[3].textContent.trim();
+      var selectHTML = cells[4].innerHTML;
+      
+      var card = document.createElement('div');
+      card.className = 'moderate-review-card';
+      card.dataset.id = id;
+      
+      var progressPct = Math.round(((index + 1) / total) * 100);
+      
+      card.innerHTML = [
+        '<div class="review-progress">',
+          '<div class="progress-bar"><div class="progress-fill" style="width:' + progressPct + '%"></div></div>',
+          '<div class="progress-label">' + (index + 1) + ' / ' + total + '</div>',
+        '</div>',
+        '<div class="review-header">',
+          '<h3>' + escapeHtml(title) + '</h3>',
+          '<span class="review-id">#' + id + '</span>',
+        '</div>',
+        '<div class="review-meta">',
+          '<span><i class="fas fa-user"></i> ' + escapeHtml(author) + '</span>',
+          '<span><i class="fas fa-calendar"></i> ' + escapeHtml(created) + '</span>',
+        '</div>',
+        (desc ? '<div class="review-desc">' + escapeHtml(desc) + '</div>' : ''),
+        '<div class="review-level-select"><label>Level</label>' + selectHTML + '</div>',
+        '<div class="review-actions">',
+          '<button class="review-preview" onclick="window.showPreview(' + id + ')"><i class="fas fa-eye"></i></button>',
+          '<button class="review-reject" onclick="window.rejectTemplate(' + id + ')"><i class="fas fa-times"></i> Reject</button>',
+          '<button class="review-approve" onclick="window.approveTemplate(' + id + ')"><i class="fas fa-check"></i> Approve</button>',
+        '</div>',
+        '<div class="review-swipe-hint"><i class="fas fa-arrow-left"></i> Swipe for more <i class="fas fa-arrow-right"></i></div>',
+      ].join('');
+      
+      cardsContainer.appendChild(card);
+    });
+    
+    container.appendChild(cardsContainer);
+  }
+  
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
+      return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;';
+    });
+  }
+  
+  var container = document.getElementById('templatesContainer');
+  if (container) {
+    var observer = new MutationObserver(function() {
+      if (isMobile()) buildReviewCards();
+    });
+    observer.observe(container, { childList: true, subtree: true });
+  }
+  
+  setTimeout(function() { if (isMobile()) buildReviewCards(); }, 300);
+  window.addEventListener('resize', function() { if (isMobile()) buildReviewCards(); });
+  window.addEventListener('load', function() { setTimeout(function() { if (isMobile()) buildReviewCards(); }, 500); });
+})();
+</script>
+<!-- Bottom Navigation (mobile) -->
+<nav class="mobile-bottom-nav">
+  <a href="amenodes.html"><i class="fas fa-project-diagram"></i><span data-i18n="moderate.editorLink">Editor</span></a>
+  <a href="templates.html"><i class="fas fa-cube"></i><span data-i18n="moderate.templatesLink">Templates</span></a>
+  <a href="profile.html"><i class="fas fa-user"></i><span data-i18n="moderate.profileLink">Profile</span></a>
+  <a href="moderate.html" class="active"><i class="fas fa-shield-alt"></i><span data-i18n="moderate.moderateLink">Moderate</span></a>
+</nav>
 </body>
 </html>

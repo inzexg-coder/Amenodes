@@ -16,6 +16,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/mobile.css">
 </head>
 <body>
 
@@ -614,6 +615,171 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadTemplateFromURL();
     }, 1500);
 });
+</script>
+<!-- Mobile Mini-Toolbar (hidden on desktop) -->
+<div class="mobile-mini-toolbar" id="mobileMiniToolbar">
+  <div class="mmt-left">
+    <div class="mmt-logo">
+      <i class="fas fa-project-diagram"></i><span>@Amenodes</span>
+    </div>
+  </div>
+  <div class="mmt-right">
+    <div class="mmt-undo-group">
+      <button class="mmt-btn" id="mmtUndo" title="Undo"><i class="fas fa-undo-alt"></i></button>
+      <button class="mmt-btn" id="mmtRedo" title="Redo"><i class="fas fa-redo-alt"></i></button>
+    </div>
+    <button class="mmt-btn" id="mmtProperties" title="Properties"><i class="fas fa-info-circle"></i></button>
+    <span class="mmt-node-count" id="mmtNodeCount">0</span>
+  </div>
+</div>
+
+<!-- Mobile FAB -->
+<button class="mobile-fab" id="mobileFab" title="Add Node" aria-label="Add Node">
+  <i class="fas fa-plus"></i>
+</button>
+
+<!-- Bottom Sheet Overlay -->
+<div class="mobile-sheet-overlay" id="mobileSheetOverlay"></div>
+
+<!-- Bottom Sheet Panel -->
+<div class="mobile-bottom-sheet" id="mobileBottomSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3 id="sheetTitle"><i class="fas fa-cubes"></i> <span>Library</span></h3>
+    <button class="sheet-close" id="sheetClose">&times;</button>
+  </div>
+  <div class="sheet-content" id="sheetContent">
+    <!-- content cloned dynamically -->
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const isMobile = () => window.innerWidth <= 768;
+  let sheetOpen = false;
+  let currentSheet = null;
+
+  const fab = document.getElementById('mobileFab');
+  const sheet = document.getElementById('mobileBottomSheet');
+  const sheetOverlay = document.getElementById('mobileSheetOverlay');
+  const sheetTitle = document.getElementById('sheetTitle');
+  const sheetContent = document.getElementById('sheetContent');
+  const sheetClose = document.getElementById('sheetClose');
+  const mmtUndo = document.getElementById('mmtUndo');
+  const mmtRedo = document.getElementById('mmtRedo');
+  const mmtProps = document.getElementById('mmtProperties');
+  const mmtNodeCount = document.getElementById('mmtNodeCount');
+
+  function openSheet(type) {
+    if (!isMobile()) return;
+    currentSheet = type;
+    const leftSidebar = document.getElementById('leftSidebar');
+    const rightSidebar = document.getElementById('rightSidebar');
+
+    if (type === 'library' && leftSidebar) {
+      const libraryContent = leftSidebar.querySelector('.sidebar-content');
+      if (libraryContent) {
+        sheetTitle.innerHTML = '<i class="fas fa-cubes"></i> <span data-i18n="editor.nodesLibrary">Nodes Library</span>';
+        sheetContent.innerHTML = '';
+        const clone = libraryContent.cloneNode(true);
+        sheetContent.appendChild(clone);
+        const searchInput = sheetContent.querySelector('.node-menu-search input');
+        if (searchInput && window.app && window.app.nodeMenu) {
+          searchInput.addEventListener('input', function(e) {
+            window.app.nodeMenu.search(e.target.value);
+          });
+        }
+      }
+    } else if (type === 'properties' && rightSidebar) {
+      const propsContent = rightSidebar.querySelector('.sidebar-content');
+      if (propsContent) {
+        sheetTitle.innerHTML = '<i class="fas fa-info-circle"></i> <span data-i18n="editor.properties">Properties</span>';
+        sheetContent.innerHTML = '';
+        const clone = propsContent.cloneNode(true);
+        sheetContent.appendChild(clone);
+      }
+    }
+
+    sheet.classList.add('open');
+    sheetOverlay.classList.add('open');
+    sheetOpen = true;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSheet() {
+    sheet.classList.remove('open');
+    sheetOverlay.classList.remove('open');
+    sheetOpen = false;
+    currentSheet = null;
+    document.body.style.overflow = '';
+  }
+
+  if (fab) {
+    fab.addEventListener('click', function() {
+      if (sheetOpen) { closeSheet(); return; }
+      openSheet('library');
+    });
+  }
+
+  if (sheetClose) {
+    sheetClose.addEventListener('click', closeSheet);
+  }
+  if (sheetOverlay) {
+    sheetOverlay.addEventListener('click', closeSheet);
+  }
+
+  if (mmtProps) {
+    mmtProps.addEventListener('click', function() {
+      if (sheetOpen && currentSheet === 'properties') { closeSheet(); return; }
+      openSheet('properties');
+    });
+  }
+
+  if (mmtUndo) {
+    mmtUndo.addEventListener('click', function() {
+      if (window.app && window.app.graph && window.app.graph.undo) {
+        window.app.graph.undo();
+        if (window.app.renderer) window.app.renderer.render();
+      }
+    });
+  }
+  if (mmtRedo) {
+    mmtRedo.addEventListener('click', function() {
+      if (window.app && window.app.graph && window.app.graph.redo) {
+        window.app.graph.redo();
+        if (window.app.renderer) window.app.renderer.render();
+      }
+    });
+  }
+
+  function updateNodeCount() {
+    if (!mmtNodeCount) return;
+    var el = document.getElementById('nodeCount');
+    if (el) {
+      var num = parseInt(el.textContent) || 0;
+      mmtNodeCount.textContent = num;
+    }
+  }
+
+  var nodeCountEl = document.getElementById('nodeCount');
+  if (nodeCountEl) {
+    var observer = new MutationObserver(updateNodeCount);
+    observer.observe(nodeCountEl, { characterData: true, childList: true, subtree: true });
+  }
+  updateNodeCount();
+
+  window.addEventListener('orientationchange', function() {
+    if (sheetOpen) closeSheet();
+  });
+
+  window.addEventListener('resize', function() {
+    if (!isMobile() && sheetOpen) closeSheet();
+  });
+
+  console.log('[Mobile] Editor initialized');
+})();
 </script>
 </body>
 </html>
