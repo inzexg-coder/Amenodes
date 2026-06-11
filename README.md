@@ -1,7 +1,7 @@
 <h1 align="center">Amenodes</h1>
 
 <p align="center">
-  <strong>2.7.0</strong><br>
+  <strong>2.8.0</strong><br>
   <sub>Visual Programming Language for Data Analysis</sub>
 </p>
 
