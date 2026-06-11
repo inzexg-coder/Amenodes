@@ -630,6 +630,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       <button class="mmt-btn" id="mmtRedo" title="Redo"><i class="fas fa-redo-alt"></i></button>
     </div>
     <span class="mmt-node-count" id="mmtNodeCount">0</span>
+    <button class="mmt-btn" id="mmtOptBtn" title="Optimizations"><i class="fas fa-tachometer-alt"></i></button>
     <button class="mmt-btn" id="mmtUserBtn" title="Profile"><i class="fas fa-user-circle"></i></button>
   </div>
 </div>
@@ -939,6 +940,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.showAuthModal();
       }
       mobileMenuOverlay.classList.remove('open');
+    });
+  }
+  // Optimization button in mobile toolbar
+  var mmtOptBtn = document.getElementById('mmtOptBtn');
+  if (mmtOptBtn) {
+    mmtOptBtn.addEventListener('click', function() {
+      var panel = document.getElementById('optPanel');
+      if (panel) panel.classList.toggle('hidden');
     });
   }
 

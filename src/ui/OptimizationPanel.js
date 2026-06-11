@@ -91,22 +91,34 @@ export class OptimizationPanel {
       }
     }
 
+    const isMobileView = window.innerWidth <= 768;
+
+    // Mobile: only show quality slider, hide all switches
     if (implementedOpts.length > 0) {
-      const categoryDiv = document.createElement('div');
-      categoryDiv.className = 'opt-category';
-      categoryDiv.textContent = t('optimizations.available');
-      container.appendChild(categoryDiv);
-      
-      for (const { opt, idx } of implementedOpts) {
-        if (opt.type === 'slider') {
-          this.createSliderItem(container, opt, currentQualityValue);
-        } else {
-          this.createSwitchItem(container, opt, idx);
+      if (isMobileView) {
+        // Only render the slider
+        for (const { opt, idx } of implementedOpts) {
+          if (opt.type === 'slider') {
+            this.createSliderItem(container, opt, currentQualityValue);
+          }
+        }
+      } else {
+        const categoryDiv = document.createElement('div');
+        categoryDiv.className = 'opt-category';
+        categoryDiv.textContent = t('optimizations.available');
+        container.appendChild(categoryDiv);
+        
+        for (const { opt, idx } of implementedOpts) {
+          if (opt.type === 'slider') {
+            this.createSliderItem(container, opt, currentQualityValue);
+          } else {
+            this.createSwitchItem(container, opt, idx);
+          }
         }
       }
     }
 
-    if (pendingOpts.length > 0) {
+    if (!isMobileView && pendingOpts.length > 0) {
       const categoryDiv = document.createElement('div');
       categoryDiv.className = 'opt-category';
       categoryDiv.textContent = t('optimizations.comingSoon');

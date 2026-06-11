@@ -945,22 +945,6 @@
     padding: 8px 12px !important;
   }
 
-  /* Оптимизации панель */
-  #optPanel {
-    position: fixed !important;
-    top: auto !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    border-radius: 20px 20px 0 0 !important;
-    max-height: 70vh !important;
-    z-index: 9000 !important;
-    border: none !important;
-    border-top: 1px solid rgba(255, 179, 71, 0.15) !important;
-  }
-
   /* Auth modal */
   .auth-modal .auth-modal-content {
     width: 92% !important;
@@ -1398,5 +1382,63 @@
 
   .mobile-menu-auth-btn:active {
     transform: scale(0.97);
+  }
+}
+
+/* ==============================================
+   OPTIMIZATION PANEL ON MOBILE
+   ============================================== */
+@media (max-width: 768px) {
+  #optPanel {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 70vh !important;
+    z-index: 9000 !important;
+    border: none !important;
+    border-top: 1px solid rgba(255, 179, 71, 0.15) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    background: rgba(20, 24, 36, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+    overflow-y: auto !important;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  #optPanel .opt-header {
+    padding: 16px 16px 12px !important;
+    border-bottom: 1px solid rgba(46, 56, 92, 0.3) !important;
+    position: sticky;
+    top: 0;
+    background: rgba(20, 24, 36, 0.98) !important;
+    z-index: 1;
+  }
+
+  #optPanel .opt-list {
+    padding: 8px 16px 24px !important;
+    max-height: none !important;
+  }
+
+  #optPanel .opt-item {
+    padding: 12px 0 !important;
+  }
+
+  #optPanel .rebench-btn,
+  #optPanel .apply-btn {
+    display: none !important;
+  }
+
+  /* Mobile optimization toggle button in mini-toolbar */
+  .mmt-btn#mmtOptBtn {
+    color: #aabbdd;
+  }
+
+  .mmt-btn#mmtOptBtn:active {
+    color: #ffb347;
+    background: rgba(255, 179, 71, 0.15);
   }
 }
