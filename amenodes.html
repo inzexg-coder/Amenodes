@@ -691,6 +691,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.app.nodeMenu.search(e.target.value);
           });
         }
+        // Re-bind click handlers on node items for mobile creation
+        sheetContent.querySelectorAll('.node-list-item').forEach(function(item) {
+          var type = item.getAttribute('data-type');
+          var subnodeKey = item.getAttribute('data-subnode');
+          if (type) {
+            item.onclick = function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              if (window.app && window.app.createNodeAtCenter) {
+                if (subnodeKey) {
+                  // Find the subnode by matching nameKey
+                  var types = null;
+                  try { types = NodeFactory.getAvailableNodeTypes(); } catch(e) {}
+                  if (types) {
+                    var cat = types.find(function(t) { return t.type === type && t.isCategory; });
+                    if (cat && cat.subnodes) {
+                      var sub = cat.subnodes.find(function(s) { return s.nameKey === subnodeKey; });
+                      if (sub) {
+                        window.app.createNodeAtCenter(type, sub);
+                        if (window.isMobile) closeSheet();
+                        return;
+                      }
+                    }
+                  }
+                }
+                window.app.createNodeAtCenter(type);
+                closeSheet();
+              }
+            };
+          }
+        });
       }
     } else if (type === 'properties' && rightSidebar) {
       const propsContent = rightSidebar.querySelector('.sidebar-content');
@@ -881,48 +912,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   // ----- NODE CREATION FROM LIBRARY -----
-  function setupLibraryCreation() {
-    var sheetContent = document.getElementById("sheetContent");
-    if (!sheetContent) return;
-    
-    // Add create button at the bottom of library
-    var createBtn = document.createElement("button");
-    createBtn.className = "sheet-add-node-btn";
-    createBtn.innerHTML = "<i class=\"fas fa-plus-circle\"></i> Create Node at Center";
-    createBtn.addEventListener("click", function() {
-      if (window.app && window.app.graph) {
-        var centerX = window.innerWidth / 2;
-        var centerY = window.innerHeight / 2;
-        var offset = { x: 0, y: 0 };
-        if (window._viewport) offset = window._viewport.getOffset();
-        var zoom = window.currentZoom || 1;
-        var worldX = (centerX - offset.x) / zoom - 140;
-        var worldY = (centerY - offset.y) / zoom - 40;
-        
-        var node = window.app.graph.addNode("connected", worldX, worldY);
-        if (node) {
-          if (window.app.renderer) window.app.renderer.render();
-          selectNode(node.id);
-          closeSheet();
-        }
-      }
-    });
-    
-    // Only add if not already present
-    if (!sheetContent.querySelector(".sheet-add-node-btn")) {
-      sheetContent.appendChild(createBtn);
-    }
-  }
-  
-  // Watch for sheet content changes to add create button
-  var sheetContentObserver = new MutationObserver(function() {
-    if (currentSheet === "library") setupLibraryCreation();
-  });
-  var sheetContentEl = document.getElementById("sheetContent");
-  if (sheetContentEl) {
-    sheetContentObserver.observe(sheetContentEl, { childList: true, subtree: true });
-  }
-
   console.log('[Mobile] Editor initialized');
 })();
 </script>

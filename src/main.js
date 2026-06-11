@@ -528,6 +528,7 @@ class Application {
       for (const nodeType of regularNodes) {
         const item = document.createElement('div');
         item.className = 'node-list-item';
+        item.setAttribute('data-type', nodeType.type);
         item.innerHTML = `
           <i class="fas ${nodeType.icon || 'fa-circle'}"></i>
           <span>${t(nodeType.nameKey)}</span>
@@ -564,6 +565,8 @@ class Application {
         for (const subnode of category.subnodes) {
           const item = document.createElement('div');
           item.className = 'node-list-item';
+        item.setAttribute('data-type', category.type);
+        item.setAttribute('data-subnode', subnode.nameKey || '');
           item.innerHTML = `
             <i class="fas fa-calculator"></i>
             <span>${t(subnode.nameKey)}</span>
