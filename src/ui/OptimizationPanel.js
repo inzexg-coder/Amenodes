@@ -289,13 +289,16 @@ export class OptimizationPanel {
       window._designQualitySaved = newValue;
       if (this.renderer && this.renderer.render) this.renderer.render();
       
-      setTimeout(async () => {
-        const result = await this.benchmarkService.runBenchmark(true);
-        if (result && result.gains) {
-          this.currentGains = result.gains;
-          updateWithBenchmark(newValue);
-        }
-      }, 500);
+      // Skip benchmark on mobile
+      if (window.innerWidth > 768) {
+        setTimeout(async () => {
+          const result = await this.benchmarkService.runBenchmark(true);
+          if (result && result.gains) {
+            this.currentGains = result.gains;
+            updateWithBenchmark(newValue);
+          }
+        }, 500);
+      }
       
       if (this.panel) this.panel.classList.add('hidden');
     };

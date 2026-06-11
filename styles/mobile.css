@@ -1436,6 +1436,18 @@
     display: none !important;
   }
 
+  /* Hide FPS gain and mode text on mobile */
+  #optPanel .opt-fps-gain,
+  #optPanel .opt-mode {
+    display: none !important;
+  }
+
+  /* Hide the Apply and Recalculate buttons container */
+  #optPanel .apply-btn,
+  #optPanel .rebench-btn {
+    display: none !important;
+  }
+
   /* Mobile optimization toggle button in mini-toolbar */
   .mmt-btn#mmtOptBtn {
     color: #aabbdd;
