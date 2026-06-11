@@ -382,7 +382,6 @@ export class DomRenderer {
       const header = element.querySelector('.node-header, .output-header, .calc-header, .map-header, .group-header');
       if (header) {
         header.addEventListener("mousedown", this.onNodeDown.bind(this));
-        header.addEventListener("touchstart", this.onNodeDown.bind(this), { passive: false });
       }
     });
   }

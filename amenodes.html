@@ -660,6 +660,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const isMobile = () => window.innerWidth <= 768;
   let sheetOpen = false;
   let currentSheet = null;
+  let selectedNodeId = null;
+
+  // ----- LONG PRESS STATE -----
+  let longPressTimer = null;
+  let longPressTriggered = false;
+  let touchStartNodeId = null;
+  let touchStartPos = { x: 0, y: 0 };
 
   const fab = document.getElementById('mobileFab');
   const sheet = document.getElementById('mobileBottomSheet');
@@ -672,6 +679,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const mmtProps = document.getElementById('mmtProperties');
   const mmtNodeCount = document.getElementById('mmtNodeCount');
 
+  // ----- BOTTOM SHEET -----
   function openSheet(type) {
     if (!isMobile()) return;
     currentSheet = type;
@@ -685,12 +693,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         sheetContent.innerHTML = '';
         const clone = libraryContent.cloneNode(true);
         sheetContent.appendChild(clone);
-        const searchInput = sheetContent.querySelector('.node-menu-search input');
-        if (searchInput && window.app && window.app.nodeMenu) {
-          searchInput.addEventListener('input', function(e) {
-            window.app.nodeMenu.search(e.target.value);
-          });
-        }
         // Re-bind click handlers on node items for mobile creation
         sheetContent.querySelectorAll('.node-list-item').forEach(function(item) {
           var type = item.getAttribute('data-type');
@@ -701,7 +703,6 @@ document.addEventListener('DOMContentLoaded', async () => {
               e.stopPropagation();
               if (window.app && window.app.createNodeAtCenter) {
                 if (subnodeKey) {
-                  // Find the subnode by matching nameKey
                   var types = null;
                   try { types = NodeFactory.getAvailableNodeTypes(); } catch(e) {}
                   if (types) {
@@ -723,14 +724,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         });
       }
-    } else if (type === 'properties' && rightSidebar) {
-      const propsContent = rightSidebar.querySelector('.sidebar-content');
-      if (propsContent) {
-        sheetTitle.innerHTML = '<i class="fas fa-info-circle"></i> <span data-i18n="editor.properties">Properties</span>';
-        sheetContent.innerHTML = '';
-        const clone = propsContent.cloneNode(true);
-        sheetContent.appendChild(clone);
-      }
     }
 
     sheet.classList.add('open');
@@ -747,6 +740,122 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.body.style.overflow = '';
   }
 
+  // ----- NODE SELECTION -----
+  function selectNode(nodeId) {
+    selectedNodeId = nodeId;
+    
+    // Remove previous selection from all nodes
+    document.querySelectorAll('.node.selected-for-edit').forEach(function(el) {
+      el.classList.remove('selected-for-edit');
+    });
+    
+    if (nodeId !== null) {
+      var nodeEl = document.querySelector('.node[data-id="' + nodeId + '"]');
+      if (nodeEl) nodeEl.classList.add('selected-for-edit');
+    }
+  }
+
+  function deselectAll() {
+    selectNode(null);
+  }
+
+  // ----- TOUCH HANDLING: long-press to drag, tap to select -----
+  var nodesLayer = document.getElementById('nodesLayer');
+  if (nodesLayer) {
+    // Touch start on any node
+    nodesLayer.addEventListener('touchstart', function(e) {
+      if (!isMobile()) return;
+      
+      var nodeEl = e.target.closest('.node');
+      if (!nodeEl) return;
+      
+      // Ignore handles, buttons, inputs
+      if (e.target.closest('.node-handle, .node-actions, input, button, select, .title-editable')) return;
+      
+      var touch = e.touches[0];
+      var nodeId = parseInt(nodeEl.getAttribute('data-id'));
+      if (isNaN(nodeId)) return;
+      
+      // Store touch state
+      touchStartNodeId = nodeId;
+      touchStartPos = { x: touch.clientX, y: touch.clientY };
+      longPressTriggered = false;
+      
+      // Start long-press timer (300ms)
+      clearTimeout(longPressTimer);
+      longPressTimer = setTimeout(function() {
+        longPressTriggered = true;
+        
+        // Start node drag via renderer
+        if (window.app && window.app.renderer) {
+          var renderer = window.app.renderer;
+          var node = window.app.graph.getNode(nodeId);
+          if (node) {
+            // Set drag state directly (like onNodeDown does)
+            renderer.dragNode = node;
+            renderer.dragStartX = touchStartPos.x;
+            renderer.dragStartY = touchStartPos.y;
+            renderer.dragNodeStartX = node.x;
+            renderer.dragNodeStartY = node.y;
+            document.body.style.cursor = 'grabbing';
+          }
+        }
+      }, 300);
+    }, { passive: true });
+    
+    // Touch move: if moved before long-press → cancel timer (it's a tap/pan)
+    // If after long-press → let global onGlobalMove handle it
+    nodesLayer.addEventListener('touchmove', function(e) {
+      if (!isMobile() || touchStartNodeId === null) return;
+      
+      var touch = e.touches[0];
+      var dx = Math.abs(touch.clientX - touchStartPos.x);
+      var dy = Math.abs(touch.clientY - touchStartPos.y);
+      
+      // If moved > 10px before long-press fired: cancel
+      if (!longPressTriggered && (dx > 10 || dy > 10)) {
+        clearTimeout(longPressTimer);
+        touchStartNodeId = null;
+      }
+    }, { passive: true });
+    
+    // Touch end
+    nodesLayer.addEventListener('touchend', function(e) {
+      if (!isMobile() || touchStartNodeId === null) return;
+      
+      clearTimeout(longPressTimer);
+      
+      var nodeId = touchStartNodeId;
+      touchStartNodeId = null;
+      
+      // If long-press was triggered and we dragged: onGlobalUp saves
+      // If long-press was triggered but we didn't drag (tap after hold): save anyway
+      // If no long-press: it's a quick tap → toggle selection
+      if (!longPressTriggered) {
+        // Quick tap: toggle selection
+        if (selectedNodeId === nodeId) {
+          selectNode(null); // deselect
+        } else {
+          selectNode(nodeId); // select
+        }
+      }
+    }, { passive: true });
+  }
+
+  // Deselect on canvas tap
+  var viewport = document.getElementById('viewport');
+  if (viewport) {
+    viewport.addEventListener('touchstart', function(e) {
+      if (!isMobile()) return;
+      if (e.target.closest('.node, .mobile-bottom-sheet, .mobile-fab, .mobile-mini-toolbar')) return;
+      // Tap on empty space: deselect after a delay (let other handlers fire first)
+      setTimeout(function() {
+        if (selectedNodeId !== null && !longPressTriggered) deselectAll();
+      }, 100);
+    }, { passive: true });
+  }
+
+  // ----- FAB — open library -----
   if (fab) {
     fab.addEventListener('click', function() {
       if (sheetOpen) { closeSheet(); return; }
@@ -754,6 +863,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // Close sheet
   if (sheetClose) {
     sheetClose.addEventListener('click', closeSheet);
   }
@@ -761,13 +871,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     sheetOverlay.addEventListener('click', closeSheet);
   }
 
+  // Properties button in mini-toolbar no longer opens properties (removed on mobile)
+  // Instead, on mobile it just deselects current node
   if (mmtProps) {
     mmtProps.addEventListener('click', function() {
-      if (sheetOpen && currentSheet === 'properties') { closeSheet(); return; }
-      openSheet('properties');
+      deselectAll();
     });
   }
 
+  // Undo / Redo
   if (mmtUndo) {
     mmtUndo.addEventListener('click', function() {
       if (window.app && window.app.graph && window.app.graph.undo) {
@@ -785,6 +897,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // Update node count
   function updateNodeCount() {
     if (!mmtNodeCount) return;
     var el = document.getElementById('nodeCount');
@@ -801,119 +914,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   updateNodeCount();
 
+  // Close sheet on orientation change
   window.addEventListener('orientationchange', function() {
     if (sheetOpen) closeSheet();
   });
 
+  // Close sheet on resize to desktop
   window.addEventListener('resize', function() {
     if (!isMobile() && sheetOpen) closeSheet();
   });
 
-
-  // ----- NODE SELECTION (tap to select) -----
-  var nodesLayer = document.getElementById("nodesLayer");
-  var selectedNodeId = null;
-  
-  function selectNode(nodeId) {
-    selectedNodeId = nodeId;
-    
-    // Remove previous selection
-    document.querySelectorAll(".node.selected-for-edit").forEach(function(el) {
-      el.classList.remove("selected-for-edit");
-    });
-    
-    if (nodeId === null) {
-      if (isMobile()) openSheet("properties"); // show empty state
-      return;
-    }
-    
-    // Highlight node
-    var nodeEl = document.querySelector(".node[data-id=\"" + nodeId + "\"]");
-    if (nodeEl) nodeEl.classList.add("selected-for-edit");
-    
-    // Show properties in sheet
-    if (isMobile() && window.app && window.app.graph) {
-      var node = window.app.graph.getNode(nodeId);
-      if (node) {
-        sheetTitle.innerHTML = "<i class=\"fas fa-info-circle\"></i> <span>Node #" + nodeId + "</span>";
-        sheetContent.innerHTML = [
-          "<div class=\"property-group\">",
-            "<div class=\"property-label\">Type</div>",
-            "<div class=\"property-value\">" + (node.type || "unknown") + "</div>",
-          "</div>",
-          "<div class=\"property-group\">",
-            "<div class=\"property-label\">ID</div>",
-            "<div class=\"property-value\">" + node.id + "</div>",
-          "</div>",
-          "<div class=\"property-group\">",
-            "<div class=\"property-label\">Position</div>",
-            "<div class=\"property-value\">X: " + Math.round(node.x) + ", Y: " + Math.round(node.y) + "</div>",
-          "</div>",
-          "<button class=\"node-delete-btn\" id=\"mobileNodeDelete\">",
-            "<i class=\"fas fa-trash-alt\"></i> Delete Node",
-          "</button>",
-        ].join("");
-        
-        document.getElementById("mobileNodeDelete").addEventListener("click", function() {
-          if (window.app && window.app.graph) {
-            window.app.graph.removeNode(nodeId);
-            if (window.app.renderer) window.app.renderer.render();
-            selectedNodeId = null;
-            closeSheet();
-            if (window.app.updateNodeCount) window.app.updateNodeCount();
-            if (window.app.updateEdgeCount) window.app.updateEdgeCount();
-          }
-        });
-        
-        if (!sheetOpen) {
-          sheet.classList.add("open");
-          sheetOverlay.classList.add("open");
-          sheetOpen = true;
-          document.body.style.overflow = "hidden";
-        }
-      }
-    }
-  }
-  
-  // Delegated tap on nodes (via pointerdown for cross-device)
-  if (nodesLayer) {
-    nodesLayer.addEventListener("pointerdown", function(e) {
-      if (!isMobile()) return;
-      if (e.pointerType !== "touch") return;
-      
-      var nodeEl = e.target.closest(".node");
-      if (!nodeEl) return;
-      
-      // Ignore handles, buttons, inputs
-      if (e.target.closest(".node-handle, .node-actions, input, button, select, .title-editable")) return;
-      
-      var nodeId = parseInt(nodeEl.getAttribute("data-id"));
-      if (!isNaN(nodeId)) {
-        e.preventDefault();
-        if (selectedNodeId === nodeId) {
-          selectNode(null); // deselect
-        } else {
-          selectNode(nodeId);
-        }
-      }
-    });
-  }
-  
-  // Deselect on canvas tap
-  var viewport = document.getElementById("viewport");
-  if (viewport) {
-    viewport.addEventListener("pointerdown", function(e) {
-      if (!isMobile() || e.pointerType !== "touch") return;
-      if (e.target.closest(".node, .mobile-bottom-sheet, .mobile-fab, .mobile-mini-toolbar")) return;
-      setTimeout(function() {
-        if (!selectedNodeId) selectNode(null);
-      }, 200);
-    });
-  }
-  
-  // ----- NODE CREATION FROM LIBRARY -----
   console.log('[Mobile] Editor initialized');
-})();
-</script>
+})();</script>
 </body>
 </html>
