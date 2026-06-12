@@ -39,6 +39,7 @@ export class DomRenderer {
       if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
     });
     
+    this.attachTouchFeedback();
     this.contextMenu = null;
   }
 
@@ -457,6 +458,31 @@ export class DomRenderer {
     this.virtual = enabled;
     this.elementCache.clear();
     this.render();
+  }
+
+  attachTouchFeedback() {
+    let touchTimeout = null;
+    this.layer.addEventListener('touchstart', (e) => {
+      const nodeEl = e.target.closest('.node');
+      if (nodeEl) {
+        clearTimeout(touchTimeout);
+        nodeEl.classList.add('node-touch-active');
+      }
+    }, { passive: true });
+    this.layer.addEventListener('touchend', (e) => {
+      const nodeEl = e.target.closest('.node');
+      if (nodeEl) {
+        touchTimeout = setTimeout(() => {
+          nodeEl.classList.remove('node-touch-active');
+        }, 150);
+      }
+    }, { passive: true });
+    this.layer.addEventListener('touchcancel', (e) => {
+      const nodeEl = e.target.closest('.node');
+      if (nodeEl) {
+        nodeEl.classList.remove('node-touch-active');
+      }
+    }, { passive: true });
   }
 
   closeMenu() {
