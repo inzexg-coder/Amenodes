@@ -686,8 +686,16 @@ body {
   transition: var(--transition);
 }
 
-.node:hover {
-  box-shadow: var(--node-hover-shadow);
+@media (hover: hover) {
+  .node:hover {
+    transform: scale(1.02);
+    box-shadow: var(--node-hover-shadow), 0 0 20px rgba(109, 138, 224, 0.4);
+  }
+}
+
+.node-touch-active {
+  transform: scale(1.02);
+  box-shadow: var(--node-hover-shadow), 0 0 20px rgba(109, 138, 224, 0.4);
 }
 
 .node-header, .output-header, .calc-header, .map-header, .group-header {
