@@ -2,6 +2,9 @@ export class EdgeRenderer {
   constructor(layer) {
     this.layer = layer;
     this.onEdgeRemoved = null;
+    this.highlightedEdgeId = null;
+    this.longPressTimer = null;
+    this.ignoreNextClick = false;
   }
 
   renderEdges(edges, graph, rectCache) {
@@ -28,18 +31,83 @@ export class EdgeRenderer {
       const line = this.createLine(point1, point2, color, edge.id);
       const arrow = this.createArrow(point1, point2, color);
       
-      svg.appendChild(line);
-      svg.appendChild(arrow);
+      const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      group.classList.add('edge-group');
+      group.setAttribute('data-edge-id', edge.id);
+      group.appendChild(line);
+      group.appendChild(arrow);
+      svg.appendChild(group);
       
-      line.addEventListener('contextmenu', (ev) => {
+      group.addEventListener('contextmenu', (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
-        graph.removeEdge(edge.id);
-        graph.reevaluateAll();
-        graph.updateAllOutputs();
-        if (this.onEdgeRemoved) this.onEdgeRemoved();
+        this.clearHighlight();
+        this.removeEdge(edge, graph);
       });
+      
+      group.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if (this.ignoreNextClick) {
+          this.ignoreNextClick = false;
+          return;
+        }
+        if (this.highlightedEdgeId === edge.id) {
+          this.clearHighlight();
+        } else {
+          this.setHighlight(edge.id);
+        }
+      });
+      
+      group.addEventListener('touchstart', (ev) => {
+        ev.stopPropagation();
+        this.longPressTimer = setTimeout(() => {
+          this.ignoreNextClick = true;
+          this.clearHighlight();
+          this.removeEdge(edge, graph);
+          this.longPressTimer = null;
+        }, 600);
+      }, { passive: true });
+      
+      group.addEventListener('touchmove', () => {
+        if (this.longPressTimer) {
+          clearTimeout(this.longPressTimer);
+          this.longPressTimer = null;
+        }
+      }, { passive: true });
+      
+      group.addEventListener('touchend', () => {
+        if (this.longPressTimer) {
+          clearTimeout(this.longPressTimer);
+          this.longPressTimer = null;
+        }
+      }, { passive: true });
+      
+      if (this.highlightedEdgeId === edge.id) {
+        group.classList.add('edge-highlighted');
+      }
     }
+  }
+
+  setHighlight(edgeId) {
+    this.clearHighlight();
+    this.highlightedEdgeId = edgeId;
+    const group = this.layer.querySelector(`g[data-edge-id="${edgeId}"]`);
+    if (group) group.classList.add('edge-highlighted');
+  }
+
+  clearHighlight() {
+    if (this.highlightedEdgeId) {
+      const prev = this.layer.querySelector(`g[data-edge-id="${this.highlightedEdgeId}"]`);
+      if (prev) prev.classList.remove('edge-highlighted');
+      this.highlightedEdgeId = null;
+    }
+  }
+
+  removeEdge(edge, graph) {
+    graph.removeEdge(edge.id);
+    graph.reevaluateAll();
+    graph.updateAllOutputs();
+    if (this.onEdgeRemoved) this.onEdgeRemoved();
   }
 
   createSvgLayer() {
@@ -88,6 +156,7 @@ export class EdgeRenderer {
     arrow.setAttribute("stroke", color === "#44aaff" ? "#88ccff" : "#ffda99");
     arrow.setAttribute("stroke-width", "1");
     arrow.setAttribute("stroke-linejoin", "round");
+    arrow.classList.add("edge-arrow");
     return arrow;
   }
 

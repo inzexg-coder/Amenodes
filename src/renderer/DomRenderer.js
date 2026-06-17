@@ -41,6 +41,11 @@ export class DomRenderer {
     
     this.attachTouchFeedback();
     this.contextMenu = null;
+    this.layer.addEventListener("click", (e) => {
+      if (!e.target.closest(".edge-group")) {
+        this.edgeRenderer.clearHighlight();
+      }
+    });
   }
 
   setViewport(viewport) {

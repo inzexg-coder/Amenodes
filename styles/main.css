@@ -986,13 +986,34 @@ body {
 
 /* EDGE LINES */
 
-.edge-line {
+.edge-group {
   cursor: pointer;
-  transition: stroke 0.3s ease, stroke-width 0.3s ease;
 }
 
-.edge-line:hover {
-  stroke-width: 5;
+.edge-line {
+  transition: stroke 0.3s ease, stroke-width 0.3s ease, filter 0.3s ease;
+}
+
+.edge-arrow {
+  transition: fill 0.3s ease, filter 0.3s ease;
+}
+
+.edge-group:hover .edge-line {
+  stroke-width: 6;
+  filter: brightness(1.5);
+}
+
+.edge-group:hover .edge-arrow {
+  filter: brightness(1.5);
+}
+
+.edge-highlighted .edge-line {
+  stroke-width: 6;
+  filter: brightness(1.5);
+}
+
+.edge-highlighted .edge-arrow {
+  filter: brightness(1.5);
 }
 
 /* OPTIMIZATION PANEL */

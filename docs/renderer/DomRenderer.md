@@ -277,6 +277,15 @@ setVirtual(enabled: boolean): void
 
 Включает или выключает режим виртуализации.
 
+## attachTouchFeedback()
+
+Вызывается из конструктора. Добавляет делегированные touch-обработчики на слой узлов (`this.layer`):
+- `touchstart` — добавляет CSS-класс `.node-touch-active` (scale 1.02 + glow)
+- `touchend` — удаляет класс через 150ms (чтобы эффект был заметен)
+- `touchcancel` — удаляет класс сразу
+
+Использует `{ passive: true }` для оптимальной производительности на мобильных устройствах.
+
 ## closeMenu()
 
 ```javascript
