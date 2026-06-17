@@ -22,7 +22,6 @@ const getOptKey = (name) => {
     'Кэш текста': 'cacheText',
     'WebGL-инстансинг': 'webglInstancing',
     'Качество дизайна': 'designQuality',
-    'Скорость анимации': 'animSpeed'
   };
   return map[name] || name.replace(/\s+/g, '');
 };
@@ -97,8 +96,6 @@ export class OptimizationPanel {
     if (implementedOpts.length > 0) {
       if (isMobileView) {
         for (const { opt, idx } of implementedOpts) {
-          if (opt.type === 'slider' && opt.name === 'Скорость анимации') {
-            this.createAnimSpeedItem(container, opt);
           } else if (opt.type === 'slider') {
             this.createSliderItem(container, opt, currentQualityValue);
           }
@@ -110,8 +107,6 @@ export class OptimizationPanel {
         container.appendChild(categoryDiv);
         
         for (const { opt, idx } of implementedOpts) {
-          if (opt.type === 'slider' && opt.name === 'Скорость анимации') {
-            this.createAnimSpeedItem(container, opt);
           } else if (opt.type === 'slider') {
             this.createSliderItem(container, opt, currentQualityValue);
           } else {
@@ -133,7 +128,6 @@ export class OptimizationPanel {
     }
   }
 
-  createAnimSpeedItem(container, opt) {
     const item = document.createElement('div');
     item.className = 'opt-item';
     

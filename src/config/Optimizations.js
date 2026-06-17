@@ -17,6 +17,5 @@ export const OPTIMIZATIONS = [
   { name: "Ограничение истории", desc: "50->20 шагов", pros: "Меньше памяти", cons: "Меньше истории", impl: true },
   { name: "Кэш текста", desc: "Строки в кэше", pros: "Ускоряет поиск", cons: "Инвалидация", impl: false },
   { name: "WebGL-инстансинг", desc: "Тысячи нод через GPU", pros: "5000+ нод 60 FPS", cons: "Требует WebGL", impl: false },
-  { name: "Скорость анимации", desc: "Длительность анимаций", pros: "Плавные движения", cons: "Может расходиться с ребрами", type: "slider", min: 0, max: 500, step: 10, default: 300, impl: true },
   { name: "Качество дизайна", desc: "Снижение визуала", pros: "FPS до +300%", cons: "Визуал страдает", type: "slider", min: 0, max: 100, step: 1, default: 100, impl: true }
 ];

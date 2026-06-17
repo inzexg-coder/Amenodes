@@ -329,6 +329,14 @@ export const en = {
     enableCtrlZoom: 'Require Ctrl key for zooming',
     invertZoom: 'Invert zoom direction',
     enableInvertZoom: 'Reverse scroll direction for zoom',
+    animSpeed: "Animation Speed",
+    animSpeedUnit: "ms",
+    animSpeed0: "0",
+    animSpeed100: "100",
+    animSpeed200: "200",
+    animSpeed300: "300",
+    animSpeed400: "400",
+    animSpeed500: "500",
     unsaved: 'Unsaved changes'
   },
 

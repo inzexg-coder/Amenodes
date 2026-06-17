@@ -329,6 +329,14 @@ export const ru = {
     enableCtrlZoom: 'Требовать клавишу Ctrl для зума',
     invertZoom: 'Инвертировать направление зума',
     enableInvertZoom: 'Изменить направление прокрутки для зума',
+    animSpeed: "Скорость анимации",
+    animSpeedUnit: "ms",
+    animSpeed0: "0",
+    animSpeed100: "100",
+    animSpeed200: "200",
+    animSpeed300: "300",
+    animSpeed400: "400",
+    animSpeed500: "500",
     unsaved: 'Несохраненные изменения'
   },
 

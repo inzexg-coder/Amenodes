@@ -31,6 +31,10 @@ class Application {
     this.snapToGrid = localStorage.getItem('canvas_snap_to_grid') === 'true';
     this.ctrlZoomOnly = localStorage.getItem('ctrl_zoom_only') === 'true';
     this.invertZoomDirection = localStorage.getItem('invert_zoom_direction') === 'true';
+    const savedSpeed = parseInt(localStorage.getItem("anim_speed") || "300");
+    window._nodeAnimSpeed = savedSpeed;
+    const sec = savedSpeed / 1000;
+    document.documentElement.style.setProperty("--transition", sec > 0 ? `all ${sec}s ease` : "none");
 
     this.initRenderer();
     this.initHistory();
@@ -165,6 +169,20 @@ class Application {
     const invertZoomCheck = document.getElementById('invertZoomDirection');
     const gridSizeInput = document.getElementById('gridSize');
     const gridSizeValue = document.getElementById('gridSizeValue');
+    const animSpeedInput = document.getElementById("animSpeed");
+    const animSpeedValue = document.getElementById("animSpeedValue");
+    const currentSpeed = window._nodeAnimSpeed !== undefined ? window._nodeAnimSpeed : 300;
+    if (animSpeedInput) animSpeedInput.value = currentSpeed;
+    if (animSpeedValue) animSpeedValue.textContent = currentSpeed;
+    
+    const animSpeedPresets = document.querySelectorAll(".anim-speed-presets span");
+    animSpeedPresets.forEach(p => {
+      if (parseInt(p.getAttribute("data-speed")) === currentSpeed) {
+        p.classList.add("active");
+      } else {
+        p.classList.remove("active");
+      }
+    });
     const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
     
     if (snapToGridCheck) snapToGridCheck.checked = this.snapToGrid;
@@ -226,6 +244,30 @@ class Application {
       if (gridPreviewCanvas) {
         const currentStyle = document.querySelector('.grid-style-btn.active')?.getAttribute('data-grid') || this.gridStyle;
         gridPreviewCanvas.setAttribute('data-preview', currentStyle);
+    const handleAnimSpeedPresetClick = (e) => {
+      const preset = e.currentTarget;
+      const speed = parseInt(preset.getAttribute("data-speed"));
+      animSpeedPresets.forEach(p => p.classList.remove("active"));
+      preset.classList.add("active");
+      if (animSpeedInput) animSpeedInput.value = speed;
+      if (animSpeedValue) animSpeedValue.textContent = speed;
+    };
+    
+    const handleAnimSpeedInput = (e) => {
+      const speed = e.target.value;
+      if (animSpeedValue) animSpeedValue.textContent = speed;
+      animSpeedPresets.forEach(p => p.classList.remove("active"));
+    };
+    
+    animSpeedPresets.forEach(preset => {
+      preset.removeEventListener("click", handleAnimSpeedPresetClick);
+      preset.addEventListener("click", handleAnimSpeedPresetClick);
+    });
+    
+    if (animSpeedInput) {
+      animSpeedInput.removeEventListener("input", handleAnimSpeedInput);
+      animSpeedInput.addEventListener("input", handleAnimSpeedInput);
+    }
         gridPreviewCanvas.style.backgroundSize = `${size}px ${size}px`;
       }
       sizePresets.forEach(p => p.classList.remove('active'));
@@ -340,6 +382,14 @@ class Application {
         const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
         const invertZoomCheck = document.getElementById('invertZoomDirection');
         const gridSizeInput = document.getElementById('gridSize');
+        const animSpeedInput = document.getElementById("animSpeed");
+        if (animSpeedInput) {
+          const speed = parseInt(animSpeedInput.value);
+          window._nodeAnimSpeed = speed;
+          const seconds = speed / 1000;
+          document.documentElement.style.setProperty("--transition", seconds > 0 ? `all ${seconds}s ease` : "none");
+          localStorage.setItem("anim_speed", speed.toString());
+        }
         const activeStyleBtn = document.querySelector('.grid-style-btn.active');
         
         if (snapToGridCheck) this.snapToGrid = snapToGridCheck.checked;
