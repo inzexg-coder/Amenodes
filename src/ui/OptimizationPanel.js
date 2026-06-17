@@ -21,7 +21,8 @@ const getOptKey = (name) => {
     'Ограничение истории': 'limitHistory',
     'Кэш текста': 'cacheText',
     'WebGL-инстансинг': 'webglInstancing',
-    'Качество дизайна': 'designQuality'
+    'Качество дизайна': 'designQuality',
+    'Скорость анимации': 'animSpeed'
   };
   return map[name] || name.replace(/\s+/g, '');
 };
@@ -93,12 +94,12 @@ export class OptimizationPanel {
 
     const isMobileView = window.innerWidth <= 768;
 
-    // Mobile: only show quality slider, hide all switches
     if (implementedOpts.length > 0) {
       if (isMobileView) {
-        // Only render the slider
         for (const { opt, idx } of implementedOpts) {
-          if (opt.type === 'slider') {
+          if (opt.type === 'slider' && opt.name === 'Скорость анимации') {
+            this.createAnimSpeedItem(container, opt);
+          } else if (opt.type === 'slider') {
             this.createSliderItem(container, opt, currentQualityValue);
           }
         }
@@ -109,7 +110,9 @@ export class OptimizationPanel {
         container.appendChild(categoryDiv);
         
         for (const { opt, idx } of implementedOpts) {
-          if (opt.type === 'slider') {
+          if (opt.type === 'slider' && opt.name === 'Скорость анимации') {
+            this.createAnimSpeedItem(container, opt);
+          } else if (opt.type === 'slider') {
             this.createSliderItem(container, opt, currentQualityValue);
           } else {
             this.createSwitchItem(container, opt, idx);
@@ -130,6 +133,62 @@ export class OptimizationPanel {
     }
   }
 
+  createAnimSpeedItem(container, opt) {
+    const item = document.createElement('div');
+    item.className = 'opt-item';
+    
+    const info = document.createElement('div');
+    info.className = 'opt-info';
+    
+    const optKey = getOptKey(opt.name);
+    const optName = t(`optimizations.${optKey}`) || opt.name;
+    const optDesc = t(`optimizations.${optKey}Desc`) || opt.desc;
+    const optPros = t(`optimizations.${optKey}Pros`) || opt.pros;
+    const optCons = t(`optimizations.${optKey}Cons`) || opt.cons;
+    
+    const currentSpeed = window._nodeAnimSpeed !== undefined ? window._nodeAnimSpeed : (opt.default || 300);
+    
+    info.innerHTML = `
+      <div class="opt-title">${optName}</div>
+      <div class="opt-desc">${optDesc}</div>
+      <div class="opt-pros">${optPros}</div>
+      <div class="opt-cons">${optCons}</div>
+    `;
+    
+    const sliderDiv = document.createElement('div');
+    sliderDiv.className = 'opt-slider-row';
+    
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = opt.min;
+    slider.max = opt.max;
+    slider.step = opt.step;
+    slider.value = currentSpeed;
+    
+    const valueSpan = document.createElement('span');
+    valueSpan.className = 'opt-slider-value';
+    valueSpan.textContent = currentSpeed + 'ms';
+    
+    slider.oninput = (e) => {
+      const v = parseInt(e.target.value);
+      valueSpan.textContent = v + 'ms';
+    };
+    
+    slider.onchange = (e) => {
+      const v = parseInt(e.target.value);
+      const seconds = v / 1000;
+      window._nodeAnimSpeed = v;
+      document.documentElement.style.setProperty('--transition', seconds > 0 ? `all ${seconds}s ease` : 'none');
+      if (this.renderer && this.renderer.render) this.renderer.render();
+    };
+    
+    sliderDiv.appendChild(slider);
+    sliderDiv.appendChild(valueSpan);
+    info.appendChild(sliderDiv);
+    item.appendChild(info);
+    container.appendChild(item);
+  }
+
   createSwitchItem(container, opt, idx) {
     const item = document.createElement('div');
     item.className = 'opt-item';
@@ -142,31 +201,26 @@ export class OptimizationPanel {
     const optDesc = t(`optimizations.${optKey}Desc`) || opt.desc;
     const optPros = t(`optimizations.${optKey}Pros`) || opt.pros;
     const optCons = t(`optimizations.${optKey}Cons`) || opt.cons;
-    const gain = this.currentGains[idx] || 0;
-    const gainText = gain > 0 ? `+${gain}%` : (gain === 0 ? '0%' : t('optimizations.notMeasured'));
+    
+    const isEnabled = this.optState[idx];
     
     info.innerHTML = `
       <div class="opt-title">${optName}</div>
       <div class="opt-desc">${optDesc}</div>
       <div class="opt-pros">${optPros}</div>
       <div class="opt-cons">${optCons}</div>
-      <div class="opt-fps">${t('optimizations.fpsLabel')}: ${gainText}</div>
     `;
     
     const switchEl = document.createElement('div');
-    switchEl.className = `opt-switch ${this.optState[idx] ? 'active' : ''}`;
+    switchEl.className = `opt-switch${isEnabled ? ' opt-switch-active' : ''}`;
+    switchEl.onclick = () => {
+      this.optState[idx] = !this.optState[idx];
+      switchEl.classList.toggle('opt-switch-active');
+      this.applyOptimizationImmediately(idx, this.optState[idx]);
+    };
     const handle = document.createElement('div');
     handle.className = 'opt-switch-handle';
     switchEl.appendChild(handle);
-    
-    switchEl.onclick = (e) => {
-      e.stopPropagation();
-      if (!opt.impl) return;
-      this.optState[idx] = !this.optState[idx];
-      switchEl.classList.toggle('active');
-      this.applyOptimizationImmediately(idx, this.optState[idx]);
-      if (this.panel) this.panel.classList.add('hidden');
-    };
     
     item.appendChild(info);
     item.appendChild(switchEl);
@@ -194,7 +248,7 @@ export class OptimizationPanel {
     `;
     
     const sliderDiv = document.createElement('div');
-    sliderDiv.className = 'opt-slider-container';
+    sliderDiv.className = 'opt-slider-row';
     
     const slider = document.createElement('input');
     slider.type = 'range';
@@ -202,81 +256,43 @@ export class OptimizationPanel {
     slider.max = opt.max;
     slider.step = opt.step;
     slider.value = currentValue;
-    slider.className = 'opt-slider';
     
     const valueSpan = document.createElement('span');
     valueSpan.className = 'opt-slider-value';
     valueSpan.textContent = currentValue + '%';
     
     const fpsGainSpan = document.createElement('div');
-    fpsGainSpan.className = 'opt-fps-gain';
-    fpsGainSpan.style.cssText = 'font-size: 11px; color: #88dd88; font-family: monospace; margin-top: 6px; padding-top: 4px; border-top: 1px solid #2e385c;';
+    fpsGainSpan.className = 'opt-fps';
     
-    const modeSpan = document.createElement('div');
-    modeSpan.className = 'opt-quality-mode';
+    const modeSpan = document.createElement('span');
+    modeSpan.className = 'opt-mode';
     
     const updateQuality = (value) => {
       valueSpan.textContent = value + '%';
-      let modeMsg = '';
-      let fpsGainMsg = '';
+      fpsGainSpan.innerHTML = '';
+      modeSpan.textContent = '';
       
-      if (value <= 20) {
-        modeMsg = t('optimizations.extreme');
-        fpsGainMsg = '+300% FPS';
-      } else if (value <= 50) {
-        modeMsg = t('optimizations.low');
-        fpsGainMsg = '+150% FPS';
-      } else if (value <= 80) {
-        modeMsg = t('optimizations.medium');
-        fpsGainMsg = '+50% FPS';
+      const initialGain = this.currentGains[OPTIMIZATIONS.length - 1] || 0;
+      const initialFpsMsg = initialGain > 0 ? `+${initialGain}% FPS` : '0% FPS';
+      
+      if (value > 80) {
+        fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: ${initialFpsMsg}`;
       } else {
-        modeMsg = t('optimizations.high');
-        const gain = this.currentGains[OPTIMIZATIONS.length - 1] || 0;
-        fpsGainMsg = gain > 0 ? `+${gain}% FPS` : '0% FPS';
+        if (value <= 20) fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: +300% FPS`;
+        else if (value <= 50) fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: +150% FPS`;
+        else if (value <= 80) fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: +50% FPS`;
+        else fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: ${initialFpsMsg}`;
       }
       
-      modeSpan.textContent = modeMsg;
-      fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: ${fpsGainMsg}`;
-      
-      if (this.onQualityChangeCallback) this.onQualityChangeCallback(value);
-    };
-    
-    const updateWithBenchmark = (value) => {
-      valueSpan.textContent = value + '%';
       let modeMsg = '';
-      
       if (value <= 20) modeMsg = t('optimizations.extreme');
       else if (value <= 50) modeMsg = t('optimizations.low');
       else if (value <= 80) modeMsg = t('optimizations.medium');
       else modeMsg = t('optimizations.high');
-      
       modeSpan.textContent = modeMsg;
-      
-      const gain = this.currentGains[OPTIMIZATIONS.length - 1] || 0;
-      const fpsGainMsg = gain > 0 ? `+${gain}% FPS` : '0% FPS';
-      fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: ${fpsGainMsg}`;
-      
-      if (this.onQualityChangeCallback) this.onQualityChangeCallback(value);
     };
     
-    const initialGain = this.currentGains[OPTIMIZATIONS.length - 1] || 0;
-    const initialFpsMsg = initialGain > 0 ? `+${initialGain}% FPS` : '0% FPS';
-    
-    if (currentValue > 80) {
-      fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: ${initialFpsMsg}`;
-    } else {
-      if (currentValue <= 20) fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: +300% FPS`;
-      else if (currentValue <= 50) fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: +150% FPS`;
-      else if (currentValue <= 80) fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: +50% FPS`;
-      else fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: ${initialFpsMsg}`;
-    }
-    
-    let modeMsg = '';
-    if (currentValue <= 20) modeMsg = t('optimizations.extreme');
-    else if (currentValue <= 50) modeMsg = t('optimizations.low');
-    else if (currentValue <= 80) modeMsg = t('optimizations.medium');
-    else modeMsg = t('optimizations.high');
-    modeSpan.textContent = modeMsg;
+    updateQuality(currentValue);
     
     slider.oninput = (e) => {
       const newValue = parseInt(e.target.value);
@@ -295,7 +311,7 @@ export class OptimizationPanel {
           const result = await this.benchmarkService.runBenchmark(true);
           if (result && result.gains) {
             this.currentGains = result.gains;
-            updateWithBenchmark(newValue);
+            updateQuality(newValue);
           }
         }, 500);
       }
