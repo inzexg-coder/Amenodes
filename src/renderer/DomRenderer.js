@@ -414,8 +414,6 @@ export class DomRenderer {
     this.dragStartY = this.getClientY(event);
     this.dragNodeStartX = node.x;
     this.dragNodeStartY = node.y;
-    const dragEl = this.elementCache.get(node.id);
-    if (dragEl) dragEl.style.transition = "none";
     
     document.body.style.cursor = 'grabbing';
     event.preventDefault();
@@ -454,10 +452,9 @@ export class DomRenderer {
 
   onGlobalUp() {
     if (this.dragNode) {
-      const dragEl = this.elementCache.get(this.dragNode.id);
-      if (dragEl) dragEl.style.transition = "";
       this.save();
       this.dragNode = null;
+      document.body.style.cursor = '';
     }
   }
 
