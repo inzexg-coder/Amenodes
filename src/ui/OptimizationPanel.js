@@ -128,61 +128,6 @@ export class OptimizationPanel {
     }
   }
 
-    const item = document.createElement('div');
-    item.className = 'opt-item';
-    
-    const info = document.createElement('div');
-    info.className = 'opt-info';
-    
-    const optKey = getOptKey(opt.name);
-    const optName = t(`optimizations.${optKey}`) || opt.name;
-    const optDesc = t(`optimizations.${optKey}Desc`) || opt.desc;
-    const optPros = t(`optimizations.${optKey}Pros`) || opt.pros;
-    const optCons = t(`optimizations.${optKey}Cons`) || opt.cons;
-    
-    const currentSpeed = window._nodeAnimSpeed !== undefined ? window._nodeAnimSpeed : (opt.default || 300);
-    
-    info.innerHTML = `
-      <div class="opt-title">${optName}</div>
-      <div class="opt-desc">${optDesc}</div>
-      <div class="opt-pros">${optPros}</div>
-      <div class="opt-cons">${optCons}</div>
-    `;
-    
-    const sliderDiv = document.createElement('div');
-    sliderDiv.className = 'opt-slider-row';
-    
-    const slider = document.createElement('input');
-    slider.type = 'range';
-    slider.min = opt.min;
-    slider.max = opt.max;
-    slider.step = opt.step;
-    slider.value = currentSpeed;
-    
-    const valueSpan = document.createElement('span');
-    valueSpan.className = 'opt-slider-value';
-    valueSpan.textContent = currentSpeed + 'ms';
-    
-    slider.oninput = (e) => {
-      const v = parseInt(e.target.value);
-      valueSpan.textContent = v + 'ms';
-    };
-    
-    slider.onchange = (e) => {
-      const v = parseInt(e.target.value);
-      const seconds = v / 1000;
-      window._nodeAnimSpeed = v;
-      document.documentElement.style.setProperty('--transition', seconds > 0 ? `all ${seconds}s ease` : 'none');
-      if (this.renderer && this.renderer.render) this.renderer.render();
-    };
-    
-    sliderDiv.appendChild(slider);
-    sliderDiv.appendChild(valueSpan);
-    info.appendChild(sliderDiv);
-    item.appendChild(info);
-    container.appendChild(item);
-  }
-
   createSwitchItem(container, opt, idx) {
     const item = document.createElement('div');
     item.className = 'opt-item';
