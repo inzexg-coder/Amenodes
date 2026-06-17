@@ -288,6 +288,24 @@ class Application {
       gridSizeInput.addEventListener('input', handleGridSizeInput);
     }
     
+    const settingsTabs = document.querySelectorAll(".settings-tab");
+    const settingsTabContents = document.querySelectorAll(".settings-tab-content");
+    const handleTabClick = (e) => {
+      const tab = e.currentTarget;
+      const tabName = tab.getAttribute("data-tab");
+      settingsTabs.forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      settingsTabContents.forEach(c => {
+        c.classList.remove("active");
+        if (c.getAttribute("data-tab") === tabName) {
+          c.classList.add("active");
+        }
+      });
+    };
+    settingsTabs.forEach(tab => {
+      tab.removeEventListener("click", handleTabClick);
+      tab.addEventListener("click", handleTabClick);
+    });
     this.fixToggleSwitches();
     
     modalEl.classList.remove('hidden');

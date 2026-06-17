@@ -1858,6 +1858,45 @@ body {
 
 .modal-body {
   padding: 20px;
+.settings-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 205, 126, 0.2);
+  padding-bottom: 0;
+}
+
+.settings-tab {
+  flex: 1;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #8899bb;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.settings-tab:hover {
+  color: #ccd4ee;
+}
+
+.settings-tab.active {
+  color: #ffb347;
+  border-bottom-color: #ffb347;
+}
+
+.settings-tab-content {
+  display: none;
+}
+
+.settings-tab-content.active {
+  display: block;
+}
 }
 
 .setting-group {

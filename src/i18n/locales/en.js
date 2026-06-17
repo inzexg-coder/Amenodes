@@ -337,6 +337,9 @@ export const en = {
     animSpeed300: "300",
     animSpeed400: "400",
     animSpeed500: "500",
+    tabGrid: "Grid",
+    tabControls: "Controls",
+    tabAppearance: "Appearance",
     unsaved: 'Unsaved changes'
   },
 

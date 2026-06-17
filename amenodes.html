@@ -151,77 +151,91 @@ console.log('[ErrConsole] ready');
       <button class="modal-close" id="closeSettingsModal">&times;</button>
     </div>
     <div class="modal-body">
-      <div class="setting-group">
-        <label><span data-i18n="editor.gridStyle">Grid Style</span></label>
-        <div class="grid-preview" id="gridPreview">
-          <div class="grid-preview-canvas" id="gridPreviewCanvas"></div>
-        </div>
-        <div class="grid-style-buttons">
-          <button class="grid-style-btn" data-grid="dots"><span data-i18n="editor.dots">Dots</span></button>
-          <button class="grid-style-btn" data-grid="lines"><span data-i18n="editor.lines">Lines</span></button>
-          <button class="grid-style-btn" data-grid="cross"><span data-i18n="editor.cross">Cross</span></button>
-          <button class="grid-style-btn" data-grid="none"><span data-i18n="editor.none">None</span></button>
-        </div>
+      <div class="settings-tabs">
+        <button class="settings-tab active" data-tab="grid"><span data-i18n="editor.tabGrid">Grid</span></button>
+        <button class="settings-tab" data-tab="controls"><span data-i18n="editor.tabControls">Controls</span></button>
+        <button class="settings-tab" data-tab="appearance"><span data-i18n="editor.tabAppearance">Appearance</span></button>
       </div>
-      <div class="setting-group">
-        <label><span data-i18n="editor.snapToGrid">Snap to Grid</span></label>
-        <div class="toggle-switch">
-          <input type="checkbox" id="snapToGrid">
-          <span class="toggle-slider"></span>
-          <span class="toggle-label"><span data-i18n="editor.enableSnap">Enable snapping nodes to grid</span></span>
-        </div>
-      </div>
-      <div class="setting-group">
-        <label><span data-i18n="editor.ctrlZoom">Ctrl + Scroll to zoom</span></label>
-        <div class="toggle-switch">
-          <input type="checkbox" id="ctrlZoomOnly">
-          <span class="toggle-slider"></span>
-          <span class="toggle-label"><span data-i18n="editor.enableCtrlZoom">Require Ctrl key for zooming</span></span>
-        </div>
-      </div>
-      <div class="setting-group">
-        <label><span data-i18n="editor.invertZoom">Invert zoom direction</span></label>
-        <div class="toggle-switch">
-          <input type="checkbox" id="invertZoomDirection">
-          <span class="toggle-slider"></span>
-          <span class="toggle-label"><span data-i18n="editor.enableInvertZoom">Reverse scroll direction for zoom</span></span>
-        </div>
-      </div>
-      <div class="setting-group">
-        <label><span data-i18n="editor.gridSize">Grid Size</span>: <span id="gridSizeValue">20</span> px</label>
-        <input type="range" id="gridSize" value="20" min="10" max="50" step="5">
-        <div class="grid-size-presets">
-          <span data-size="10">10px</span>
-          <span data-size="15">15px</span>
-          <span data-size="20" class="active">20px</span>
-          <span data-size="25">25px</span>
-          <span data-size="30">30px</span>
-          <span data-size="40">40px</span>
-          <span data-size="50">50px</span>
-        </div>
-      </div>
-      <div class="setting-group">
-        <label><span data-i18n="editor.animSpeed">Animation Speed</span>: <span id="animSpeedValue">300</span> ms</label>
-        <input type="range" id="animSpeed" value="300" min="0" max="500" step="10">
-        <div class="grid-size-presets anim-speed-presets">
-          <span data-speed="0" data-i18n="editor.animSpeed0">0</span>
-          <span data-speed="100" data-i18n="editor.animSpeed100">100</span>
-          <span data-speed="200" data-i18n="editor.animSpeed200">200</span>
-          <span data-speed="300" class="active" data-i18n="editor.animSpeed300">300</span>
-          <span data-speed="400" data-i18n="editor.animSpeed400">400</span>
-          <span data-speed="500" data-i18n="editor.animSpeed500">500</span>
-        </div>
-      </div>
-      <div class="setting-group">
-        <label><span data-i18n="editor.language">Language</span></label>
-        <div class="language-selector" id="canvasLanguageSelector">
-          <div class="language-option" data-lang="en">
-            <span>English</span>
-            <span id="lang-en-check" style="display:none;">✓</span>
+
+      <div class="settings-tab-content active" data-tab="grid">
+        <div class="setting-group">
+          <label><span data-i18n="editor.gridStyle">Grid Style</span></label>
+          <div class="grid-preview" id="gridPreview">
+            <div class="grid-preview-canvas" id="gridPreviewCanvas"></div>
           </div>
-          <div class="language-option" data-lang="ru">
-            <span>Русский</span>
-            <span id="lang-ru-check" style="display:none;">✓</span>
+          <div class="grid-style-buttons">
+            <button class="grid-style-btn" data-grid="dots"><span data-i18n="editor.dots">Dots</span></button>
+            <button class="grid-style-btn" data-grid="lines"><span data-i18n="editor.lines">Lines</span></button>
+            <button class="grid-style-btn" data-grid="cross"><span data-i18n="editor.cross">Cross</span></button>
+            <button class="grid-style-btn" data-grid="none"><span data-i18n="editor.none">None</span></button>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label><span data-i18n="editor.snapToGrid">Snap to Grid</span></label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="snapToGrid">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label"><span data-i18n="editor.enableSnap">Enable snapping nodes to grid</span></span>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label><span data-i18n="editor.gridSize">Grid Size</span>: <span id="gridSizeValue">20</span> px</label>
+          <input type="range" id="gridSize" value="20" min="10" max="50" step="5">
+          <div class="grid-size-presets">
+            <span data-size="10">10px</span>
+            <span data-size="15">15px</span>
+            <span data-size="20" class="active">20px</span>
+            <span data-size="25">25px</span>
+            <span data-size="30">30px</span>
+            <span data-size="40">40px</span>
+            <span data-size="50">50px</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-tab-content" data-tab="controls">
+        <div class="setting-group">
+          <label><span data-i18n="editor.ctrlZoom">Ctrl + Scroll to zoom</span></label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="ctrlZoomOnly">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label"><span data-i18n="editor.enableCtrlZoom">Require Ctrl key for zooming</span></span>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label><span data-i18n="editor.invertZoom">Invert zoom direction</span></label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="invertZoomDirection">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label"><span data-i18n="editor.enableInvertZoom">Reverse scroll direction for zoom</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-tab-content" data-tab="appearance">
+        <div class="setting-group">
+          <label><span data-i18n="editor.animSpeed">Animation Speed</span>: <span id="animSpeedValue">300</span> ms</label>
+          <input type="range" id="animSpeed" value="300" min="0" max="500" step="10">
+          <div class="grid-size-presets anim-speed-presets">
+            <span data-speed="0" data-i18n="editor.animSpeed0">0</span>
+            <span data-speed="100" data-i18n="editor.animSpeed100">100</span>
+            <span data-speed="200" data-i18n="editor.animSpeed200">200</span>
+            <span data-speed="300" class="active" data-i18n="editor.animSpeed300">300</span>
+            <span data-speed="400" data-i18n="editor.animSpeed400">400</span>
+            <span data-speed="500" data-i18n="editor.animSpeed500">500</span>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label><span data-i18n="editor.language">Language</span></label>
+          <div class="language-selector" id="canvasLanguageSelector">
+            <div class="language-option" data-lang="en">
+              <span>English</span>
+              <span id="lang-en-check" style="display:none;">✓</span>
+            </div>
+            <div class="language-option" data-lang="ru">
+              <span>Русский</span>
+              <span id="lang-ru-check" style="display:none;">✓</span>
+            </div>
           </div>
         </div>
       </div>

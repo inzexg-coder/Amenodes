@@ -337,6 +337,9 @@ export const ru = {
     animSpeed300: "300",
     animSpeed400: "400",
     animSpeed500: "500",
+    tabGrid: "Сетка",
+    tabControls: "Управление",
+    tabAppearance: "Вид",
     unsaved: 'Несохраненные изменения'
   },
 
