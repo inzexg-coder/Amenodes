@@ -465,10 +465,11 @@ export class DomRenderer {
       if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
     }
   }
-
+  onGlobalUp() {
     if (this.dragNode) {
-      const dragEl = this.elementCache.get(this.dragNode.id);
+      this.save();
       document.body.style.cursor = "";
+      this.dragNode = null;
     }
   }
 
