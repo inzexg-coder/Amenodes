@@ -34,7 +34,7 @@ class Application {
     const savedSpeed = parseInt(localStorage.getItem("anim_speed") || "300");
     window._nodeAnimSpeed = savedSpeed;
     const sec = savedSpeed / 1000;
-    document.documentElement.style.setProperty("--transition", sec > 0 ? `all ${sec}s ease` : "none");
+    document.body.style.setProperty("--transition", sec > 0 ? `all ${sec}s ease` : "none");
 
     this.initRenderer();
     this.initHistory();
@@ -383,7 +383,7 @@ class Application {
           const speed = parseInt(animSpeedInput.value);
           window._nodeAnimSpeed = speed;
           const seconds = speed / 1000;
-          document.documentElement.style.setProperty("--transition", seconds > 0 ? `all ${seconds}s ease` : "none");
+          document.body.style.setProperty("--transition", seconds > 0 ? `all ${seconds}s ease` : "none");
           localStorage.setItem("anim_speed", speed.toString());
         }
         const activeStyleBtn = document.querySelector('.grid-style-btn.active');
