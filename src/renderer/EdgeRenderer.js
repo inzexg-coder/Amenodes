@@ -103,6 +103,50 @@ export class EdgeRenderer {
     }
   }
 
+  updatePositions(edges, graph, rectCache) {
+    const svg = this.layer.querySelector('.edge-layer');
+    if (!svg) return;
+    
+    for (const edge of edges) {
+      const source = graph.getNode(edge.sourceId);
+      const target = graph.getNode(edge.targetId);
+      if (!source || !target) continue;
+      
+      const sourceRect = rectCache.get(edge.sourceId);
+      const targetRect = rectCache.get(edge.targetId);
+      if (!sourceRect || !targetRect) continue;
+      
+      const group = svg.querySelector(`g[data-edge-id="${edge.id}"]`);
+      if (!group) continue;
+      
+      const point1 = this.getBorderPoint(sourceRect, targetRect);
+      const point2 = this.getBorderPoint(targetRect, sourceRect);
+      
+      const line = group.querySelector('.edge-line');
+      const arrow = group.querySelector('.edge-arrow');
+      
+      if (line) {
+        line.setAttribute('x1', point1.x);
+        line.setAttribute('y1', point1.y);
+        line.setAttribute('x2', point2.x);
+        line.setAttribute('y2', point2.y);
+      }
+      
+      if (arrow) {
+        const midX = (point1.x + point2.x) / 2;
+        const midY = (point1.y + point2.y) / 2;
+        const angle = Math.atan2(point2.y - point1.y, point2.x - point1.x);
+        const tipX = midX + Math.cos(angle) * 6;
+        const tipY = midY + Math.sin(angle) * 6;
+        const backX = midX - Math.cos(angle) * 8;
+        const backY = midY - Math.sin(angle) * 8;
+        const perpX = -Math.sin(angle) * 5;
+        const perpY = Math.cos(angle) * 5;
+        arrow.setAttribute('points', `${tipX},${tipY} ${backX + perpX},${backY + perpY} ${backX - perpX},${backY - perpY}`);
+      }
+    }
+  }
+
   removeEdge(edge, graph) {
     graph.removeEdge(edge.id);
     graph.reevaluateAll();

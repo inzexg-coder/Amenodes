@@ -143,6 +143,22 @@ export class DomRenderer {
     
     this.edgeRenderer.renderEdges(filteredEdges, this.graph, rectCache);
   }
+  updateEdgePositions() {
+    const nodeIds = new Set(this.graph.nodes.map(n => n.id));
+    const filteredEdges = this.graph.edges.filter(e => nodeIds.has(e.sourceId) && nodeIds.has(e.targetId));
+    
+    const rectCache = new Map();
+    for (const node of this.graph.nodes) {
+      rectCache.set(node.id, {
+        x: node.x,
+        y: node.y,
+        w: 280,
+        h: this.getNodeHeight(node)
+      });
+    }
+    
+    this.edgeRenderer.updatePositions(filteredEdges, this.graph, rectCache);
+  }
 
   render() {
     this.clearTemp();
@@ -446,7 +462,7 @@ export class DomRenderer {
         element.style.top = `${this.dragNode.y}px`;
       }
       
-      this.renderEdges(this.graph.nodes);
+      this.updateEdgePositions();
       
       if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
     }
