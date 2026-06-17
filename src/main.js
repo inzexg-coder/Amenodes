@@ -130,10 +130,14 @@ class Application {
   applyDesignQuality(percent) {
     window.currentQualityValue = percent;
     window._designQualitySaved = percent;
-    document.body.classList.remove('design-quality-extreme', 'design-quality-1', 'design-quality-2');
-    if (percent <= 20) document.body.classList.add('design-quality-extreme');
-    else if (percent <= 50) document.body.classList.add('design-quality-1');
-    else if (percent <= 80) document.body.classList.add('design-quality-2');
+    document.body.classList.remove("design-quality-extreme", "design-quality-1", "design-quality-2");
+    if (percent <= 20) document.body.classList.add("design-quality-extreme");
+    else if (percent <= 50) document.body.classList.add("design-quality-1");
+    else if (percent <= 80) document.body.classList.add("design-quality-2");
+    var as = window._nodeAnimSpeed;
+    if (as === undefined) as = 300;
+    var sec = as / 1000;
+    document.body.style.setProperty("--transition", sec > 0 ? "all " + sec + "s ease" : "none");
   }
 
   applyCanvasSettings() {
