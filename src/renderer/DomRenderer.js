@@ -133,10 +133,9 @@ export class DomRenderer {
     
     const rectCache = new Map();
     for (const node of visibleNodes) {
-      const el = this.elementCache.get(node.id);
       rectCache.set(node.id, {
-        x: el ? parseFloat(getComputedStyle(el).left) : node.x,
-        y: el ? parseFloat(getComputedStyle(el).top) : node.y,
+        x: node.x,
+        y: node.y,
         w: 280,
         h: this.getNodeHeight(node)
       });
@@ -200,10 +199,9 @@ export class DomRenderer {
     
     const rectCache = new Map();
     for (const node of this.graph.nodes) {
-      const el = this.elementCache.get(node.id);
       rectCache.set(node.id, {
-        x: el ? parseFloat(getComputedStyle(el).left) : node.x,
-        y: el ? parseFloat(getComputedStyle(el).top) : node.y,
+        x: node.x,
+        y: node.y,
         w: 280,
         h: this.getNodeHeight(node)
       });
@@ -416,6 +414,8 @@ export class DomRenderer {
     this.dragStartY = this.getClientY(event);
     this.dragNodeStartX = node.x;
     this.dragNodeStartY = node.y;
+    const dragEl = this.elementCache.get(node.id);
+    if (dragEl) dragEl.style.transition = "none";
     
     document.body.style.cursor = 'grabbing';
     event.preventDefault();
@@ -454,9 +454,11 @@ export class DomRenderer {
 
   onGlobalUp() {
     if (this.dragNode) {
+      const dragEl = this.elementCache.get(this.dragNode.id);
+      if (dragEl) dragEl.style.transition = "";
       this.save();
       this.dragNode = null;
-      document.body.style.cursor = '';
+      document.body.style.cursor = "";
     }
   }
 
