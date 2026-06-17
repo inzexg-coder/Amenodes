@@ -133,9 +133,10 @@ export class DomRenderer {
     
     const rectCache = new Map();
     for (const node of visibleNodes) {
+      const el = this.elementCache.get(node.id);
       rectCache.set(node.id, {
-        x: node.x,
-        y: node.y,
+        x: el ? parseFloat(getComputedStyle(el).left) : node.x,
+        y: el ? parseFloat(getComputedStyle(el).top) : node.y,
         w: 280,
         h: this.getNodeHeight(node)
       });
@@ -199,9 +200,10 @@ export class DomRenderer {
     
     const rectCache = new Map();
     for (const node of this.graph.nodes) {
+      const el = this.elementCache.get(node.id);
       rectCache.set(node.id, {
-        x: node.x,
-        y: node.y,
+        x: el ? parseFloat(getComputedStyle(el).left) : node.x,
+        y: el ? parseFloat(getComputedStyle(el).top) : node.y,
         w: 280,
         h: this.getNodeHeight(node)
       });
