@@ -175,14 +175,6 @@ class Application {
     if (animSpeedInput) animSpeedInput.value = currentSpeed;
     if (animSpeedValue) animSpeedValue.textContent = currentSpeed;
     
-    const animSpeedPresets = document.querySelectorAll(".anim-speed-presets span");
-    animSpeedPresets.forEach(p => {
-      if (parseInt(p.getAttribute("data-speed")) === currentSpeed) {
-        p.classList.add("active");
-      } else {
-        p.classList.remove("active");
-      }
-    });
     const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
     
     if (snapToGridCheck) snapToGridCheck.checked = this.snapToGrid;
@@ -244,34 +236,20 @@ class Application {
       if (gridPreviewCanvas) {
         const currentStyle = document.querySelector('.grid-style-btn.active')?.getAttribute('data-grid') || this.gridStyle;
         gridPreviewCanvas.setAttribute('data-preview', currentStyle);
-    const handleAnimSpeedPresetClick = (e) => {
-      const preset = e.currentTarget;
-      const speed = parseInt(preset.getAttribute("data-speed"));
-      animSpeedPresets.forEach(p => p.classList.remove("active"));
-      preset.classList.add("active");
-      if (animSpeedInput) animSpeedInput.value = speed;
-      if (animSpeedValue) animSpeedValue.textContent = speed;
+        gridPreviewCanvas.style.backgroundSize = `${size}px ${size}px`;
+      }
+      sizePresets.forEach(p => p.classList.remove('active'));
     };
     
     const handleAnimSpeedInput = (e) => {
       const speed = e.target.value;
       if (animSpeedValue) animSpeedValue.textContent = speed;
-      animSpeedPresets.forEach(p => p.classList.remove("active"));
     };
-    
-    animSpeedPresets.forEach(preset => {
-      preset.removeEventListener("click", handleAnimSpeedPresetClick);
-      preset.addEventListener("click", handleAnimSpeedPresetClick);
-    });
     
     if (animSpeedInput) {
       animSpeedInput.removeEventListener("input", handleAnimSpeedInput);
       animSpeedInput.addEventListener("input", handleAnimSpeedInput);
     }
-        gridPreviewCanvas.style.backgroundSize = `${size}px ${size}px`;
-      }
-      sizePresets.forEach(p => p.classList.remove('active'));
-    };
     
     gridStyleBtns.forEach(btn => {
       btn.removeEventListener('click', handleStyleClick);
