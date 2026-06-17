@@ -96,7 +96,7 @@ export class OptimizationPanel {
     if (implementedOpts.length > 0) {
       if (isMobileView) {
         for (const { opt, idx } of implementedOpts) {
-          } else if (opt.type === 'slider') {
+          if (opt.type === "slider") {
             this.createSliderItem(container, opt, currentQualityValue);
           }
         }
@@ -107,7 +107,7 @@ export class OptimizationPanel {
         container.appendChild(categoryDiv);
         
         for (const { opt, idx } of implementedOpts) {
-          } else if (opt.type === 'slider') {
+          if (opt.type === "slider") {
             this.createSliderItem(container, opt, currentQualityValue);
           } else {
             this.createSwitchItem(container, opt, idx);
