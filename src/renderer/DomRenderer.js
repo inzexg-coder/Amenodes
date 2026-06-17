@@ -40,15 +40,12 @@ export class DomRenderer {
     });
     
     this.attachTouchFeedback();
-    this.edgeSyncId = null;
-    this.edgeSyncRects = new Map();
     this.contextMenu = null;
     this.layer.addEventListener("click", (e) => {
       if (!e.target.closest(".edge-group")) {
         this.edgeRenderer.clearHighlight();
       }
     });
-    this.startEdgeSync();
   }
 
   setViewport(viewport) {
@@ -146,46 +143,6 @@ export class DomRenderer {
     
     this.edgeRenderer.renderEdges(filteredEdges, this.graph, rectCache);
   }
-  startEdgeSync() {
-    const loop = () => {
-      if (!this.graph) return;
-      const nodes = this.graph.nodes;
-      let changed = false;
-      for (const node of nodes) {
-        const el = this.elementCache.get(node.id);
-        if (!el) continue;
-        const x = parseFloat(getComputedStyle(el).left);
-        const y = parseFloat(getComputedStyle(el).top);
-        const prev = this.edgeSyncRects.get(node.id);
-        if (!prev || prev.x !== x || prev.y !== y) {
-          this.edgeSyncRects.set(node.id, { x, y });
-          changed = true;
-        }
-      }
-      if (changed && nodes.length > 0) {
-        const filteredEdges = this.graph.edges.filter(e =>
-          this.edgeSyncRects.has(e.sourceId) && this.edgeSyncRects.has(e.targetId));
-        if (filteredEdges.length > 0) {
-          const rectCache = new Map();
-          for (const node of nodes) {
-            const r = this.edgeSyncRects.get(node.id);
-            if (r) {
-              rectCache.set(node.id, {
-                x: r.x,
-                y: r.y,
-                w: 280,
-                h: this.getNodeHeight(node)
-              });
-            }
-          }
-          this.edgeRenderer.updatePositions(filteredEdges, this.graph, rectCache);
-        }
-      }
-      this.edgeSyncId = requestAnimationFrame(loop);
-    };
-    this.edgeSyncId = requestAnimationFrame(loop);
-  }
-
   updateEdgePositions() {
     const nodeIds = new Set(this.graph.nodes.map(n => n.id));
     const filteredEdges = this.graph.edges.filter(e => nodeIds.has(e.sourceId) && nodeIds.has(e.targetId));
@@ -503,12 +460,12 @@ export class DomRenderer {
         element.style.top = `${this.dragNode.y}px`;
       }
       
+      this.updateEdgePositions();
       
       if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
     }
   }
 
-  onGlobalUp() {
     if (this.dragNode) {
       const dragEl = this.elementCache.get(this.dragNode.id);
       document.body.style.cursor = "";
