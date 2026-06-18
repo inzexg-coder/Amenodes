@@ -9,11 +9,6 @@ export const metadata = {
   author: 'Amenoke',
   github: 'https://github.com/inzexg-coder/Amenodes',
   icon: 'fa-infinity',
-  dataType: 'num',
-  canHaveIncomingEdges: false,
-  canHaveOutgoingEdges: true,
-  allowedInputTypes: [],
-  defaultValue: 0
 };
 
 export class ConstantNode extends Node {

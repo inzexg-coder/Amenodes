@@ -10,11 +10,7 @@ export const metadata = {
   author: 'Amenoke',
   github: 'https://github.com/inzexg-coder/Amenodes',
   icon: 'fa-chart-line',
-  dataType: 'auto',
-  canHaveIncomingEdges: true,
-  canHaveOutgoingEdges: false,
-  allowedInputTypes: ['num', 'array', 'uncert', 'list', 'wlist'],
-  defaultValue: null
+ 'array', 'uncert', 'list', 'wlist'],
 };
 
 export class OutputNode extends Node {

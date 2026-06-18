@@ -7,11 +7,6 @@ export const metadata = {
   author: 'Amenoke',
   github: 'https://github.com/inzexg-coder/Amenodes',
   icon: 'fa-hashtag',
-  dataType: 'num',
-  canHaveIncomingEdges: false,
-  canHaveOutgoingEdges: true,
-  allowedInputTypes: [],
-  defaultValue: 0
 };
 
 export class NumberNode extends Node {

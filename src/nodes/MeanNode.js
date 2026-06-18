@@ -8,11 +8,7 @@ export const metadata = {
   author: 'Amenoke',
   github: 'https://github.com/inzexg-coder/Amenodes',
   icon: 'fa-chart-line',
-  dataType: 'num',
-  canHaveIncomingEdges: true,
-  canHaveOutgoingEdges: true,
-  allowedInputTypes: ['num', 'array', 'list', 'wlist', 'uncert', 'auto'],
-  defaultValue: null
+ 'array', 'list', 'wlist', 'uncert', 'auto'],
 };
 
 export class MeanNode extends Node {

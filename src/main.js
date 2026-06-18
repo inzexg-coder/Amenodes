@@ -31,7 +31,7 @@ class Application {
     this.snapToGrid = localStorage.getItem('canvas_snap_to_grid') === 'true';
     this.ctrlZoomOnly = localStorage.getItem('ctrl_zoom_only') === 'true';
     this.invertZoomDirection = localStorage.getItem('invert_zoom_direction') === 'true';
-    const savedSpeed = parseInt(localStorage.getItem("anim_speed") || "300");
+    const savedSpeed = parseInt(localStorage.getItem("anim_speed") || "100");
     window._nodeAnimSpeed = savedSpeed;
     const sec = savedSpeed / 1000;
     document.body.style.setProperty("--transition", sec > 0 ? `all ${sec}s ease` : "none");
@@ -135,7 +135,7 @@ class Application {
     else if (percent <= 50) document.body.classList.add("design-quality-1");
     else if (percent <= 80) document.body.classList.add("design-quality-2");
     var as = window._nodeAnimSpeed;
-    if (as === undefined) as = 300;
+    if (as === undefined) as = 100;
     var sec = as / 1000;
     document.body.style.setProperty("--transition", sec > 0 ? "all " + sec + "s ease" : "none");
   }
@@ -175,7 +175,7 @@ class Application {
     const gridSizeValue = document.getElementById('gridSizeValue');
     const animSpeedInput = document.getElementById("animSpeed");
     const animSpeedValue = document.getElementById("animSpeedValue");
-    const currentSpeed = window._nodeAnimSpeed !== undefined ? window._nodeAnimSpeed : 300;
+    const currentSpeed = window._nodeAnimSpeed !== undefined ? window._nodeAnimSpeed : 100;
     if (animSpeedInput) animSpeedInput.value = currentSpeed;
     if (animSpeedValue) animSpeedValue.textContent = currentSpeed;
     

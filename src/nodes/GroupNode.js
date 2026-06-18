@@ -9,11 +9,6 @@ export const metadata = {
   author: 'Amenoke',
   github: 'https://github.com/inzexg-coder/Amenodes',
   icon: 'fa-layer-group',
-  dataType: 'array',
-  canHaveIncomingEdges: false,
-  canHaveOutgoingEdges: true,
-  allowedInputTypes: [],
-  defaultValue: []
 };
 
 export class GroupNode extends Node {

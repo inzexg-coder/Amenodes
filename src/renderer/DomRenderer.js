@@ -13,6 +13,7 @@ export class DomRenderer {
     this.dragStartX = 0;
     this.dragStartY = 0;
     this.dragNodeStartX = 0;
+    this._edgeRafPending = null;
     this.dragNodeStartY = 0;
     this.isDraggingEdge = false;
     this.edgeSourceId = null;
@@ -44,6 +45,15 @@ export class DomRenderer {
     this.layer.addEventListener("click", (e) => {
       if (!e.target.closest(".edge-group")) {
         this.edgeRenderer.clearHighlight();
+      }
+    });
+    this.viewportElement.addEventListener("mouseleave", () => {
+      if (this.dragNode) {
+        if (this._edgeRafPending) {
+          cancelAnimationFrame(this._edgeRafPending);
+          this._edgeRafPending = null;
+        }
+        this.updateEdgePositions();
       }
     });
   }
@@ -149,17 +159,15 @@ export class DomRenderer {
     
     const rectCache = new Map();
     for (const node of this.graph.nodes) {
-      const el = this.elementCache.get(node.id);
       rectCache.set(node.id, {
-        x: el ? parseFloat(getComputedStyle(el).left) : node.x,
-        y: el ? parseFloat(getComputedStyle(el).top) : node.y,
+        x: node.x,
+        y: node.y,
         w: 280,
         h: this.getNodeHeight(node)
       });
     }
     this.edgeRenderer.updatePositions(filteredEdges, this.graph, rectCache);
   }
-
   render() {
     this.clearTemp();
     
@@ -430,6 +438,7 @@ export class DomRenderer {
     this.dragStartY = this.getClientY(event);
     this.dragNodeStartX = node.x;
     this.dragNodeStartY = node.y;
+    nodeElement.style.transition = "none";
     
     document.body.style.cursor = 'grabbing';
     event.preventDefault();
@@ -460,14 +469,26 @@ export class DomRenderer {
         element.style.top = `${this.dragNode.y}px`;
       }
       
-      this.updateEdgePositions();
+      if (!this._edgeRafPending) {
+        this._edgeRafPending = requestAnimationFrame(() => {
+          this._edgeRafPending = null;
+          this.updateEdgePositions();
+        });
+      }
       
       if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
     }
   }
   onGlobalUp() {
     if (this.dragNode) {
+      const dragEl = this.elementCache.get(this.dragNode.id);
+      if (dragEl) dragEl.style.transition = "";
       this.save();
+      if (this._edgeRafPending) {
+        cancelAnimationFrame(this._edgeRafPending);
+        this._edgeRafPending = null;
+      }
+      this.updateEdgePositions();
       document.body.style.cursor = "";
       this.dragNode = null;
     }

@@ -122,6 +122,7 @@ export class EdgeRenderer {
       const point1 = this.getBorderPoint(sourceRect, targetRect);
       const point2 = this.getBorderPoint(targetRect, sourceRect);
       
+      if (!isFinite(point1.x) || !isFinite(point1.y) || !isFinite(point2.x) || !isFinite(point2.y)) continue;
       const line = group.querySelector('.edge-line');
       const arrow = group.querySelector('.edge-arrow');
       

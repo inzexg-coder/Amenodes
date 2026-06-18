@@ -1,5 +1,17 @@
 import { nodesManifest } from './manifest/this-manifest.js';
 import { i18n } from '../i18n/LanguageManager.js';
+import { typeSystem } from '../core/DataType.js';
+
+const nodeTypeConfig = {
+  number:  { dataType: 'num',   allowedInputTypes: [],                                   canHaveIncomingEdges: false, canHaveOutgoingEdges: true,  defaultValue: 0 },
+  constant:{ dataType: 'num',   allowedInputTypes: [],                                   canHaveIncomingEdges: false, canHaveOutgoingEdges: true,  defaultValue: 0 },
+  group:   { dataType: 'array', allowedInputTypes: [],                                   canHaveIncomingEdges: false, canHaveOutgoingEdges: true,  defaultValue: [] },
+  calc:    { dataType: 'uncert',allowedInputTypes: ['num','array','uncert','list','wlist'],canHaveIncomingEdges: true, canHaveOutgoingEdges: true,  defaultValue: null },
+  output:  { dataType: 'auto',  allowedInputTypes: ['num','array','uncert','list','wlist'],canHaveIncomingEdges: true, canHaveOutgoingEdges: false, defaultValue: null },
+  map:     { dataType: 'list',  allowedInputTypes: ['num','array','uncert','list','wlist'],canHaveIncomingEdges: true, canHaveOutgoingEdges: true,  defaultValue: [] },
+  mean:    { dataType: 'num',   allowedInputTypes: ['num','array','list','wlist','uncert','auto'],canHaveIncomingEdges: true, canHaveOutgoingEdges: true, defaultValue: null },
+  sem:     { dataType: 'num',   allowedInputTypes: ['array','list','wlist','num'],        canHaveIncomingEdges: true, canHaveOutgoingEdges: true,  defaultValue: null },
+};
 
 export const nodeRegistry = new Map();
 export const nodeTranslations = { en: {}, ru: {} };
@@ -44,6 +56,21 @@ async function loadTranslationsForNode(fileName) {
 async function registerAllNodes() {
   for (const { ctor, metadata, fileName } of nodesManifest) {
     if (metadata?.type) {
+      var cfg = nodeTypeConfig[metadata.type];
+      if (cfg) {
+        metadata.dataType = cfg.dataType;
+        metadata.allowedInputTypes = cfg.allowedInputTypes;
+        metadata.canHaveIncomingEdges = cfg.canHaveIncomingEdges;
+        metadata.canHaveOutgoingEdges = cfg.canHaveOutgoingEdges;
+        metadata.defaultValue = cfg.defaultValue;
+        typeSystem.registerType(cfg.dataType, {
+          name: cfg.dataType,
+          canHaveIncomingEdges: cfg.canHaveIncomingEdges,
+          canHaveOutgoingEdges: cfg.canHaveOutgoingEdges,
+          allowedInputTypes: cfg.allowedInputTypes,
+          defaultValue: cfg.defaultValue
+        });
+      }
       nodeRegistry.set(metadata.type, { ctor, metadata });
       ctor.metadata = metadata;
       await loadTranslationsForNode(fileName);

@@ -8,11 +8,7 @@ export const metadata = {
   author: 'Amenoke',
   github: 'https://github.com/inzexg-coder/Amenodes',
   icon: 'fa-solid fa-down-left-and-up-right-to-center',
-  dataType: 'num',
-  canHaveIncomingEdges: true,
-  canHaveOutgoingEdges: true,
-  allowedInputTypes: ['array', 'list', 'wlist', 'num'],
-  defaultValue: null
+ 'list', 'wlist', 'num'],
 };
 
 export class SEMNode extends Node {
