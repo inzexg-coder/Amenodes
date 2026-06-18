@@ -267,6 +267,9 @@ export class DomRenderer {
     event.stopPropagation();
     const handle = event.target.closest('.node-handle');
     if (!handle) return;
+    if (event.type === 'touchstart') {
+      handle.classList.add('node-handle-touch-active');
+    }
     
     const sourceId = parseInt(handle.getAttribute('data-source-id'));
     const port = handle.getAttribute('data-port') || 'main';
@@ -295,6 +298,7 @@ export class DomRenderer {
       window.removeEventListener('mouseup', onEnd);
       window.removeEventListener('touchmove', onMove);
       window.removeEventListener('touchend', onEnd);
+      if (handle) handle.classList.remove('node-handle-touch-active');
     };
     
     window.addEventListener('mousemove', onMove);
