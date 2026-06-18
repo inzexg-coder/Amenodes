@@ -9,7 +9,6 @@ export const metadata = {
   author: 'Amenoke',
   github: 'https://github.com/inzexg-coder/Amenodes',
   icon: 'fa-map',
- 'array', 'uncert', 'list', 'wlist'],
 };
 
 export class MapNode extends Node {

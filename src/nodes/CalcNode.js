@@ -8,7 +8,6 @@ export const metadata = {
   author: 'Amenoke',
   github: 'https://github.com/inzexg-coder/Amenodes',
   icon: 'fa-calculator',
- 'array', 'uncert'],
 };
 
 export class CalcNode extends Node {

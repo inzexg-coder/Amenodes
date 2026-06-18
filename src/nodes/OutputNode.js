@@ -10,7 +10,6 @@ export const metadata = {
   author: 'Amenoke',
   github: 'https://github.com/inzexg-coder/Amenodes',
   icon: 'fa-chart-line',
- 'array', 'uncert', 'list', 'wlist'],
 };
 
 export class OutputNode extends Node {
