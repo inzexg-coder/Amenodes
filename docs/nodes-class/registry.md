@@ -17,12 +17,41 @@
 ```javascript
 import { nodesManifest } from './manifest/this-manifest.js';
 import { i18n } from '../i18n/LanguageManager.js';
+import { typeSystem } from '../core/DataType.js';
 ```
 
 | Импорт | Назначение |
 |--------|------------|
 | `nodesManifest` | Массив описаний узлов из файла манифеста, содержащий конструкторы, метаданные и имена файлов. |
 | `i18n` | Глобальный экземпляр `LanguageManager` для установки переводов узлов. |
+| `typeSystem` | Глобальный экземпляр `TypeSystem` для регистрации типов данных узлов. |
+
+# КОНФИГУРАЦИЯ ТИПОВ УЗЛОВ
+
+Перед глобальными экспортами определена константа `nodeTypeConfig` — единый источник истины для всех типовых метаданных узлов. Ранее эти данные находились в каждом файле узла отдельно; теперь они централизованы здесь.
+
+```javascript
+const nodeTypeConfig = {
+  number:  { dataType: 'num',   allowedInputTypes: [],                                     canHaveIncomingEdges: false, canHaveOutgoingEdges: true,  defaultValue: 0 },
+  constant:{ dataType: 'num',   allowedInputTypes: [],                                     canHaveIncomingEdges: false, canHaveOutgoingEdges: true,  defaultValue: 0 },
+  group:   { dataType: 'array', allowedInputTypes: [],                                     canHaveIncomingEdges: false, canHaveOutgoingEdges: true,  defaultValue: [] },
+  calc:    { dataType: 'uncert',allowedInputTypes: ['num','array','uncert','list','wlist'],   canHaveIncomingEdges: true, canHaveOutgoingEdges: true,  defaultValue: null },
+  output:  { dataType: 'auto',  allowedInputTypes: ['num','array','uncert','list','wlist'],   canHaveIncomingEdges: true, canHaveOutgoingEdges: false, defaultValue: null },
+  map:     { dataType: 'list',  allowedInputTypes: ['num','array','uncert','list','wlist'],   canHaveIncomingEdges: true, canHaveOutgoingEdges: true,  defaultValue: [] },
+  mean:    { dataType: 'num',   allowedInputTypes: ['num','array','list','wlist','uncert','auto'], canHaveIncomingEdges: true, canHaveOutgoingEdges: true, defaultValue: null },
+  sem:     { dataType: 'num',   allowedInputTypes: ['array','list','wlist','num'],           canHaveIncomingEdges: true, canHaveOutgoingEdges: true,  defaultValue: null },
+};
+```
+
+**Назначение полей:**
+
+| Поле | Описание |
+|------|----------|
+| `dataType` | Имя типа данных, который узел отдаёт на выход. Регистрируется в `typeSystem`. |
+| `allowedInputTypes` | Массив имён типов, которые могут быть подключены на вход этого узла. Если массив пуст — узел не принимает входящие соединения. |
+| `canHaveIncomingEdges` | Флаг разрешения входящих соединений. |
+| `canHaveOutgoingEdges` | Флаг разрешения исходящих соединений. |
+| `defaultValue` | Значение по умолчанию для типа данных. |
 
 # ГЛОБАЛЬНЫЕ ЭКСПОРТЫ
 
@@ -202,8 +231,11 @@ import { typeSystem } from './core/DataType.js';
 async function init() {
   // Загружаем все узлы и их переводы
   await loadAllNodes();
+  // Внутри registerAllNodes() уже выполнена регистрация типов
+  // через typeSystem.registerType() — типы доступны для валидации соединений
   
-  // Инициализируем систему типов на основе зарегистрированных узлов
+  // Дополнительный проход initFromNodeRegistry (в main.js) регистрирует
+  // те же типы повторно — это безопасно, данные совпадают.
   typeSystem.initFromNodeRegistry(nodeRegistry);
   
   // Теперь можно создавать узлы
