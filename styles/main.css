@@ -889,13 +889,14 @@ body {
   cursor: crosshair;
   z-index: 25;
   box-shadow: var(--handle-shadow);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, filter 0.3s ease;
 }
 
 .node-handle:hover {
   transform: scale(1.5);
   background: var(--handle-color);
-  box-shadow: 0 0 8px var(--handle-color), 0 0 20px var(--handle-glow);
+  box-shadow: var(--handle-shadow);
+  filter: brightness(1.5) drop-shadow(0 0 6px var(--handle-color));
   animation: handle-flash 0.6s ease-out;
 }
 
@@ -930,13 +931,12 @@ body {
   border-color: #ffffff;
   box-shadow: 0 0 0 1px #2288ff;
 }
-
 @keyframes handle-flash {
   0% {
     box-shadow: 0 0 20px #fff, 0 0 40px var(--handle-color);
   }
   100% {
-    box-shadow: 0 0 8px var(--handle-color), 0 0 20px var(--handle-glow);
+    box-shadow: var(--handle-shadow);
   }
 }
 /* CONTEXT MENU */
