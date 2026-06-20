@@ -1458,3 +1458,93 @@
     background: rgba(255, 179, 71, 0.15);
   }
 }
+
+
+/* ==============================================
+   SETTINGS MODAL AS BOTTOM SHEET
+   ============================================== */
+@media (max-width: 768px) {
+  #canvasSettingsModal.modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+    background: rgba(0, 0, 0, 0.6);
+  }
+
+  #canvasSettingsModal .modal-content {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    width: 100%;
+    max-width: 100%;
+    max-height: 85vh;
+    border-radius: 20px 20px 0 0;
+    border-bottom: none;
+    transform: translateY(0);
+    animation: sheetSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    overflow-y: auto;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  #canvasSettingsModal .modal-header {
+    border-radius: 20px 20px 0 0;
+    padding-top: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  /* Drag handle */
+  #canvasSettingsModal .modal-header::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: #3a4a6a;
+    border-radius: 4px;
+  }
+
+  #canvasSettingsModal .modal-body {
+    padding: 16px;
+    overflow-y: auto;
+  }
+
+  #canvasSettingsModal .settings-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 0;
+    padding-bottom: 4px;
+  }
+
+  #canvasSettingsModal .settings-tab {
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  #canvasSettingsModal .modal-footer {
+    position: sticky;
+    bottom: 0;
+    padding: 12px 16px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
+  }
+
+  @keyframes sheetSlideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  /* Premium tab on mobile */
+  #canvasSettingsModal .premium-tab-content .setting-group label {
+    font-size: 13px;
+  }
+
+  #canvasSettingsModal .premium-tab-content .toggle-label {
+    font-size: 11px;
+  }
+}
