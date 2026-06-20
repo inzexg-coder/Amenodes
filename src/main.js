@@ -187,10 +187,13 @@ class Application {
     const premiumTab = document.querySelector('.premium-tab');
     const premiumContent = document.querySelector('.premium-tab-content');
     const isPremium = localStorage.getItem('amenodes_premium') === 'true';
-    if (premiumTab) premiumTab.style.display = isPremium ? '' : 'none';
-    if (premiumContent) premiumContent.style.display = isPremium ? '' : 'none';
+    if (premiumTab) premiumTab.style.display = isPremium ? 'block' : 'none';
 
     // Apply saved premium visual settings
+    // Auto-enable purple accent for premium users if never set
+    if (isPremium && localStorage.getItem('premium_purple_accent') === null) {
+      localStorage.setItem('premium_purple_accent', 'true');
+    }
     if (localStorage.getItem('premium_purple_accent') === 'true') {
       document.body.classList.add('premium-purple');
     } else {

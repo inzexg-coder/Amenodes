@@ -340,7 +340,13 @@ export const en = {
     tabGrid: "Grid",
     tabControls: "Controls",
     tabAppearance: "Appearance",
-    unsaved: 'Unsaved changes'
+    unsaved: 'Unsaved changes',
+    tabPremium: 'Premium',
+    overshootBounce: 'Overshoot Bounce',
+    overshootBounceDesc: 'Transitions overshoot with bounce (cubic-bezier 0.34, 1.56, 0.64, 1)',
+    purpleAccent: 'Purple Accent',
+    purpleAccentDesc: 'Replace orange accents with purple gradient (crown, buttons, highlights)',
+    premiumInfo: 'Premium settings — available only for premium users'
   },
 
   mean: {

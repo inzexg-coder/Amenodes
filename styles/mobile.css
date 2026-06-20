@@ -702,7 +702,7 @@
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), #ff8c47);
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
     color: #1a1f30;
     align-items: center;
     justify-content: center;
@@ -749,7 +749,7 @@
   .mobile-mini-toolbar .mmt-logo {
     font-size: 14px;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--accent), var(--accent));
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -1286,7 +1286,7 @@
   .mobile-menu-title {
     font-size: 18px;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--accent), var(--accent));
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -1369,7 +1369,7 @@
     width: 100%;
     padding: 14px 16px;
     margin: 4px 0;
-    background: linear-gradient(135deg, var(--accent), #ff8c47);
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
     border: none;
     border-radius: 12px;
     color: #1a1f30;
