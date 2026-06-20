@@ -97,7 +97,7 @@ getOutputValue(port: string = 'main', visited: Set<number> = new Set(), graph: G
 ## canAcceptEdge(source, port)
 
 ```javascript
-canAcceptEdge(source: Node, port: string = 'main'): { ok: boolean, message?: string }
+canAcceptEdge(source: Node, port: string = 'main'): { ok: boolean }
 ```
 
 Определяет, может ли узел принять входящее соединение от указанного источника.
