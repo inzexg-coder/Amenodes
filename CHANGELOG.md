@@ -3,17 +3,17 @@
 ## 2.8.4 — 2026-06-20
 
 ### Added
-- **Port hover effect** — scale(1.5) + цветная вспышка в цвет порта (оранжевый/синий) с filter drop-shadow (#4 roadmap)
-- `filter: brightness(1.5) drop-shadow()` для чистого свечения без двойного наложения
-- Анимация `handle-flash` — белый burst → затухание до glow порта
+- **Port hover effect** — scale(1.5) + color flash matching port color (orange/blue) with filter drop-shadow (#4 roadmap)
+- `filter: brightness(1.5) drop-shadow()` for clean glow without double-shadow artifacts
+- `handle-flash` animation — white burst → fade into port-colored glow
 
 ### Fixed
-- **i18n ошибки соединения** — сообщение «This node cannot accept incoming connections» заменено на переведённое `errors.cannotConnect` (RU: «Невозможно соединить», EN: «Cannot connect»)
+- **Connection error i18n** — hardcoded English message "This node cannot accept incoming connections" replaced with translated `errors.cannotConnect` (RU: «Невозможно соединить», EN: «Cannot connect»)
 
 ### Changed
-- Все JS-файлы очищены от комментариев
-- `docs/core/Node.md` — возвращаемый тип `canAcceptEdge` приведён в соответствие с кодом
+- Stripped all comments from JS source files
+- `docs/core/Node.md` — `canAcceptEdge` return type updated to match the code
 
 ### Refactored
-- Glow портов переведён с box-shadow на CSS filter (brightness + drop-shadow)
-- Удалён CSS-блок `.node-handle-blue:hover` (наследуется от общего ховера)
+- Port glow migrated from box-shadow to CSS filter (brightness + drop-shadow)
+- Removed `.node-handle-blue:hover` block (inherits from the common hover rule)
