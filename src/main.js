@@ -137,7 +137,11 @@ class Application {
     var as = window._nodeAnimSpeed;
     if (as === undefined) as = 100;
     var sec = as / 1000;
-    document.body.style.setProperty("--transition", sec > 0 ? "all " + sec + "s ease" : "none");
+    var easing = "ease";
+    if (localStorage.getItem('premium_overshoot_bounce') === 'true') {
+      easing = "cubic-bezier(0.34, 1.56, 0.64, 1)";
+    }
+    document.body.style.setProperty("--transition", sec > 0 ? "all " + sec + "s " + easing : "none");
   }
 
   applyCanvasSettings() {
@@ -178,6 +182,19 @@ class Application {
     const currentSpeed = window._nodeAnimSpeed !== undefined ? window._nodeAnimSpeed : 100;
     if (animSpeedInput) animSpeedInput.value = currentSpeed;
     if (animSpeedValue) animSpeedValue.textContent = currentSpeed;
+
+    // Premium tab visibility
+    const premiumTab = document.querySelector('.premium-tab');
+    const premiumContent = document.querySelector('.premium-tab-content');
+    const isPremium = localStorage.getItem('amenodes_premium') === 'true';
+    if (premiumTab) premiumTab.style.display = isPremium ? '' : 'none';
+    if (premiumContent) premiumContent.style.display = isPremium ? '' : 'none';
+
+    const overshootCheck = document.getElementById('premiumOvershoot');
+    if (overshootCheck) {
+      const saved = localStorage.getItem('premium_overshoot_bounce');
+      overshootCheck.checked = saved === 'true';
+    }
 
     const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
 
@@ -387,7 +404,11 @@ class Application {
           const speed = parseInt(animSpeedInput.value);
           window._nodeAnimSpeed = speed;
           const seconds = speed / 1000;
-          document.body.style.setProperty("--transition", seconds > 0 ? `all ${seconds}s ease` : "none");
+          var easing = "ease";
+          if (localStorage.getItem('premium_overshoot_bounce') === 'true') {
+            easing = "cubic-bezier(0.34, 1.56, 0.64, 1)";
+          }
+          document.body.style.setProperty("--transition", seconds > 0 ? `all ${seconds}s ${easing}` : "none");
           localStorage.setItem("anim_speed", speed.toString());
         }
         const activeStyleBtn = document.querySelector('.grid-style-btn.active');
@@ -403,6 +424,11 @@ class Application {
         localStorage.setItem('canvas_snap_to_grid', this.snapToGrid.toString());
         localStorage.setItem('ctrl_zoom_only', this.ctrlZoomOnly.toString());
         localStorage.setItem('invert_zoom_direction', this.invertZoomDirection.toString());
+
+        const overshootCheck = document.getElementById('premiumOvershoot');
+        if (overshootCheck) {
+          localStorage.setItem('premium_overshoot_bounce', overshootCheck.checked.toString());
+        }
 
         if (this.renderer) {
           this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);

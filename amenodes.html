@@ -155,6 +155,7 @@ console.log('[ErrConsole] ready');
         <button class="settings-tab active" data-tab="grid"><span data-i18n="editor.tabGrid">Grid</span></button>
         <button class="settings-tab" data-tab="controls"><span data-i18n="editor.tabControls">Controls</span></button>
         <button class="settings-tab" data-tab="appearance"><span data-i18n="editor.tabAppearance">Appearance</span></button>
+        <button class="settings-tab premium-tab" data-tab="premium"><i class="fas fa-crown" style="color:#ffb347;"></i> <span>Premium</span></button>
       </div>
 
       <div class="settings-tab-content active" data-tab="grid">
@@ -229,6 +230,20 @@ console.log('[ErrConsole] ready');
               <span id="lang-ru-check" style="display:none;">✓</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div class="settings-tab-content premium-tab-content" data-tab="premium">
+        <div class="setting-group">
+          <label><i class="fas fa-crown" style="color:#ffb347;font-size:12px;"></i> Overshoot Bounce</label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="premiumOvershoot">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label">Transitions overshoot with bounce (cubic-bezier 0.34, 1.56, 0.64, 1)</span>
+          </div>
+        </div>
+        <div style="margin-top:16px;padding:12px;background:linear-gradient(135deg,#2a1f30,#1f2a44);border-radius:8px;border:1px solid rgba(255,179,71,0.2);">
+          <p style="margin:0;font-size:11px;color:#8899bb;"><i class="fas fa-crown" style="color:#ffb347;"></i> Premium settings — появляются только у премиум-пользователей</p>
         </div>
       </div>
     </div>

@@ -1908,6 +1908,18 @@ body {
 }
 }
 
+.premium-tab {
+  display: none;
+}
+
+.premium-tab-content {
+  display: none;
+}
+
+.premium-tab-content.active {
+  display: block;
+}
+
 .setting-group {
   margin-bottom: 24px;
 }
