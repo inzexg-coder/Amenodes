@@ -44,29 +44,29 @@ export class ConstantNode extends Node {
       padding: 8px;
       color: #ffaa55;
     `;
-    
+
     content.appendChild(valueDisplay);
     div.appendChild(content);
     renderer.addHandles(div, this.id, null);
     renderer.applyOptStyles(div);
-    
+
     return div;
   }
 
   static async onCreate(graph, x, y, options = {}) {
     const value = await modal.prompt(t('modal.enterValue'), '0');
     if (value === null) return null;
-    
+
     const numValue = parseFloat(value);
     const finalValue = isNaN(numValue) ? 0 : numValue;
-    
+
     const defaultTitle = i18n.t('nodes.constant');
     const node = new ConstantNode(null, x, y, defaultTitle, { val: finalValue });
-    
+
     if (graph) {
       graph.addNode(node);
     }
-    
+
     return node;
   }
 }

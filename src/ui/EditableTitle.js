@@ -43,7 +43,7 @@ export class EditableTitle {
     this.input.style.color = '#dcf0ff';
     this.input.style.outline = 'none';
     this.input.style.width = '200px';
-    
+
     this.input.onkeydown = (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -56,7 +56,7 @@ export class EditableTitle {
       }
       e.stopPropagation();
     };
-    
+
     this.input.onblur = () => {
       setTimeout(() => {
         if (document.activeElement !== this.input && this.input.parentNode === this.element) {
@@ -64,7 +64,7 @@ export class EditableTitle {
         }
       }, 100);
     };
-    
+
     this.input.onclick = (e) => {
       e.stopPropagation();
     };
@@ -74,7 +74,7 @@ export class EditableTitle {
 
   startEdit() {
     this.input.value = this.value;
-    
+
     if (this.displaySpan.parentNode === this.element) {
       this.element.removeChild(this.displaySpan);
     }
@@ -87,18 +87,18 @@ export class EditableTitle {
     if (this.input.parentNode !== this.element) {
       return;
     }
-    
+
     let newValue = this.input.value.trim();
-    
+
     if (newValue === '') {
       newValue = this.value;
     }
-    
+
     const hasChanged = (newValue !== this.value);
-    
+
     this.value = newValue;
     this.displaySpan.textContent = replaceSymbols(newValue);
-    
+
     this.element.removeChild(this.input);
     this.element.appendChild(this.displaySpan);
 
@@ -126,7 +126,7 @@ export class EditableTitle {
       this.input.value = val;
     }
   }
-  
+
   getValue() {
     return this.value;
   }

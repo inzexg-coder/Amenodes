@@ -24,7 +24,7 @@ export class History {
     if (this.stack.length > this.maxSize) this.stack.shift();
     else this.index = this.stack.length - 1;
     this.autoSave();
-    
+
     if (this.graph && this.graph.clearDirty) {
       this.graph.clearDirty();
     }
@@ -65,7 +65,7 @@ export class History {
       data.viewportZoom = window.currentZoom || 1;
       data.designQuality = window.currentQualityValue || 100;
       localStorage.setItem('amenodes_autosave', JSON.stringify(data));
-      
+
       const statusEl = document.getElementById('autosaveStatus');
       if (statusEl) {
         statusEl.style.opacity = '1';
@@ -93,7 +93,7 @@ export class History {
         if (this.graph && this.graph.clearDirty) {
           this.graph.clearDirty();
         }
-        
+
         return true;
       }
     } catch (e) {}

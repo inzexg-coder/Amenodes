@@ -36,7 +36,7 @@ export class NodeMenu {
     const rect = document.getElementById('viewport').getBoundingClientRect();
     const offset = this.viewport.getOffset();
     const zoom = window.currentZoom || 1;
-    
+
     return {
       x: (rect.width / 2 - offset.x) / zoom - 100,
       y: (rect.height / 2 - offset.y) / zoom - 40
@@ -45,42 +45,42 @@ export class NodeMenu {
 
   open() {
     if (this.menuElement) this.close();
-    
+
     const types = NodeFactory.getAvailableNodeTypes();
     if (!types.length) return;
-    
+
     const overlay = document.createElement('div');
     overlay.className = 'node-menu-overlay';
-    
+
     const panel = document.createElement('div');
     panel.className = 'node-menu-panel';
-    
+
     const header = document.createElement('div');
     header.className = 'node-menu-header';
     header.innerHTML = `
       <h3><i class="fas fa-cubes"></i> ${t('nodeMenu.title')}</h3>
       <button class="node-menu-close"><i class="fas fa-times"></i></button>
     `;
-    
+
     const searchBox = document.createElement('div');
     searchBox.className = 'node-menu-search';
     searchBox.innerHTML = `
       <i class="fas fa-search"></i>
       <input type="text" placeholder="${t('nodeMenu.search')}" id="nodeMenuSearch">
     `;
-    
+
     const list = document.createElement('div');
     list.className = 'node-menu-list';
-    
+
     header.querySelector('.node-menu-close').onclick = () => this.close();
-    
+
     panel.appendChild(header);
     panel.appendChild(searchBox);
     panel.appendChild(list);
     overlay.appendChild(panel);
-    
+
     this.renderNodeList(types, list);
-    
+
     const searchInput = searchBox.querySelector('#nodeMenuSearch');
     searchInput.oninput = () => {
       const query = searchInput.value.toLowerCase();
@@ -92,28 +92,28 @@ export class NodeMenu {
       });
       this.renderNodeList(filtered, list);
     };
-    
+
     overlay.onclick = (e) => {
       if (e.target === overlay) this.close();
     };
-    
+
     document.body.appendChild(overlay);
     this.menuElement = overlay;
     this.isOpen = true;
-    
+
     setTimeout(() => searchInput.focus(), 100);
   }
 
   renderNodeList(types, container) {
     container.innerHTML = '';
-    
+
     const categories = types.filter(t => t.isCategory === true);
     const regularNodes = types.filter(t => !t.isCategory);
-    
+
     for (const category of categories) {
       this.renderCategoryCard(category, container);
     }
-    
+
     for (const nodeType of regularNodes) {
       this.renderNodeCard(nodeType, container);
     }
@@ -122,11 +122,11 @@ export class NodeMenu {
   renderCategoryCard(category, container) {
     const categoryCard = document.createElement('div');
     categoryCard.className = 'node-menu-card node-menu-category';
-    
+
     const icon = category.icon || 'fa-folder';
     const name = t(category.nameKey);
     const description = t(category.descriptionKey);
-    
+
     categoryCard.innerHTML = `
       <div class="node-menu-card-icon"><i class="fas ${icon}"></i></div>
       <div class="node-menu-card-info">
@@ -139,11 +139,11 @@ export class NodeMenu {
       </div>
       <div class="node-menu-card-expand"><i class="fas fa-chevron-right"></i></div>
     `;
-    
+
     const submenuContainer = document.createElement('div');
     submenuContainer.className = 'node-menu-submenu-container';
     submenuContainer.style.display = 'none';
-    
+
     if (category.subnodes && category.subnodes.length) {
       for (const subnode of category.subnodes) {
         const subCard = document.createElement('div');
@@ -155,19 +155,19 @@ export class NodeMenu {
           </div>
           <div class="node-menu-card-add"><i class="fas fa-plus-circle"></i></div>
         `;
-        
+
         subCard.onclick = async (e) => {
           e.stopPropagation();
           await this.createNodeByType(category.type, subnode);
           this.close();
         };
-        
+
         submenuContainer.appendChild(subCard);
       }
     }
-    
+
     categoryCard.appendChild(submenuContainer);
-    
+
     categoryCard.onclick = (e) => {
       e.stopPropagation();
       const isExpanded = submenuContainer.style.display === 'flex';
@@ -177,7 +177,7 @@ export class NodeMenu {
         icon.className = isExpanded ? 'fas fa-chevron-right' : 'fas fa-chevron-down';
       }
     };
-    
+
     container.appendChild(categoryCard);
   }
 
@@ -185,11 +185,11 @@ export class NodeMenu {
     const card = document.createElement('div');
     card.className = 'node-menu-card';
     card.setAttribute('data-type', nodeType.type);
-    
+
     const icon = nodeType.icon || 'fa-circle';
     const name = t(nodeType.nameKey);
     const description = t(nodeType.descriptionKey);
-    
+
     card.innerHTML = `
       <div class="node-menu-card-icon"><i class="fas ${icon}"></i></div>
       <div class="node-menu-card-info">
@@ -202,29 +202,29 @@ export class NodeMenu {
       </div>
       <div class="node-menu-card-add"><i class="fas fa-plus-circle"></i></div>
     `;
-    
+
     card.querySelector('.node-menu-card-add').onclick = async (e) => {
       e.stopPropagation();
       await this.createNode(nodeType.type);
       this.close();
     };
-    
+
     card.onclick = async () => {
       await this.createNode(nodeType.type);
       this.close();
     };
-    
+
     container.appendChild(card);
   }
 
   async createNodeByType(categoryType, subnode) {
     const { x, y } = this.getCenterPosition();
-    
+
     const options = { x, y };
     Object.assign(options, subnode);
-    
+
     const node = await NodeFactory.createNode(categoryType, options);
-    
+
     if (node) {
       this.graph.addNode(node);
       this.finishNodeCreation();
@@ -234,9 +234,9 @@ export class NodeMenu {
   async createNode(type) {
     const { x, y } = this.getCenterPosition();
     const options = { x, y };
-    
+
     const node = await NodeFactory.createNode(type, options);
-    
+
     if (node) {
       this.graph.addNode(node);
       this.finishNodeCreation();

@@ -13,17 +13,17 @@ export class BenchmarkService {
   async runBenchmark(notify = true) {
     if (this.benchmarking) return { gains: this.realGains, baseline: this.baselineFPS };
     this.benchmarking = true;
-    
+
     const statusEl = document.getElementById('benchmarkStatus');
     if (notify && statusEl) {
       statusEl.style.display = 'block';
       statusEl.innerHTML = `<i class="fas fa-flask"></i> ${t('optimizations.benchmarking')}`;
     }
-    
+
     const savedState = this.captureState();
-    
+
     this.resetToBaseline();
-    
+
     if (notify && statusEl) {
       statusEl.innerHTML = `<i class="fas fa-flask"></i> ${t('optimizations.measuringBaseline')}`;
     }
@@ -33,19 +33,19 @@ export class BenchmarkService {
       statusEl.innerHTML = `${t('optimizations.baselineFPS')}: ${this.baselineFPS}`;
     }
     await this.sleep(800);
-    
+
     for (let i = 0; i < this.optimizations.length; i++) {
       const opt = this.optimizations[i];
       if (opt.type === 'slider') continue;
       if (notify && statusEl) {
         statusEl.innerHTML = `${t('optimizations.testing')}: ${opt.name}... (${i + 1}/${this.optimizations.length})`;
       }
-      
+
       if (!opt.impl) {
         this.realGains[i] = 0;
         continue;
       }
-      
+
       this.applyOptimizationByIndex(i, true);
       await this.sleep(100);
       const fps = await this.fpsCounter.measure(1000);
@@ -54,18 +54,18 @@ export class BenchmarkService {
       if (notify && statusEl) {
         statusEl.innerHTML = `${opt.name}: +${this.realGains[i]}% -> ${fps} ${t('optimizations.fpsLabel')}`;
       }
-      
+
       this.applyOptimizationByIndex(i, false);
       await this.sleep(100);
     }
-    
+
     this.restoreState(savedState);
-    
+
     if (notify && statusEl) {
       statusEl.innerHTML = `${t('optimizations.completed')} ${t('optimizations.baselineFPS')}: ${this.baselineFPS}`;
       setTimeout(() => { if (statusEl) statusEl.style.display = 'none'; }, 3000);
     }
-    
+
     this.benchmarking = false;
     return { gains: this.realGains, baseline: this.baselineFPS };
   }

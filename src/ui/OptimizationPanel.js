@@ -105,7 +105,7 @@ export class OptimizationPanel {
         categoryDiv.className = 'opt-category';
         categoryDiv.textContent = t('optimizations.available');
         container.appendChild(categoryDiv);
-        
+
         for (const { opt, idx } of implementedOpts) {
           if (opt.type === "slider") {
             this.createSliderItem(container, opt, currentQualityValue);
@@ -121,7 +121,7 @@ export class OptimizationPanel {
       categoryDiv.className = 'opt-category';
       categoryDiv.textContent = t('optimizations.comingSoon');
       container.appendChild(categoryDiv);
-      
+
       for (const { opt, idx } of pendingOpts) {
         this.createPendingItem(container, opt, idx);
       }
@@ -131,25 +131,25 @@ export class OptimizationPanel {
   createSwitchItem(container, opt, idx) {
     const item = document.createElement('div');
     item.className = 'opt-item';
-    
+
     const info = document.createElement('div');
     info.className = 'opt-info';
-    
+
     const optKey = getOptKey(opt.name);
     const optName = t(`optimizations.${optKey}`) || opt.name;
     const optDesc = t(`optimizations.${optKey}Desc`) || opt.desc;
     const optPros = t(`optimizations.${optKey}Pros`) || opt.pros;
     const optCons = t(`optimizations.${optKey}Cons`) || opt.cons;
-    
+
     const isEnabled = this.optState[idx];
-    
+
     info.innerHTML = `
       <div class="opt-title">${optName}</div>
       <div class="opt-desc">${optDesc}</div>
       <div class="opt-pros">${optPros}</div>
       <div class="opt-cons">${optCons}</div>
     `;
-    
+
     const switchEl = document.createElement('div');
     switchEl.className = `opt-switch${isEnabled ? ' opt-switch-active' : ''}`;
     switchEl.onclick = () => {
@@ -160,7 +160,7 @@ export class OptimizationPanel {
     const handle = document.createElement('div');
     handle.className = 'opt-switch-handle';
     switchEl.appendChild(handle);
-    
+
     item.appendChild(info);
     item.appendChild(switchEl);
     container.appendChild(item);
@@ -169,51 +169,51 @@ export class OptimizationPanel {
   createSliderItem(container, opt, currentValue) {
     const item = document.createElement('div');
     item.className = 'opt-item';
-    
+
     const info = document.createElement('div');
     info.className = 'opt-info';
-    
+
     const optKey = getOptKey(opt.name);
     const optName = t(`optimizations.${optKey}`) || opt.name;
     const optDesc = t(`optimizations.${optKey}Desc`) || opt.desc;
     const optPros = t(`optimizations.${optKey}Pros`) || opt.pros;
     const optCons = t(`optimizations.${optKey}Cons`) || opt.cons;
-    
+
     info.innerHTML = `
       <div class="opt-title">${optName}</div>
       <div class="opt-desc">${optDesc}</div>
       <div class="opt-pros">${optPros}</div>
       <div class="opt-cons">${optCons}</div>
     `;
-    
+
     const sliderDiv = document.createElement('div');
     sliderDiv.className = 'opt-slider-row';
-    
+
     const slider = document.createElement('input');
     slider.type = 'range';
     slider.min = opt.min;
     slider.max = opt.max;
     slider.step = opt.step;
     slider.value = currentValue;
-    
+
     const valueSpan = document.createElement('span');
     valueSpan.className = 'opt-slider-value';
     valueSpan.textContent = currentValue + '%';
-    
+
     const fpsGainSpan = document.createElement('div');
     fpsGainSpan.className = 'opt-fps';
-    
+
     const modeSpan = document.createElement('span');
     modeSpan.className = 'opt-mode';
-    
+
     const updateQuality = (value) => {
       valueSpan.textContent = value + '%';
       fpsGainSpan.innerHTML = '';
       modeSpan.textContent = '';
-      
+
       const initialGain = this.currentGains[OPTIMIZATIONS.length - 1] || 0;
       const initialFpsMsg = initialGain > 0 ? `+${initialGain}% FPS` : '0% FPS';
-      
+
       if (value > 80) {
         fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: ${initialFpsMsg}`;
       } else {
@@ -222,7 +222,7 @@ export class OptimizationPanel {
         else if (value <= 80) fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: +50% FPS`;
         else fpsGainSpan.innerHTML = `<i class="fas fa-chart-line"></i> ${t('optimizations.fpsGain')}: ${initialFpsMsg}`;
       }
-      
+
       let modeMsg = '';
       if (value <= 20) modeMsg = t('optimizations.extreme');
       else if (value <= 50) modeMsg = t('optimizations.low');
@@ -230,21 +230,20 @@ export class OptimizationPanel {
       else modeMsg = t('optimizations.high');
       modeSpan.textContent = modeMsg;
     };
-    
+
     updateQuality(currentValue);
-    
+
     slider.oninput = (e) => {
       const newValue = parseInt(e.target.value);
       updateQuality(newValue);
     };
-    
+
     slider.onchange = (e) => {
       const newValue = parseInt(e.target.value);
       if (this.onQualityChangeCallback) this.onQualityChangeCallback(newValue);
       window._designQualitySaved = newValue;
       if (this.renderer && this.renderer.render) this.renderer.render();
-      
-      // Skip benchmark on mobile
+
       if (window.innerWidth > 768) {
         setTimeout(async () => {
           const result = await this.benchmarkService.runBenchmark(true);
@@ -254,10 +253,10 @@ export class OptimizationPanel {
           }
         }, 500);
       }
-      
+
       if (this.panel) this.panel.classList.add('hidden');
     };
-    
+
     sliderDiv.appendChild(slider);
     sliderDiv.appendChild(valueSpan);
     info.appendChild(sliderDiv);
@@ -270,16 +269,16 @@ export class OptimizationPanel {
   createPendingItem(container, opt, idx) {
     const item = document.createElement('div');
     item.className = 'opt-item opt-item-disabled';
-    
+
     const info = document.createElement('div');
     info.className = 'opt-info';
-    
+
     const optKey = getOptKey(opt.name);
     const optName = t(`optimizations.${optKey}`) || opt.name;
     const optDesc = t(`optimizations.${optKey}Desc`) || opt.desc;
     const optPros = t(`optimizations.${optKey}Pros`) || opt.pros;
     const optCons = t(`optimizations.${optKey}Cons`) || opt.cons;
-    
+
     info.innerHTML = `
       <div class="opt-title">${optName}</div>
       <div class="opt-desc">${optDesc}</div>
@@ -287,7 +286,7 @@ export class OptimizationPanel {
       <div class="opt-cons">${optCons}</div>
       <div class="opt-fps" style="color:#667799;">${t('optimizations.notImplemented')}</div>
     `;
-    
+
     const switchEl = document.createElement('div');
     switchEl.className = 'opt-switch';
     switchEl.style.cursor = 'not-allowed';
@@ -295,7 +294,7 @@ export class OptimizationPanel {
     const handle = document.createElement('div');
     handle.className = 'opt-switch-handle';
     switchEl.appendChild(handle);
-    
+
     item.appendChild(info);
     item.appendChild(switchEl);
     container.appendChild(item);

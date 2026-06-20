@@ -15,10 +15,10 @@ export class Node {
     this.unsubscribeI18n = null;
     this.dirtyIndicator = null;
     this.unsubscribeDirty = null;
-    
+
     Object.assign(this, options);
   }
-  
+
   getValue() {
     return [];
   }
@@ -38,11 +38,11 @@ export class Node {
   onAttach(graph) {
     this.graph = graph;
   }
-  
+
   onDetach() {
     this.graph = null;
   }
-  
+
   reevaluate(graph) {
   }
 
@@ -124,17 +124,17 @@ export class Node {
     titleContainer.style.gap = '6px';
 
     let displayTitle = this.title;
-    
+
     const self = this;
-    
+
     this.titleEditor = new EditableTitle(displayTitle, (newTitle) => {
       self.title = newTitle;
       self.originalTitle = newTitle;
-      
+
       graph.reevaluateAll();
       renderer.render();
       renderer.save();
-      
+
       if (graph && graph.setDirty) {
         graph.setDirty(true);
       }
@@ -178,7 +178,7 @@ export class Node {
         this.dirtyIndicator.style.display = isDirty ? 'inline' : 'none';
       }
     };
-    
+
     if (graph && typeof graph.onDirtyChange === 'function') {
       this.unsubscribeDirty = graph.onDirtyChange(updateDirtyIndicator);
     }
@@ -205,7 +205,7 @@ export class Node {
     };
 
     renderer.applyOptStyles(div);
-    
+
     return div;
   }
 

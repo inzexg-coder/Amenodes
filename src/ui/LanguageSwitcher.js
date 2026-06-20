@@ -10,7 +10,7 @@ export class LanguageSwitcher {
 
   init() {
     if (!this.container) return;
-    
+
     this.button = document.createElement('button');
     this.button.id = 'languageBtn';
     this.button.className = 'language-btn';
@@ -19,14 +19,14 @@ export class LanguageSwitcher {
       e.stopPropagation();
       this.toggleMenu();
     };
-    
+
     this.container.appendChild(this.button);
-    
+
     i18n.subscribe((lang) => {
       this.button.innerHTML = `<i class="fas fa-globe"></i> ${lang.toUpperCase()}`;
       this.closeMenu();
     });
-    
+
     document.addEventListener('click', (e) => {
       if (this.menu && !this.menu.contains(e.target) && e.target !== this.button) {
         this.closeMenu();
@@ -44,12 +44,12 @@ export class LanguageSwitcher {
 
   createMenu() {
     this.closeMenu();
-    
+
     this.menu = document.createElement('div');
     this.menu.className = 'language-menu';
-    
+
     const languages = i18n.getAvailableLanguages();
-    
+
     for (const lang of languages) {
       const item = document.createElement('div');
       item.className = 'language-menu-item';
@@ -63,9 +63,9 @@ export class LanguageSwitcher {
       };
       this.menu.appendChild(item);
     }
-    
+
     document.body.appendChild(this.menu);
-    
+
     const rect = this.button.getBoundingClientRect();
     this.menu.style.position = 'fixed';
     this.menu.style.top = `${rect.bottom + 5}px`;

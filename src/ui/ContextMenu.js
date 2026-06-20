@@ -13,22 +13,22 @@ export class ContextMenu {
 
   show(x, y, sourceId) {
     this.close();
-    
+
     this.currentSourceId = sourceId;
-    
+
     const menu = document.createElement('div');
     menu.className = 'node-menu';
     menu.style.left = x + 'px';
     menu.style.top = y + 'px';
-    
+
     const sourceNode = this.graph.getNode(sourceId);
-    
+
     this.addMenuItem(menu, t('contextMenu.markImportant'), () => this.toggleImportant(sourceNode, true));
     this.addMenuItem(menu, t('contextMenu.unmarkImportant'), () => this.toggleImportant(sourceNode, false));
-    
+
     document.body.appendChild(menu);
     this.currentMenu = menu;
-    
+
     setTimeout(() => {
       const closeHandler = (ev) => {
         if (!menu.contains(ev.target)) {

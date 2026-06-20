@@ -27,7 +27,7 @@ export class NumberNode extends Node {
     const div = this.createBaseDiv(graph, renderer);
     const content = document.createElement('div');
     content.className = 'empty-node-content';
-    
+
     const input = document.createElement('input');
     input.type = 'number';
     input.value = this.value;
@@ -38,12 +38,12 @@ export class NumberNode extends Node {
       renderer.render();
       renderer.save();
     };
-    
+
     content.appendChild(input);
     div.appendChild(content);
     renderer.addHandles(div, this.id, null);
     renderer.applyOptStyles(div);
-    
+
     return div;
   }
 }

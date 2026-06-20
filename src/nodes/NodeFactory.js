@@ -19,11 +19,11 @@ export class NodeFactory {
     if (!entry) {
       throw new Error(`Unknown node type: ${type}`);
     }
-    
+
     const { id, x, y, title, ...customParams } = options;
     const defaultTitle = i18n.t(entry.metadata.nameKey);
     const finalTitle = title || defaultTitle;
-    
+
     const NodeClass = entry.ctor;
 
     if (typeof NodeClass.onCreate === 'function') {
@@ -35,7 +35,7 @@ export class NodeFactory {
       }
       return null;
     }
-    
+
     return new NodeClass(id || 0, x || 0, y || 0, finalTitle, customParams);
   }
 

@@ -18,22 +18,22 @@ export class ToolbarController {
 
     const undoBtn = document.getElementById('undoBtn');
     if (undoBtn) undoBtn.onclick = () => this.undo();
-    
+
     const redoBtn = document.getElementById('redoBtn');
     if (redoBtn) redoBtn.onclick = () => this.redo();
-    
+
     const exportBtn = document.getElementById('exportBtn');
     if (exportBtn) exportBtn.onclick = () => this.export();
-    
+
     const importBtn = document.getElementById('importBtn');
     if (importBtn) importBtn.onclick = () => this.import();
-    
+
     const clearStorageBtn = document.getElementById('clearStorageBtn');
     if (clearStorageBtn) clearStorageBtn.onclick = () => this.clearStorage();
-    
+
     const fileInput = document.getElementById('fileInput');
     if (fileInput) fileInput.onchange = (e) => this.handleFileImport(e);
-    
+
     const fileGroup = document.querySelector('.file-group');
     if (fileGroup && !document.getElementById('languageSwitcherContainer')) {
       const langContainer = document.createElement('div');
@@ -46,7 +46,7 @@ export class ToolbarController {
 
     i18n.subscribe(() => this.updateButtonTexts());
   }
-  
+
   updateButtonTexts() {
     const buttons = {
       undoBtn: t('toolbar.undo'),
@@ -55,7 +55,7 @@ export class ToolbarController {
       importBtn: t('toolbar.import'),
       clearStorageBtn: t('toolbar.clearStorage')
     };
-    
+
     for (const [id, text] of Object.entries(buttons)) {
       const btn = document.getElementById(id);
       if (btn) btn.textContent = text;

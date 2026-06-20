@@ -68,11 +68,11 @@ export class OutputNode extends Node {
     const div = this.createBaseDiv(graph, renderer, 'output-header');
     const tableDiv = document.createElement('div');
     tableDiv.className = 'data-table';
-    
+
     const table = document.createElement('table');
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
-    
+
     const paramTh = document.createElement('th');
     paramTh.textContent = t('common.parameter');
     const valueTh = document.createElement('th');
@@ -81,14 +81,14 @@ export class OutputNode extends Node {
     headerRow.appendChild(valueTh);
     thead.appendChild(headerRow);
     table.appendChild(thead);
-    
+
     const tbody = document.createElement('tbody');
-    
+
     const updateTable = () => {
       tbody.innerHTML = '';
       this.rows.forEach((row, idx) => {
         const tr = document.createElement('tr');
-        
+
         const tdParam = document.createElement('td');
         const paramEditor = new EditableTitle(row.param, (newParam) => {
           this.rows[idx].param = newParam;
@@ -97,39 +97,39 @@ export class OutputNode extends Node {
         paramEditor.displaySpan.style.minWidth = '160px';
         paramEditor.displaySpan.style.display = 'inline-block';
         tdParam.appendChild(paramEditor.getElement());
-        
+
         const tdValue = document.createElement('td');
         const valueInput = document.createElement('input');
         valueInput.value = replaceSymbols(row.value);
         valueInput.disabled = true;
         tdValue.appendChild(valueInput);
-        
+
         tr.appendChild(tdParam);
         tr.appendChild(tdValue);
         tbody.appendChild(tr);
       });
     };
-    
+
     updateTable();
     table.appendChild(tbody);
     tableDiv.appendChild(table);
     div.appendChild(tableDiv);
-    
+
     renderer.addHandles(div, this.id, null);
     renderer.applyOptStyles(div);
-    
+
     const unsubscribe = i18n.subscribe(() => {
       paramTh.textContent = t('common.parameter');
       valueTh.textContent = t('common.value');
       updateTable();
     });
-    
+
     const originalRemove = div.remove;
     div.remove = function() {
       unsubscribe();
       if (originalRemove) originalRemove.call(this);
     };
-    
+
     return div;
   }
 }

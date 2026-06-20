@@ -14,7 +14,7 @@ class LanguageManager {
     this.translations = {};
     this.updateTranslations();
   }
-  
+
   setNodeTranslations(translations) {
     this.nodeTranslations = translations;
     this.updateTranslations();
@@ -72,7 +72,7 @@ class LanguageManager {
   t(key, params = {}) {
     const keys = key.split('.');
     let value = this.translations;
-    
+
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
@@ -80,11 +80,11 @@ class LanguageManager {
         return key;
       }
     }
-    
+
     if (typeof value === 'string') {
       return value.replace(/\{(\w+)\}/g, (_, param) => params[param] ?? `{${param}}`);
     }
-    
+
     return key;
   }
 

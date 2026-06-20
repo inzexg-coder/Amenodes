@@ -30,7 +30,7 @@ export class DomRenderer {
       contain: false,
       pointerEvents: false
     };
-    
+
     this.edgeRenderer = new EdgeRenderer(this.layer);
     this.edgeRenderer.setOnEdgeRemoved(() => {
       this.graph.reevaluateAll();
@@ -39,7 +39,7 @@ export class DomRenderer {
       this.save();
       if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
     });
-    
+
     this.attachTouchFeedback();
     this.contextMenu = null;
     this.layer.addEventListener("click", (e) => {
@@ -87,7 +87,7 @@ export class DomRenderer {
       console.warn('Node missing getMinHeight method:', node);
       return 80;
     }
-    
+
     if (this.heightCache.has(node.id)) {
       return this.heightCache.get(node.id);
     }
@@ -98,14 +98,14 @@ export class DomRenderer {
 
   isNodeVisible(node, viewportRect, offset) {
     if (!node) return false;
-    
+
     const nodeX = node.x + offset.x;
     const nodeY = node.y + offset.y;
     const height = this.getNodeHeight(node);
     const margin = 300;
-    return !(nodeX + 280 + margin < 0 || 
-             nodeX - margin > viewportRect.w || 
-             nodeY + height + margin < 0 || 
+    return !(nodeX + 280 + margin < 0 ||
+             nodeX - margin > viewportRect.w ||
+             nodeY + height + margin < 0 ||
              nodeY - margin > viewportRect.h);
   }
 
@@ -140,7 +140,7 @@ export class DomRenderer {
   renderEdges(visibleNodes) {
     const nodeIds = new Set(visibleNodes.map(n => n.id));
     const filteredEdges = this.graph.edges.filter(e => nodeIds.has(e.sourceId) && nodeIds.has(e.targetId));
-    
+
     const rectCache = new Map();
     for (const node of visibleNodes) {
       rectCache.set(node.id, {
@@ -150,13 +150,13 @@ export class DomRenderer {
         h: this.getNodeHeight(node)
       });
     }
-    
+
     this.edgeRenderer.renderEdges(filteredEdges, this.graph, rectCache);
   }
   updateEdgePositions() {
     const nodeIds = new Set(this.graph.nodes.map(n => n.id));
     const filteredEdges = this.graph.edges.filter(e => nodeIds.has(e.sourceId) && nodeIds.has(e.targetId));
-    
+
     const rectCache = new Map();
     for (const node of this.graph.nodes) {
       rectCache.set(node.id, {
@@ -170,18 +170,18 @@ export class DomRenderer {
   }
   render() {
     this.clearTemp();
-    
+
     if (this.virtual && this.viewport) {
       const viewportRect = this.viewport.getRect();
       const offset = this.viewport.getOffset();
       const visibleNodes = this.graph.nodes.filter(n => this.isNodeVisible(n, viewportRect, offset));
       const hiddenNodes = this.graph.nodes.filter(n => !this.isNodeVisible(n, viewportRect, offset));
-      
+
       for (const node of hiddenNodes) {
         const element = this.elementCache.get(node.id);
         if (element && element.parentNode) element.remove();
       }
-      
+
       for (const node of visibleNodes) {
         if (!this.elementCache.has(node.id)) {
           if (typeof node.createDOM !== 'function') {
@@ -198,7 +198,7 @@ export class DomRenderer {
         this.updateNodeClass(node);
         this.applyOptStyles(element);
       }
-      
+
       this.renderEdges(visibleNodes);
     } else {
       this.renderAll();
@@ -208,7 +208,7 @@ export class DomRenderer {
   renderAll() {
     this.layer.innerHTML = '';
     this.elementCache.clear();
-    
+
     for (const node of this.graph.nodes) {
       if (typeof node.createDOM !== 'function') {
         console.error('Node missing createDOM method:', node);
@@ -220,7 +220,7 @@ export class DomRenderer {
       this.updateNodeClass(node);
       this.applyOptStyles(element);
     }
-    
+
     const rectCache = new Map();
     for (const node of this.graph.nodes) {
       rectCache.set(node.id, {
@@ -230,7 +230,7 @@ export class DomRenderer {
         h: this.getNodeHeight(node)
       });
     }
-    
+
     this.edgeRenderer.renderEdges(this.graph.edges, this.graph, rectCache);
     this.attachDragEvents();
   }
@@ -238,7 +238,7 @@ export class DomRenderer {
   addHandles(container, nodeId, unmappedPort) {
     const existingHandles = container.querySelectorAll('.node-handle');
     existingHandles.forEach(handle => handle.remove());
-    
+
     const positions = ['top', 'right', 'bottom', 'left'];
     for (const position of positions) {
       const dot = document.createElement('div');
@@ -249,7 +249,7 @@ export class DomRenderer {
       dot.addEventListener("touchstart", this.onHandleDown.bind(this), { passive: false });
       container.appendChild(dot);
     }
-    
+
     if (unmappedPort === 'unmapped') {
       const blueHandle = document.createElement('div');
       blueHandle.className = 'node-handle handle-right node-handle-blue';
@@ -267,14 +267,14 @@ export class DomRenderer {
     event.stopPropagation();
     const handle = event.target.closest('.node-handle');
     if (!handle) return;
-    
+
     const sourceId = parseInt(handle.getAttribute('data-source-id'));
     const port = handle.getAttribute('data-port') || 'main';
     const startX = event.clientX || (event.touches && event.touches[0].clientX) || 0;
     const startY = event.clientY || (event.touches && event.touches[0].clientY) || 0;
     let moved = false;
     const isTouch = event.type === 'touchstart';
-    
+
     const onMove = (moveEvent) => {
       const cx = moveEvent.clientX || (moveEvent.touches && moveEvent.touches[0].clientX) || 0;
       const cy = moveEvent.clientY || (moveEvent.touches && moveEvent.touches[0].clientY) || 0;
@@ -284,19 +284,19 @@ export class DomRenderer {
         this.startDragEdge(sourceId, port, cx, cy);
       }
     };
-    
+
     const onEnd = () => {
       cleanup();
       if (!moved) this.showMenu(startX, startY, sourceId);
     };
-    
+
     const cleanup = () => {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onEnd);
       window.removeEventListener('touchmove', onMove);
       window.removeEventListener('touchend', onEnd);
     };
-    
+
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onEnd);
     if (isTouch) {
@@ -311,7 +311,7 @@ export class DomRenderer {
     this.isDraggingEdge = true;
     this.edgeSourceId = sourceId;
     this.edgeSourcePort = port;
-    
+
     const canvasCoords = this.getCanvasCoords(clientX, clientY);
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.classList.add('temp');
@@ -325,7 +325,7 @@ export class DomRenderer {
     svg.style.overflow = 'visible';
     this.layer.appendChild(svg);
     this.tempSvg = svg;
-    
+
     this.tempLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
     this.tempLine.setAttribute("stroke", port === 'unmapped' ? "#44aaff" : "#ffaa55");
     this.tempLine.setAttribute("stroke-width", "3");
@@ -335,19 +335,19 @@ export class DomRenderer {
     this.tempLine.setAttribute("x2", canvasCoords.x);
     this.tempLine.setAttribute("y2", canvasCoords.y);
     svg.appendChild(this.tempLine);
-    
+
     document.body.style.cursor = 'crosshair';
   }
 
   getClientX(event) {
-    return event.clientX !== undefined ? event.clientX : 
-      (event.touches && event.touches[0] ? event.touches[0].clientX : 
+    return event.clientX !== undefined ? event.clientX :
+      (event.touches && event.touches[0] ? event.touches[0].clientX :
       (event.changedTouches && event.changedTouches[0] ? event.changedTouches[0].clientX : 0));
   }
 
   getClientY(event) {
-    return event.clientY !== undefined ? event.clientY : 
-      (event.touches && event.touches[0] ? event.touches[0].clientY : 
+    return event.clientY !== undefined ? event.clientY :
+      (event.touches && event.touches[0] ? event.touches[0].clientY :
       (event.changedTouches && event.changedTouches[0] ? event.changedTouches[0].clientY : 0));
   }
 
@@ -361,19 +361,19 @@ export class DomRenderer {
 
   onGlobalUpEdge(event) {
     if (!this.isDraggingEdge) return;
-    
+
     const cx = this.getClientX(event);
     const cy = this.getClientY(event);
     const targetElement = document.elementsFromPoint(cx, cy)
       .find(el => el.classList && el.classList.contains('node'));
     const targetId = targetElement ? parseInt(targetElement.getAttribute('data-id')) : null;
-    
+
     if (this.tempSvg && this.tempLine) {
       this.tempSvg.remove();
     }
     this.tempLine = null;
     this.tempSvg = null;
-    
+
     if (targetId && targetId !== this.edgeSourceId) {
       const edge = this.graph.addEdge(this.edgeSourceId, targetId, this.edgeSourcePort);
       if (edge) {
@@ -384,7 +384,7 @@ export class DomRenderer {
         if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
       }
     }
-    
+
     this.isDraggingEdge = false;
     this.edgeSourceId = null;
     this.edgeSourcePort = null;
@@ -425,21 +425,21 @@ export class DomRenderer {
         event.target.closest('.title-editable')) {
       return;
     }
-    
+
     const nodeElement = event.target.closest('.node');
     if (!nodeElement) return;
-    
+
     const nodeId = parseInt(nodeElement.getAttribute('data-id'));
     const node = this.graph.getNode(nodeId);
     if (!node) return;
-    
+
     this.dragNode = node;
     this.dragStartX = this.getClientX(event);
     this.dragStartY = this.getClientY(event);
     this.dragNodeStartX = node.x;
     this.dragNodeStartY = node.y;
     nodeElement.style.transition = "none";
-    
+
     document.body.style.cursor = 'grabbing';
     event.preventDefault();
   }
@@ -450,32 +450,32 @@ export class DomRenderer {
       const cy = this.getClientY(event);
       const deltaX = (cx - this.dragStartX) / (window.currentZoom || 1);
       const deltaY = (cy - this.dragStartY) / (window.currentZoom || 1);
-      
+
       let newX = this.dragNodeStartX + deltaX;
       let newY = this.dragNodeStartY + deltaY;
-      
+
       if (this.getSnapEnabled && this.getSnapEnabled()) {
         const gridSize = this.getGridSize ? this.getGridSize() : 20;
         newX = Math.round(newX / gridSize) * gridSize;
         newY = Math.round(newY / gridSize) * gridSize;
       }
-      
+
       this.dragNode.x = newX;
       this.dragNode.y = newY;
-      
+
       const element = this.elementCache.get(this.dragNode.id);
       if (element) {
         element.style.left = `${this.dragNode.x}px`;
         element.style.top = `${this.dragNode.y}px`;
       }
-      
+
       if (!this._edgeRafPending) {
         this._edgeRafPending = requestAnimationFrame(() => {
           this._edgeRafPending = null;
           this.updateEdgePositions();
         });
       }
-      
+
       if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
     }
   }

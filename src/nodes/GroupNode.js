@@ -38,11 +38,11 @@ export class GroupNode extends Node {
     const div = this.createBaseDiv(graph, renderer, 'group-header');
     const itemsContainer = document.createElement('div');
     itemsContainer.className = 'group-items';
-    
+
     if (!this.values || !this.values.length) {
       this.values = [{ name: `${t('common.value')} 1`, val: 0 }];
     }
-    
+
     const update = () => {
       renderer.invalidateCache(this.id);
       graph.reevaluateAll();
@@ -52,18 +52,18 @@ export class GroupNode extends Node {
     };
 
     itemsContainer.innerHTML = '';
-    
+
     this.values.forEach((val, idx) => {
       const row = document.createElement('div');
       row.className = 'group-row';
-      
+
       const nameEditor = new EditableTitle(val.name, (newName) => {
         this.values[idx].name = newName;
         update();
       });
       nameEditor.displaySpan.style.width = '90px';
       nameEditor.displaySpan.style.display = 'inline-block';
-      
+
       const valueInput = document.createElement('input');
       valueInput.type = 'number';
       valueInput.value = val.val;
@@ -73,7 +73,7 @@ export class GroupNode extends Node {
         this.values[idx].val = parseFloat(valueInput.value) || 0;
         update();
       };
-      
+
       const removeBtn = document.createElement('button');
       removeBtn.textContent = '✕';
       removeBtn.style.cssText = 'background:none;border:none;color:#ffaa88;cursor:pointer';
@@ -86,13 +86,13 @@ export class GroupNode extends Node {
         removeBtn.disabled = true;
         removeBtn.style.opacity = '0.5';
       }
-      
+
       row.appendChild(nameEditor.getElement());
       row.appendChild(valueInput);
       row.appendChild(removeBtn);
       itemsContainer.appendChild(row);
     });
-    
+
     const addBtn = document.createElement('button');
     addBtn.textContent = t('group.addValue');
     addBtn.className = 'add-value-btn';
@@ -102,21 +102,21 @@ export class GroupNode extends Node {
       update();
     };
     itemsContainer.appendChild(addBtn);
-    
+
     div.appendChild(itemsContainer);
     renderer.addHandles(div, this.id, null);
     renderer.applyOptStyles(div);
-    
+
     const unsubscribe = i18n.subscribe(() => {
       addBtn.textContent = t('group.addValue');
     });
-    
+
     const originalRemove = div.remove;
     div.remove = function() {
       unsubscribe();
       if (originalRemove) originalRemove.call(this);
     };
-    
+
     return div;
   }
 }

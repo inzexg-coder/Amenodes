@@ -45,7 +45,7 @@ class Application {
     this.initEvents();
     this.initI18n();
     this.initSidebar();
-    
+
     this.initNodesAndStart();
   }
 
@@ -53,7 +53,7 @@ class Application {
     const viewportEl = document.getElementById('viewport');
     const canvasContainer = document.getElementById('canvasContainer');
     const nodesLayer = document.getElementById('nodesLayer');
-    
+
     this.viewport = new Viewport(viewportEl, canvasContainer);
     this.renderer = new DomRenderer(this.graph, nodesLayer, viewportEl, this.eventBus);
     this.renderer.setViewport(this.viewport);
@@ -62,7 +62,7 @@ class Application {
       this.renderer.render();
       this.updateCoordIndicator();
     };
-    
+
     window._renderer = this.renderer;
   }
 
@@ -75,12 +75,12 @@ class Application {
   initViewport() {
     let currentZoom = 1;
     const viewportEl = document.getElementById('viewport');
-    
+
     const setZoom = (z, centerX = null, centerY = null) => {
       const oldZoom = currentZoom;
       currentZoom = Math.min(3, Math.max(0.3, z));
       window.currentZoom = currentZoom;
-      
+
       if (centerX !== null && centerY !== null && oldZoom !== currentZoom) {
         const offset = this.viewport.getOffset();
         const rect = viewportEl.getBoundingClientRect();
@@ -92,35 +92,35 @@ class Application {
       } else {
         this.viewport.update();
       }
-      
+
       this.renderer.render();
       this.updateZoomIndicator();
     };
-    
+
     viewportEl.addEventListener('wheel', (e) => {
       if (this.ctrlZoomOnly && !e.ctrlKey) {
         return;
       }
       e.preventDefault();
-      
+
       let delta = e.deltaY > 0 ? -0.05 : 0.05;
       if (this.invertZoomDirection) {
         delta = -delta;
       }
-      
+
       const rect = viewportEl.getBoundingClientRect();
       const mouseX = e.clientX;
       const mouseY = e.clientY;
-      
+
       const newZoom = currentZoom * (1 + delta);
       setZoom(newZoom, mouseX, mouseY);
     }, { passive: false });
-    
+
     viewportEl.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       return false;
     });
-    
+
     window.setZoom = setZoom;
     window.currentZoom = currentZoom;
     window.applyDesignQuality = (p) => this.applyDesignQuality(p);
@@ -143,7 +143,7 @@ class Application {
   applyCanvasSettings() {
     const viewport = document.getElementById('viewport');
     if (!viewport) return;
-    
+
     switch(this.gridStyle) {
       case 'dots':
         viewport.style.backgroundImage = `radial-gradient(circle, rgba(255, 179, 71, 0.15) 1px, transparent 1px)`;
@@ -167,7 +167,7 @@ class Application {
   openCanvasSettings() {
     const modalEl = document.getElementById('canvasSettingsModal');
     if (!modalEl) return;
-    
+
     const snapToGridCheck = document.getElementById('snapToGrid');
     const ctrlZoomCheck = document.getElementById('ctrlZoomOnly');
     const invertZoomCheck = document.getElementById('invertZoomDirection');
@@ -178,15 +178,15 @@ class Application {
     const currentSpeed = window._nodeAnimSpeed !== undefined ? window._nodeAnimSpeed : 100;
     if (animSpeedInput) animSpeedInput.value = currentSpeed;
     if (animSpeedValue) animSpeedValue.textContent = currentSpeed;
-    
+
     const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
-    
+
     if (snapToGridCheck) snapToGridCheck.checked = this.snapToGrid;
     if (ctrlZoomCheck) ctrlZoomCheck.checked = this.ctrlZoomOnly;
     if (invertZoomCheck) invertZoomCheck.checked = this.invertZoomDirection;
     if (gridSizeInput) gridSizeInput.value = this.gridSize;
     if (gridSizeValue) gridSizeValue.textContent = this.gridSize;
-    
+
     const gridStyleBtns = document.querySelectorAll('.grid-style-btn');
     gridStyleBtns.forEach(btn => {
       if (btn.getAttribute('data-grid') === this.gridStyle) {
@@ -195,7 +195,7 @@ class Application {
         btn.classList.remove('active');
       }
     });
-    
+
     const sizePresets = document.querySelectorAll('.grid-size-presets span');
     sizePresets.forEach(preset => {
       if (parseInt(preset.getAttribute('data-size')) === this.gridSize) {
@@ -204,12 +204,12 @@ class Application {
         preset.classList.remove('active');
       }
     });
-    
+
     if (gridPreviewCanvas) {
       gridPreviewCanvas.setAttribute('data-preview', this.gridStyle);
       gridPreviewCanvas.style.backgroundSize = `${this.gridSize}px ${this.gridSize}px`;
     }
-    
+
     const handleStyleClick = (e) => {
       const btn = e.currentTarget;
       const gridVal = btn.getAttribute('data-grid');
@@ -219,7 +219,7 @@ class Application {
         gridPreviewCanvas.setAttribute('data-preview', gridVal);
       }
     };
-    
+
     const handleSizePresetClick = (e) => {
       const preset = e.currentTarget;
       const size = parseInt(preset.getAttribute('data-size'));
@@ -233,7 +233,7 @@ class Application {
         gridPreviewCanvas.style.backgroundSize = `${size}px ${size}px`;
       }
     };
-    
+
     const handleGridSizeInput = (e) => {
       const size = e.target.value;
       if (gridSizeValue) gridSizeValue.textContent = size;
@@ -244,32 +244,32 @@ class Application {
       }
       sizePresets.forEach(p => p.classList.remove('active'));
     };
-    
+
     const handleAnimSpeedInput = (e) => {
       const speed = e.target.value;
       if (animSpeedValue) animSpeedValue.textContent = speed;
     };
-    
+
     if (animSpeedInput) {
       animSpeedInput.removeEventListener("input", handleAnimSpeedInput);
       animSpeedInput.addEventListener("input", handleAnimSpeedInput);
     }
-    
+
     gridStyleBtns.forEach(btn => {
       btn.removeEventListener('click', handleStyleClick);
       btn.addEventListener('click', handleStyleClick);
     });
-    
+
     sizePresets.forEach(preset => {
       preset.removeEventListener('click', handleSizePresetClick);
       preset.addEventListener('click', handleSizePresetClick);
     });
-    
+
     if (gridSizeInput) {
       gridSizeInput.removeEventListener('input', handleGridSizeInput);
       gridSizeInput.addEventListener('input', handleGridSizeInput);
     }
-    
+
     const settingsTabs = document.querySelectorAll(".settings-tab");
     const settingsTabContents = document.querySelectorAll(".settings-tab-content");
     const handleTabClick = (e) => {
@@ -289,7 +289,7 @@ class Application {
       tab.addEventListener("click", handleTabClick);
     });
     this.fixToggleSwitches();
-    
+
     modalEl.classList.remove('hidden');
   }
 
@@ -303,16 +303,16 @@ class Application {
     toggleWrappers.forEach(wrapper => {
       const checkbox = wrapper.querySelector('input[type="checkbox"]');
       if (!checkbox) return;
-      
+
       if (wrapper.hasAttribute('data-fixed')) return;
-      
+
       const newWrapper = wrapper.cloneNode(true);
       wrapper.parentNode.replaceChild(newWrapper, wrapper);
-      
+
       const newCheckbox = newWrapper.querySelector('input[type="checkbox"]');
-      
+
       newWrapper.style.cursor = 'pointer';
-      
+
       const toggleCheckbox = function(e) {
         if (e.target !== newCheckbox) {
           e.preventDefault();
@@ -322,7 +322,7 @@ class Application {
           newCheckbox.dispatchEvent(changeEvent);
         }
       };
-      
+
       newWrapper.addEventListener('click', toggleCheckbox);
       newWrapper.setAttribute('data-fixed', 'true');
     });
@@ -350,7 +350,7 @@ class Application {
     const splashSettingsBtn = document.getElementById('splashSettingsBtn');
     const splashOverlay = document.getElementById('splashOverlay');
     const appContainer = document.getElementById('appContainer');
-    
+
     if (undoBtn) undoBtn.onclick = () => this.undo();
     if (redoBtn) redoBtn.onclick = () => this.redo();
     if (exportBtn) exportBtn.onclick = () => this.export();
@@ -365,17 +365,17 @@ class Application {
       };
     }
     if (fileInput) fileInput.onchange = (e) => this.handleFileImport(e);
-    
+
     if (collapseLeft && leftSidebar) {
       collapseLeft.onclick = () => leftSidebar.classList.toggle('collapsed');
     }
     if (collapseRight && rightSidebar) {
       collapseRight.onclick = () => rightSidebar.classList.toggle('collapsed');
     }
-    
+
     if (closeSettingsModal) closeSettingsModal.onclick = () => this.closeCanvasSettings();
     if (cancelSettings) cancelSettings.onclick = () => this.closeCanvasSettings();
-    
+
     if (applySettings) {
       applySettings.onclick = () => {
         const snapToGridCheck = document.getElementById('snapToGrid');
@@ -391,32 +391,32 @@ class Application {
           localStorage.setItem("anim_speed", speed.toString());
         }
         const activeStyleBtn = document.querySelector('.grid-style-btn.active');
-        
+
         if (snapToGridCheck) this.snapToGrid = snapToGridCheck.checked;
         if (ctrlZoomCheck) this.ctrlZoomOnly = ctrlZoomCheck.checked;
         if (invertZoomCheck) this.invertZoomDirection = invertZoomCheck.checked;
         if (gridSizeInput) this.gridSize = parseInt(gridSizeInput.value);
         if (activeStyleBtn) this.gridStyle = activeStyleBtn.getAttribute('data-grid');
-        
+
         localStorage.setItem('canvas_grid_style', this.gridStyle);
         localStorage.setItem('canvas_grid_size', this.gridSize.toString());
         localStorage.setItem('canvas_snap_to_grid', this.snapToGrid.toString());
         localStorage.setItem('ctrl_zoom_only', this.ctrlZoomOnly.toString());
         localStorage.setItem('invert_zoom_direction', this.invertZoomDirection.toString());
-        
+
         if (this.renderer) {
           this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
         }
-        
+
         this.applyCanvasSettings();
         if (this.renderer) this.renderer.render();
-        
+
         this.closeCanvasSettings();
       };
     }
-    
+
     this.fixToggleSwitches();
-    
+
     if (newCanvasBtn) {
       newCanvasBtn.onclick = () => {
         if (this.graph) {
@@ -425,25 +425,25 @@ class Application {
           this.graph.map.clear();
           this.graph.nextId = 1;
           this.graph.nextEdgeId = 1;
-          
+
           if (this.viewport) {
             this.viewport.setOffset(0, 0);
             window.setZoom(1);
           }
-          
+
           if (window.applyDesignQuality) {
             window.applyDesignQuality(100);
           }
-          
+
           if (this.renderer) {
             this.renderer.render();
           }
-          
+
           this.updateNodeCount();
           this.updateEdgeCount();
           this.graph.clearDirty();
         }
-        
+
         if (splashOverlay && appContainer) {
           splashOverlay.style.opacity = '0';
           setTimeout(() => {
@@ -453,7 +453,7 @@ class Application {
         }
       };
     }
-    
+
     if (loadCanvasBtn) {
       loadCanvasBtn.onclick = () => {
         const input = document.getElementById('fileInput');
@@ -470,7 +470,7 @@ class Application {
                 this.updateNodeCount();
                 this.updateEdgeCount();
                 this.graph.clearDirty();
-                
+
                 if (splashOverlay && appContainer) {
                   splashOverlay.style.opacity = '0';
                   setTimeout(() => {
@@ -486,11 +486,11 @@ class Application {
         }
       };
     }
-    
+
     if (splashSettingsBtn) {
       splashSettingsBtn.onclick = () => this.openCanvasSettings();
     }
-    
+
     if (splashOverlay && appContainer && this.graph && this.graph.nodes.length === 0) {
     } else if (splashOverlay && appContainer) {
       splashOverlay.style.display = 'none';
@@ -505,7 +505,7 @@ class Application {
     );
     this.optPanel.setDesignQualityCallback((value) => this.applyDesignQuality(value));
     this.optPanel.buildPanel(window.currentQualityValue || 100);
-    
+
     setTimeout(() => {
       this.runInitialBenchmark();
     }, 1000);
@@ -551,17 +551,17 @@ class Application {
       this.initDirtyIndicator();
     }
   }
-  
+
   populateNodesLibrary() {
     const container = document.getElementById('nodesLibraryList');
     if (!container) return;
-    
+
     const types = NodeFactory.getAvailableNodeTypes();
     const categories = types.filter(t => t.isCategory === true);
     const regularNodes = types.filter(t => !t.isCategory);
-    
+
     container.innerHTML = '';
-    
+
     if (regularNodes.length) {
       const categoryDiv = document.createElement('div');
       categoryDiv.className = 'node-category';
@@ -573,7 +573,7 @@ class Application {
         </div>
         <div class="category-nodes"></div>
       `;
-      
+
       const nodesContainer = categoryDiv.querySelector('.category-nodes');
       for (const nodeType of regularNodes) {
         const item = document.createElement('div');
@@ -588,16 +588,16 @@ class Application {
         };
         nodesContainer.appendChild(item);
       }
-      
+
       const header = categoryDiv.querySelector('.category-header');
       header.onclick = () => {
         header.classList.toggle('collapsed');
         nodesContainer.classList.toggle('hidden');
       };
-      
+
       container.appendChild(categoryDiv);
     }
-    
+
     for (const category of categories) {
       const categoryDiv = document.createElement('div');
       categoryDiv.className = 'node-category';
@@ -609,7 +609,7 @@ class Application {
         </div>
         <div class="category-nodes"></div>
       `;
-      
+
       const nodesContainer = categoryDiv.querySelector('.category-nodes');
       if (category.subnodes) {
         for (const subnode of category.subnodes) {
@@ -627,17 +627,17 @@ class Application {
           nodesContainer.appendChild(item);
         }
       }
-      
+
       const header = categoryDiv.querySelector('.category-header');
       header.onclick = () => {
         header.classList.toggle('collapsed');
         nodesContainer.classList.toggle('hidden');
       };
-      
+
       container.appendChild(categoryDiv);
     }
   }
-  
+
   snapToGridValue(value) {
     if (!this.snapToGrid) return value;
     return Math.round(value / this.gridSize) * this.gridSize;
@@ -647,24 +647,24 @@ class Application {
     const viewportRect = document.getElementById('viewport').getBoundingClientRect();
     const offset = this.viewport.getOffset();
     const zoom = window.currentZoom || 1;
-    
+
     let x = (viewportRect.width / 2 - offset.x) / zoom - 140;
     let y = (viewportRect.height / 2 - offset.y) / zoom - 40;
-    
+
     x = this.snapToGridValue(x);
     y = this.snapToGridValue(y);
-    
+
     const options = { x, y };
     if (subnode) Object.assign(options, subnode);
-    
+
     const node = await NodeFactory.createNode(type, options);
-    
+
     if (node) {
       this.graph.addNode(node);
       this.finishNodeCreation();
     }
   }
-  
+
   finishNodeCreation() {
     this.graph.reevaluateAll();
     this.graph.updateAllOutputs();
@@ -673,12 +673,12 @@ class Application {
     this.updateNodeCount();
     this.updateEdgeCount();
   }
-  
+
   loadInitialState() {
     const loaded = this.persistenceService.loadFromStorage();
     this.updateNodeCount();
     this.updateEdgeCount();
-    
+
     if (!loaded && this.graph.nodes.length === 0) {
       const splashOverlay = document.getElementById('splashOverlay');
       if (splashOverlay && splashOverlay.style.display !== 'none') {
@@ -695,17 +695,17 @@ class Application {
       }
     }
   }
-  
+
   initDirtyIndicator() {
     const dirtySpan = document.getElementById('dirtyIndicator');
     if (!dirtySpan) return;
-    
+
     dirtySpan.style.display = 'none';
-    
+
     if (this.graph && typeof this.graph.onDirtyChange === 'function') {
       this.graph.onDirtyChange((isDirty) => {
         dirtySpan.style.display = isDirty ? 'inline-flex' : 'none';
-        
+
         if (isDirty) {
           if (!document.title.startsWith('* ')) {
             document.title = '* ' + document.title;
@@ -718,21 +718,21 @@ class Application {
       });
     }
   }
-  
+
   updateNodeCount() {
     const nodeCountEl = document.getElementById('nodeCount');
     if (nodeCountEl) {
       nodeCountEl.textContent = `${this.graph.nodes.length} ${t('editor.nodeCount')}`;
     }
   }
-  
+
   updateEdgeCount() {
     const edgeCountEl = document.getElementById('edgeCount');
     if (edgeCountEl) {
       edgeCountEl.textContent = `${this.graph.edges.length} ${t('editor.edgeCount')}`;
     }
   }
-  
+
   updateZoomIndicator() {
     const zoomIndicator = document.getElementById('zoomIndicator');
     if (zoomIndicator) {
@@ -740,7 +740,7 @@ class Application {
       zoomIndicator.textContent = `${percent}%`;
     }
   }
-  
+
   updateCoordIndicator() {
     const indicator = document.getElementById('coordIndicator');
     if (indicator && this.viewport) {
@@ -810,7 +810,7 @@ class Application {
     window.addEventListener('touchmove', (e) => this.renderer.onGlobalMoveEdge(e), { passive: false });
     window.addEventListener('mouseup', (e) => this.renderer.onGlobalUpEdge(e));
     window.addEventListener('touchend', (e) => this.renderer.onGlobalUpEdge(e));
-    
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         this.renderer.closeMenu();
@@ -826,21 +826,21 @@ class Application {
         }
       }
     });
-    
+
     const originalRemoveNode = this.graph.removeNode.bind(this.graph);
     this.graph.removeNode = (id) => {
       originalRemoveNode(id);
       this.updateNodeCount();
       this.updateEdgeCount();
     };
-    
+
     const originalAddEdge = this.graph.addEdge.bind(this.graph);
     this.graph.addEdge = (sourceId, targetId, port) => {
       const edge = originalAddEdge(sourceId, targetId, port);
       if (edge) this.updateEdgeCount();
       return edge;
     };
-    
+
     const originalRemoveEdge = this.graph.removeEdge.bind(this.graph);
     this.graph.removeEdge = (id) => {
       originalRemoveEdge(id);
@@ -856,18 +856,18 @@ class Application {
         this.renderer.render();
       }
     });
-    
+
     this.updateUITitles();
   }
 
   updateUITitles() {
     document.title = `@Amenodes`;
-    
+
     if (this.graph) {
       this.graph.reevaluateAll();
       this.graph.updateAllOutputs();
     }
-    
+
     if (this.renderer) {
       this.renderer.render();
     }
@@ -878,11 +878,11 @@ class Application {
       this.updatePropertiesPanel(node);
     };
   }
-  
+
   updatePropertiesPanel(node) {
     const panel = document.getElementById('propertiesPanel');
     if (!panel) return;
-    
+
     if (!node) {
       panel.innerHTML = `
         <div class="empty-property">
@@ -892,7 +892,7 @@ class Application {
       `;
       return;
     }
-    
+
     panel.innerHTML = `
       <div class="property-group">
         <div class="property-label">${t('editor.nodeType')}</div>

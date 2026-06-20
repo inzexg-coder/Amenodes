@@ -17,35 +17,35 @@ export class SplashManager {
     const newBtn = document.getElementById('newCanvasBtn');
     const loadBtn = document.getElementById('loadCanvasBtn');
     const settingsBtn = document.getElementById('splashSettingsBtn');
-    
+
     if (newBtn) newBtn.onclick = () => this.newCanvas();
     if (loadBtn) loadBtn.onclick = () => this.loadCanvas();
     if (settingsBtn) settingsBtn.onclick = () => this.openCanvasSettings();
-    
+
     const closeBtn = document.getElementById('closeSettingsModal');
     const cancelBtn = document.getElementById('cancelSettings');
     const applyBtn = document.getElementById('applySettings');
-    
+
     if (closeBtn) closeBtn.onclick = () => this.closeCanvasSettings();
     if (cancelBtn) cancelBtn.onclick = () => this.closeCanvasSettings();
     if (applyBtn) applyBtn.onclick = () => this.applyCanvasSettings();
-    
+
     document.querySelectorAll('.color-preset').forEach(preset => {
       preset.onclick = () => {
         const bg = preset.getAttribute('data-bg');
         if (bg) this.backgroundColor = bg;
       };
     });
-    
+
     const gridStyleSelect = document.getElementById('gridStyleSelect');
     const snapToGridCheck = document.getElementById('snapToGrid');
     const gridSizeInput = document.getElementById('gridSize');
-    
+
     if (gridStyleSelect) gridStyleSelect.onchange = (e) => this.gridStyle = e.target.value;
     if (snapToGridCheck) snapToGridCheck.onchange = (e) => this.snapToGrid = e.target.checked;
     if (gridSizeInput) gridSizeInput.onchange = (e) => this.gridSize = parseInt(e.target.value) || 20;
   }
-  
+
   newCanvas() {
     this.hideSplash();
     if (this.app && this.app.graph) {
@@ -54,24 +54,24 @@ export class SplashManager {
       this.app.graph.map.clear();
       this.app.graph.nextId = 1;
       this.app.graph.nextEdgeId = 1;
-      
+
       if (this.app.viewport) {
         this.app.viewport.setOffset(0, 0);
         window.setZoom(1);
       }
-      
+
       if (window.applyDesignQuality) {
         window.applyDesignQuality(100);
       }
-      
+
       if (this.app.renderer) {
         this.app.renderer.render();
       }
-      
+
       localStorage.removeItem('amenodes_autosave');
     }
   }
-  
+
   loadCanvas() {
     const fileInput = document.getElementById('fileInput');
     if (fileInput) {
@@ -92,45 +92,45 @@ export class SplashManager {
       fileInput.click();
     }
   }
-  
+
   openCanvasSettings() {
     if (this.canvasSettingsModal) {
       const gridStyleSelect = document.getElementById('gridStyleSelect');
       const snapToGridCheck = document.getElementById('snapToGrid');
       const gridSizeInput = document.getElementById('gridSize');
-      
+
       if (gridStyleSelect) gridStyleSelect.value = this.gridStyle;
       if (snapToGridCheck) snapToGridCheck.checked = this.snapToGrid;
       if (gridSizeInput) gridSizeInput.value = this.gridSize;
-      
+
       this.canvasSettingsModal.classList.remove('hidden');
     }
   }
-  
+
   closeCanvasSettings() {
     if (this.canvasSettingsModal) {
       this.canvasSettingsModal.classList.add('hidden');
     }
   }
-  
+
   applyCanvasSettings() {
     const viewport = document.getElementById('viewport');
     if (viewport) {
       viewport.style.background = this.backgroundColor;
     }
-    
+
     this.applyGridStyle();
-    
+
     this.closeCanvasSettings();
   }
-  
+
   applyGridStyle() {
     const viewport = document.getElementById('viewport');
     if (!viewport) return;
-    
+
     viewport.style.backgroundImage = '';
     viewport.style.backgroundSize = '';
-    
+
     switch(this.gridStyle) {
       case 'dots':
         viewport.style.backgroundImage = `radial-gradient(circle, rgba(255, 179, 71, 0.15) 1px, transparent 1px)`;
@@ -150,7 +150,7 @@ export class SplashManager {
         break;
     }
   }
-  
+
   hideSplash() {
     if (this.splashOverlay) {
       this.splashOverlay.style.opacity = '0';

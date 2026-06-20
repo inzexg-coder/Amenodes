@@ -19,7 +19,7 @@ export class PersistenceService {
     data.designQuality = quality || 100;
     localStorage.setItem('amenodes_autosave', JSON.stringify(data));
     this.showAutosaveStatus();
-    
+
     if (this.graph && this.graph.clearDirty) {
       this.graph.clearDirty();
     }
@@ -40,11 +40,11 @@ export class PersistenceService {
         if (data.viewportZoom !== undefined && window.setZoom) {
           window.setZoom(data.viewportZoom);
         }
-        
+
         if (this.graph && this.graph.clearDirty) {
           this.graph.clearDirty();
         }
-        
+
         return data;
       }
     } catch (e) {
@@ -59,14 +59,14 @@ export class PersistenceService {
     data.viewportOffsetY = window._viewportY || 0;
     data.viewportZoom = window.currentZoom || 1;
     data.designQuality = window.currentQualityValue || 100;
-    
+
     const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `diagram_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.amnk`;
     a.click();
     URL.revokeObjectURL(a.href);
-    
+
     if (this.graph && this.graph.clearDirty) {
       this.graph.clearDirty();
     }
@@ -93,7 +93,7 @@ export class PersistenceService {
           if (this.graph && this.graph.clearDirty) {
             this.graph.clearDirty();
           }
-          
+
           resolve(true);
         } catch (err) {
           this.graph.loadFrom(backup);

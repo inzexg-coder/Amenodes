@@ -37,14 +37,14 @@ export class MeanNode extends Node {
       this.resultStr = '--';
       return;
     }
-    
+
     const numbers = input.filter(v => typeof v === 'number' && !isNaN(v));
     if (numbers.length === 0) {
       this.result = null;
       this.resultStr = '--';
       return;
     }
-    
+
     const sum = numbers.reduce((acc, val) => acc + val, 0);
     const mean = sum / numbers.length;
     this.result = mean;
@@ -66,7 +66,7 @@ export class MeanNode extends Node {
     const div = this.createBaseDiv(graph, renderer, 'node-header');
     const content = document.createElement('div');
     content.className = 'calc-result';
-    
+
     const updateInfo = () => {
       const incoming = graph.getIncomingEdges(this.id);
       const inputCount = incoming.length;
@@ -77,23 +77,23 @@ export class MeanNode extends Node {
                            ${t('mean.sampleSize')}: ${validNumbers.length}<br>
                            ${t('mean.result')}: ${this.resultStr}`;
     };
-    
+
     updateInfo();
-    
+
     const unsubscribe = i18n.subscribe(() => {
       updateInfo();
     });
-    
+
     div.appendChild(content);
     renderer.addHandles(div, this.id, null);
     renderer.applyOptStyles(div);
-    
+
     const originalRemove = div.remove;
     div.remove = function() {
       unsubscribe();
       if (originalRemove) originalRemove.call(this);
     };
-    
+
     return div;
   }
 }

@@ -70,10 +70,10 @@ export class Graph {
     if (!this.canConnect(sourceId, targetId, port)) {
       const sourceType = typeSystem.getNodeType(source);
       const targetType = typeSystem.getNodeType(target);
-      
+
       const sourceTypeName = this.getTypeDisplayName(sourceType);
       const targetTypeName = this.getTypeDisplayName(targetType);
-      
+
       modal.alert(`${t('errors.cannotConnect')}: ${sourceTypeName} → ${targetTypeName}`);
       return null;
     }
@@ -143,7 +143,7 @@ export class Graph {
     }
     return typeKey.charAt(0).toUpperCase() + typeKey.slice(1);
   }
-  
+
   getSourceValue(source, port = 'main', visited = new Set()) {
     if (visited.has(source.id)) return [];
     visited.add(source.id);
@@ -170,7 +170,6 @@ export class Graph {
     }
     return values;
   }
-
 
   reevaluateAll() {
     for (const node of this.nodes) {
@@ -239,17 +238,17 @@ export class Graph {
     this.updateAllOutputs();
 
     if (data.designQuality !== undefined) window._designQualitySaved = data.designQuality;
-    
+
     this.clearDirty();
   }
-  
+
   exportGraph() {
     return {
       nodes: this.nodes.map(node => node.toJSON()),
-      edges: this.edges.map(edge => ({ 
-        id: edge.id, 
-        source: edge.sourceId, 
-        target: edge.targetId 
+      edges: this.edges.map(edge => ({
+        id: edge.id,
+        source: edge.sourceId,
+        target: edge.targetId
       })),
       nextId: this.nextId,
       nextEdgeId: this.nextEdgeId
@@ -297,7 +296,7 @@ export class Graph {
 
     this.reevaluateAll();
     this.updateAllOutputs();
-    
+
     this.clearDirty();
   }
 }

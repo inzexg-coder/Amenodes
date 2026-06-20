@@ -71,20 +71,20 @@ export class MapNode extends Node {
     const div = this.createBaseDiv(graph, renderer, 'map-header');
     const itemsContainer = document.createElement('div');
     itemsContainer.className = 'group-items';
-    
+
     const update = () => {
       renderer.invalidateCache(this.id);
       graph.reevaluateAll();
       renderer.render();
       renderer.save();
     };
-    
+
     const header = document.createElement('div');
     header.style.display = 'flex';
     header.style.gap = '8px';
     header.style.marginBottom = '8px';
     header.style.fontWeight = 'bold';
-    
+
     const xHead = new EditableTitle(this.xCol || 'x', (newVal) => {
       this.xCol = newVal || 'x';
       update();
@@ -94,7 +94,7 @@ export class MapNode extends Node {
     xHead.displaySpan.style.border = '1px solid #2e385c';
     xHead.displaySpan.style.borderRadius = '6px';
     xHead.displaySpan.style.padding = '4px 8px';
-    
+
     const yHead = new EditableTitle(this.yCol || 'y', (newVal) => {
       this.yCol = newVal || 'y';
       update();
@@ -104,10 +104,10 @@ export class MapNode extends Node {
     yHead.displaySpan.style.border = '1px solid #2e385c';
     yHead.displaySpan.style.borderRadius = '6px';
     yHead.displaySpan.style.padding = '4px 8px';
-    
+
     const empty = document.createElement('span');
     empty.style.width = '26px';
-    
+
     header.appendChild(xHead.getElement());
     header.appendChild(yHead.getElement());
     header.appendChild(empty);
@@ -116,7 +116,7 @@ export class MapNode extends Node {
     this.maps.forEach((map, idx) => {
       const row = document.createElement('div');
       row.className = 'group-row';
-      
+
       const xInput = document.createElement('input');
       xInput.type = 'number';
       xInput.value = map.x;
@@ -131,7 +131,7 @@ export class MapNode extends Node {
         this.maps[idx].x = newX;
         update();
       };
-      
+
       const yInput = document.createElement('input');
       yInput.type = 'number';
       yInput.value = map.y;
@@ -141,7 +141,7 @@ export class MapNode extends Node {
         this.maps[idx].y = parseFloat(yInput.value) || 0;
         update();
       };
-      
+
       const removeBtn = document.createElement('button');
       removeBtn.textContent = '✕';
       removeBtn.style.cssText = 'background:none;border:none;color:#ffaa88;cursor:pointer';
@@ -153,13 +153,13 @@ export class MapNode extends Node {
       } else {
         removeBtn.disabled = true;
       }
-      
+
       row.appendChild(xInput);
       row.appendChild(yInput);
       row.appendChild(removeBtn);
       itemsContainer.appendChild(row);
     });
-    
+
     const addBtn = document.createElement('button');
     addBtn.textContent = t('map.addRule');
     addBtn.className = 'add-value-btn';
@@ -168,20 +168,20 @@ export class MapNode extends Node {
       update();
     };
     itemsContainer.appendChild(addBtn);
-    
+
     const modeDiv = document.createElement('div');
     modeDiv.className = 'map-mode-switch';
-    
+
     const passBtn = document.createElement('div');
     passBtn.className = 'map-mode-option';
     passBtn.textContent = t('map.passThrough');
     passBtn.style.borderRadius = '32px 0 0 32px';
-    
+
     const sepBtn = document.createElement('div');
     sepBtn.className = 'map-mode-option';
     sepBtn.textContent = t('map.separateOutput');
     sepBtn.style.borderRadius = '0 32px 32px 0';
-    
+
     const updateUI = () => {
       if (this.unmappedMode === 'passthrough') {
         passBtn.classList.add('active');
@@ -198,44 +198,44 @@ export class MapNode extends Node {
       renderer.render();
       renderer.save();
     };
-    
+
     passBtn.onclick = () => {
       if (this.unmappedMode !== 'passthrough') {
         this.unmappedMode = 'passthrough';
         updateUI();
       }
     };
-    
+
     sepBtn.onclick = () => {
       if (this.unmappedMode !== 'separate') {
         this.unmappedMode = 'separate';
         updateUI();
       }
     };
-    
+
     modeDiv.appendChild(passBtn);
     modeDiv.appendChild(sepBtn);
     itemsContainer.appendChild(modeDiv);
     div.appendChild(itemsContainer);
-    
+
     renderer.addHandles(div, this.id, this.unmappedMode === 'separate' ? 'unmapped' : null);
     renderer.applyOptStyles(div);
-    
+
     if (this.unmappedMode === 'passthrough') passBtn.classList.add('active');
     else sepBtn.classList.add('active');
-    
+
     const unsubscribe = i18n.subscribe(() => {
       addBtn.textContent = t('map.addRule');
       passBtn.textContent = t('map.passThrough');
       sepBtn.textContent = t('map.separateOutput');
     });
-    
+
     const originalRemove = div.remove;
     div.remove = function() {
       unsubscribe();
       if (originalRemove) originalRemove.call(this);
     };
-    
+
     return div;
   }
 }

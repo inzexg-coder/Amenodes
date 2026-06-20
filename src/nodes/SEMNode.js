@@ -64,7 +64,7 @@ export class SEMNode extends Node {
     const div = this.createBaseDiv(graph, renderer, 'node-header');
     const content = document.createElement('div');
     content.className = 'calc-result';
-    
+
     const updateInfo = () => {
       const incoming = graph.getIncomingEdges(this.id);
       const inputCount = incoming.length;
@@ -75,21 +75,21 @@ export class SEMNode extends Node {
                            ${t('sem.sampleSize')}: ${sampleSize}<br>
                            ${t('sem.result')}: ${this.resultStr}`;
     };
-    
+
     updateInfo();
-    
+
     const unsubscribe = i18n.subscribe(() => updateInfo());
-    
+
     div.appendChild(content);
     renderer.addHandles(div, this.id, null);
     renderer.applyOptStyles(div);
-    
+
     const originalRemove = div.remove;
     div.remove = function() {
       unsubscribe();
       if (originalRemove) originalRemove.call(this);
     };
-    
+
     return div;
   }
 }
