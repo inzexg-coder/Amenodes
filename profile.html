@@ -44,6 +44,15 @@
     
     const API_BASE = 'https://amenoke.ru/amenodes/api';
     let currentUser = null;
+    
+    function savePremiumStatus() {
+        if (currentUser && currentUser.premium) {
+            localStorage.setItem('amenodes_premium', 'true');
+        } else {
+            localStorage.removeItem('amenodes_premium');
+        }
+    }
+    
     let currentTab = 'all';
     
     function getToken() { return localStorage.getItem('auth_token'); }
@@ -232,8 +241,11 @@
     function updateAuthUI() {
         const authSection = document.getElementById('authSection');
         if (currentUser) {
-            authSection.innerHTML = `<div class="user-panel"><span class="user-name">${escapeHtml(currentUser.username)}</span><span class="user-points">${currentUser.creator_points} CP</span><button id="logoutBtn" style="background:none;border:none;color:#ffb347;cursor:pointer;">${t('profile.logout')}</button></div>`;
-            document.getElementById('logoutBtn').onclick = () => { localStorage.removeItem('auth_token'); window.location.reload(); };
+            const premiumBadge = localStorage.getItem('amenodes_premium') === 'true'
+                ? '<span style="font-size:10px;background:linear-gradient(135deg,#ffb347,#ff8c00);color:#1a1f30;padding:2px 8px;border-radius:10px;font-weight:bold;letter-spacing:0.5px;margin-right:4px;"><i class="fas fa-crown"></i> PREMIUM</span>'
+                : '';
+            authSection.innerHTML = `<div class="user-panel">${premiumBadge}<span class="user-name">${escapeHtml(currentUser.username)}</span><span class="user-points">${currentUser.creator_points} CP</span><button id="logoutBtn" style="background:none;border:none;color:#ffb347;cursor:pointer;">${t('profile.logout')}</button></div>`;
+            document.getElementById('logoutBtn').onclick = () => { localStorage.removeItem('auth_token'); localStorage.removeItem('amenodes_premium'); window.location.reload(); };
         } else {
             authSection.innerHTML = `<a href="amenodes.html" style="background:#ffb347;color:#1a1f30;padding:6px 16px;border-radius:30px;text-decoration:none;">${t('profile.login')}</a>`;
         }
@@ -243,6 +255,7 @@
         const data = await getCurrentUser();
         if (data?.success) { 
             currentUser = data.user; 
+            savePremiumStatus();
             updateAuthUI(); 
             renderProfileHeader(); 
         } else { 

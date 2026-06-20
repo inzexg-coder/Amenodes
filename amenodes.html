@@ -256,6 +256,22 @@ const API_BASE = 'https://amenoke.ru/amenodes/api';
 let currentUser = null;
 let userMenu = null;
 
+// --- Premium persistence ---
+function savePremiumStatus() {
+    if (currentUser && currentUser.premium) {
+        localStorage.setItem('amenodes_premium', 'true');
+        document.body.classList.add('premium');
+    } else {
+        localStorage.removeItem('amenodes_premium');
+        document.body.classList.remove('premium');
+    }
+}
+
+function isPremium() {
+    return localStorage.getItem('amenodes_premium') === 'true';
+}
+// -------------------------
+
 function t(key, params = {}) {
     const translations = window._translations || {};
     const keys = key.split('.');
@@ -407,6 +423,7 @@ function showAuthModal() {
             if (data.success) {
                 modal.remove();
                 currentUser = data.user;
+                savePremiumStatus();
                 updateAuthUI();
                 showToast(t('editor.welcome', { username: data.user.username }), 'success');
             }
@@ -426,6 +443,7 @@ function showAuthModal() {
                 modal.remove();
                 const userData = await api.getCurrentUser();
                 currentUser = userData.user;
+                savePremiumStatus();
                 updateAuthUI();
                 showToast(t('editor.welcome', { username }), 'success');
             }
@@ -461,6 +479,13 @@ function updateAuthUI() {
             toggleUserMenu();
         };
         authContainer.appendChild(saveBtn);
+        if (isPremium()) {
+            const premiumBadge = document.createElement('span');
+            premiumBadge.className = 'premium-badge';
+            premiumBadge.innerHTML = '<i class="fas fa-crown"></i> PREMIUM';
+            premiumBadge.style.cssText = 'font-size:10px;background:linear-gradient(135deg,#ffb347,#ff8c00);color:#1a1f30;padding:2px 8px;border-radius:10px;font-weight:bold;letter-spacing:0.5px;margin-right:4px;';
+            authContainer.appendChild(premiumBadge);
+        }
         if (currentUser.role === 'moderator' || currentUser.role === 'admin') {
             const modBtn = document.createElement('button');
             modBtn.id = 'moderateBtn';
@@ -528,6 +553,8 @@ function toggleUserMenu() {
     document.getElementById('menu-logout').onclick = () => {
         api.logout();
         currentUser = null;
+        localStorage.removeItem('amenodes_premium');
+        document.body.classList.remove('premium');
         userMenu.remove();
         userMenu = null;
         updateAuthUI();
@@ -646,6 +673,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const data = await api.getCurrentUser();
         if (data && data.success) {
             currentUser = data.user;
+            savePremiumStatus();
             updateAuthUI();
         } else {
             updateAuthUI();
