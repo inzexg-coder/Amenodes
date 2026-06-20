@@ -190,10 +190,22 @@ class Application {
     if (premiumTab) premiumTab.style.display = isPremium ? '' : 'none';
     if (premiumContent) premiumContent.style.display = isPremium ? '' : 'none';
 
+    // Apply saved premium visual settings
+    if (localStorage.getItem('premium_purple_accent') === 'true') {
+      document.body.classList.add('premium-purple');
+    } else {
+      document.body.classList.remove('premium-purple');
+    }
+
     const overshootCheck = document.getElementById('premiumOvershoot');
     if (overshootCheck) {
       const saved = localStorage.getItem('premium_overshoot_bounce');
       overshootCheck.checked = saved === 'true';
+    }
+    const purpleCheck = document.getElementById('premiumPurple');
+    if (purpleCheck) {
+      const saved = localStorage.getItem('premium_purple_accent');
+      purpleCheck.checked = saved === 'true';
     }
 
     const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
@@ -428,6 +440,15 @@ class Application {
         const overshootCheck = document.getElementById('premiumOvershoot');
         if (overshootCheck) {
           localStorage.setItem('premium_overshoot_bounce', overshootCheck.checked.toString());
+        }
+        const purpleCheck = document.getElementById('premiumPurple');
+        if (purpleCheck) {
+          localStorage.setItem('premium_purple_accent', purpleCheck.checked.toString());
+          if (purpleCheck.checked) {
+            document.body.classList.add('premium-purple');
+          } else {
+            document.body.classList.remove('premium-purple');
+          }
         }
 
         if (this.renderer) {

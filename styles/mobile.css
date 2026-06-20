@@ -156,11 +156,11 @@
   }
 
   .mobile-bottom-nav a.active {
-    color: #ffb347;
+    color: var(--accent);
   }
 
   .mobile-bottom-nav a.active i {
-    color: #ffb347;
+    color: var(--accent);
     text-shadow: 0 0 6px rgba(255, 179, 71, 0.3);
   }
 
@@ -172,7 +172,7 @@
     transform: translateX(-50%);
     width: 20px;
     height: 2px;
-    background: #ffb347;
+    background: var(--accent);
     border-radius: 0 0 2px 2px;
   }
 
@@ -305,7 +305,7 @@
     background: #1a1f30;
     border: 1px solid #2e385c;
     border-radius: 12px;
-    color: #ffb347;
+    color: var(--accent);
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -386,9 +386,9 @@
   }
 
   .profile-container .tabs .tab.active {
-    background: #ffb347;
+    background: var(--accent);
     color: #1a1f30;
-    border-color: #ffb347;
+    border-color: var(--accent);
     font-weight: 600;
   }
 
@@ -588,7 +588,7 @@
 
   .moderate-review-card .review-progress .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #ffb347, #ff8c47);
+    background: linear-gradient(90deg, var(--accent), #ff8c47);
     border-radius: 4px;
     transition: width 0.3s ease;
   }
@@ -702,7 +702,7 @@
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #ffb347, #ff8c47);
+    background: linear-gradient(135deg, var(--accent), #ff8c47);
     color: #1a1f30;
     align-items: center;
     justify-content: center;
@@ -749,7 +749,7 @@
   .mobile-mini-toolbar .mmt-logo {
     font-size: 14px;
     font-weight: 700;
-    background: linear-gradient(135deg, #ffb347, #ff8c00);
+    background: linear-gradient(135deg, var(--accent), #ff8c00);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -760,7 +760,7 @@
 
   .mobile-mini-toolbar .mmt-logo i {
     font-size: 18px;
-    color: #ffb347;
+    color: var(--accent);
     -webkit-background-clip: unset;
     background-clip: unset;
   }
@@ -783,7 +783,7 @@
 
   .mobile-mini-toolbar .mmt-btn:active {
     background: rgba(255, 179, 71, 0.15);
-    color: #ffb347;
+    color: var(--accent);
   }
 
   .mobile-mini-toolbar .mmt-node-count {
@@ -843,7 +843,7 @@
   }
 
   .mobile-bottom-sheet .sheet-header h3 i {
-    color: #ffb347;
+    color: var(--accent);
     font-size: 18px;
   }
 
@@ -865,7 +865,7 @@
 
   .mobile-bottom-sheet .sheet-header .sheet-close:active {
     background: rgba(255, 179, 71, 0.2);
-    color: #ffb347;
+    color: var(--accent);
   }
 
   .mobile-bottom-sheet .sheet-content {
@@ -1286,7 +1286,7 @@
   .mobile-menu-title {
     font-size: 18px;
     font-weight: 700;
-    background: linear-gradient(135deg, #ffb347, #ff8c00);
+    background: linear-gradient(135deg, var(--accent), #ff8c00);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -1308,7 +1308,7 @@
 
   .mobile-menu-close:active {
     background: rgba(255, 179, 71, 0.2);
-    color: #ffb347;
+    color: var(--accent);
   }
 
   .mobile-menu-body {
@@ -1353,23 +1353,23 @@
 
   .mobile-menu-item:active {
     background: rgba(255, 179, 71, 0.1);
-    color: #ffb347;
+    color: var(--accent);
   }
 
   .mobile-menu-item.active {
     background: rgba(255, 179, 71, 0.08);
-    color: #ffb347;
+    color: var(--accent);
   }
 
   .mobile-menu-item.active i {
-    color: #ffb347;
+    color: var(--accent);
   }
 
   .mobile-menu-auth-btn {
     width: 100%;
     padding: 14px 16px;
     margin: 4px 0;
-    background: linear-gradient(135deg, #ffb347, #ff8c47);
+    background: linear-gradient(135deg, var(--accent), #ff8c47);
     border: none;
     border-radius: 12px;
     color: #1a1f30;
@@ -1454,7 +1454,7 @@
   }
 
   .mmt-btn#mmtOptBtn:active {
-    color: #ffb347;
+    color: var(--accent);
     background: rgba(255, 179, 71, 0.15);
   }
 }

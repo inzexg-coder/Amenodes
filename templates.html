@@ -81,10 +81,14 @@
     let currentUser = null;
     
     function savePremiumStatus() {
-        if (currentUser && currentUser.premium) {
+        var premium = currentUser && currentUser.is_premium;
+        var override = localStorage.getItem('amenodes_premium_override') === 'true';
+        if (premium || override) {
             localStorage.setItem('amenodes_premium', 'true');
+            console.log('[Premium] enabled' + (override ? ' (override)' : ''));
         } else {
             localStorage.removeItem('amenodes_premium');
+            console.log('[Premium] disabled');
         }
     }
     
@@ -244,7 +248,8 @@
     function updateAuthUI() {
         const authSection = document.getElementById('authSection');
         if (currentUser) {
-            const premiumBadge = localStorage.getItem('amenodes_premium') === 'true'
+            const isPremium = localStorage.getItem('amenodes_premium') === 'true' || localStorage.getItem('amenodes_premium_override') === 'true';
+            const premiumBadge = isPremium
                 ? '<span style="font-size:10px;background:linear-gradient(135deg,#ffb347,#ff8c00);color:#1a1f30;padding:2px 8px;border-radius:10px;font-weight:bold;letter-spacing:0.5px;margin-right:4px;"><i class="fas fa-crown"></i> PREMIUM</span>'
                 : '';
             authSection.innerHTML = `<div class="user-panel">${premiumBadge}<span class="user-name">${escapeHtml(currentUser.username)}</span>${currentUser.role === 'moderator' || currentUser.role === 'admin' ? '<span class="mod-badge">Mod</span>' : ''}<span class="user-points">${currentUser.creator_points} CP</span><button id="logoutBtn" style="background:none;border:none;color:#ffb347;cursor:pointer;">${t('templates.logout')}</button></div>`;

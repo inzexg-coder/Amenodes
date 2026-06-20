@@ -155,7 +155,7 @@ console.log('[ErrConsole] ready');
         <button class="settings-tab active" data-tab="grid"><span data-i18n="editor.tabGrid">Grid</span></button>
         <button class="settings-tab" data-tab="controls"><span data-i18n="editor.tabControls">Controls</span></button>
         <button class="settings-tab" data-tab="appearance"><span data-i18n="editor.tabAppearance">Appearance</span></button>
-        <button class="settings-tab premium-tab" data-tab="premium"><i class="fas fa-crown" style="color:#ffb347;"></i> <span>Premium</span></button>
+        <button class="settings-tab premium-tab" data-tab="premium"><i class="fas fa-crown" style="color:var(--accent, #ffb347);"></i> <span>Premium</span></button>
       </div>
 
       <div class="settings-tab-content active" data-tab="grid">
@@ -235,15 +235,23 @@ console.log('[ErrConsole] ready');
 
       <div class="settings-tab-content premium-tab-content" data-tab="premium">
         <div class="setting-group">
-          <label><i class="fas fa-crown" style="color:#ffb347;font-size:12px;"></i> Overshoot Bounce</label>
+          <label><i class="fas fa-crown" style="color:var(--accent, #ffb347);font-size:12px;"></i> Overshoot Bounce</label>
           <div class="toggle-switch">
             <input type="checkbox" id="premiumOvershoot">
             <span class="toggle-slider"></span>
             <span class="toggle-label">Transitions overshoot with bounce (cubic-bezier 0.34, 1.56, 0.64, 1)</span>
           </div>
         </div>
+        <div class="setting-group">
+          <label><i class="fas fa-crown" style="color:var(--accent, #ffb347);font-size:12px;"></i> Purple Accent</label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="premiumPurple">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label">Replace orange accents with purple gradient (crown, buttons, highlights → lilac)</span>
+          </div>
+        </div>
         <div style="margin-top:16px;padding:12px;background:linear-gradient(135deg,#2a1f30,#1f2a44);border-radius:8px;border:1px solid rgba(255,179,71,0.2);">
-          <p style="margin:0;font-size:11px;color:#8899bb;"><i class="fas fa-crown" style="color:#ffb347;"></i> Premium settings — появляются только у премиум-пользователей</p>
+          <p style="margin:0;font-size:11px;color:#8899bb;"><i class="fas fa-crown" style="color:var(--accent, #ffb347);"></i> Premium settings — появляются только у премиум-пользователей</p>
         </div>
       </div>
     </div>
@@ -273,17 +281,22 @@ let userMenu = null;
 
 // --- Premium persistence ---
 function savePremiumStatus() {
-    if (currentUser && currentUser.premium) {
+    var premium = currentUser && currentUser.is_premium;
+    var override = localStorage.getItem('amenodes_premium_override') === 'true';
+    if (premium || override) {
         localStorage.setItem('amenodes_premium', 'true');
         document.body.classList.add('premium');
+        console.log('[Premium] enabled' + (override ? ' (override)' : ''));
     } else {
         localStorage.removeItem('amenodes_premium');
         document.body.classList.remove('premium');
+        console.log('[Premium] disabled');
     }
 }
 
 function isPremium() {
-    return localStorage.getItem('amenodes_premium') === 'true';
+    return localStorage.getItem('amenodes_premium') === 'true' ||
+           localStorage.getItem('amenodes_premium_override') === 'true';
 }
 // -------------------------
 
@@ -345,7 +358,14 @@ class AmenodesAPI {
         const headers = { 'Content-Type': 'application/json' };
         if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
         const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
-        const data = await response.json();
+        let data;
+        try {
+          data = await response.json();
+        } catch (e) {
+          const text = await response.text();
+          const short = text.substring(0, 200).replace(/\s+/g, ' ').trim();
+          throw new Error(short || 'Server returned non-JSON response');
+        }
         if (!response.ok) {
           const errMsg = data.error || data.message || `HTTP ${response.status}`;
           throw new Error(errMsg);
@@ -438,6 +458,7 @@ function showAuthModal() {
             if (data.success) {
                 modal.remove();
                 currentUser = data.user;
+                console.log('[Premium] /me.php user:', JSON.stringify(data.user));
                 savePremiumStatus();
                 updateAuthUI();
                 showToast(t('editor.welcome', { username: data.user.username }), 'success');
@@ -498,7 +519,7 @@ function updateAuthUI() {
             const premiumBadge = document.createElement('span');
             premiumBadge.className = 'premium-badge';
             premiumBadge.innerHTML = '<i class="fas fa-crown"></i> PREMIUM';
-            premiumBadge.style.cssText = 'font-size:10px;background:linear-gradient(135deg,#ffb347,#ff8c00);color:#1a1f30;padding:2px 8px;border-radius:10px;font-weight:bold;letter-spacing:0.5px;margin-right:4px;';
+            premiumBadge.style.cssText = 'font-size:10px;background:var(--accent-gradient,linear-gradient(135deg,#ffb347,#ff8c00));color:#1a1f30;padding:2px 8px;border-radius:10px;font-weight:bold;letter-spacing:0.5px;margin-right:4px;';
             authContainer.appendChild(premiumBadge);
         }
         if (currentUser.role === 'moderator' || currentUser.role === 'admin') {
@@ -688,6 +709,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const data = await api.getCurrentUser();
         if (data && data.success) {
             currentUser = data.user;
+            console.log('[Premium] user from API:', JSON.stringify(data.user));
             savePremiumStatus();
             updateAuthUI();
         } else {
