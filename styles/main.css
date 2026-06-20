@@ -23,7 +23,7 @@ body {
   --transition: all 0.3s ease;
   --accent: var(--accent);
   --accent-dim: rgba(255, 179, 71, 0.15);
-  --accent-gradient: linear-gradient(135deg, var(--accent), #ff8c00);
+  --accent-gradient: linear-gradient(135deg, var(--accent), var(--accent));
   --toolbar-bg: rgba(30,35,48,.9);
   --opt-panel-bg: rgba(20,24,36,0.98);
   --border-light: 1px solid rgba(255,255,255,.15);
@@ -2348,7 +2348,7 @@ input[type=number] {
   font-weight: bold;
 }
 
-.status-pending { background: #ff8c00; color: #1a1f30; }
+.status-pending { background: var(--accent); color: #1a1f30; }
 .status-approved { background: #2e7d32; color: #fff; }
 .status-rejected { background: #c62828; color: #ffcdd2; }
 
@@ -2646,7 +2646,7 @@ input[type=number] {
 .mod-reject:hover { background: #d83a3a; }
 
 .mod-revert {
-  background: #ff8c00;
+  background: var(--accent);
   color: #1a1f30;
 }
 .mod-revert:hover { background: #ffa033; }
@@ -2759,7 +2759,7 @@ input[type=number] {
 }
 
 .logo span {
-  background: linear-gradient(135deg, var(--accent), #ff8c00);
+  background: linear-gradient(135deg, var(--accent), var(--accent));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -2950,7 +2950,7 @@ input[type=number] {
 .user-avatar {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, var(--accent), #ff8c00);
+  background: linear-gradient(135deg, var(--accent), var(--accent));
   border-radius: 50%;
   display: flex;
   align-items: center;

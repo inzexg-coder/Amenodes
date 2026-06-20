@@ -749,7 +749,7 @@
   .mobile-mini-toolbar .mmt-logo {
     font-size: 14px;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--accent), #ff8c00);
+    background: linear-gradient(135deg, var(--accent), var(--accent));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -1218,7 +1218,7 @@
 
   /* Selected node border glow */
   .node.selected-for-edit {
-    box-shadow: 0 0 0 3px #ffb347, 0 0 20px rgba(255, 179, 71, 0.3), var(--node-shadow) !important;
+    box-shadow: 0 0 0 3px var(--accent), 0 0 20px rgba(var(--accent-rgb), 0.3), var(--node-shadow) !important;
     z-index: 25 !important;
   }
 
@@ -1286,7 +1286,7 @@
   .mobile-menu-title {
     font-size: 18px;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--accent), #ff8c00);
+    background: linear-gradient(135deg, var(--accent), var(--accent));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
