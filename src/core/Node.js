@@ -142,7 +142,7 @@ export class Node {
 
     this.dirtyIndicator = document.createElement('span');
     this.dirtyIndicator.textContent = '*';
-    this.dirtyIndicator.style.color = '#ffb347';
+    this.dirtyIndicator.style.color = window.__premiumAccent ? window.__premiumAccent() : '#ffb347';
     this.dirtyIndicator.style.fontSize = '14px';
     this.dirtyIndicator.style.fontWeight = 'bold';
     this.dirtyIndicator.style.marginLeft = '4px';

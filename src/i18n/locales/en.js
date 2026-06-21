@@ -340,7 +340,16 @@ export const en = {
     tabGrid: "Grid",
     tabControls: "Controls",
     tabAppearance: "Appearance",
-    unsaved: 'Unsaved changes'
+    unsaved: 'Unsaved changes',
+    tabPremium: 'Premium',
+    overshootBounce: 'Node Inertia',
+    overshootBounceDesc: 'Nodes overshoot with inertia when dragged and spring back',
+    purpleAccent: 'PREMIUM Theme',
+    purpleAccentDesc: 'Replace orange tones with purple gradient',
+    edgeWave: 'Edge Wave',
+    edgeWaveDesc: 'Running wave animation on edge hover',
+    magneticNodes: 'Magnetic Nodes',
+    magneticNodesDesc: 'Nodes attract connections when dragged nearby',
   },
 
   mean: {

@@ -2,14 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title data-i18n="profile.title">My Profile</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="styles/main.css">
-    <link rel="stylesheet" href="styles/mobile.css">
+    <link rel="stylesheet" href="styles/main.css?v=1781977953">
+    <link rel="stylesheet" href="styles/mobile.css?v=1781977953">
 </head>
 <body>
+<script>
+// Blocking: restore premium theme before paint
+(function(){
+if(localStorage.getItem('premium_purple_accent')==='true'){
+document.body.classList.add('premium-purple');document.body.classList.add('premium-hover');document.body.classList.add('premium-hover');
+var s=document.createElement('style');
+s.textContent='body.premium-purple{--accent:#a78bfa;--accent-dark:#6d28d9;--accent-rgb:167,139,250;--accent-gradient:linear-gradient(135deg,#a78bfa,#7c3aed)}';
+document.head.appendChild(s);
+}
+})();
+
+window.__premiumAccent = window.__premiumAccent || function() {
+    return localStorage.getItem('premium_purple_accent') === 'true' ? '#a78bfa' : '#ffb347';
+};
+</script>
 
 <div class="header">
     <div class="logo">
@@ -44,6 +62,20 @@
     
     const API_BASE = 'https://amenoke.ru/amenodes/api';
     let currentUser = null;
+    
+    function savePremiumStatus() {
+        var premium = currentUser && (currentUser.is_premium || currentUser.premium);
+        var override = localStorage.getItem('amenodes_premium_override') === 'true';
+        if (premium || override) {
+            localStorage.setItem('amenodes_premium', 'true');
+            if (localStorage.getItem('premium_purple_accent') === null) {
+                localStorage.setItem('premium_purple_accent', 'true');
+            }
+        } else {
+            localStorage.removeItem('amenodes_premium');
+        }
+    }
+    
     let currentTab = 'all';
     
     function getToken() { return localStorage.getItem('auth_token'); }
@@ -232,10 +264,14 @@
     function updateAuthUI() {
         const authSection = document.getElementById('authSection');
         if (currentUser) {
-            authSection.innerHTML = `<div class="user-panel"><span class="user-name">${escapeHtml(currentUser.username)}</span><span class="user-points">${currentUser.creator_points} CP</span><button id="logoutBtn" style="background:none;border:none;color:#ffb347;cursor:pointer;">${t('profile.logout')}</button></div>`;
-            document.getElementById('logoutBtn').onclick = () => { localStorage.removeItem('auth_token'); window.location.reload(); };
+            const isPremium = localStorage.getItem('amenodes_premium') === 'true' || localStorage.getItem('amenodes_premium_override') === 'true';
+            const premiumBadge = isPremium
+                ? '<span class="premium-badge"><i class="fas fa-crown"></i> PREMIUM</span>'
+                : '';
+            authSection.innerHTML = `<div class="user-panel">${premiumBadge}<span class="user-name">${escapeHtml(currentUser.username)}</span><span class="user-points">${currentUser.creator_points} CP</span><button id="logoutBtn" style="background:none;border:none;color:${window.__premiumAccent ? window.__premiumAccent() : "#ffb347"};cursor:pointer;">${t('profile.logout')}</button></div>`;
+            document.getElementById('logoutBtn').onclick = () => { localStorage.removeItem('auth_token'); localStorage.removeItem('amenodes_premium'); window.location.reload(); };
         } else {
-            authSection.innerHTML = `<a href="amenodes.html" style="background:#ffb347;color:#1a1f30;padding:6px 16px;border-radius:30px;text-decoration:none;">${t('profile.login')}</a>`;
+            authSection.innerHTML = `<a href="amenodes.html" style="background:${window.__premiumAccent ? window.__premiumAccent() : "#ffb347"};color:#1a1f30;padding:6px 16px;border-radius:30px;text-decoration:none;">${t('profile.login')}</a>`;
         }
     }
     
@@ -243,6 +279,13 @@
         const data = await getCurrentUser();
         if (data?.success) { 
             currentUser = data.user; 
+            savePremiumStatus();
+            // Sync purple theme
+            if (localStorage.getItem('premium_purple_accent') === 'true') {
+                document.body.classList.add('premium-purple');document.body.classList.add('premium-hover');document.body.classList.add('premium-hover');
+            } else {
+                document.body.classList.remove('premium-purple');document.body.classList.remove('premium-hover');
+            }
             updateAuthUI(); 
             renderProfileHeader(); 
         } else { 

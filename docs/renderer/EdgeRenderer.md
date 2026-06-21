@@ -274,6 +274,51 @@ function renderEdges() {
 renderer.setOnEdgeRemoved(() => console.log('Edge was deleted'));
 ```
 
+## Edge Wave (премиум-анимация на рёбрах)
+
+Управляется классом `premium-edge-wave` на `document.body` и `localStorage('premium_edge_wave')`.
+
+### Hover-эффект
+
+```css
+.premium-edge-wave .edge-group:hover .edge-line {
+  stroke-width: 5;
+  stroke-dasharray: 10 8;
+  animation: edge-wave 0.5s linear infinite;
+  filter: brightness(1.8) drop-shadow(0 0 6px var(--accent));
+}
+```
+
+При наведении на ребро у премиум-пользователей линия становится пунктирной с бегущей анимацией `stroke-dashoffset`.
+
+### Touch-эффект
+
+На мобильных устройствах при касании ребра добавляется класс `.edge-wave` на 700мс:
+
+```javascript
+group.addEventListener('touchstart', () => {
+  group.classList.add('edge-wave');
+  setTimeout(() => group.classList.remove('edge-wave'), 700);
+});
+```
+
+CSS для touch:
+
+```css
+.premium-edge-wave .edge-group.edge-wave .edge-line {
+  stroke-dasharray: 12 8;
+  animation: edge-wave 0.4s linear infinite;
+}
+```
+
+### Click-эффект
+
+Аналогично touch, но на `click`. Стрелка и линия получают свечение `drop-shadow`.
+
+## Магнитные узлы и стрелка предпросмотра
+
+В премиум-версии при перетаскивании связи рядом с совместимым узлом отрисовывается временная стрелка (см. `DomRenderer._addTempArrow`). Она создаётся непосредственно в `DomRenderer`, а не через `EdgeRenderer`, так как отображается только во время drag.
+
 # ЗАМЕЧАНИЯ
 
 - Метод `getBorderPoint` предполагает, что размер узла фиксирован по ширине (280 пикселей) и вычисляется по высоте через `getMinHeight`. При изменении парадигмы отрисовки узлов этот метод может давать неверные результаты.

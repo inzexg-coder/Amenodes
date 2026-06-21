@@ -133,16 +133,16 @@ export class SplashManager {
 
     switch(this.gridStyle) {
       case 'dots':
-        viewport.style.backgroundImage = `radial-gradient(circle, rgba(255, 179, 71, 0.15) 1px, transparent 1px)`;
+        viewport.style.backgroundImage = `radial-gradient(circle, rgba(var(--accent-rgb), 0.15) 1px, transparent 1px)`;
         viewport.style.backgroundSize = `${this.gridSize}px ${this.gridSize}px`;
         break;
       case 'lines':
-        viewport.style.backgroundImage = `linear-gradient(to right, rgba(255, 179, 71, 0.1) 1px, transparent 1px),
-                                          linear-gradient(to bottom, rgba(255, 179, 71, 0.1) 1px, transparent 1px)`;
+        viewport.style.backgroundImage = `linear-gradient(to right, rgba(var(--accent-rgb), 0.1) 1px, transparent 1px),
+                                          linear-gradient(to bottom, rgba(var(--accent-rgb), 0.1) 1px, transparent 1px)`;
         viewport.style.backgroundSize = `${this.gridSize}px ${this.gridSize}px`;
         break;
       case 'cross':
-        viewport.style.backgroundImage = `radial-gradient(circle, rgba(255, 179, 71, 0.2) 2px, transparent 2px)`;
+        viewport.style.backgroundImage = `radial-gradient(circle, rgba(var(--accent-rgb), 0.2) 2px, transparent 2px)`;
         viewport.style.backgroundSize = `${this.gridSize * 2}px ${this.gridSize * 2}px`;
         break;
       case 'none':

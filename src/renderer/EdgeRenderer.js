@@ -26,15 +26,15 @@ export class EdgeRenderer {
       const point1 = this.getBorderPoint(sourceRect, targetRect);
       const point2 = this.getBorderPoint(targetRect, sourceRect);
       const isBlue = edge.sourcePort === 'unmapped';
-      const color = isBlue ? "#44aaff" : "#ffb347";
+      const color = isBlue ? "#44aaff" : (window.__premiumAccent ? window.__premiumAccent() : "#ffb347");
 
-      const line = this.createLine(point1, point2, color, edge.id);
+      const lineGroup = this.createLine(point1, point2, color, edge.id);
       const arrow = this.createArrow(point1, point2, color);
 
       const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
       group.classList.add('edge-group');
       group.setAttribute('data-edge-id', edge.id);
-      group.appendChild(line);
+      group.appendChild(lineGroup);
       group.appendChild(arrow);
       svg.appendChild(group);
 
@@ -47,25 +47,23 @@ export class EdgeRenderer {
 
       group.addEventListener('click', (ev) => {
         ev.stopPropagation();
-        if (this.ignoreNextClick) {
-          this.ignoreNextClick = false;
-          return;
-        }
-        if (this.highlightedEdgeId === edge.id) {
-          this.clearHighlight();
-        } else {
-          this.setHighlight(edge.id);
-        }
+        // Wave animation on click, no highlight toggle
+        group.classList.add('edge-wave');
+        setTimeout(function() { group.classList.remove('edge-wave'); }, 700);
+        this.clearHighlight();
       });
 
       group.addEventListener('touchstart', (ev) => {
         ev.stopPropagation();
+        // Wave on touch
+        group.classList.add('edge-wave');
+        setTimeout(function() { group.classList.remove('edge-wave'); }, 700);
         this.longPressTimer = setTimeout(() => {
           this.ignoreNextClick = true;
           this.clearHighlight();
           this.removeEdge(edge, graph);
           this.longPressTimer = null;
-        }, 600);
+        }, 700);
       }, { passive: true });
 
       group.addEventListener('touchmove', () => {
@@ -103,6 +101,24 @@ export class EdgeRenderer {
     }
   }
 
+  // Update hitbox positions when edges move (called from updatePositions)
+  updateHitbox(lineGroup, p1, p2) {
+    const hitbox = lineGroup ? lineGroup.querySelector('.edge-hitbox') : null;
+    const line = lineGroup ? lineGroup.querySelector('.edge-line') : null;
+    if (hitbox) {
+      hitbox.setAttribute('x1', p1.x);
+      hitbox.setAttribute('y1', p1.y);
+      hitbox.setAttribute('x2', p2.x);
+      hitbox.setAttribute('y2', p2.y);
+    }
+    if (line) {
+      line.setAttribute('x1', p1.x);
+      line.setAttribute('y1', p1.y);
+      line.setAttribute('x2', p2.x);
+      line.setAttribute('y2', p2.y);
+    }
+  }
+
   updatePositions(edges, graph, rectCache) {
     const svg = this.layer.querySelector('.edge-layer');
     if (!svg) return;
@@ -123,14 +139,11 @@ export class EdgeRenderer {
       const point2 = this.getBorderPoint(targetRect, sourceRect);
 
       if (!isFinite(point1.x) || !isFinite(point1.y) || !isFinite(point2.x) || !isFinite(point2.y)) continue;
-      const line = group.querySelector('.edge-line');
+      const lineGroup = group.querySelector('.edge-line-group');
       const arrow = group.querySelector('.edge-arrow');
 
-      if (line) {
-        line.setAttribute('x1', point1.x);
-        line.setAttribute('y1', point1.y);
-        line.setAttribute('x2', point2.x);
-        line.setAttribute('y2', point2.y);
+      if (lineGroup) {
+        this.updateHitbox(lineGroup, point1, point2);
       }
 
       if (arrow) {
@@ -169,6 +182,19 @@ export class EdgeRenderer {
   }
 
   createLine(p1, p2, color, edgeId) {
+    // Hitbox line (wider, transparent) for easier clicking
+    const hitbox = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    hitbox.setAttribute("x1", p1.x);
+    hitbox.setAttribute("y1", p1.y);
+    hitbox.setAttribute("x2", p2.x);
+    hitbox.setAttribute("y2", p2.y);
+    hitbox.setAttribute("stroke-width", "14");
+    hitbox.setAttribute("stroke", "transparent");
+    hitbox.setAttribute("stroke-linecap", "round");
+    hitbox.style.pointerEvents = "visibleStroke";
+    hitbox.classList.add("edge-hitbox");
+    
+    // Visible line
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
     line.setAttribute("x1", p1.x);
     line.setAttribute("y1", p1.y);
@@ -178,9 +204,14 @@ export class EdgeRenderer {
     line.setAttribute("stroke-linecap", "round");
     line.classList.add("edge-line");
     line.setAttribute("stroke", color);
-    line.style.pointerEvents = "visibleStroke";
+    line.style.pointerEvents = "none";
     line.setAttribute("data-edge-id", edgeId);
-    return line;
+    
+    const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    group.appendChild(hitbox);
+    group.appendChild(line);
+    group.classList.add("edge-line-group");
+    return group;
   }
 
   createArrow(p1, p2, color) {
@@ -198,7 +229,7 @@ export class EdgeRenderer {
     const arrow = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
     arrow.setAttribute("points", points);
     arrow.setAttribute("fill", color);
-    arrow.setAttribute("stroke", color === "#44aaff" ? "#88ccff" : "#ffda99");
+    arrow.setAttribute("stroke", color === "#44aaff" ? "#88ccff" : color);
     arrow.setAttribute("stroke-width", "1");
     arrow.setAttribute("stroke-linejoin", "round");
     arrow.classList.add("edge-arrow");

@@ -62,24 +62,15 @@ export class Graph {
     if (typeof target.canAcceptEdge === 'function') {
       const canAccept = target.canAcceptEdge(source, port);
       if (!canAccept.ok) {
-        modal.alert(canAccept.message || t('errors.cannotConnect'));
         return null;
       }
     }
 
     if (!this.canConnect(sourceId, targetId, port)) {
-      const sourceType = typeSystem.getNodeType(source);
-      const targetType = typeSystem.getNodeType(target);
-
-      const sourceTypeName = this.getTypeDisplayName(sourceType);
-      const targetTypeName = this.getTypeDisplayName(targetType);
-
-      modal.alert(`${t('errors.cannotConnect')}: ${sourceTypeName} → ${targetTypeName}`);
       return null;
     }
 
     if (this.hasCycle(sourceId, targetId)) {
-      modal.alert(t('errors.cyclicDependency'));
       return null;
     }
 

@@ -1,6 +1,6 @@
 # Amenodes
 
-**2.8.4**  *Visual Programming Language for Data Analysis*
+**2.9.0**  *Visual Programming Language for Data Analysis*
 
 [GitHub Repository](https://github.com/inzexg-coder/Amenodes) | [Live Demo](https://amenoke.ru/amenodes.html) | [Wiki Docs](https://github.com/inzexg-coder/Amenodes/wiki)
 
@@ -17,6 +17,11 @@
 - **Real-time Computation** - Automatic reevaluation when connections or values change.
 - **Type System** - Smart connection validation prevents invalid links (e.g., connecting text to a number input).
 - **Internationalization (i18n)** - Full support for English and Russian with an easy-to-extend translation system.
+- **Premium System** - Optional premium subscription with visual enhancements:
+  - **Purple Accent Theme** — replaces orange accents with purple gradient
+  - **Node Inertia** — nodes overshoot with spring-back when dragged
+  - **Edge Wave** — running wave animation on edge hover
+  - **Magnetic Nodes** — connection preview with arrow on compatible node hover
 - **Performance Optimizations** - Built-in benchmarking and optimization panel with toggle switches and real-time FPS gain display.
 - **Undo/Redo** - Full history with auto-save to localStorage.
 - **Import/Export** - Save your graphs to `.amnk` files and load them back.
@@ -75,6 +80,10 @@ Click the **+** button in the toolbar or right-click on an existing node's handl
 
 Click and drag from a colored circle (handle) on a node to another node's handle. A line with an arrow indicates the connection. Right-click on a connection line to delete it.
 
+#### Premium: Magnetic Nodes
+
+When **Magnetic Nodes** is enabled in the Premium settings, dragging a connection near a compatible node (within 40px) shows a live preview: the dashed line becomes solid with an arrow, and the target node glows purple. If the nodes are incompatible by data type, the target glows red and the line stays dashed. On drop, incompatible connections silently fail with a brief red flash on both nodes (no popup alerts).
+
 ### Working with Nodes
 
 - **Edit titles** - Click on any node title to rename it.
@@ -96,6 +105,19 @@ Click and drag from a colored circle (handle) on a node to another node's handle
 3. **Wait for Moderation** - Templates are reviewed by moderators. Once approved, they appear in the public libraryry.
 4. **Earn Creator Points** - Each approved template awards CP. The more CP you have, the more your profile and templates glow.
 5. **Browse Library** - Filter templates by popularity, recency, or search by name.
+
+### Premium Features
+
+Premium features are available after authentication. They provide visual and UX enhancements without adding new node types or computational capabilities, keeping templates accessible to all users.
+
+| Feature | Description | Toggle Location |
+|---------|-------------|-----------------|
+| **Node Inertia** | Nodes overshoot when dragged and spring back into place | Editor → Settings → Premium |
+| **Purple Accent** | Replaces orange gradients and buttons with purple | Editor → Settings → Premium |
+| **Edge Wave** | Running dashed animation on edge hover | Editor → Settings → Premium |
+| **Magnetic Nodes** | Connection preview with arrow and node glow when dragging near compatible nodes | Editor → Settings → Premium |
+
+Settings are saved to `localStorage` and persist across sessions.
 
 ### Mobile & Touch Controls
 

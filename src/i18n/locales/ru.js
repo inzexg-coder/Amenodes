@@ -340,7 +340,16 @@ export const ru = {
     tabGrid: "Сетка",
     tabControls: "Управление",
     tabAppearance: "Вид",
-    unsaved: 'Несохраненные изменения'
+    unsaved: 'Несохраненные изменения',
+    tabPremium: 'Премиум',
+    overshootBounce: 'Инерция узлов',
+    overshootBounceDesc: 'При перетаскивании узел пролетает по инерции и пружинит обратно',
+    purpleAccent: 'PREMIUM Тема',
+    purpleAccentDesc: 'Заменить оранжевые тона на сиреневый градиент',
+    edgeWave: 'Волна на ребрах',
+    edgeWaveDesc: 'Бегущая волна при наведении на связь',
+    magneticNodes: 'Магнитные узлы',
+    magneticNodesDesc: 'Узлы притягивают соединение при перетаскивании',
   },
 
   mean: {

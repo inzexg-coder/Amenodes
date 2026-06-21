@@ -33,6 +33,7 @@ export class ConstantNode extends Node {
 
     const valueDisplay = document.createElement('div');
     valueDisplay.textContent = this.value;
+    valueDisplay.className = 'constant-value';
     valueDisplay.style.cssText = `
       text-align: center;
       font-size: 18px;
@@ -42,7 +43,7 @@ export class ConstantNode extends Node {
       border: 1px solid #4a6a8a;
       border-radius: 8px;
       padding: 8px;
-      color: #ffaa55;
+      color:  + (window.__premiumAccent ? window.__premiumAccent() : '#ffaa55') + ;
     `;
 
     content.appendChild(valueDisplay);

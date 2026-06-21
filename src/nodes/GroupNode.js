@@ -76,7 +76,8 @@ export class GroupNode extends Node {
 
       const removeBtn = document.createElement('button');
       removeBtn.textContent = '✕';
-      removeBtn.style.cssText = 'background:none;border:none;color:#ffaa88;cursor:pointer';
+      removeBtn.className = 'node-remove-btn';
+      removeBtn.style.cssText = 'background:none;border:none;color:' + (window.__premiumAccent ? window.__premiumAccent() : '#ffaa88') + ';cursor:pointer';
       if (this.values.length > 1) {
         removeBtn.onclick = () => {
           this.values.splice(idx, 1);

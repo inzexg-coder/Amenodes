@@ -11,6 +11,7 @@ import { modal } from './ui/CustomModal.js';
 import { NodeMenu } from './ui/NodeMenu.js';
 import { loadAllNodes, nodeRegistry } from './nodes/registry.js';
 import { typeSystem } from './core/DataType.js';
+window.typeSystem = typeSystem;
 import { OptimizationPanel } from './ui/OptimizationPanel.js';
 import { BenchmarkService } from './services/BenchmarkService.js';
 import { NodeFactory } from './nodes/NodeFactory.js';
@@ -18,6 +19,60 @@ import { NodeFactory } from './nodes/NodeFactory.js';
 window.alert = (msg) => { modal.alert(msg); };
 window.confirm = (msg) => modal.confirm(msg);
 window.prompt = (msg, def) => modal.prompt(msg, def);
+
+
+
+// Premium color helper - uses direct hex values, not CSS variables
+var PREMIUM_ACCENT = '#a78bfa';
+var PREMIUM_ACCENT_DARK = '#6d28d9';
+var PREMIUM_ACCENT_RGB = '167, 139, 250';
+var ORANGE_ACCENT = '#ffb347';
+var ORANGE_ACCENT_DARK = '#d48f30';
+var ORANGE_ACCENT_RGB = '255, 179, 71';
+
+function isPremiumTheme() {
+    return localStorage.getItem('premium_purple_accent') === 'true';
+}
+
+function premiumColor(orangeVal, purpleVal) {
+    return isPremiumTheme() ? purpleVal : orangeVal;
+}
+
+
+window.__premiumAccent = function() {
+    return localStorage.getItem('premium_purple_accent') === 'true' ? '#a78bfa' : '#ffb347';
+};
+window.__premiumAccentRGB = function() {
+    return localStorage.getItem('premium_purple_accent') === 'true' ? '167, 139, 250' : '255, 179, 71';
+};
+
+// Force-update premium theme on all elements
+function refreshPremiumTheme() {
+    var isPurple = localStorage.getItem('premium_purple_accent') === 'true';
+    document.body.classList.toggle('premium-purple', isPurple);
+    // Premium hover effect — active when purple theme is on
+    document.body.classList.toggle('premium-hover', isPurple);
+    // Edge wave — separate toggle
+    var edgeWave = localStorage.getItem('premium_edge_wave') === 'true';
+    document.body.classList.toggle('premium-edge-wave', edgeWave);
+    console.log('[Premium] Theme purple:', isPurple, 'hover:', isPurple, 'edgeWave:', edgeWave);
+    // Force repaint
+    document.body.style.transform = 'translateZ(0)';
+    requestAnimationFrame(function() {
+        document.body.style.transform = '';
+    });
+}
+
+// Restore premium theme from localStorage immediately
+(function() {
+    if (localStorage.getItem('premium_purple_accent') === 'true') {
+        document.body.classList.add('premium-purple');
+        // Force-applied style injection for elements that might miss CSS variable cascade
+        var s = document.createElement('style');
+        s.textContent = '.premium-force{--accent:#a78bfa;--accent-dark:#6d28d9;--accent-rgb:167,139,250;--accent-gradient:linear-gradient(135deg,#a78bfa,#7c3aed)}';
+        document.head.appendChild(s);
+    }
+})();
 
 class Application {
   constructor() {
@@ -58,6 +113,11 @@ class Application {
     this.renderer = new DomRenderer(this.graph, nodesLayer, viewportEl, this.eventBus);
     this.renderer.setViewport(this.viewport);
     this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
+    this.renderer.inertiaEnabled = () => localStorage.getItem('premium_overshoot_bounce') === 'true';
+    this.renderer.magneticNodesEnabled = () => {
+      if (localStorage.getItem('amenodes_premium') !== 'true') return false;
+      return localStorage.getItem('premium_magnetic_nodes') === 'true';
+    };
     this.viewport.onChange = () => {
       this.renderer.render();
       this.updateCoordIndicator();
@@ -137,7 +197,11 @@ class Application {
     var as = window._nodeAnimSpeed;
     if (as === undefined) as = 100;
     var sec = as / 1000;
-    document.body.style.setProperty("--transition", sec > 0 ? "all " + sec + "s ease" : "none");
+    var easing = "ease";
+    if (localStorage.getItem('premium_overshoot_bounce') === 'true') {
+      easing = "cubic-bezier(0.22, 2.2, 0.4, 1)";
+    }
+    document.body.style.setProperty("--transition", sec > 0 ? "all " + sec + "s " + easing : "none");
   }
 
   applyCanvasSettings() {
@@ -146,16 +210,16 @@ class Application {
 
     switch(this.gridStyle) {
       case 'dots':
-        viewport.style.backgroundImage = `radial-gradient(circle, rgba(255, 179, 71, 0.15) 1px, transparent 1px)`;
+        viewport.style.backgroundImage = `radial-gradient(circle, rgba(var(--accent-rgb), 0.15) 1px, transparent 1px)`;
         viewport.style.backgroundSize = `${this.gridSize}px ${this.gridSize}px`;
         break;
       case 'lines':
-        viewport.style.backgroundImage = `linear-gradient(to right, rgba(255, 179, 71, 0.1) 1px, transparent 1px),
-                                          linear-gradient(to bottom, rgba(255, 179, 71, 0.1) 1px, transparent 1px)`;
+        viewport.style.backgroundImage = `linear-gradient(to right, rgba(var(--accent-rgb), 0.1) 1px, transparent 1px),
+                                          linear-gradient(to bottom, rgba(var(--accent-rgb), 0.1) 1px, transparent 1px)`;
         viewport.style.backgroundSize = `${this.gridSize}px ${this.gridSize}px`;
         break;
       case 'cross':
-        viewport.style.backgroundImage = `radial-gradient(circle, rgba(255, 179, 71, 0.2) 2px, transparent 2px)`;
+        viewport.style.backgroundImage = `radial-gradient(circle, rgba(var(--accent-rgb), 0.2) 2px, transparent 2px)`;
         viewport.style.backgroundSize = `${this.gridSize * 2}px ${this.gridSize * 2}px`;
         break;
       case 'none':
@@ -178,6 +242,40 @@ class Application {
     const currentSpeed = window._nodeAnimSpeed !== undefined ? window._nodeAnimSpeed : 100;
     if (animSpeedInput) animSpeedInput.value = currentSpeed;
     if (animSpeedValue) animSpeedValue.textContent = currentSpeed;
+
+    // Premium tab visibility
+    const premiumTab = document.querySelector('.premium-tab');
+    const premiumContent = document.querySelector('.premium-tab-content');
+    const isPremium = localStorage.getItem('amenodes_premium') === 'true';
+    if (premiumTab) premiumTab.style.display = isPremium ? 'block' : 'none';
+
+    // Apply saved premium visual settings
+    // Auto-enable purple accent for premium users if never set
+    if (isPremium && localStorage.getItem('premium_purple_accent') === null) {
+      localStorage.setItem('premium_purple_accent', 'true');
+    }
+    refreshPremiumTheme();
+
+    const overshootCheck = document.getElementById('premiumOvershoot');
+    if (overshootCheck) {
+      const saved = localStorage.getItem('premium_overshoot_bounce');
+      overshootCheck.checked = saved === 'true';
+    }
+    const purpleCheck = document.getElementById('premiumPurple');
+    if (purpleCheck) {
+      const saved = localStorage.getItem('premium_purple_accent');
+      purpleCheck.checked = saved === 'true';
+    }
+    const edgeWaveCheck = document.getElementById('premiumEdgeWave');
+    if (edgeWaveCheck) {
+      const saved = localStorage.getItem('premium_edge_wave');
+      edgeWaveCheck.checked = saved === 'true';
+    }
+    const magneticCheck = document.getElementById('premiumMagneticNodes');
+    if (magneticCheck) {
+      const saved = localStorage.getItem('premium_magnetic_nodes');
+      magneticCheck.checked = saved === 'true';
+    }
 
     const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
 
@@ -387,7 +485,11 @@ class Application {
           const speed = parseInt(animSpeedInput.value);
           window._nodeAnimSpeed = speed;
           const seconds = speed / 1000;
-          document.body.style.setProperty("--transition", seconds > 0 ? `all ${seconds}s ease` : "none");
+          var easing = "ease";
+          if (localStorage.getItem('premium_overshoot_bounce') === 'true') {
+            easing = "cubic-bezier(0.22, 2.2, 0.4, 1)";
+          }
+          document.body.style.setProperty("--transition", seconds > 0 ? `all ${seconds}s ${easing}` : "none");
           localStorage.setItem("anim_speed", speed.toString());
         }
         const activeStyleBtn = document.querySelector('.grid-style-btn.active');
@@ -403,6 +505,25 @@ class Application {
         localStorage.setItem('canvas_snap_to_grid', this.snapToGrid.toString());
         localStorage.setItem('ctrl_zoom_only', this.ctrlZoomOnly.toString());
         localStorage.setItem('invert_zoom_direction', this.invertZoomDirection.toString());
+
+        const overshootCheck = document.getElementById('premiumOvershoot');
+        if (overshootCheck) {
+          localStorage.setItem('premium_overshoot_bounce', overshootCheck.checked.toString());
+        }
+        const purpleCheck = document.getElementById('premiumPurple');
+        if (purpleCheck) {
+          localStorage.setItem('premium_purple_accent', purpleCheck.checked.toString());
+          refreshPremiumTheme();
+        }
+        const edgeWaveCheck = document.getElementById('premiumEdgeWave');
+        if (edgeWaveCheck) {
+          localStorage.setItem('premium_edge_wave', edgeWaveCheck.checked.toString());
+          refreshPremiumTheme();
+        }
+        const magneticCheck = document.getElementById('premiumMagneticNodes');
+        if (magneticCheck) {
+          localStorage.setItem('premium_magnetic_nodes', magneticCheck.checked.toString());
+        }
 
         if (this.renderer) {
           this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);

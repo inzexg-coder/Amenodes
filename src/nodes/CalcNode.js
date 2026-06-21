@@ -206,7 +206,7 @@ export class CalcNode extends Node {
     toggle.style.padding = '8px 12px';
     toggle.style.background = 'linear-gradient(135deg, #1a1f30, #0f1222)';
     toggle.style.color = '#ffefcf';
-    toggle.style.border = '1px solid rgba(255, 179, 71, 0.3)';
+    toggle.style.border = '1px solid rgba(var(--accent-rgb), 0.3)';
     toggle.style.borderRadius = '8px';
     toggle.style.fontFamily = 'monospace';
     toggle.style.fontSize = '12px';
@@ -223,7 +223,7 @@ export class CalcNode extends Node {
     const arrow = document.createElement('span');
     arrow.className = 'arrow';
     arrow.style.transition = 'transform 0.2s ease';
-    arrow.style.color = '#ffb347';
+    arrow.style.color = window.__premiumAccent ? window.__premiumAccent() : '#ffb347';
     arrow.style.fontSize = '10px';
     arrow.textContent = '▼';
 
@@ -238,7 +238,7 @@ export class CalcNode extends Node {
     menu.style.right = '0';
     menu.style.marginTop = '4px';
     menu.style.background = 'linear-gradient(135deg, #1f2a44, #12162a)';
-    menu.style.border = '1px solid rgba(255, 179, 71, 0.3)';
+    menu.style.border = '1px solid rgba(var(--accent-rgb), 0.3)';
     menu.style.borderRadius = '8px';
     menu.style.overflow = 'hidden';
     menu.style.zIndex = '100';
@@ -259,21 +259,21 @@ export class CalcNode extends Node {
       item.style.transition = 'all 0.1s ease';
       if (this.operation === op) {
         item.classList.add('active');
-        item.style.background = 'rgba(255, 179, 71, 0.3)';
-        item.style.color = '#ffb347';
-        item.style.borderLeft = '2px solid #ffb347';
+        item.style.background = 'rgba(var(--accent-rgb), 0.3)';
+        item.style.color = window.__premiumAccent ? window.__premiumAccent() : '#ffb347';
+        item.style.borderLeft = '2px solid ' + (window.__premiumAccent ? window.__premiumAccent() : '#ffb347');
       }
       item.textContent = t(`calcTypes.${op}`);
       item.dataset.op = op;
 
       item.onmouseenter = () => {
-        item.style.background = 'rgba(255, 179, 71, 0.2)';
-        item.style.color = '#ffb347';
+        item.style.background = 'rgba(var(--accent-rgb), 0.2)';
+        item.style.color = window.__premiumAccent ? window.__premiumAccent() : '#ffb347';
       };
       item.onmouseleave = () => {
         if (this.operation === op) {
-          item.style.background = 'rgba(255, 179, 71, 0.3)';
-          item.style.color = '#ffb347';
+          item.style.background = 'rgba(var(--accent-rgb), 0.3)';
+          item.style.color = window.__premiumAccent ? window.__premiumAccent() : '#ffb347';
         } else {
           item.style.background = '';
           item.style.color = '#ffefcf';
@@ -290,9 +290,9 @@ export class CalcNode extends Node {
           i.style.borderLeft = '';
         }
         item.classList.add('active');
-        item.style.background = 'rgba(255, 179, 71, 0.3)';
-        item.style.color = '#ffb347';
-        item.style.borderLeft = '2px solid #ffb347';
+        item.style.background = 'rgba(var(--accent-rgb), 0.3)';
+        item.style.color = window.__premiumAccent ? window.__premiumAccent() : '#ffb347';
+        item.style.borderLeft = '2px solid ' + (window.__premiumAccent ? window.__premiumAccent() : '#ffb347');
         dropdown.classList.remove('open');
         menu.style.display = 'none';
         arrow.style.transform = '';

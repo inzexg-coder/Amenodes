@@ -108,7 +108,7 @@ removeNode(id: number): void
 addEdge(sourceId: number, targetId: number, port: string = 'main'): Edge | null
 ```
 
-Создаёт связь между двумя узлами после выполнения набора проверок. При успешном создании автоматически устанавливает `setDirty(true)`.
+Создаёт связь между двумя узлами после выполнения набора проверок. При успешном создании автоматически устанавливает `setDirty(true)`. При неудаче возвращает `null` без показа уведомлений — обработка ошибок (красная вспышка на узлах) реализована на стороне UI в `DomRenderer.onGlobalUpEdge()`.
 
 **Проверки:**
 1. Существование обоих узлов.
@@ -116,6 +116,8 @@ addEdge(sourceId: number, targetId: number, port: string = 'main'): Edge | null
 3. Совместимость типов через `canConnect()`.
 4. Отсутствие цикла (вызов `hasCycle`).
 5. Отсутствие дублирующей связи.
+
+> **Примечание:** Ранее при ошибках соединения вызывался `modal.alert()`. Начиная с премиум-версии все алерты удалены — визуальная обратная связь (красная рамка на 600мс) происходит в `DomRenderer`.
 
 ## removeEdge(id)
 
@@ -263,12 +265,9 @@ loadGraph(data: object): void
 const sourceId = 1, targetId = 2;
 if (graph.canConnect(sourceId, targetId)) {
   graph.addEdge(sourceId, targetId);
-} else {
-  const sourceType = graph.getTypeDisplayName(typeSystem.getNodeType(graph.getNode(sourceId)));
-  const targetType = graph.getTypeDisplayName(typeSystem.getNodeType(graph.getNode(targetId)));
-  modal.alert(`Cannot connect: ${sourceType} → ${targetType}`);
 }
 ```
+> **Примечание:** Если соединение невозможно, `addEdge` вернёт `null`. UI-слой (`DomRenderer`) сам покажет красную вспышку на узлах. Вызывать `modal.alert()` вручную не требуется.
 
 ### Подписка на dirty-состояние
 
@@ -284,3 +283,4 @@ graph.onDirtyChange((isDirty) => {
 - **Dirty-флаг:** Автоматически устанавливается при любом изменении графа.
 - **canConnect():** Используется как внутри `addEdge()`, так и в `ContextMenu` для предварительной проверки перед созданием узла.
 - **Восстановление из сохранения:** При загрузке графа НЕ вызываются статические методы `onCreate` узлов (чтобы избежать повторных запросов к пользователю).
+- **Ошибки соединения:** `addEdge()` не вызывает `modal.alert()` — вся обратная связь вынесена в UI (`DomRenderer.onGlobalUpEdge`).

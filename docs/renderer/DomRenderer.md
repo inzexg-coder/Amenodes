@@ -314,6 +314,70 @@ closeMenu(): void
 
 Закрывает контекстное меню.
 
+## Перетаскивание связей (edge dragging)
+
+### startDragEdge(sourceId, port, clientX, clientY)
+
+Создаёт временную SVG-линию (`tempLine`) от порта-источника. Координаты старта (`x1`, `y1`) передаются в Canvas-координатах, конвертированных из клиентских через `getCanvasCoords()`. 
+
+> **Важно:** Стартовая точка всегда вычисляется от центра хендла порта (`handle.getBoundingClientRect()`), а не от клиентских координат мыши. Это гарантирует правильное положение линии независимо от CSS-трансформации узла (scale при ховере).
+
+### onGlobalMoveEdge(event)
+
+Вызывается из глобальных обработчиков `mousemove`/`touchmove`. Обновляет `x2`/`y2` временной линии. Если включена премиум-функция `magneticNodesEnabled`, вызывает `updateMagneticPreview()` вместо обычного обновления.
+
+### updateMagneticPreview(clientX, clientY, fallbackPoint)
+
+Премиум-функция. При перетаскивании связи проверяет ближайший узел (40px зона):
+
+- **Совместимый тип данных** — линия становится сплошной + рисуется стрелка-треугольник (`_addTempArrow`) в середине + узел подсвечивается сиреневым (класс `node-magnetic-snap`)
+- **Несовместимый тип** — линия остаётся пунктирной, узел подсвечивается красноватым (класс `node-magnetic-glow`)
+- **Нет узла рядом** — обычное поведение
+
+Проверка совместимости выполнена через `window.typeSystem` по дататипу (игнорируя флаги `canHaveIncomingEdges`/`canHaveOutgoingEdges`): если `allowedInputTypes` цели пуст — любой тип совместим, иначе проверяется вхождение source-типа в список.
+
+### _addTempArrow(fromPoint, toPoint)
+
+Создаёт SVG-`polygon` (стрелку) на временной SVG-прослойке (`tempSvg`). Стрелка позиционируется на середине линии, цвет — `window.__premiumAccent()` (оранжевый или сиреневый). Обновляется при каждом движении мыши через `_updateTempArrow`.
+
+### _removeTempArrow()
+
+Удаляет стрелку из временной SVG и обнуляет ссылку `_tempArrow`. Вызывается при очистке линии или при уходе из магнитной зоны.
+
+## Инерция узлов (overshoot bounce)
+
+Премиум-функция, управляемая `localStorage('premium_overshoot_bounce')`. В `onGlobalUp()` при отпускании узла после перетаскивания:
+
+1. Рассчитывается velocity на основе истории последних 5 позиций (`_dragHistory`)
+2. Если скорость превышает порог (5px), узел продолжает движение по инерции с затуханием (коэффициент 0.95) до 60px максимум
+3. Пружинит обратно с `cubic-bezier(0.22, 2.2, 0.4, 1)` за 450ms
+
+Контролируется через `this.inertiaEnabled` (функция, возвращающая boolean).
+
+## Ошибка соединения (connect error flash)
+
+Когда `this.graph.addEdge()` возвращает `null` (неудачное соединение), `onGlobalUpEdge()` находит оба узла через `document.querySelector('.node[data-id="..."]')` и применяет inline-стиль:
+
+```javascript
+el.style.setProperty('box-shadow', '0 0 0 4px #ff4444, 0 0 35px rgba(255,68,68,0.6)', 'important');
+```
+
+Через 600мс стиль удаляется. CSS-анимация `connect-error-flash` (pulsing red border) также добавляется через класс `node-connect-error` как резерв.
+
+## Свойства
+
+| Свойство | Тип | Описание |
+|---|---|---|
+| `inertiaEnabled` | `function(): boolean` | Включена ли инерция (чтение localStorage) |
+| `magneticNodesEnabled` | `function(): boolean` | Включены ли магнитные узлы (чтение localStorage + premium check) |
+| `magneticNode` | `HTMLElement|null` | Текущий магнитный узел под курсором |
+| `_tempArrow` | `SVGPolygonElement|null` | Стрелка на временной линии |
+| `_dragHistory` | `Array<{x,y,t}>` | История позиций для расчёта velocity инерции |
+| `_inertiaAnimId` | `number|null` | ID анимационного фрейма инерции |
+| `isDraggingEdge` | `boolean` | Флаг перетаскивания связи |
+| `edgeSourceId` | `number|null` | ID узла-источника при перетаскивании |
+| `edgeSourcePort` | `string` | Тип порта ('main' или 'unmapped') |
+
 # ПРИМЕРЫ ИСПОЛЬЗОВАНИЯ
 
 ### Создание и настройка рендерера

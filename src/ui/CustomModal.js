@@ -28,7 +28,7 @@ export class CustomModal {
       .custom-modal {
         background: linear-gradient(135deg, #1a1f30, #0f1222);
         border-radius: 20px;
-        border: 1px solid #ffcd7e;
+        border: 1px solid var(--accent, #ffcd7e);
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
         width: 400px;
         max-width: 90%;
@@ -53,7 +53,7 @@ export class CustomModal {
         font-weight: bold;
         font-size: 16px;
         color: #ffefcf;
-        border-bottom: 1px solid #ffcd7e50;
+        border-bottom: 1px solid rgba(var(--accent-rgb), 0.3);
       }
 
       .custom-modal-body {
@@ -77,8 +77,8 @@ export class CustomModal {
       }
 
       .custom-modal-input:focus {
-        border-color: #ffcd7e;
-        box-shadow: 0 0 8px rgba(255, 205, 126, 0.3);
+        border-color: var(--accent, #ffcd7e);
+        box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.3);
       }
 
       .custom-modal-buttons {
@@ -101,12 +101,12 @@ export class CustomModal {
       }
 
       .custom-modal-btn-primary {
-        background: #ffb347;
+        background: var(--accent, #ffb347);
         color: #1a1f30;
       }
 
       .custom-modal-btn-primary:hover {
-        background: #ffcc66;
+        background: var(--accent-dark, #ffcc66);
         transform: scale(1.02);
       }
 

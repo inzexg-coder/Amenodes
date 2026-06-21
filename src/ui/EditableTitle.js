@@ -37,7 +37,7 @@ export class EditableTitle {
     this.input.style.fontSize = '14px';
     this.input.style.fontWeight = '700';
     this.input.style.background = '#0f1222';
-    this.input.style.border = '1px solid #ffb347';
+    this.input.style.border = '1px solid ' + (window.__premiumAccent ? window.__premiumAccent() : '#ffb347');
     this.input.style.borderRadius = '8px';
     this.input.style.padding = '4px 8px';
     this.input.style.color = '#dcf0ff';

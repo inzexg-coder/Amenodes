@@ -9,14 +9,21 @@
     base.href = basePath;
     document.head.appendChild(base);
   })();
+
+window.__premiumAccent = window.__premiumAccent || function() {
+    return localStorage.getItem('premium_purple_accent') === 'true' ? '#a78bfa' : '#ffb347';
+};
 </script>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title data-i18n="editor.title">@Amenodes</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<link rel="stylesheet" href="styles/main.css">
-    <link rel="stylesheet" href="styles/mobile.css">
+<link rel="stylesheet" href="styles/main.css?v=110">
+    <link rel="stylesheet" href="styles/mobile.css?v=110">
 <script>
 (function(){var c;function init(){if(c)return;c=document.createElement('div');
 c.id='errConsole';c.style.cssText='position:fixed;bottom:0;left:0;right:0;background:rgba(10,0,0,0.92);color:#ff6b6b;font-family:monospace;font-size:13px;z-index:99999;padding:12px 16px;max-height:40vh;overflow-y:auto;border-top:2px solid #ff3333;display:none';
@@ -41,6 +48,17 @@ console.log('[ErrConsole] ready');
 </script>
 </head>
 <body>
+<script>
+// Blocking: restore premium theme before paint
+(function(){
+if(localStorage.getItem('premium_purple_accent')==='true'){
+document.body.classList.add('premium-purple');document.body.classList.add('premium-hover');document.body.classList.add('premium-hover');
+var s=document.createElement('style');
+s.textContent='body.premium-purple{--accent:#a78bfa;--accent-dark:#6d28d9;--accent-rgb:167,139,250;--accent-gradient:linear-gradient(135deg,#a78bfa,#7c3aed)}';
+document.head.appendChild(s);
+}
+})();
+</script>
 
 <div id="splashOverlay" class="splash-overlay">
   <div class="splash-card">
@@ -120,7 +138,7 @@ console.log('[ErrConsole] ready');
     <div class="status-left">
       <span id="nodeCount">0 <span data-i18n="editor.nodeCount">nodes</span></span>
       <span id="edgeCount">0 <span data-i18n="editor.edgeCount">connections</span></span>
-      <span id="dirtyIndicator" style="display: none; color: #ffb347; margin-left: 12px;">
+      <span id="dirtyIndicator" style="display: none; color: var(--accent, #ffb347); margin-left: 12px;">
         <i class="fas fa-pen"></i> <span data-i18n="editor.unsaved">Unsaved changes</span>
       </span>
     </div>
@@ -155,6 +173,7 @@ console.log('[ErrConsole] ready');
         <button class="settings-tab active" data-tab="grid"><span data-i18n="editor.tabGrid">Grid</span></button>
         <button class="settings-tab" data-tab="controls"><span data-i18n="editor.tabControls">Controls</span></button>
         <button class="settings-tab" data-tab="appearance"><span data-i18n="editor.tabAppearance">Appearance</span></button>
+        <button class="settings-tab premium-tab" data-tab="premium"><i class="fas fa-crown" style="color:var(--accent);"></i> <span data-i18n="editor.tabPremium">Premium</span></button>
       </div>
 
       <div class="settings-tab-content active" data-tab="grid">
@@ -231,6 +250,41 @@ console.log('[ErrConsole] ready');
           </div>
         </div>
       </div>
+
+      <div class="settings-tab-content premium-tab-content" data-tab="premium">
+        <div class="setting-group">
+          <label><i class="fas fa-crown" style="color:var(--accent);font-size:12px;"></i> <span data-i18n="editor.overshootBounce">Overshoot Bounce</span></label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="premiumOvershoot">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label"><span data-i18n="editor.overshootBounceDesc">Transitions overshoot with bounce (cubic-bezier 0.34, 1.56, 0.64, 1)</span></span>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label><i class="fas fa-crown" style="color:var(--accent);font-size:12px;"></i> <span data-i18n="editor.purpleAccent">Purple Accent</span></label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="premiumPurple">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label"><span data-i18n="editor.purpleAccentDesc">Replace orange accents with purple gradient (crown, buttons, highlights)</span></span>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label><i class="fas fa-crown" style="color:var(--accent);font-size:12px;"></i> <span data-i18n="editor.edgeWave">Edge Wave</span></label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="premiumEdgeWave">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label"><span data-i18n="editor.edgeWaveDesc">Running wave animation on edge hover</span></span>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label><i class="fas fa-crown" style="color:var(--accent);font-size:12px;"></i> <span data-i18n="editor.magneticNodes">Magnetic Nodes</span></label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="premiumMagneticNodes">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label"><span data-i18n="editor.magneticNodesDesc">Nodes attract connections when dragged nearby</span></span>
+          </div>
+        </div>
+        </div>
     </div>
     <div class="modal-footer">
       <button class="modal-btn secondary" id="cancelSettings"><span data-i18n="editor.cancel">Cancel</span></button>
@@ -245,16 +299,42 @@ console.log('[ErrConsole] ready');
 <script type="importmap">
 {
   "imports": {
-    "./src/main.js": "./src/main.js"
+    "./src/main.js": "./src/main.js?v=110"
   }
 }
 </script>
-<script type="module" src="./src/main.js"></script>
+<script type="module" src="./src/main.js?v=110"></script>
 
 <script>
 const API_BASE = 'https://amenoke.ru/amenodes/api';
 let currentUser = null;
 let userMenu = null;
+
+// --- Premium persistence ---
+function savePremiumStatus() {
+    var premium = currentUser && (currentUser.is_premium || currentUser.premium);
+    var override = localStorage.getItem('amenodes_premium_override') === 'true';
+    if (premium || override) {
+        localStorage.setItem('amenodes_premium', 'true');
+        document.body.classList.add('premium');
+        if (localStorage.getItem('premium_purple_accent') === null) {
+            localStorage.setItem('premium_purple_accent', 'true');
+        }
+        if (localStorage.getItem('premium_purple_accent') === 'true') {
+            document.body.classList.add('premium-purple');document.body.classList.add('premium-hover');document.body.classList.add('premium-hover');
+        }
+    } else {
+        localStorage.removeItem('amenodes_premium');
+        document.body.classList.remove('premium');
+        document.body.classList.remove('premium-purple');document.body.classList.remove('premium-hover');
+    }
+}
+
+function isPremium() {
+    return localStorage.getItem('amenodes_premium') === 'true' ||
+           localStorage.getItem('amenodes_premium_override') === 'true';
+}
+// -------------------------
 
 function t(key, params = {}) {
     const translations = window._translations || {};
@@ -283,7 +363,7 @@ function updateUITexts() {
 
 function loadTranslations() {
     const savedLang = localStorage.getItem('amenodes_language') || 'en';
-    fetch(`./src/i18n/locales/${savedLang}.js`)
+    fetch(`./src/i18n/locales/${savedLang}.js?v=110`)
         .then(res => res.text())
         .then(text => {
             const match = text.match(/export const \w+ = ({[\s\S]*?});/);
@@ -314,7 +394,14 @@ class AmenodesAPI {
         const headers = { 'Content-Type': 'application/json' };
         if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
         const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
-        const data = await response.json();
+        const text = await response.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          const short = text.substring(0, 200).replace(/\s+/g, ' ').trim();
+          throw new Error(short || 'Server returned non-JSON response');
+        }
         if (!response.ok) {
           const errMsg = data.error || data.message || `HTTP ${response.status}`;
           throw new Error(errMsg);
@@ -407,6 +494,8 @@ function showAuthModal() {
             if (data.success) {
                 modal.remove();
                 currentUser = data.user;
+                console.log('[Premium] /me.php user:', JSON.stringify(data.user));
+                savePremiumStatus();
                 updateAuthUI();
                 showToast(t('editor.welcome', { username: data.user.username }), 'success');
             }
@@ -426,6 +515,7 @@ function showAuthModal() {
                 modal.remove();
                 const userData = await api.getCurrentUser();
                 currentUser = userData.user;
+                savePremiumStatus();
                 updateAuthUI();
                 showToast(t('editor.welcome', { username }), 'success');
             }
@@ -450,8 +540,7 @@ function updateAuthUI() {
         saveBtn.id = 'saveTemplateBtn';
         saveBtn.className = 'top-btn';
         saveBtn.style.background = '#2d3a5e';
-        saveBtn.style.color = '#ffb347';
-        saveBtn.innerHTML = `<i class="fas fa-save"></i> ${t('editor.saveTemplate')}`;
+                saveBtn.innerHTML = `<i class="fas fa-save"></i> ${t('editor.saveTemplate')}`;
         saveBtn.onclick = () => showSaveTemplateModal();
         const avatar = document.createElement('div');
         avatar.className = 'user-avatar';
@@ -461,12 +550,20 @@ function updateAuthUI() {
             toggleUserMenu();
         };
         authContainer.appendChild(saveBtn);
+        // Premium badge removed from corner - shown inline instead
+        // if (isPremium()) {
+        //     const premiumBadge = document.createElement('span');
+        //     premiumBadge.className = 'premium-badge';
+        //     premiumBadge.innerHTML = '<i class="fas fa-crown"></i> PREMIUM';
+        //     authContainer.appendChild(premiumBadge);
+        // }
         if (currentUser.role === 'moderator' || currentUser.role === 'admin') {
             const modBtn = document.createElement('button');
             modBtn.id = 'moderateBtn';
             modBtn.className = 'top-btn';
-            modBtn.style.background = '#8b3a3a';
-            modBtn.style.color = '#fff';
+            modBtn.style.background = 'transparent';
+            modBtn.style.border = '1px solid ' + (window.__premiumAccent ? window.__premiumAccent() : '#ffb347');
+            modBtn.style.color = window.__premiumAccent ? window.__premiumAccent() : '#ffb347';
             modBtn.innerHTML = `<i class="fas fa-gavel"></i> ${t('editor.moderate')}`;
             modBtn.onclick = () => window.open('moderate.html', '_blank');
             authContainer.appendChild(modBtn);
@@ -479,7 +576,7 @@ function updateAuthUI() {
         const loginBtn = document.createElement('button');
         loginBtn.id = 'loginHeaderBtn';
         loginBtn.className = 'top-btn';
-        loginBtn.style.background = '#ffb347';
+        loginBtn.style.background = window.__premiumAccent ? window.__premiumAccent() : '#ffb347';
         loginBtn.style.color = '#1a1f30';
         loginBtn.innerHTML = `<i class="fas fa-sign-in-alt"></i> ${t('editor.login')}`;
         loginBtn.onclick = () => showAuthModal();
@@ -528,6 +625,8 @@ function toggleUserMenu() {
     document.getElementById('menu-logout').onclick = () => {
         api.logout();
         currentUser = null;
+        localStorage.removeItem('amenodes_premium');
+        document.body.classList.remove('premium');
         userMenu.remove();
         userMenu = null;
         updateAuthUI();
@@ -646,6 +745,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const data = await api.getCurrentUser();
         if (data && data.success) {
             currentUser = data.user;
+            console.log('[Premium] user from API:', JSON.stringify(data.user));
+            savePremiumStatus();
             updateAuthUI();
         } else {
             updateAuthUI();
@@ -673,6 +774,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       <button class="mmt-btn" id="mmtRedo" title="Redo"><i class="fas fa-redo-alt"></i></button>
     </div>
     <span class="mmt-node-count" id="mmtNodeCount">0</span>
+    <button class="mmt-btn" id="mmtSettingsBtn" title="Settings"><i class="fas fa-sliders-h"></i></button>
     <button class="mmt-btn" id="mmtOptBtn" title="Optimizations"><i class="fas fa-tachometer-alt"></i></button>
     <button class="mmt-btn" id="mmtUserBtn" title="Profile"><i class="fas fa-user-circle"></i></button>
   </div>
@@ -985,6 +1087,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       mobileMenuOverlay.classList.remove('open');
     });
   }
+  // Settings button in mobile toolbar
+  var mmtSettingsBtn = document.getElementById("mmtSettingsBtn");
+  if (mmtSettingsBtn) {
+    mmtSettingsBtn.addEventListener("click", function() {
+      if (window.app && window.app.openCanvasSettings) {
+        window.app.openCanvasSettings();
+      }
+    });
+  }
+
   // Optimization button in mobile toolbar
   var mmtOptBtn = document.getElementById('mmtOptBtn');
   if (mmtOptBtn) {
