@@ -2297,6 +2297,7 @@ body.inertia-active .node {
   color: var(--accent) !important;
 }
 
+.premium-tab-content .setting-group {
   margin-bottom: 16px;
 }
 
