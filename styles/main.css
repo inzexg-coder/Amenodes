@@ -711,8 +711,12 @@ body {
 }
 
 /* Make neighboring nodes dim slightly when a node is hovered with premium */
-.premium-hover .node:hover ~ .node {
+.premium-hover .node:hover ~ .node:not(.edge-drawing) {
   opacity: 0.85;
+}
+/* Source node during edge drawing — never dim */
+.edge-drawing {
+  opacity: 1 !important;
 }
 
 .node-dragging {
@@ -1133,6 +1137,43 @@ body {
 
 .edge-highlighted .edge-arrow {
   filter: brightness(1.5);
+}
+
+/* ── Blue edges (Map node output): always blue regardless of theme ── */
+.edge-blue .edge-line {
+  stroke: #44aaff !important;
+}
+.edge-blue .edge-arrow {
+  fill: #44aaff !important;
+  stroke: #88ccff !important;
+}
+.edge-blue:hover .edge-line {
+  filter: brightness(1.5) drop-shadow(0 0 6px #44aaff) !important;
+}
+.edge-blue:hover .edge-arrow {
+  filter: brightness(1.5) drop-shadow(0 0 6px #44aaff) !important;
+}
+/* Override purple theme on blue edges */
+.premium-purple .edge-blue .edge-line {
+  stroke: #44aaff !important;
+}
+.premium-purple .edge-blue .edge-arrow {
+  fill: #44aaff !important;
+  stroke: #88ccff !important;
+}
+.premium-purple .edge-blue:hover .edge-line {
+  filter: brightness(1.5) drop-shadow(0 0 6px #44aaff) !important;
+}
+.premium-purple .edge-blue:hover .edge-arrow {
+  filter: brightness(1.5) drop-shadow(0 0 6px #44aaff) !important;
+}
+/* Override premium edge wave on blue edges */
+.premium-edge-wave .edge-blue:hover .edge-line {
+  filter: brightness(1.8) drop-shadow(0 0 6px #44aaff) !important;
+}
+.premium-edge-wave .edge-blue.edge-wave .edge-line,
+.premium-edge-wave .edge-blue.edge-wave.edge-highlighted .edge-line {
+  filter: brightness(1.8) drop-shadow(0 0 6px #44aaff) !important;
 }
 
 /* OPTIMIZATION PANEL */

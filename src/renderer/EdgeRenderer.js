@@ -33,6 +33,7 @@ export class EdgeRenderer {
 
       const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
       group.classList.add('edge-group');
+      if (isBlue) group.classList.add('edge-blue');
       group.setAttribute('data-edge-id', edge.id);
       group.appendChild(lineGroup);
       group.appendChild(arrow);

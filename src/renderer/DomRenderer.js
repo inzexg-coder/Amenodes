@@ -322,6 +322,9 @@ export class DomRenderer {
     this.isDraggingEdge = true;
     this.edgeSourceId = sourceId;
     this.edgeSourcePort = port;
+    // Mark source node so premium hover doesn't dim it
+    var _srcEl = document.querySelector('.node[data-id="' + sourceId + '"]');
+    if (_srcEl) _srcEl.classList.add('edge-drawing');
 
     const canvasCoords = this.getCanvasCoords(clientX, clientY);
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -614,6 +617,10 @@ export class DomRenderer {
       }
     }
 
+    if (this.edgeSourceId) {
+      var _srcEl = document.querySelector('.node[data-id="' + this.edgeSourceId + '"]');
+      if (_srcEl) _srcEl.classList.remove('edge-drawing');
+    }
     this.isDraggingEdge = false;
     this.edgeSourceId = null;
     this.edgeSourcePort = null;
