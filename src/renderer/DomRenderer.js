@@ -730,6 +730,8 @@ export class DomRenderer {
       nodeElement.classList.add('node-dragging');
       nodeElement.style.setProperty('transition', 'transform 0.15s ease, box-shadow 0.15s ease', 'important');
       nodeElement.style.setProperty('transform', 'scale(1.03)', 'important');
+      // Visible glow during drag: accent border + colored glow + white edge
+      nodeElement.style.setProperty('boxShadow', '0 0 0 2px var(--accent), 0 0 20px rgba(var(--accent-rgb), 0.5), 0 0 40px rgba(var(--accent-rgb), 0.3), 0 0 0 1px rgba(255,255,255,0.2)', 'important');
       document.body.classList.add('dragging');
     }
 
