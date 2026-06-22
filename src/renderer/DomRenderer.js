@@ -731,7 +731,7 @@ export class DomRenderer {
       nodeElement.style.setProperty('transition', 'transform 0.15s ease, box-shadow 0.15s ease', 'important');
       nodeElement.style.setProperty('transform', 'scale(1.03)', 'important');
       // Visible glow during drag: accent border + colored glow + white edge
-      nodeElement.style.setProperty('boxShadow', '0 0 0 2px var(--accent), 0 0 20px rgba(var(--accent-rgb), 0.5), 0 0 40px rgba(var(--accent-rgb), 0.3), 0 0 0 1px rgba(255,255,255,0.2)', 'important');
+      nodeElement.style.setProperty('box-shadow', '0 0 0 2px var(--accent), 0 0 20px rgba(var(--accent-rgb), 0.5), 0 0 40px rgba(var(--accent-rgb), 0.3), 0 0 0 1px rgba(255,255,255,0.2)', 'important');
       document.body.classList.add('dragging');
     }
 
@@ -764,7 +764,7 @@ export class DomRenderer {
           console.log('[Drag] touch .node-dragging ADDED, box-shadow:', getComputedStyle(el).boxShadow);
           el.style.setProperty('transition', 'transform 0.15s ease, box-shadow 0.15s ease', 'important');
           el.style.setProperty('transform', 'scale(1.03)', 'important');
-          el.style.setProperty('boxShadow', '0 0 0 4px #ff0000, 0 0 40px rgba(255,0,0,0.8)', 'important');
+          el.style.setProperty('box-shadow', '0 0 0 4px #ff0000, 0 0 40px rgba(255,0,0,0.8)', 'important');
           document.body.classList.add('dragging');
         }
       }
@@ -814,7 +814,7 @@ export class DomRenderer {
       document.body.classList.remove('dragging');
       if (dragEl) {
         dragEl.classList.remove('node-dragging');
-        dragEl.style.removeProperty('boxShadow');
+        dragEl.style.removeProperty('box-shadow');
         if (!this.inertiaEnabled()) {
           // No inertia: smooth handoff from drag scale to normal/hover
           dragEl.style.setProperty('transition', 'transform 0.2s ease, box-shadow 0.2s ease', 'important');
@@ -879,7 +879,7 @@ export class DomRenderer {
               if (dragEl) {
                 dragEl.style.removeProperty('transition');
                 dragEl.style.removeProperty('transform');
-                dragEl.style.removeProperty('zIndex');
+                dragEl.style.removeProperty('z-index');
                 dragEl.classList.remove('node-inertia');
               }
               self._inertiaAnimId = null;
