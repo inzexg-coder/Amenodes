@@ -1985,8 +1985,8 @@ body.inertia-active .node {
   background: linear-gradient(135deg, #1a1f30, #0f1222);
   border-radius: 20px;
   border: 1px solid rgba(var(--accent-rgb), 0.3);
-  width: 450px;
-  max-width: 90%;
+  width: 520px;
+  max-width: 92%;
   overflow: hidden;
   animation: modalSlideIn 0.2s ease;
 }
@@ -2248,13 +2248,55 @@ body.inertia-active .node {
 
 .premium-tab-content.active {
   display: block;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.premium-tab-content.active::-webkit-scrollbar {
+  width: 4px;
+}
+
+.premium-tab-content.active::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.premium-tab-content.active::-webkit-scrollbar-thumb {
+  background: rgba(var(--accent-rgb), 0.3);
+  border-radius: 4px;
+}
+
+.premium-tab-content.active::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--accent-rgb), 0.5);
+}
+
+.premium-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.35);
+  margin: 20px 0 10px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.premium-section-label i {
+  font-size: 12px;
+  color: rgba(255,255,255,0.25);
+}
+
+.premium-section-label:first-child {
+  margin-top: 4px;
 }
 
 .premium-tab-content .setting-group label i.fa-crown {
   color: var(--accent) !important;
 }
 
-.premium-tab-content .setting-group {
   margin-bottom: 16px;
 }
 
