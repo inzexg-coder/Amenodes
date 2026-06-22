@@ -276,6 +276,11 @@ class Application {
       const saved = localStorage.getItem('premium_magnetic_nodes');
       magneticCheck.checked = saved === 'true';
     }
+    const particleTrailCheck = document.getElementById('premiumParticleTrail');
+    if (particleTrailCheck) {
+      const saved = localStorage.getItem('premium_particle_trail');
+      particleTrailCheck.checked = saved === 'true';
+    }
 
     const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
 
@@ -523,6 +528,10 @@ class Application {
         const magneticCheck = document.getElementById('premiumMagneticNodes');
         if (magneticCheck) {
           localStorage.setItem('premium_magnetic_nodes', magneticCheck.checked.toString());
+        }
+        const particleTrailCheck = document.getElementById('premiumParticleTrail');
+        if (particleTrailCheck) {
+          localStorage.setItem('premium_particle_trail', particleTrailCheck.checked.toString());
         }
 
         if (this.renderer) {

@@ -29,6 +29,11 @@ export class DomRenderer {
     this.magneticNodesEnabled = function() { return false; };
     this._dragHistory = [];
     this._inertiaAnimId = null;
+    this._particles = [];
+    this._particleSpawnActive = false;
+    this._particleAnimId = null;
+    this._particleCanvas = null;
+    this._particleCtx = null;
     this._touchDragConfirmed = false;
     this.getSnapEnabled = null;
     this.getGridSize = null;
@@ -48,6 +53,7 @@ export class DomRenderer {
     });
 
     this.attachTouchFeedback();
+    this._initParticleCanvas();
     this.contextMenu = null;
     this.layer.addEventListener("click", (e) => {
       if (!e.target.closest(".edge-group")) {
@@ -737,6 +743,13 @@ export class DomRenderer {
 
     document.body.style.cursor = 'grabbing';
     console.log('[Drag] START type=' + event.type + ' id=' + node.id + ' x=' + node.x.toFixed(0) + ' y=' + node.y.toFixed(0));
+    if (this._particleTrailEnabled()) {
+      this._particleSpawnActive = true;
+      window.__particleAccent = getComputedStyle(document.body).getPropertyValue('--accent').trim() || '#a78bfa';
+      if (!this._particleAnimId) {
+        this._animateParticles();
+      }
+    }
     event.preventDefault();
   }
 
@@ -764,7 +777,7 @@ export class DomRenderer {
           console.log('[Drag] touch .node-dragging ADDED, box-shadow:', getComputedStyle(el).boxShadow);
           el.style.setProperty('transition', 'transform 0.15s ease, box-shadow 0.15s ease', 'important');
           el.style.setProperty('transform', 'scale(1.03)', 'important');
-          el.style.setProperty('box-shadow', '0 0 0 4px #ff0000, 0 0 40px rgba(255,0,0,0.8)', 'important');
+          el.style.setProperty('box-shadow', '0 0 0 2px var(--accent), 0 0 20px rgba(var(--accent-rgb), 0.5), 0 0 40px rgba(var(--accent-rgb), 0.3), 0 0 0 1px rgba(255,255,255,0.2)', 'important');
           document.body.classList.add('dragging');
         }
       }
@@ -796,6 +809,10 @@ export class DomRenderer {
 
       // Track velocity for inertia
       this._dragHistory.push({ x: newX, y: newY, t: Date.now() });
+
+      if (this._particleSpawnActive && this.dragNode) {
+        this._spawnDragParticles(newX, newY);
+      }
       while (this._dragHistory.length > 5) this._dragHistory.shift();
 
       if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
@@ -811,6 +828,7 @@ export class DomRenderer {
       }
 
       const dragEl = this.elementCache.get(this.dragNode.id);
+      this._particleSpawnActive = false;
       document.body.classList.remove('dragging');
       if (dragEl) {
         dragEl.classList.remove('node-dragging');
@@ -859,6 +877,7 @@ export class DomRenderer {
             dragEl.style.top = this.dragNode.y + 'px';
           }
           this.updateEdgePositions();
+          document.body.classList.add('inertia-active');
           // Spring back after a tiny delay (clear scale here)
           var self = this;
           var savedDragNode = this.dragNode;
@@ -882,6 +901,7 @@ export class DomRenderer {
                 dragEl.style.removeProperty('z-index');
                 dragEl.classList.remove('node-inertia');
               }
+              document.body.classList.remove('inertia-active');
               self._inertiaAnimId = null;
             }, 500);
           });
@@ -940,6 +960,105 @@ export class DomRenderer {
       }
     }, { passive: true });
   }
+
+  _isPremium() {
+    return localStorage.getItem('amenodes_premium') === 'true';
+  }
+
+  _particleTrailEnabled() {
+    return this._isPremium() && localStorage.getItem('premium_particle_trail') === 'true';
+  }
+
+  _initParticleCanvas() {
+    if (this._particleCanvas) return;
+    var canvas = document.createElement('canvas');
+    canvas.id = 'particleTrailCanvas';
+    canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10000;';
+    var container = this.viewportElement;
+    if (container) {
+      container.appendChild(canvas);
+      this._particleCanvas = canvas;
+      this._particleCtx = canvas.getContext('2d');
+      this._resizeParticleCanvas();
+    }
+  }
+
+  _resizeParticleCanvas() {
+    if (this._particleCanvas && this.viewportElement) {
+      this._particleCanvas.width = this.viewportElement.clientWidth;
+      this._particleCanvas.height = this.viewportElement.clientHeight;
+    }
+  }
+
+  _spawnDragParticles(worldX, worldY) {
+    if (!this._particleCtx || !this._particleTrailEnabled()) return;
+    for (var i = 0; i < 2; i++) {
+      var angle = Math.random() * Math.PI * 2;
+      var speed = 0.3 + Math.random() * 1.2;
+      var size = 2 + Math.random() * 4;
+      this._particles.push({
+        worldX: worldX,
+        worldY: worldY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1.0,
+        decay: 0.015 + Math.random() * 0.025,
+        size: size,
+        startSize: size
+      });
+    }
+    if (this._particles.length > 200) {
+      this._particles.splice(0, this._particles.length - 200);
+    }
+  }
+
+  _animateParticles() {
+    if (!this._particleCtx || !this._particleCanvas) return;
+    this._resizeParticleCanvas();
+    var ctx = this._particleCtx;
+    var canvas = this._particleCanvas;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    var zoom = window.currentZoom || 1;
+    var rect = this.viewportElement.getBoundingClientRect();
+    var offset = this.viewport ? this.viewport.getOffset() : { x: 0, y: 0 };
+
+    var alive = false;
+    for (var i = this._particles.length - 1; i >= 0; i--) {
+      var p = this._particles[i];
+      p.worldX += p.vx;
+      p.worldY += p.vy;
+      p.vx *= 0.98;
+      p.vy *= 0.98;
+      p.life -= p.decay;
+
+      if (p.life <= 0) {
+        this._particles.splice(i, 1);
+        continue;
+      }
+      alive = true;
+
+      var sx = p.worldX * zoom + rect.left + offset.x;
+      var sy = p.worldY * zoom + rect.top + offset.y;
+
+      var particleColor = window.__particleAccent || '#a78bfa';
+      ctx.globalAlpha = p.life * 0.7;
+      ctx.shadowColor = particleColor;
+      ctx.shadowBlur = 6 * p.life;
+      ctx.fillStyle = particleColor;
+      ctx.beginPath();
+      ctx.arc(sx - rect.left, sy - rect.top, p.size * p.life, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    if (alive || this._particleSpawnActive) {
+      this._particleAnimId = requestAnimationFrame(this._animateParticles.bind(this));
+    } else {
+      this._particleAnimId = null;
+    }
+  }
+
 
   closeMenu() {
     if (this.contextMenu) {

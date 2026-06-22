@@ -22,8 +22,8 @@ window.__premiumAccent = window.__premiumAccent || function() {
 <title data-i18n="editor.title">@Amenodes</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<link rel="stylesheet" href="styles/main.css?v=128">
-    <link rel="stylesheet" href="styles/mobile.css?v=128">
+<link rel="stylesheet" href="styles/main.css?v=129">
+    <link rel="stylesheet" href="styles/mobile.css?v=129">
 <script>
 (function(){var c;function init(){if(c)return;c=document.createElement('div');
 c.id='errConsole';c.style.cssText='position:fixed;bottom:0;left:0;right:0;background:rgba(10,0,0,0.92);color:#ff6b6b;font-family:monospace;font-size:13px;z-index:99999;padding:12px 16px;max-height:40vh;overflow-y:auto;border-top:2px solid #ff3333;display:none';
@@ -282,6 +282,14 @@ document.head.appendChild(s);
             <input type="checkbox" id="premiumMagneticNodes">
             <span class="toggle-slider"></span>
             <span class="toggle-label"><span data-i18n="editor.magneticNodesDesc">Nodes attract connections when dragged nearby</span></span>
+        <div class="setting-group">
+          <label><i class="fas fa-crown" style="color:var(--accent);font-size:12px;"></i> <span data-i18n="editor.particleTrail">Particle Trail</span></label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="premiumParticleTrail">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label"><span data-i18n="editor.particleTrailDesc">Glowing particles trail behind nodes when dragged</span></span>
+          </div>
+        </div>
           </div>
         </div>
         </div>
@@ -299,11 +307,11 @@ document.head.appendChild(s);
 <script type="importmap">
 {
   "imports": {
-    "./src/main.js": "./src/main.js?v=128"
+    "./src/main.js": "./src/main.js?v=129"
   }
 }
 </script>
-<script type="module" src="./src/main.js?v=128"></script>
+<script type="module" src="./src/main.js?v=129"></script>
 
 <script>
 const API_BASE = 'https://amenoke.ru/amenodes/api';
@@ -375,7 +383,7 @@ function loadTranslations() {
       var bl = (navigator.language || '').split('-')[0];
       if (bl === 'ru') detectedLang = 'ru';
     }
-    fetch(`./src/i18n/locales/${savedLang}.js?v=128`)
+    fetch(`./src/i18n/locales/${detectedLang}.js?v=129`)
         .then(res => res.text())
         .then(text => {
             const match = text.match(/export const \w+ = ({[\s\S]*?\n});/);
@@ -383,12 +391,16 @@ function loadTranslations() {
                 const translationsObj = eval('(' + match[1] + ')');
                 window._translations = translationsObj;
                 updateUITexts();
+                updateAuthUI();
                 if (window.i18n && window.i18n.notifyListeners) {
                     window.i18n.notifyListeners();
                 }
             }
         })
-        .catch(err => console.error('Failed to load translations:', err));
+        .catch(err => console.error('Failed to load translations:', err)).finally(function() {
+                updateUITexts();
+                updateAuthUI();
+            });
 }
 
 loadTranslations();

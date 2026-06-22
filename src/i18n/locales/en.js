@@ -350,6 +350,9 @@ export const en = {
     edgeWaveDesc: 'Running wave animation on edge hover',
     magneticNodes: 'Magnetic Nodes',
     magneticNodesDesc: 'Nodes attract connections when dragged nearby',
+    particleTrail: 'Particle Trail',
+    particleTrailDesc: 'Glowing particles trail behind nodes when dragged',
+
   },
 
   mean: {
