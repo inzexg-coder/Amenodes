@@ -40,7 +40,7 @@ constructor(layer: HTMLElement)
 | `this.layer` | `HTMLElement` | `layer` | Контейнер для SVG-элементов. |
 | `this.onEdgeRemoved` | `Function` | `null` | Коллбэк, вызываемый после удаления ребра (устанавливается через `setOnEdgeRemoved`). |
 
-### Публичные свойства
+## Публичные свойства
 
 | Свойство | Тип | Доступ | Описание |
 |----------|-----|--------|----------|
@@ -229,7 +229,7 @@ edgeRenderer.setOnEdgeRemoved(() => {
 
 # ПРИМЕРЫ ИСПОЛЬЗОВАНИЯ
 
-### Базовое использование в DomRenderer
+## Базовое использование в DomRenderer
 
 ```javascript
 // В конструкторе DomRenderer
@@ -254,7 +254,7 @@ for (const node of visibleNodes) {
 this.edgeRenderer.renderEdges(this.graph.edges, this.graph, rectCache);
 ```
 
-### Самостоятельное использование
+## Самостоятельное использование
 
 ```javascript
 import { EdgeRenderer } from './renderer/EdgeRenderer.js';
@@ -275,13 +275,13 @@ renderer.setOnEdgeRemoved(() => console.log('Edge was deleted'));
 ```
 
 
-## Расширенные возможности
+## Расширенные методы
 
-### Анимация на рёбрах
+## Edge Wave (анимация на рёбрах)
 
 Гейтинг: класс `premium-edge-wave` на `document.body` при `localStorage('premium_edge_wave') === 'true'` и `_isPremium()`.
 
-### Hover-эффект
+## Hover-эффект
 
 ```css
 .premium-edge-wave .edge-group:hover .edge-line {
@@ -294,7 +294,7 @@ renderer.setOnEdgeRemoved(() => console.log('Edge was deleted'));
 
 При наведении на ребро линия становится пунктирной с анимацией `stroke-dashoffset`.
 
-### Touch-эффект
+## Touch-эффект
 
 На мобильных устройствах при касании ребра добавляется класс `.edge-wave` на 700мс:
 
@@ -314,12 +314,12 @@ CSS для touch:
 }
 ```
 
-### Click-эффект
+## Click-эффект
 
 Аналогично touch, но на `click`. Стрелка и линия получают свечение `drop-shadow`.
 
 
-### Стрелка предпросмотра
+## Магнитные узлы и стрелка предпросмотра
 
 Гейтинг: `_isPremium() && localStorage('premium_magnetic_nodes') === 'true'`. При перетаскивании связи рядом с совместимым узлом отрисовывается временная стрелка (см. `DomRenderer._addTempArrow`). Создаётся в `DomRenderer`, так как отображается только во время drag.
 

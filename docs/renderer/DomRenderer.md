@@ -316,13 +316,11 @@ closeMenu(): void
 
 ## Перетаскивание связей (edge dragging)
 
-### startDragEdge(sourceId, port, clientX, clientY)
 
 Создаёт временную SVG-линию (`tempLine`) от порта-источника. Координаты старта (`x1`, `y1`) передаются в Canvas-координатах, конвертированных из клиентских через `getCanvasCoords()`. 
 
 > **Важно:** Стартовая точка всегда вычисляется от центра хендла порта (`handle.getBoundingClientRect()`), а не от клиентских координат мыши. Это гарантирует правильное положение линии независимо от CSS-трансформации узла (scale при ховере).
 
-### onGlobalMoveEdge(event)
 
 Вызывается из глобальных обработчиков `mousemove`/`touchmove`. Обновляет `x2`/`y2` временной линии. Если включена премиум-функция `magneticNodesEnabled`, вызывает `updateMagneticPreview()` вместо обычного обновления.
 
@@ -352,7 +350,7 @@ el.style.setProperty('box-shadow', '0 0 0 4px #ff4444, 0 0 35px rgba(255,68,68,0
 
 # ПРИМЕРЫ ИСПОЛЬЗОВАНИЯ
 
-### Создание и настройка рендерера
+## Создание и настройка рендерера
 
 ```javascript
 const renderer = new DomRenderer(graph, nodesLayer, viewportEl, eventBus);
@@ -361,7 +359,7 @@ renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
 renderer.render();
 ```
 
-### Защита от ошибок при отрисовке
+## Защита от ошибок при отрисовке
 
 ```javascript
 // Рендерер автоматически обрабатывает узлы без метода createDOM
@@ -370,11 +368,11 @@ renderer.renderAll();
 ```
 
 
-## Расширенные возможности
+## Расширенные методы
 
-### Магнитные узлы
+## Магнитные узлы (magnetic nodes)
 
-#### updateMagneticPreview(clientX, clientY, fallbackPoint)
+## updateMagneticPreview(clientX, clientY, fallbackPoint)
 
 Доступно при `_isPremium()`. При перетаскивании связи проверяет ближайший узел в радиусе 40px:
 
@@ -384,16 +382,16 @@ renderer.renderAll();
 
 Проверка совместимости выполнена через `window.typeSystem` по дататипу (игнорируя флаги `canHaveIncomingEdges`/`canHaveOutgoingEdges`): если `allowedInputTypes` цели пуст — любой тип совместим, иначе проверяется вхождение source-типа в список.
 
-#### _addTempArrow(fromPoint, toPoint)
+## _addTempArrow(fromPoint, toPoint)
 
 Создаёт SVG-`polygon` (стрелку) на временной SVG-прослойке (`tempSvg`). Стрелка позиционируется на середине линии, цвет — `window.__premiumAccent()` (оранжевый или сиреневый). Обновляется при каждом движении мыши через `_updateTempArrow`.
 
-#### _removeTempArrow()
+## _removeTempArrow()
 
 Удаляет стрелку из временной SVG и обнуляет ссылку `_tempArrow`. Вызывается при очистке линии или при уходе из магнитной зоны.
 
 
-### Инерция узлов
+## Инерция узлов (overshoot bounce)
 
 Гейтинг: `_isPremium() && localStorage('premium_overshoot_bounce') === 'true'`. В `onGlobalUp()` при отпускании узла после перетаскивания:
 
@@ -403,7 +401,7 @@ renderer.renderAll();
 
 Контролируется через `this.inertiaEnabled` (функция, возвращающая boolean).
 
-### Particle Trail
+## Particle Trail (частицы при драге)
 
 Гейтинг: `_isPremium() && localStorage.getItem('premium_particle_trail') === 'true'`. При перетаскивании узла спавнятся частицы:
 
@@ -424,7 +422,7 @@ renderer.renderAll();
 | `_particleCanvas` | `HTMLCanvasElement\|null` | Canvas-оверлей для рендера частиц |
 | `_particleCtx` | `CanvasRenderingContext2D\|null` | 2D-контекст канваса |
 
-### Блокировка ховеров при инерции
+## Блокировка ховеров при инерции
 
 При активации инерции на `document.body` добавляется класс `inertia-active`, а в CSS — правило:
 
