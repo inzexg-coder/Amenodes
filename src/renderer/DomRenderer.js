@@ -342,7 +342,8 @@ export class DomRenderer {
 
     this.tempLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
     this.tempLine.setAttribute("class", "temp-edge-line");
-    this.tempLine.setAttribute("stroke", port === 'unmapped' ? "#44aaff" : (window.__premiumAccent ? window.__premiumAccent() : "#ffaa55"));
+    var tempLineColor = port === 'unmapped' ? '#44aaff' : (window.__premiumAccent ? window.__premiumAccent() : '#ffaa55');
+    this.tempLine.style.setProperty('stroke', tempLineColor, 'important');
     this.tempLine.setAttribute("stroke-width", "3");
     this.tempLine.setAttribute("stroke-dasharray", "6,4");
     this.tempLine.setAttribute("x1", canvasCoords.x);
@@ -536,7 +537,8 @@ export class DomRenderer {
     if (!this._tempArrow && this.tempSvg) {
       var arrow = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
       arrow.classList.add("temp-edge-arrow");
-      arrow.setAttribute("fill", window.__premiumAccent ? window.__premiumAccent() : "#ffb347");
+      var isBluePort = this.edgeSourcePort === 'unmapped';
+      arrow.style.setProperty('fill', isBluePort ? '#44aaff' : (window.__premiumAccent ? window.__premiumAccent() : '#ffb347'), 'important');
       arrow.setAttribute("stroke", "none");
       this.tempSvg.appendChild(arrow);
       this._tempArrow = arrow;
@@ -686,6 +688,7 @@ export class DomRenderer {
       nodeElement.classList.add('node-dragging');
       nodeElement.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease';
       nodeElement.style.transform = 'scale(1.03)';
+      document.body.classList.add('dragging');
     }
 
     document.body.style.cursor = 'grabbing';
@@ -715,6 +718,7 @@ export class DomRenderer {
           el.classList.add('node-dragging');
           el.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease';
           el.style.transform = 'scale(1.03)';
+          document.body.classList.add('dragging');
         }
       }
 
@@ -760,6 +764,7 @@ export class DomRenderer {
       }
 
       const dragEl = this.elementCache.get(this.dragNode.id);
+      document.body.classList.remove('dragging');
       if (dragEl) {
         dragEl.classList.remove('node-dragging');
         if (!this.inertiaEnabled()) {
@@ -816,6 +821,7 @@ export class DomRenderer {
               if (dragEl) {
                 dragEl.style.transition = '';
                 dragEl.style.transform = '';
+                dragEl.style.zIndex = '';
                 dragEl.classList.remove('node-inertia');
               }
               self._inertiaAnimId = null;
