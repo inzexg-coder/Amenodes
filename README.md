@@ -1,6 +1,6 @@
 # Amenodes
 
-**2.9.0**  *Visual Programming Language for Data Analysis*
+**2.9.5**  *Visual Programming Language for Data Analysis*
 
 [GitHub Repository](https://github.com/inzexg-coder/Amenodes) | [Live Demo](https://amenoke.ru/amenodes.html) | [Wiki Docs](https://github.com/inzexg-coder/Amenodes/wiki)
 
