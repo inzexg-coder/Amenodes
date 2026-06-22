@@ -350,6 +350,9 @@ export const ru = {
     edgeWaveDesc: 'Бегущая волна при наведении на связь',
     magneticNodes: 'Магнитные узлы',
     magneticNodesDesc: 'Узлы притягивают соединение при перетаскивании',
+    particleTrail: 'Шлейф частиц',
+    particleTrailDesc: 'Светящиеся частицы тянутся за узлом при перетаскивании',
+
   },
 
   mean: {

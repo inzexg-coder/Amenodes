@@ -1,12 +1,26 @@
 # Amenodes
 
-**2.9.0**  *Visual Programming Language for Data Analysis*
+**2.9.5**  *Visual Programming Language for Data Analysis*
 
 [GitHub Repository](https://github.com/inzexg-coder/Amenodes) | [Live Demo](https://amenoke.ru/amenodes.html) | [Wiki Docs](https://github.com/inzexg-coder/Amenodes/wiki)
 
 ---
 
 ## About
+
+### ✨ Premium Features
+
+Unlock a premium subscription and transform your Amenodes experience with exclusive visual enhancements designed to make your workflow smoother, more intuitive, and visually stunning:
+
+- **🎨 Purple Accent Theme** — Swap the standard orange palette for a sleek purple gradient. Your canvas, your style.
+- **⚡ Node Inertia** — Drag nodes with momentum. Watch them glide with a satisfying overshoot and spring-back effect that makes every interaction feel alive and responsive.
+- **🌊 Edge Wave** — Hover over any connection line and see it come to life with a flowing wave animation. Perfect for tracking complex data flows at a glance.
+- **🧲 Magnetic Nodes** — No more pixel-hunting. Drag a connection near a compatible node and watch it snap into focus with a live arrow preview and purple glow. Incompatible types show a red warning — instantly.
+- **✨ Particle Trail** — Drag a node and leave a trail of glowing particles behind. A subtle, beautiful effect that adds a layer of polish to every movement.
+- **🚀 Premium Settings Panel** — Fine-tune every premium feature from a dedicated settings tab: toggle inertia bounce, particle trails, edge waves, magnetic nodes, and the purple accent independently.
+
+> Upgrade your node editor from tool to experience. Premium features are available via subscription.
+
 
 **Amenodes** is a node-based visual programming language built in JavaScript for data analysis and calculations. Replace cumbersome Excel spreadsheets with a flexible, visual interface powered by a rich set of mathematical tools.
 
@@ -17,11 +31,6 @@
 - **Real-time Computation** - Automatic reevaluation when connections or values change.
 - **Type System** - Smart connection validation prevents invalid links (e.g., connecting text to a number input).
 - **Internationalization (i18n)** - Full support for English and Russian with an easy-to-extend translation system.
-- **Premium System** - Optional premium subscription with visual enhancements:
-  - **Purple Accent Theme** — replaces orange accents with purple gradient
-  - **Node Inertia** — nodes overshoot with spring-back when dragged
-  - **Edge Wave** — running wave animation on edge hover
-  - **Magnetic Nodes** — connection preview with arrow on compatible node hover
 - **Performance Optimizations** - Built-in benchmarking and optimization panel with toggle switches and real-time FPS gain display.
 - **Undo/Redo** - Full history with auto-save to localStorage.
 - **Import/Export** - Save your graphs to `.amnk` files and load them back.
@@ -108,7 +117,7 @@ When **Magnetic Nodes** is enabled in the Premium settings, dragging a connectio
 
 ### Premium Features
 
-Premium features are available after authentication. They provide visual and UX enhancements without adding new node types or computational capabilities, keeping templates accessible to all users.
+See [✨ Premium Features](#-premium-features) at the top of this page for the full list of visual enhancements available with a premium subscription.
 
 | Feature | Description | Toggle Location |
 |---------|-------------|-----------------|
@@ -116,6 +125,7 @@ Premium features are available after authentication. They provide visual and UX 
 | **Purple Accent** | Replaces orange gradients and buttons with purple | Editor → Settings → Premium |
 | **Edge Wave** | Running dashed animation on edge hover | Editor → Settings → Premium |
 | **Magnetic Nodes** | Connection preview with arrow and node glow when dragging near compatible nodes | Editor → Settings → Premium |
+| **Particle Trail** | Glowing particles trail behind nodes when dragged | Editor → Settings → Premium |
 
 Settings are saved to `localStorage` and persist across sessions.
 

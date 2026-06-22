@@ -29,6 +29,12 @@ export class DomRenderer {
     this.magneticNodesEnabled = function() { return false; };
     this._dragHistory = [];
     this._inertiaAnimId = null;
+    this._particles = [];
+    this._particleSpawnActive = false;
+    this._particleAnimId = null;
+    this._particleCanvas = null;
+    this._particleCtx = null;
+    this._touchDragConfirmed = false;
     this.getSnapEnabled = null;
     this.getGridSize = null;
     this.opts = {
@@ -47,6 +53,7 @@ export class DomRenderer {
     });
 
     this.attachTouchFeedback();
+    this._initParticleCanvas();
     this.contextMenu = null;
     this.layer.addEventListener("click", (e) => {
       if (!e.target.closest(".edge-group")) {
@@ -276,6 +283,7 @@ export class DomRenderer {
 
     const sourceId = parseInt(handle.getAttribute('data-source-id'));
     const port = handle.getAttribute('data-port') || 'main';
+    this._edgeHandlePos = Array.from(handle.classList).find(c => c.startsWith('handle-')) || 'handle-right';
     const startX = event.clientX || (event.touches && event.touches[0].clientX) || 0;
     const startY = event.clientY || (event.touches && event.touches[0].clientY) || 0;
     let moved = false;
@@ -287,7 +295,7 @@ export class DomRenderer {
       if (!moved && (Math.abs(cx - startX) > 5 || Math.abs(cy - startY) > 5)) {
         moved = true;
         cleanup();
-        // Use handle center so line starts from port center regardless of node scaling
+        
         var hRect = handle.getBoundingClientRect();
         var hCx = hRect.left + hRect.width / 2;
         var hCy = hRect.top + hRect.height / 2;
@@ -321,6 +329,9 @@ export class DomRenderer {
     this.isDraggingEdge = true;
     this.edgeSourceId = sourceId;
     this.edgeSourcePort = port;
+    
+    var _srcEl = document.querySelector('.node[data-id="' + sourceId + '"]');
+    if (_srcEl) _srcEl.classList.add('edge-drawing');
 
     const canvasCoords = this.getCanvasCoords(clientX, clientY);
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -338,7 +349,8 @@ export class DomRenderer {
 
     this.tempLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
     this.tempLine.setAttribute("class", "temp-edge-line");
-    this.tempLine.setAttribute("stroke", port === 'unmapped' ? "#44aaff" : (window.__premiumAccent ? window.__premiumAccent() : "#ffaa55"));
+    var tempLineColor = port === 'unmapped' ? '#44aaff' : (window.__premiumAccent ? window.__premiumAccent() : '#ffaa55');
+    this.tempLine.style.setProperty('stroke', tempLineColor, 'important');
     this.tempLine.setAttribute("stroke-width", "3");
     this.tempLine.setAttribute("stroke-dasharray", "6,4");
     this.tempLine.setAttribute("x1", canvasCoords.x);
@@ -369,7 +381,8 @@ export class DomRenderer {
     var cy = this.getClientY(event);
     var point = this.getCanvasCoords(cx, cy);
 
-    // Magnetic node preview (premium)
+    this._updateTempLineSource();
+
     if (this.magneticNodesEnabled()) {
       this.updateMagneticPreview(cx, cy, point, event);
     } else {
@@ -379,9 +392,8 @@ export class DomRenderer {
   }
 
   updateMagneticPreview(clientX, clientY, fallbackPoint, event) {
-    var MAGNET_ZONE = 40;  // px — connection preview zone
+    var MAGNET_ZONE = 40;  
 
-    // Find nearest node (different from source)
     var nodeEls = document.querySelectorAll('.node');
     var nearest = null;
     var minDist = Infinity;
@@ -406,21 +418,19 @@ export class DomRenderer {
       }
     }
 
-    // Clear previous magnetic node visual
-    if (this.magneticNode && this.magneticNode !== nearest) {
+    if (this.magneticNode && (this.magneticNode !== nearest || minDist >= MAGNET_ZONE)) {
       this.magneticNode.classList.remove('node-magnetic-glow');
       this.magneticNode.classList.remove('node-magnetic-snap');
       this.magneticNode = null;
     }
 
-    // Reset line to free dashed, remove arrow
     this.tempLine.setAttribute("x2", fallbackPoint.x);
     this.tempLine.setAttribute("y2", fallbackPoint.y);
     this.tempLine.setAttribute("stroke-dasharray", "6,4");
     this._removeTempArrow();
 
     if (nearest && minDist < MAGNET_ZONE) {
-      // Check data type compatibility only (not edge capability)
+      
       var dataCompatible = false;
       if (this.graph && this.graph.map) {
         try {
@@ -431,21 +441,20 @@ export class DomRenderer {
             var tgtDT = window.typeSystem.getNodeType(tgtNode);
             var srcDef = window.typeSystem.getTypeDefinition(srcDT);
             var tgtDef = window.typeSystem.getTypeDefinition(tgtDT);
-            // Compatible if both types registered and target allows this source type
+            
             dataCompatible = srcDef && tgtDef && (tgtDef.allowedInputTypes.length === 0 || tgtDef.allowedInputTypes.includes(srcDT));
           }
         } catch(e) { console.warn('[Magnetic] type check error:', e); }
       }
 
       if (dataCompatible) {
-        // Compatible — preview: node glows, line solid with arrow to node border
+        
         nearest.classList.add('node-magnetic-snap');
 
-        // Get source port canvas position
+        this._updateTempLineSource();
         var srcX = parseFloat(this.tempLine.getAttribute('x1'));
         var srcY = parseFloat(this.tempLine.getAttribute('y1'));
 
-        // Convert target rect to canvas coords
         var vr = this.viewportElement.getBoundingClientRect();
         var offset = this.viewport ? this.viewport.getOffset() : { x: 0, y: 0 };
         var zoom = window.currentZoom || 1;
@@ -455,20 +464,16 @@ export class DomRenderer {
         var tCanvasW = nearestRect.width / zoom;
         var tCanvasH = nearestRect.height / zoom;
 
-        // Target center in canvas coords
         var tCenterX = tCanvasX + tCanvasW / 2;
         var tCenterY = tCanvasY + tCanvasH / 2;
 
-        // Calculate border intersection: line from src to target center, crossing target rect border
         var borderPoint = this._lineToRectBorder(srcX, srcY, tCenterX, tCenterY, tCanvasX, tCanvasY, tCanvasW, tCanvasH);
 
-        // Update line to border point
         this.tempLine.setAttribute("stroke-dasharray", "none");
         this.tempLine.setAttribute("stroke-width", "3");
         this.tempLine.setAttribute("x2", borderPoint.x);
         this.tempLine.setAttribute("y2", borderPoint.y);
 
-        // Arrow at midpoint between source and border
         this._addTempArrow(
           { x: srcX, y: srcY },
           { x: borderPoint.x, y: borderPoint.y }
@@ -476,7 +481,7 @@ export class DomRenderer {
 
         this.magneticNode = nearest;
       } else {
-        // Incompatible — just glow the node, line stays dashed
+        
         nearest.classList.add('node-magnetic-glow');
         this.magneticNode = nearest;
       }
@@ -484,8 +489,7 @@ export class DomRenderer {
   }
 
   _lineToRectBorder(x1, y1, x2, y2, rx, ry, rw, rh) {
-    // Line from (x1,y1) to (x2,y2), find intersection with rect (rx,ry,rw,rh)
-    // If line starts inside rect, return the start point
+
     if (x1 >= rx && x1 <= rx + rw && y1 >= ry && y1 <= ry + rh) {
       return { x: x1, y: y1 };
     }
@@ -494,29 +498,27 @@ export class DomRenderer {
     var dy = y2 - y1;
     var t = Infinity;
 
-    // Check intersection with each rect edge
-    // Left edge
     if (dx !== 0) {
       var tLeft = (rx - x1) / dx;
       if (tLeft > 0 && tLeft < t) {
         var y = y1 + dy * tLeft;
         if (y >= ry && y <= ry + rh) t = tLeft;
       }
-      // Right edge
+      
       var tRight = (rx + rw - x1) / dx;
       if (tRight > 0 && tRight < t) {
         var y = y1 + dy * tRight;
         if (y >= ry && y <= ry + rh) t = tRight;
       }
     }
-    // Top edge
+    
     if (dy !== 0) {
       var tTop = (ry - y1) / dy;
       if (tTop > 0 && tTop < t) {
         var x = x1 + dx * tTop;
         if (x >= rx && x <= rx + rw) t = tTop;
       }
-      // Bottom edge
+      
       var tBottom = (ry + rh - y1) / dy;
       if (tBottom > 0 && tBottom < t) {
         var x = x1 + dx * tBottom;
@@ -532,7 +534,8 @@ export class DomRenderer {
     if (!this._tempArrow && this.tempSvg) {
       var arrow = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
       arrow.classList.add("temp-edge-arrow");
-      arrow.setAttribute("fill", window.__premiumAccent ? window.__premiumAccent() : "#ffb347");
+      var isBluePort = this.edgeSourcePort === 'unmapped';
+      arrow.style.setProperty('fill', isBluePort ? '#44aaff' : (window.__premiumAccent ? window.__premiumAccent() : '#ffb347'), 'important');
       arrow.setAttribute("stroke", "none");
       this.tempSvg.appendChild(arrow);
       this._tempArrow = arrow;
@@ -568,7 +571,7 @@ export class DomRenderer {
     var targetId = null;
 
     if (this.magneticNode) {
-      // Use magnetic target node
+      
       targetId = parseInt(this.magneticNode.getAttribute('data-id'));
       this.magneticNode.classList.remove('node-magnetic-glow');
       this.magneticNode.classList.remove('node-magnetic-snap');
@@ -597,7 +600,7 @@ export class DomRenderer {
         this.save();
         if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
       } else if (targetId) {
-        // Connection failed — flash both nodes red briefly using inline box-shadow
+        
         var _srcEl = document.querySelector('.node[data-id="' + this.edgeSourceId + '"]');
         var _tgtEl = document.querySelector('.node[data-id="' + targetId + '"]');
         [ _srcEl, _tgtEl ].forEach(function(el) {
@@ -613,6 +616,10 @@ export class DomRenderer {
       }
     }
 
+    if (this.edgeSourceId) {
+      var _srcEl = document.querySelector('.node[data-id="' + this.edgeSourceId + '"]');
+      if (_srcEl) _srcEl.classList.remove('edge-drawing');
+    }
     this.isDraggingEdge = false;
     this.edgeSourceId = null;
     this.edgeSourcePort = null;
@@ -636,18 +643,55 @@ export class DomRenderer {
     const worldY = (clientY - rect.top - offset.y) / zoom;
     return { x: worldX, y: worldY };
   }
+  _updateTempLineSource() {
+    if (!this.edgeSourceId || !this.tempLine) return;
+    var srcEl = document.querySelector('.node[data-id="' + this.edgeSourceId + '"]');
+    if (!srcEl) return;
+    var rect = srcEl.getBoundingClientRect();
+    var vr = this.viewportElement.getBoundingClientRect();
+    var offset = this.viewport ? this.viewport.getOffset() : { x: 0, y: 0 };
+    var zoom = window.currentZoom || 1;
+
+    var srcX, srcY;
+    var handlePos = this._edgeHandlePos || 'handle-right';
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height / 2;
+
+    if (handlePos === 'handle-top') {
+      srcX = cx;
+      srcY = rect.top - 7;
+    } else if (handlePos === 'handle-bottom') {
+      srcX = cx;
+      srcY = rect.bottom + 7;
+    } else if (handlePos === 'handle-left') {
+      srcX = rect.left - 7;
+      srcY = cy;
+    } else {
+      
+      srcX = rect.right + 7;
+      srcY = this.edgeSourcePort === 'unmapped' ? cy + 20 : cy;
+    }
+
+    srcX = (srcX - vr.left - offset.x) / zoom;
+    srcY = (srcY - vr.top - offset.y) / zoom;
+
+    this.tempLine.setAttribute("x1", srcX);
+    this.tempLine.setAttribute("y1", srcY);
+  }
 
   attachDragEvents() {
     document.querySelectorAll('.node').forEach(element => {
       const header = element.querySelector('.node-header, .output-header, .calc-header, .map-header, .group-header');
       if (header) {
         header.addEventListener("mousedown", this.onNodeDown.bind(this));
+        header.addEventListener("touchstart", this.onNodeDown.bind(this), { passive: false });
       }
     });
   }
 
   onNodeDown(event) {
-    if (event.button !== 0 && event.button !== undefined) return;
+    const isTouch = event.type === 'touchstart';
+    if (!isTouch && event.button !== 0 && event.button !== undefined) return;
     if (event.target.closest('.node-handle') ||
         event.target.closest('.node-actions') ||
         event.target.closest('input') ||
@@ -668,10 +712,28 @@ export class DomRenderer {
     this.dragStartY = this.getClientY(event);
     this.dragNodeStartX = node.x;
     this.dragNodeStartY = node.y;
-    nodeElement.style.transition = "none";
-    nodeElement.classList.add('node-dragging');
+
+    if (isTouch) {
+      this._touchDragConfirmed = false;
+      nodeElement.classList.add('node-touch-active');
+    } else {
+      nodeElement.classList.add('node-dragging');
+      nodeElement.style.setProperty('transition', 'transform 0.15s ease, box-shadow 0.15s ease', 'important');
+      nodeElement.style.setProperty('transform', 'scale(1.03)', 'important');
+      
+      nodeElement.style.setProperty('box-shadow', '0 0 0 2px var(--accent), 0 0 20px rgba(var(--accent-rgb), 0.5), 0 0 40px rgba(var(--accent-rgb), 0.3), 0 0 0 1px rgba(255,255,255,0.2)', 'important');
+      document.body.classList.add('dragging');
+    }
 
     document.body.style.cursor = 'grabbing';
+    console.log('[Drag] START type=' + event.type + ' id=' + node.id + ' x=' + node.x.toFixed(0) + ' y=' + node.y.toFixed(0));
+    if (this._particleTrailEnabled()) {
+      this._particleSpawnActive = true;
+      window.__particleAccent = getComputedStyle(document.body).getPropertyValue('--accent').trim() || '#a78bfa';
+      if (!this._particleAnimId) {
+        this._animateParticles();
+      }
+    }
     event.preventDefault();
   }
 
@@ -681,6 +743,27 @@ export class DomRenderer {
       const cy = this.getClientY(event);
       const deltaX = (cx - this.dragStartX) / (window.currentZoom || 1);
       const deltaY = (cy - this.dragStartY) / (window.currentZoom || 1);
+
+      if (!this._touchDragConfirmed && event.type === 'touchmove') {
+        const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        if (dist < 5) {
+          
+          this._dragHistory.push({ x: this.dragNodeStartX + deltaX, y: this.dragNodeStartY + deltaY, t: Date.now() });
+          while (this._dragHistory.length > 5) this._dragHistory.shift();
+          return;
+        }
+        this._touchDragConfirmed = true;
+        const el = this.elementCache.get(this.dragNode.id);
+        if (el) {
+          el.classList.remove('node-touch-active');
+          el.classList.add('node-dragging');
+          console.log('[Drag] touch .node-dragging ADDED, box-shadow:', getComputedStyle(el).boxShadow);
+          el.style.setProperty('transition', 'transform 0.15s ease, box-shadow 0.15s ease', 'important');
+          el.style.setProperty('transform', 'scale(1.03)', 'important');
+          el.style.setProperty('box-shadow', '0 0 0 2px var(--accent), 0 0 20px rgba(var(--accent-rgb), 0.5), 0 0 40px rgba(var(--accent-rgb), 0.3), 0 0 0 1px rgba(255,255,255,0.2)', 'important');
+          document.body.classList.add('dragging');
+        }
+      }
 
       let newX = this.dragNodeStartX + deltaX;
       let newY = this.dragNodeStartY + deltaY;
@@ -707,61 +790,111 @@ export class DomRenderer {
         });
       }
 
-      // Track velocity for inertia
       this._dragHistory.push({ x: newX, y: newY, t: Date.now() });
+
+      if (this._particleSpawnActive && this.dragNode) {
+        this._spawnDragParticles(newX, newY);
+      }
       while (this._dragHistory.length > 5) this._dragHistory.shift();
 
       if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
     }
   }
-  onGlobalUp() {
+  onGlobalUp(event) {
     if (this.dragNode) {
-      const dragEl = this.elementCache.get(this.dragNode.id);
-      if (dragEl) {
-        dragEl.style.transition = "";
-        dragEl.classList.remove('node-dragging');
+      
+      if (this._touchDragConfirmed === false && event && event.type === 'touchend') {
+        this._dragHistory = [];
+        this.dragNode = null;
+        return;
       }
 
-      // Inertia overshoot for premium
+      const dragEl = this.elementCache.get(this.dragNode.id);
+      this._particleSpawnActive = false;
+      document.body.classList.remove('dragging');
+      if (dragEl) {
+        dragEl.classList.remove('node-dragging');
+        dragEl.style.removeProperty('box-shadow');
+        if (!this.inertiaEnabled()) {
+          
+          dragEl.style.setProperty('transition', 'transform 0.2s ease, box-shadow 0.2s ease', 'important');
+          dragEl.style.removeProperty('transform');
+          setTimeout(function() {
+            if (dragEl) dragEl.style.removeProperty('transition');
+          }, 200);
+        } else {
+          
+          dragEl.classList.add('node-inertia');
+        }
+      }
+
       if (this._inertiaAnimId) { cancelAnimationFrame(this._inertiaAnimId); this._inertiaAnimId = null; }
-      if (this.inertiaEnabled() && this._dragHistory.length >= 3) {
+      var _inertiaEnabled = this.inertiaEnabled();
+      var _histLen = this._dragHistory.length;
+      if (_inertiaEnabled) console.log('[Inertia] enabled=' + _inertiaEnabled + ' history=' + _histLen + ' dragNode=' + (this.dragNode ? this.dragNode.id : 'null') + ' dragEl=' + (dragEl ? 'found' : 'null'));
+      if (_inertiaEnabled && _histLen >= 2) {
         var hist = this._dragHistory;
         var last = hist[hist.length - 1];
-        var first = hist[0];
-        var dt = (last.t - first.t) || 1;
-        var vx = (last.x - first.x) / dt * 40;
-        var vy = (last.y - first.y) / dt * 40;
+        var prev = hist.length >= 2 ? hist[hist.length - 2] : hist[0];
+        var dt = (last.t - prev.t) || 1;
+        var vx = (last.x - prev.x) / dt * 40;
+        var vy = (last.y - prev.y) / dt * 40;
         var speed = Math.sqrt(vx * vx + vy * vy);
+        console.log('[Inertia] speed=' + speed.toFixed(2) + ' vx=' + vx.toFixed(2) + ' vy=' + vy.toFixed(2) + ' dt=' + dt + ' zoom=' + (window.currentZoom || 1).toFixed(2));
+        console.log('[Inertia] prev.x=' + prev.x.toFixed(1) + ' last.x=' + last.x.toFixed(1) + ' prev.y=' + prev.y.toFixed(1) + ' last.y=' + last.y.toFixed(1) + ' dragNode.x=' + this.dragNode.x.toFixed(1) + ' y=' + this.dragNode.y.toFixed(1));
+        console.log('[Inertia] FULL history:', hist.map(function(h){return h.x.toFixed(0)+','+h.y.toFixed(0)+'t='+h.t;}).join(' | '));
         if (speed > 2) {
-          var overshootX = Math.max(-60, Math.min(60, vx * 2.0));
-          var overshootY = Math.max(-60, Math.min(60, vy * 2.0));
+          var overshootX = Math.max(-30, Math.min(30, vx * 1.0));
+          var overshootY = Math.max(-30, Math.min(30, vy * 1.0));
+          console.log('[Inertia] OVERSHOOT x=' + overshootX.toFixed(1) + ' y=' + overshootY.toFixed(1));
           var finalX = this.dragNode.x;
           var finalY = this.dragNode.y;
-          // Apply overshoot
+          
           this.dragNode.x = finalX + overshootX;
           this.dragNode.y = finalY + overshootY;
           if (dragEl) {
-            dragEl.style.transition = 'none';
+            dragEl.style.setProperty('transition', 'none', 'important');
             dragEl.style.left = this.dragNode.x + 'px';
             dragEl.style.top = this.dragNode.y + 'px';
           }
           this.updateEdgePositions();
-          // Spring back after a tiny delay
+          document.body.classList.add('inertia-active');
+          
           var self = this;
           var savedDragNode = this.dragNode;
           requestAnimationFrame(function() {
             if (!savedDragNode) return;
-            dragEl.style.transition = 'left 0.45s cubic-bezier(0.18, 2.5, 0.3, 1), top 0.45s cubic-bezier(0.18, 2.5, 0.3, 1)';
+            var _transVal = 'left 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94), top 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            dragEl.style.setProperty('transition', _transVal, 'important');
+            console.log('[Inertia] SPRING-BACK transition set, computed=', getComputedStyle(dragEl).transition, 'final=' + finalX.toFixed(0) + ',' + finalY.toFixed(0));
             savedDragNode.x = finalX;
             savedDragNode.y = finalY;
             dragEl.style.left = finalX + 'px';
             dragEl.style.top = finalY + 'px';
             self.updateEdgePositions();
+            
+            dragEl.style.removeProperty('transform');
             self._inertiaAnimId = setTimeout(function() {
-              if (dragEl) dragEl.style.transition = '';
+              console.log('[Inertia] ANIMATION DONE — cleanup');
+              if (dragEl) {
+                dragEl.style.removeProperty('transition');
+                dragEl.style.removeProperty('transform');
+                dragEl.style.removeProperty('z-index');
+                dragEl.classList.remove('node-inertia');
+              }
+              document.body.classList.remove('inertia-active');
               self._inertiaAnimId = null;
             }, 500);
           });
+        } else {
+          
+          if (dragEl) {
+            dragEl.style.setProperty('transition', 'transform 0.2s ease, box-shadow 0.2s ease', 'important');
+            dragEl.style.removeProperty('transform');
+            setTimeout(function() {
+              if (dragEl) dragEl.style.removeProperty('transition');
+            }, 200);
+          }
         }
       }
 
@@ -807,6 +940,104 @@ export class DomRenderer {
         nodeEl.classList.remove('node-touch-active');
       }
     }, { passive: true });
+  }
+
+  _isPremium() {
+    return localStorage.getItem('amenodes_premium') === 'true';
+  }
+
+  _particleTrailEnabled() {
+    return this._isPremium() && localStorage.getItem('premium_particle_trail') === 'true';
+  }
+
+  _initParticleCanvas() {
+    if (this._particleCanvas) return;
+    var canvas = document.createElement('canvas');
+    canvas.id = 'particleTrailCanvas';
+    canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10000;';
+    var container = this.viewportElement;
+    if (container) {
+      container.appendChild(canvas);
+      this._particleCanvas = canvas;
+      this._particleCtx = canvas.getContext('2d');
+      this._resizeParticleCanvas();
+    }
+  }
+
+  _resizeParticleCanvas() {
+    if (this._particleCanvas && this.viewportElement) {
+      this._particleCanvas.width = this.viewportElement.clientWidth;
+      this._particleCanvas.height = this.viewportElement.clientHeight;
+    }
+  }
+
+  _spawnDragParticles(worldX, worldY) {
+    if (!this._particleCtx || !this._particleTrailEnabled()) return;
+    for (var i = 0; i < 2; i++) {
+      var angle = Math.random() * Math.PI * 2;
+      var speed = 0.3 + Math.random() * 1.2;
+      var size = 2 + Math.random() * 4;
+      this._particles.push({
+        worldX: worldX,
+        worldY: worldY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1.0,
+        decay: 0.015 + Math.random() * 0.025,
+        size: size,
+        startSize: size
+      });
+    }
+    if (this._particles.length > 200) {
+      this._particles.splice(0, this._particles.length - 200);
+    }
+  }
+
+  _animateParticles() {
+    if (!this._particleCtx || !this._particleCanvas) return;
+    this._resizeParticleCanvas();
+    var ctx = this._particleCtx;
+    var canvas = this._particleCanvas;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    var zoom = window.currentZoom || 1;
+    var rect = this.viewportElement.getBoundingClientRect();
+    var offset = this.viewport ? this.viewport.getOffset() : { x: 0, y: 0 };
+
+    var alive = false;
+    for (var i = this._particles.length - 1; i >= 0; i--) {
+      var p = this._particles[i];
+      p.worldX += p.vx;
+      p.worldY += p.vy;
+      p.vx *= 0.98;
+      p.vy *= 0.98;
+      p.life -= p.decay;
+
+      if (p.life <= 0) {
+        this._particles.splice(i, 1);
+        continue;
+      }
+      alive = true;
+
+      var sx = p.worldX * zoom + rect.left + offset.x;
+      var sy = p.worldY * zoom + rect.top + offset.y;
+
+      var particleColor = window.__particleAccent || '#a78bfa';
+      ctx.globalAlpha = p.life * 0.7;
+      ctx.shadowColor = particleColor;
+      ctx.shadowBlur = 6 * p.life;
+      ctx.fillStyle = particleColor;
+      ctx.beginPath();
+      ctx.arc(sx - rect.left, sy - rect.top, p.size * p.life, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    if (alive || this._particleSpawnActive) {
+      this._particleAnimId = requestAnimationFrame(this._animateParticles.bind(this));
+    } else {
+      this._particleAnimId = null;
+    }
   }
 
   closeMenu() {

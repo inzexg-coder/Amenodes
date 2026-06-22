@@ -22,8 +22,8 @@ window.__premiumAccent = window.__premiumAccent || function() {
 <title data-i18n="editor.title">@Amenodes</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<link rel="stylesheet" href="styles/main.css?v=110">
-    <link rel="stylesheet" href="styles/mobile.css?v=110">
+<link rel="stylesheet" href="styles/main.css?v=129">
+    <link rel="stylesheet" href="styles/mobile.css?v=129">
 <script>
 (function(){var c;function init(){if(c)return;c=document.createElement('div');
 c.id='errConsole';c.style.cssText='position:fixed;bottom:0;left:0;right:0;background:rgba(10,0,0,0.92);color:#ff6b6b;font-family:monospace;font-size:13px;z-index:99999;padding:12px 16px;max-height:40vh;overflow-y:auto;border-top:2px solid #ff3333;display:none';
@@ -49,7 +49,7 @@ console.log('[ErrConsole] ready');
 </head>
 <body>
 <script>
-// Blocking: restore premium theme before paint
+
 (function(){
 if(localStorage.getItem('premium_purple_accent')==='true'){
 document.body.classList.add('premium-purple');document.body.classList.add('premium-hover');document.body.classList.add('premium-hover');
@@ -252,14 +252,24 @@ document.head.appendChild(s);
       </div>
 
       <div class="settings-tab-content premium-tab-content" data-tab="premium">
+        <div class="premium-section-label"><i class="fas fa-running"></i> Animation</div>
         <div class="setting-group">
           <label><i class="fas fa-crown" style="color:var(--accent);font-size:12px;"></i> <span data-i18n="editor.overshootBounce">Overshoot Bounce</span></label>
           <div class="toggle-switch">
             <input type="checkbox" id="premiumOvershoot">
             <span class="toggle-slider"></span>
-            <span class="toggle-label"><span data-i18n="editor.overshootBounceDesc">Transitions overshoot with bounce (cubic-bezier 0.34, 1.56, 0.64, 1)</span></span>
+            <span class="toggle-label"><span data-i18n="editor.overshootBounceDesc">Nodes overshoot with inertia when dragged and spring back</span></span>
           </div>
         </div>
+        <div class="setting-group">
+          <label><i class="fas fa-crown" style="color:var(--accent);font-size:12px;"></i> <span data-i18n="editor.particleTrail">Particle Trail</span></label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="premiumParticleTrail">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label"><span data-i18n="editor.particleTrailDesc">Glowing particles trail behind nodes when dragged</span></span>
+          </div>
+        </div>
+        <div class="premium-section-label"><i class="fas fa-palette"></i> Visual</div>
         <div class="setting-group">
           <label><i class="fas fa-crown" style="color:var(--accent);font-size:12px;"></i> <span data-i18n="editor.purpleAccent">Purple Accent</span></label>
           <div class="toggle-switch">
@@ -276,6 +286,7 @@ document.head.appendChild(s);
             <span class="toggle-label"><span data-i18n="editor.edgeWaveDesc">Running wave animation on edge hover</span></span>
           </div>
         </div>
+        <div class="premium-section-label"><i class="fas fa-hand-pointer"></i> Interaction</div>
         <div class="setting-group">
           <label><i class="fas fa-crown" style="color:var(--accent);font-size:12px;"></i> <span data-i18n="editor.magneticNodes">Magnetic Nodes</span></label>
           <div class="toggle-switch">
@@ -283,7 +294,6 @@ document.head.appendChild(s);
             <span class="toggle-slider"></span>
             <span class="toggle-label"><span data-i18n="editor.magneticNodesDesc">Nodes attract connections when dragged nearby</span></span>
           </div>
-        </div>
         </div>
     </div>
     <div class="modal-footer">
@@ -299,18 +309,17 @@ document.head.appendChild(s);
 <script type="importmap">
 {
   "imports": {
-    "./src/main.js": "./src/main.js?v=110"
+    "./src/main.js": "./src/main.js?v=129"
   }
 }
 </script>
-<script type="module" src="./src/main.js?v=110"></script>
+<script type="module" src="./src/main.js?v=129"></script>
 
 <script>
 const API_BASE = 'https://amenoke.ru/amenodes/api';
 let currentUser = null;
 let userMenu = null;
 
-// --- Premium persistence ---
 function savePremiumStatus() {
     var premium = currentUser && (currentUser.is_premium || currentUser.premium);
     var override = localStorage.getItem('amenodes_premium_override') === 'true';
@@ -334,9 +343,13 @@ function isPremium() {
     return localStorage.getItem('amenodes_premium') === 'true' ||
            localStorage.getItem('amenodes_premium_override') === 'true';
 }
-// -------------------------
 
 function t(key, params = {}) {
+    
+    if (window.i18n && window.i18n.t) {
+        return window.i18n.t(key, params);
+    }
+    
     const translations = window._translations || {};
     const keys = key.split('.');
     let value = translations;
@@ -362,21 +375,32 @@ function updateUITexts() {
 }
 
 function loadTranslations() {
-    const savedLang = localStorage.getItem('amenodes_language') || 'en';
-    fetch(`./src/i18n/locales/${savedLang}.js?v=110`)
+    const savedLang = localStorage.getItem('amenodes_language');
+    var detectedLang = 'en';
+    if (savedLang && ['en','ru'].indexOf(savedLang) !== -1) {
+      detectedLang = savedLang;
+    } else {
+      var bl = (navigator.language || '').split('-')[0];
+      if (bl === 'ru') detectedLang = 'ru';
+    }
+    fetch(`./src/i18n/locales/${detectedLang}.js?v=129`)
         .then(res => res.text())
         .then(text => {
-            const match = text.match(/export const \w+ = ({[\s\S]*?});/);
+            const match = text.match(/export const \w+ = ({[\s\S]*?\n});/);
             if (match) {
                 const translationsObj = eval('(' + match[1] + ')');
                 window._translations = translationsObj;
                 updateUITexts();
+                updateAuthUI();
                 if (window.i18n && window.i18n.notifyListeners) {
                     window.i18n.notifyListeners();
                 }
             }
         })
-        .catch(err => console.error('Failed to load translations:', err));
+        .catch(err => console.error('Failed to load translations:', err)).finally(function() {
+                updateUITexts();
+                updateAuthUI();
+            });
 }
 
 loadTranslations();
@@ -550,13 +574,7 @@ function updateAuthUI() {
             toggleUserMenu();
         };
         authContainer.appendChild(saveBtn);
-        // Premium badge removed from corner - shown inline instead
-        // if (isPremium()) {
-        //     const premiumBadge = document.createElement('span');
-        //     premiumBadge.className = 'premium-badge';
-        //     premiumBadge.innerHTML = '<i class="fas fa-crown"></i> PREMIUM';
-        //     authContainer.appendChild(premiumBadge);
-        // }
+
         if (currentUser.role === 'moderator' || currentUser.role === 'admin') {
             const modBtn = document.createElement('button');
             modBtn.id = 'moderateBtn';
@@ -723,6 +741,7 @@ function initLanguageSettings() {
             document.getElementById('lang-en-check').style.display = currentLang === 'en' ? 'inline' : 'none';
             document.getElementById('lang-ru-check').style.display = currentLang === 'ru' ? 'inline' : 'none';
             modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
         }
     };
     const langOptions = document.querySelectorAll('#canvasLanguageSelector .language-option');
@@ -834,7 +853,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentSheet = null;
   let selectedNodeId = null;
 
-  // ----- LONG PRESS STATE -----
   let longPressTimer = null;
   let longPressTriggered = false;
   let touchStartNodeId = null;
@@ -854,7 +872,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
   const mobileMenuClose = document.getElementById('mobileMenuClose');
 
-  // ----- BOTTOM SHEET -----
   function openSheet(type) {
     if (!isMobile()) return;
     currentSheet = type;
@@ -868,7 +885,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         sheetContent.innerHTML = '';
         const clone = libraryContent.cloneNode(true);
         sheetContent.appendChild(clone);
-        // Re-bind click handlers on node items for mobile creation
+        
         sheetContent.querySelectorAll('.node-list-item').forEach(function(item) {
           var type = item.getAttribute('data-type');
           var subnodeKey = item.getAttribute('data-subnode');
@@ -915,11 +932,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.body.style.overflow = '';
   }
 
-  // ----- NODE SELECTION -----
   function selectNode(nodeId) {
     selectedNodeId = nodeId;
-    
-    // Remove previous selection from all nodes
+
     document.querySelectorAll('.node.selected-for-edit').forEach(function(el) {
       el.classList.remove('selected-for-edit');
     });
@@ -934,39 +949,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectNode(null);
   }
 
-  // ----- TOUCH HANDLING: long-press to drag, tap to select -----
   var nodesLayer = document.getElementById('nodesLayer');
   if (nodesLayer) {
-    // Touch start on any node
+    
     nodesLayer.addEventListener('touchstart', function(e) {
       if (!isMobile()) return;
       
       var nodeEl = e.target.closest('.node');
       if (!nodeEl) return;
-      
-      // Ignore handles, buttons, inputs
+
       if (e.target.closest('.node-handle, .node-actions, input, button, select, .title-editable')) return;
       
       var touch = e.touches[0];
       var nodeId = parseInt(nodeEl.getAttribute('data-id'));
       if (isNaN(nodeId)) return;
-      
-      // Store touch state
+
       touchStartNodeId = nodeId;
       touchStartPos = { x: touch.clientX, y: touch.clientY };
       longPressTriggered = false;
-      
-      // Start long-press timer (300ms)
+
       clearTimeout(longPressTimer);
       longPressTimer = setTimeout(function() {
         longPressTriggered = true;
-        
-        // Start node drag via renderer
+
         if (window.app && window.app.renderer) {
           var renderer = window.app.renderer;
           var node = window.app.graph.getNode(nodeId);
           if (node) {
-            // Set drag state directly (like onNodeDown does)
+            
             renderer.dragNode = node;
             renderer.dragStartX = touchStartPos.x;
             renderer.dragStartY = touchStartPos.y;
@@ -977,24 +987,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }, 300);
     }, { passive: true });
-    
-    // Touch move: if moved before long-press → cancel timer (it's a tap/pan)
-    // If after long-press → let global onGlobalMove handle it
+
     nodesLayer.addEventListener('touchmove', function(e) {
       if (!isMobile() || touchStartNodeId === null) return;
       
       var touch = e.touches[0];
       var dx = Math.abs(touch.clientX - touchStartPos.x);
       var dy = Math.abs(touch.clientY - touchStartPos.y);
-      
-      // If moved > 10px before long-press fired: cancel
+
       if (!longPressTriggered && (dx > 10 || dy > 10)) {
         clearTimeout(longPressTimer);
         touchStartNodeId = null;
       }
     }, { passive: true });
-    
-    // Touch end
+
     nodesLayer.addEventListener('touchend', function(e) {
       if (!isMobile() || touchStartNodeId === null) return;
       
@@ -1002,35 +1008,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       var nodeId = touchStartNodeId;
       touchStartNodeId = null;
-      
-      // If long-press was triggered and we dragged: onGlobalUp saves
-      // If long-press was triggered but we didn't drag (tap after hold): save anyway
-      // If no long-press: it's a quick tap → toggle selection
+
       if (!longPressTriggered) {
-        // Quick tap: toggle selection
+        
         if (selectedNodeId === nodeId) {
-          selectNode(null); // deselect
+          selectNode(null); 
         } else {
-          selectNode(nodeId); // select
+          selectNode(nodeId); 
         }
       }
     }, { passive: true });
   }
 
-  // Deselect on canvas tap
   var viewport = document.getElementById('viewport');
   if (viewport) {
     viewport.addEventListener('touchstart', function(e) {
       if (!isMobile()) return;
       if (e.target.closest('.node, .mobile-bottom-sheet, .mobile-fab, .mobile-mini-toolbar')) return;
-      // Tap on empty space: deselect after a delay (let other handlers fire first)
+      
       setTimeout(function() {
         if (selectedNodeId !== null && !longPressTriggered) deselectAll();
       }, 100);
     }, { passive: true });
   }
 
-  // ----- FAB — open library -----
   if (fab) {
     fab.addEventListener('click', function() {
       if (sheetOpen) { closeSheet(); return; }
@@ -1038,7 +1039,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Close sheet
   if (sheetClose) {
     sheetClose.addEventListener('click', closeSheet);
   }
@@ -1046,7 +1046,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     sheetOverlay.addEventListener('click', closeSheet);
   }
 
-  // Menu button
   if (mmtMenuBtn) {
     mmtMenuBtn.addEventListener('click', function() {
       mobileMenuOverlay.classList.add('open');
@@ -1062,7 +1061,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (e.target === mobileMenuOverlay) mobileMenuOverlay.classList.remove('open');
     });
   }
-  // User button → open profile or auth
+  
   if (mmtUserBtn) {
     mmtUserBtn.addEventListener('click', function() {
       var token = localStorage.getItem('auth_token');
@@ -1077,7 +1076,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   }
-  // Login button in mobile menu
+  
   var mobileLoginBtn = document.getElementById('mobileLoginBtn');
   if (mobileLoginBtn) {
     mobileLoginBtn.addEventListener('click', function() {
@@ -1087,7 +1086,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       mobileMenuOverlay.classList.remove('open');
     });
   }
-  // Settings button in mobile toolbar
+  
   var mmtSettingsBtn = document.getElementById("mmtSettingsBtn");
   if (mmtSettingsBtn) {
     mmtSettingsBtn.addEventListener("click", function() {
@@ -1097,7 +1096,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Optimization button in mobile toolbar
   var mmtOptBtn = document.getElementById('mmtOptBtn');
   if (mmtOptBtn) {
     mmtOptBtn.addEventListener('click', function() {
@@ -1106,7 +1104,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Undo / Redo
   if (mmtUndo) {
     mmtUndo.addEventListener('click', function() {
       if (window.app && window.app.undo) {
@@ -1124,7 +1121,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Update node count
   function updateNodeCount() {
     if (!mmtNodeCount) return;
     var el = document.getElementById('nodeCount');
@@ -1141,12 +1137,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   updateNodeCount();
 
-  // Close sheet on orientation change
   window.addEventListener('orientationchange', function() {
     if (sheetOpen) closeSheet();
   });
 
-  // Close sheet on resize to desktop
   window.addEventListener('resize', function() {
     if (!isMobile() && sheetOpen) closeSheet();
   });

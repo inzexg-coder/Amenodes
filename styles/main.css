@@ -691,11 +691,6 @@ body {
   transition: var(--transition);
 }
 
-.node-dragging {
-  z-index: 1000 !important;
-  transition: none !important;
-}
-
 @media (hover: hover) {
   .node:hover {
     transform: scale(1.02);
@@ -716,10 +711,37 @@ body {
 }
 
 /* Make neighboring nodes dim slightly when a node is hovered with premium */
-.premium-hover .node:hover ~ .node {
+.premium-hover .node:hover ~ .node:not(.edge-drawing) {
   opacity: 0.85;
-  transition: opacity 0.3s ease;
 }
+/* Source node during edge drawing — never dim */
+.edge-drawing {
+  opacity: 1 !important;
+}
+
+.node-dragging {
+  z-index: 1000 !important;
+  transform: scale(1.03) !important;
+  box-shadow: 
+    0 0 0 2px var(--accent),
+    0 0 20px rgba(var(--accent-rgb), 0.5),
+    0 0 40px rgba(var(--accent-rgb), 0.3),
+    0 0 80px rgba(var(--accent-rgb), 0.15),
+    0 0 0 1px rgba(255,255,255,0.2) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+
+.node-inertia {
+  z-index: 1000 !important;
+}
+
+body.inertia-active .node {
+  pointer-events: none !important;
+}
+
+
+
 
 .node-touch-active {
   transform: scale(1.02);
@@ -1119,6 +1141,43 @@ body {
 
 .edge-highlighted .edge-arrow {
   filter: brightness(1.5);
+}
+
+/* ── Blue edges (Map node output): always blue regardless of theme ── */
+.edge-blue .edge-line {
+  stroke: #44aaff !important;
+}
+.edge-blue .edge-arrow {
+  fill: #44aaff !important;
+  stroke: #88ccff !important;
+}
+.edge-blue:hover .edge-line {
+  filter: brightness(1.5) drop-shadow(0 0 6px #44aaff) !important;
+}
+.edge-blue:hover .edge-arrow {
+  filter: brightness(1.5) drop-shadow(0 0 6px #44aaff) !important;
+}
+/* Override purple theme on blue edges */
+.premium-purple .edge-blue .edge-line {
+  stroke: #44aaff !important;
+}
+.premium-purple .edge-blue .edge-arrow {
+  fill: #44aaff !important;
+  stroke: #88ccff !important;
+}
+.premium-purple .edge-blue:hover .edge-line {
+  filter: brightness(1.5) drop-shadow(0 0 6px #44aaff) !important;
+}
+.premium-purple .edge-blue:hover .edge-arrow {
+  filter: brightness(1.5) drop-shadow(0 0 6px #44aaff) !important;
+}
+/* Override premium edge wave on blue edges */
+.premium-edge-wave .edge-blue:hover .edge-line {
+  filter: brightness(1.8) drop-shadow(0 0 6px #44aaff) !important;
+}
+.premium-edge-wave .edge-blue.edge-wave .edge-line,
+.premium-edge-wave .edge-blue.edge-wave.edge-highlighted .edge-line {
+  filter: brightness(1.8) drop-shadow(0 0 6px #44aaff) !important;
 }
 
 /* OPTIMIZATION PANEL */
@@ -1926,8 +1985,8 @@ body {
   background: linear-gradient(135deg, #1a1f30, #0f1222);
   border-radius: 20px;
   border: 1px solid rgba(var(--accent-rgb), 0.3);
-  width: 450px;
-  max-width: 90%;
+  width: 520px;
+  max-width: 92%;
   overflow: hidden;
   animation: modalSlideIn 0.2s ease;
 }
@@ -2189,6 +2248,49 @@ body {
 
 .premium-tab-content.active {
   display: block;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.premium-tab-content.active::-webkit-scrollbar {
+  width: 4px;
+}
+
+.premium-tab-content.active::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.premium-tab-content.active::-webkit-scrollbar-thumb {
+  background: rgba(var(--accent-rgb), 0.3);
+  border-radius: 4px;
+}
+
+.premium-tab-content.active::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--accent-rgb), 0.5);
+}
+
+.premium-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.35);
+  margin: 20px 0 10px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.premium-section-label i {
+  font-size: 12px;
+  color: rgba(255,255,255,0.25);
+}
+
+.premium-section-label:first-child {
+  margin-top: 4px;
 }
 
 .premium-tab-content .setting-group label i.fa-crown {
@@ -3560,6 +3662,11 @@ input[type=number] {
   --handle-color: #2288ff !important;
   background: #2288ff !important;
 }
+.premium-purple .node-handle-blue:hover {
+  background: #2288ff !important;
+  filter: brightness(1.5) drop-shadow(0 0 6px #2288ff) !important;
+  box-shadow: 0 0 12px rgba(34, 136, 255, 0.6) !important;
+}
 .premium-purple .design-quality-extreme .node-handle {
   background: #a78bfa !important;
 }
@@ -3699,6 +3806,14 @@ input[type=number] {
   animation: handle-flash-premium 0.6s ease-out !important;
 }
 
+/* Keep blue handle BLUE on hover even in purple theme */
+.premium-purple .node-handle-blue:hover {
+  background: #2288ff !important;
+  filter: brightness(1.5) drop-shadow(0 0 6px #2288ff) !important;
+  box-shadow: 0 0 12px rgba(34, 136, 255, 0.6) !important;
+  animation: handle-flash-premium 0.6s ease-out !important;
+}
+
 /* ── Context menu border ── */
 .premium-purple .context-menu {
   border-color: var(--accent) !important;
@@ -3771,6 +3886,11 @@ input[type=number] {
 .premium-purple .node-handle {
   background: #a78bfa !important;
   --handle-color: #a78bfa !important;
+}
+/* Blue handle stays blue even in purple theme (normal state) */
+.premium-purple .node-handle-blue {
+  background: #2288ff !important;
+  --handle-color: #2288ff !important;
 }
 
 /* ── SVG edges ── */
