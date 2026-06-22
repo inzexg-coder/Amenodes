@@ -677,6 +677,8 @@ export class DomRenderer {
       nodeElement.classList.add('node-touch-active');
     } else {
       nodeElement.classList.add('node-dragging');
+      nodeElement.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease';
+      nodeElement.style.transform = 'scale(1.03)';
     }
 
     document.body.style.cursor = 'grabbing';
@@ -704,6 +706,8 @@ export class DomRenderer {
         if (el) {
           el.classList.remove('node-touch-active');
           el.classList.add('node-dragging');
+          el.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease';
+          el.style.transform = 'scale(1.03)';
         }
       }
 
@@ -750,7 +754,8 @@ export class DomRenderer {
 
       const dragEl = this.elementCache.get(this.dragNode.id);
       if (dragEl) {
-        dragEl.style.transition = "";
+        dragEl.style.transition = '';
+        dragEl.style.transform = '';
         dragEl.classList.remove('node-dragging');
         // Keep node elevated during inertia — will be removed when animation completes
         if (this.inertiaEnabled()) {
