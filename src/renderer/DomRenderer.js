@@ -734,6 +734,7 @@ export class DomRenderer {
     }
 
     document.body.style.cursor = 'grabbing';
+    console.log('[Drag] START type=' + event.type + ' id=' + node.id + ' x=' + node.x.toFixed(0) + ' y=' + node.y.toFixed(0));
     event.preventDefault();
   }
 
@@ -835,7 +836,8 @@ export class DomRenderer {
         var vx = (last.x - prev.x) / dt * 40;
         var vy = (last.y - prev.y) / dt * 40;
         var speed = Math.sqrt(vx * vx + vy * vy);
-        console.log('[Inertia] speed=' + speed.toFixed(2) + ' vx=' + vx.toFixed(2) + ' vy=' + vy.toFixed(2) + ' dt=' + dt + ' prev.x=' + prev.x.toFixed(1) + ' last.x=' + last.x.toFixed(1) + ' prev.y=' + prev.y.toFixed(1) + ' last.y=' + last.y.toFixed(1));
+        console.log('[Inertia] speed=' + speed.toFixed(2) + ' vx=' + vx.toFixed(2) + ' vy=' + vy.toFixed(2) + ' dt=' + dt + ' zoom=' + (window.currentZoom || 1).toFixed(2));
+        console.log('[Inertia] prev.x=' + prev.x.toFixed(1) + ' last.x=' + last.x.toFixed(1) + ' prev.y=' + prev.y.toFixed(1) + ' last.y=' + last.y.toFixed(1) + ' dragNode.x=' + this.dragNode.x.toFixed(1) + ' y=' + this.dragNode.y.toFixed(1));
         console.log('[Inertia] FULL history:', hist.map(function(h){return h.x.toFixed(0)+','+h.y.toFixed(0)+'t='+h.t;}).join(' | '));
         if (speed > 2) {
           var overshootX = Math.max(-60, Math.min(60, vx * 2.0));
