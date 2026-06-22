@@ -754,18 +754,23 @@ export class DomRenderer {
 
       const dragEl = this.elementCache.get(this.dragNode.id);
       if (dragEl) {
-        dragEl.style.transition = '';
-        dragEl.style.transform = '';
         dragEl.classList.remove('node-dragging');
-        // Keep node elevated during inertia — will be removed when animation completes
-        if (this.inertiaEnabled()) {
+        if (!this.inertiaEnabled()) {
+          // No inertia: smooth handoff from drag scale to normal/hover
+          dragEl.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
+          dragEl.style.transform = '';
+          setTimeout(function() {
+            if (dragEl) dragEl.style.transition = '';
+          }, 200);
+        } else {
+          // Inertia: keep scale during overshoot, clear transform on spring-back
           dragEl.classList.add('node-inertia');
         }
       }
 
       // Inertia overshoot for premium
       if (this._inertiaAnimId) { cancelAnimationFrame(this._inertiaAnimId); this._inertiaAnimId = null; }
-      if (this.inertiaEnabled() && this._dragHistory.length >= 3) {
+      if (this.inertiaEnabled() && this._dragHistory.length >= 2) {
         var hist = this._dragHistory;
         var last = hist[hist.length - 1];
         var first = hist[0];
@@ -787,7 +792,7 @@ export class DomRenderer {
             dragEl.style.top = this.dragNode.y + 'px';
           }
           this.updateEdgePositions();
-          // Spring back after a tiny delay
+          // Spring back after a tiny delay (clear scale here)
           var self = this;
           var savedDragNode = this.dragNode;
           requestAnimationFrame(function() {
@@ -798,14 +803,26 @@ export class DomRenderer {
             dragEl.style.left = finalX + 'px';
             dragEl.style.top = finalY + 'px';
             self.updateEdgePositions();
+            // Clear inline transform so scale returns to normal during spring-back
+            dragEl.style.transform = '';
             self._inertiaAnimId = setTimeout(function() {
               if (dragEl) {
                 dragEl.style.transition = '';
+                dragEl.style.transform = '';
                 dragEl.classList.remove('node-inertia');
               }
               self._inertiaAnimId = null;
             }, 500);
           });
+        } else {
+          // Speed too low — still do smooth handoff
+          if (dragEl) {
+            dragEl.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
+            dragEl.style.transform = '';
+            setTimeout(function() {
+              if (dragEl) dragEl.style.transition = '';
+            }, 200);
+          }
         }
       }
 
