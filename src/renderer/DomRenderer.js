@@ -859,7 +859,9 @@ export class DomRenderer {
           var savedDragNode = this.dragNode;
           requestAnimationFrame(function() {
             if (!savedDragNode) return;
-            dragEl.style.transition = 'left 0.45s cubic-bezier(0.18, 2.5, 0.3, 1), top 0.45s cubic-bezier(0.18, 2.5, 0.3, 1), transform 0.45s cubic-bezier(0.18, 2.5, 0.3, 1)';
+            var _transVal = 'left 0.45s cubic-bezier(0.18, 2.5, 0.3, 1), top 0.45s cubic-bezier(0.18, 2.5, 0.3, 1), transform 0.45s cubic-bezier(0.18, 2.5, 0.3, 1)';
+            dragEl.style.transition = _transVal;
+            console.log('[Inertia] SPRING-BACK transition set, computed=', getComputedStyle(dragEl).transition, 'final=' + finalX.toFixed(0) + ',' + finalY.toFixed(0));
             savedDragNode.x = finalX;
             savedDragNode.y = finalY;
             dragEl.style.left = finalX + 'px';
@@ -868,6 +870,7 @@ export class DomRenderer {
             // Clear inline transform so scale returns to normal during spring-back
             dragEl.style.transform = '';
             self._inertiaAnimId = setTimeout(function() {
+              console.log('[Inertia] ANIMATION DONE — cleanup');
               if (dragEl) {
                 dragEl.style.transition = '';
                 dragEl.style.transform = '';
