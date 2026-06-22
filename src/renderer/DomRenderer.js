@@ -835,7 +835,8 @@ export class DomRenderer {
         var vx = (last.x - prev.x) / dt * 40;
         var vy = (last.y - prev.y) / dt * 40;
         var speed = Math.sqrt(vx * vx + vy * vy);
-        console.log('[Inertia] speed=' + speed.toFixed(2) + ' vx=' + vx.toFixed(2) + ' vy=' + vy.toFixed(2) + ' dt=' + dt);
+        console.log('[Inertia] speed=' + speed.toFixed(2) + ' vx=' + vx.toFixed(2) + ' vy=' + vy.toFixed(2) + ' dt=' + dt + ' prev.x=' + prev.x.toFixed(1) + ' last.x=' + last.x.toFixed(1) + ' prev.y=' + prev.y.toFixed(1) + ' last.y=' + last.y.toFixed(1));
+        console.log('[Inertia] FULL history:', hist.map(function(h){return h.x.toFixed(0)+','+h.y.toFixed(0)+'t='+h.t;}).join(' | '));
         if (speed > 2) {
           var overshootX = Math.max(-60, Math.min(60, vx * 2.0));
           var overshootY = Math.max(-60, Math.min(60, vy * 2.0));
