@@ -728,8 +728,8 @@ export class DomRenderer {
       nodeElement.classList.add('node-touch-active');
     } else {
       nodeElement.classList.add('node-dragging');
-      nodeElement.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease';
-      nodeElement.style.transform = 'scale(1.03)';
+      nodeElement.style.setProperty('transition', 'transform 0.15s ease, box-shadow 0.15s ease', 'important');
+      nodeElement.style.setProperty('transform', 'scale(1.03)', 'important');
       document.body.classList.add('dragging');
     }
 
@@ -759,8 +759,8 @@ export class DomRenderer {
         if (el) {
           el.classList.remove('node-touch-active');
           el.classList.add('node-dragging');
-          el.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease';
-          el.style.transform = 'scale(1.03)';
+          el.style.setProperty('transition', 'transform 0.15s ease, box-shadow 0.15s ease', 'important');
+          el.style.setProperty('transform', 'scale(1.03)', 'important');
           document.body.classList.add('dragging');
         }
       }
@@ -812,10 +812,10 @@ export class DomRenderer {
         dragEl.classList.remove('node-dragging');
         if (!this.inertiaEnabled()) {
           // No inertia: smooth handoff from drag scale to normal/hover
-          dragEl.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
-          dragEl.style.transform = '';
+          dragEl.style.setProperty('transition', 'transform 0.2s ease, box-shadow 0.2s ease', 'important');
+          dragEl.style.removeProperty('transform');
           setTimeout(function() {
-            if (dragEl) dragEl.style.transition = '';
+            if (dragEl) dragEl.style.removeProperty('transition');
           }, 200);
         } else {
           // Inertia: keep scale during overshoot, clear transform on spring-back
@@ -849,7 +849,7 @@ export class DomRenderer {
           this.dragNode.x = finalX + overshootX;
           this.dragNode.y = finalY + overshootY;
           if (dragEl) {
-            dragEl.style.transition = 'none';
+            dragEl.style.setProperty('transition', 'none', 'important');
             dragEl.style.left = this.dragNode.x + 'px';
             dragEl.style.top = this.dragNode.y + 'px';
           }
@@ -860,7 +860,7 @@ export class DomRenderer {
           requestAnimationFrame(function() {
             if (!savedDragNode) return;
             var _transVal = 'left 0.45s cubic-bezier(0.18, 2.5, 0.3, 1), top 0.45s cubic-bezier(0.18, 2.5, 0.3, 1), transform 0.45s cubic-bezier(0.18, 2.5, 0.3, 1)';
-            dragEl.style.transition = _transVal;
+            dragEl.style.setProperty('transition', _transVal, 'important');
             console.log('[Inertia] SPRING-BACK transition set, computed=', getComputedStyle(dragEl).transition, 'final=' + finalX.toFixed(0) + ',' + finalY.toFixed(0));
             savedDragNode.x = finalX;
             savedDragNode.y = finalY;
@@ -868,13 +868,13 @@ export class DomRenderer {
             dragEl.style.top = finalY + 'px';
             self.updateEdgePositions();
             // Clear inline transform so scale returns to normal during spring-back
-            dragEl.style.transform = '';
+            dragEl.style.removeProperty('transform');
             self._inertiaAnimId = setTimeout(function() {
               console.log('[Inertia] ANIMATION DONE — cleanup');
               if (dragEl) {
-                dragEl.style.transition = '';
-                dragEl.style.transform = '';
-                dragEl.style.zIndex = '';
+                dragEl.style.removeProperty('transition');
+                dragEl.style.removeProperty('transform');
+                dragEl.style.removeProperty('zIndex');
                 dragEl.classList.remove('node-inertia');
               }
               self._inertiaAnimId = null;
@@ -883,10 +883,10 @@ export class DomRenderer {
         } else {
           // Speed too low — still do smooth handoff
           if (dragEl) {
-            dragEl.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
-            dragEl.style.transform = '';
+            dragEl.style.setProperty('transition', 'transform 0.2s ease, box-shadow 0.2s ease', 'important');
+            dragEl.style.removeProperty('transform');
             setTimeout(function() {
-              if (dragEl) dragEl.style.transition = '';
+              if (dragEl) dragEl.style.removeProperty('transition');
             }, 200);
           }
         }
