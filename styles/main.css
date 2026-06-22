@@ -718,7 +718,12 @@ body {
 .node-dragging {
   z-index: 1000 !important;
   transform: scale(1.03) !important;
-  box-shadow: 0 0 0 2px var(--accent), 0 0 25px rgba(var(--accent-rgb), 0.35), 0 20px 40px rgba(0,0,0,0.5) !important;
+  box-shadow: 
+    0 0 0 2px var(--accent),
+    0 0 30px rgba(var(--accent-rgb), 0.4),
+    0 0 60px rgba(var(--accent-rgb), 0.15),
+    0 30px 60px rgba(0,0,0,0.7),
+    0 0 0 1px rgba(255,255,255,0.12) !important;
   transition: transform 0.15s ease, box-shadow 0.15s ease !important;
 }
 
