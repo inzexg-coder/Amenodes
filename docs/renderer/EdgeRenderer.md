@@ -19,6 +19,60 @@
 
 `EdgeRenderer` не импортирует другие модули приложения и является самостоятельным классом.
 
+
+## Премиум-возможности
+
+Эксклюзивные визуальные эффекты для премиум-подписчиков, превращающие обычные связи в произведение искусства.
+
+## Edge Wave (анимация на рёбрах)
+
+Проведите курсором по связи — и она оживёт: линия утолщается, начинает пульсировать бегущей волной и светиться неоновым свечением. Больше никаких скучных прямых линий — каждое ребро графа может стать визуальным акцентом.
+
+Гейтинг: класс `premium-edge-wave` на `document.body` при `localStorage('premium_edge_wave') === 'true'` и `_isPremium()`.
+
+## Hover-эффект
+
+При наведении на ребро линия становится пунктирной с анимацией `stroke-dashoffset`:
+
+```css
+.premium-edge-wave .edge-group:hover .edge-line {
+  stroke-width: 5;
+  stroke-dasharray: 10 8;
+  animation: edge-wave 0.5s linear infinite;
+  filter: brightness(1.8) drop-shadow(0 0 6px var(--accent));
+}
+```
+
+## Touch-эффект
+
+На мобильных устройствах при касании ребра добавляется класс `.edge-wave` на 700мс:
+
+```javascript
+group.addEventListener('touchstart', () => {
+  group.classList.add('edge-wave');
+  setTimeout(() => group.classList.remove('edge-wave'), 700);
+});
+```
+
+CSS для touch:
+
+```css
+.premium-edge-wave .edge-group.edge-wave .edge-line {
+  stroke-dasharray: 12 8;
+  animation: edge-wave 0.4s linear infinite;
+}
+```
+
+## Click-эффект
+
+Аналогично touch, но на `click`. Стрелка и линия получают свечение `drop-shadow`.
+
+## Магнитные узлы и стрелка предпросмотра
+
+Визуальная обратная связь при создании связей: рядом с совместимым узлом появляется стрелка-подсказка, показывающая кука будет проведено соединение. Никаких случайных связей — вы всегда видите результат до того, как отпустили кнопку мыши.
+
+Гейтинг: `_isPremium() && localStorage('premium_magnetic_nodes') === 'true'`. При перетаскивании связи рядом с совместимым узлом отрисовывается временная стрелка (см. `DomRenderer._addTempArrow`). Создаётся в `DomRenderer`, так как отображается только во время drag.
+
 # КЛАСС EDGERENDERER
 
 ## Конструктор
@@ -227,56 +281,6 @@ edgeRenderer.setOnEdgeRemoved(() => {
 });
 ```
 
-# Расширенные методы
-
-## Edge Wave
-
-Гейтинг: класс `premium-edge-wave` на `document.body` при `localStorage('premium_edge_wave') === 'true'` и `_isPremium()`.
-
-## Hover-эффект
-
-```css
-.premium-edge-wave .edge-group:hover .edge-line {
-  stroke-width: 5;
-  stroke-dasharray: 10 8;
-  animation: edge-wave 0.5s linear infinite;
-  filter: brightness(1.8) drop-shadow(0 0 6px var(--accent));
-}
-```
-
-При наведении на ребро линия становится пунктирной с анимацией `stroke-dashoffset`.
-
-## Touch-эффект
-
-На мобильных устройствах при касании ребра добавляется класс `.edge-wave` на 700мс:
-
-```javascript
-group.addEventListener('touchstart', () => {
-  group.classList.add('edge-wave');
-  setTimeout(() => group.classList.remove('edge-wave'), 700);
-});
-```
-
-CSS для touch:
-
-```css
-.premium-edge-wave .edge-group.edge-wave .edge-line {
-  stroke-dasharray: 12 8;
-  animation: edge-wave 0.4s linear infinite;
-}
-```
-
-## Click-эффект
-
-Аналогично touch, но на `click`. Стрелка и линия получают свечение `drop-shadow`.
-
-
-## Стрелка предпросмотра
-
-Гейтинг: `_isPremium() && localStorage('premium_magnetic_nodes') === 'true'`. При перетаскивании связи рядом с совместимым узлом отрисовывается временная стрелка (см. `DomRenderer._addTempArrow`). Создаётся в `DomRenderer`, так как отображается только во время drag.
-
-
-
 # ПРИМЕРЫ ИСПОЛЬЗОВАНИЯ
 
 ## Базовое использование в DomRenderer
@@ -323,6 +327,7 @@ function renderEdges() {
 
 renderer.setOnEdgeRemoved(() => console.log('Edge was deleted'));
 ```
+
 
 # ЗАМЕЧАНИЯ
 
