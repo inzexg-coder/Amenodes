@@ -728,6 +728,12 @@ body {
 }
 
 
+.node-inertia {
+  z-index: 1000 !important;
+}
+
+
+
 
 .node-touch-active {
   transform: scale(1.02);

@@ -693,7 +693,12 @@ export class DomRenderer {
       // Touch drag threshold: wait until finger moves > 5px
       if (!this._touchDragConfirmed && event.type === 'touchmove') {
         const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-        if (dist < 5) return;
+        if (dist < 5) {
+          // Track small movements so inertia has data even on short touch drags
+          this._dragHistory.push({ x: this.dragNodeStartX + deltaX, y: this.dragNodeStartY + deltaY, t: Date.now() });
+          while (this._dragHistory.length > 5) this._dragHistory.shift();
+          return;
+        }
         this._touchDragConfirmed = true;
         const el = this.elementCache.get(this.dragNode.id);
         if (el) {
@@ -747,6 +752,10 @@ export class DomRenderer {
       if (dragEl) {
         dragEl.style.transition = "";
         dragEl.classList.remove('node-dragging');
+        // Keep node elevated during inertia — will be removed when animation completes
+        if (this.inertiaEnabled()) {
+          dragEl.classList.add('node-inertia');
+        }
       }
 
       // Inertia overshoot for premium
@@ -785,7 +794,10 @@ export class DomRenderer {
             dragEl.style.top = finalY + 'px';
             self.updateEdgePositions();
             self._inertiaAnimId = setTimeout(function() {
-              if (dragEl) dragEl.style.transition = '';
+              if (dragEl) {
+                dragEl.style.transition = '';
+                dragEl.classList.remove('node-inertia');
+              }
               self._inertiaAnimId = null;
             }, 500);
           });
