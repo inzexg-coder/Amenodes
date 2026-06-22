@@ -275,9 +275,9 @@ renderer.setOnEdgeRemoved(() => console.log('Edge was deleted'));
 ```
 
 
-## Премиум-функции
+## Расширенные возможности
 
-### Edge Wave (анимация на рёбрах)
+### Анимация на рёбрах
 
 Гейтинг: класс `premium-edge-wave` на `document.body` при `localStorage('premium_edge_wave') === 'true'` и `_isPremium()`.
 
@@ -319,7 +319,7 @@ CSS для touch:
 Аналогично touch, но на `click`. Стрелка и линия получают свечение `drop-shadow`.
 
 
-### Магнитные узлы и стрелка предпросмотра
+### Стрелка предпросмотра
 
 Гейтинг: `_isPremium() && localStorage('premium_magnetic_nodes') === 'true'`. При перетаскивании связи рядом с совместимым узлом отрисовывается временная стрелка (см. `DomRenderer._addTempArrow`). Создаётся в `DomRenderer`, так как отображается только во время drag.
 
