@@ -295,7 +295,7 @@ export class DomRenderer {
       if (!moved && (Math.abs(cx - startX) > 5 || Math.abs(cy - startY) > 5)) {
         moved = true;
         cleanup();
-        // Use handle center so line starts from port center regardless of node scaling
+        
         var hRect = handle.getBoundingClientRect();
         var hCx = hRect.left + hRect.width / 2;
         var hCy = hRect.top + hRect.height / 2;
@@ -329,7 +329,7 @@ export class DomRenderer {
     this.isDraggingEdge = true;
     this.edgeSourceId = sourceId;
     this.edgeSourcePort = port;
-    // Mark source node so premium hover doesn't dim it
+    
     var _srcEl = document.querySelector('.node[data-id="' + sourceId + '"]');
     if (_srcEl) _srcEl.classList.add('edge-drawing');
 
@@ -381,10 +381,8 @@ export class DomRenderer {
     var cy = this.getClientY(event);
     var point = this.getCanvasCoords(cx, cy);
 
-    // Update source point to follow handle position (accounting for node scale on hover)
     this._updateTempLineSource();
 
-    // Magnetic node preview (premium)
     if (this.magneticNodesEnabled()) {
       this.updateMagneticPreview(cx, cy, point, event);
     } else {
@@ -394,9 +392,8 @@ export class DomRenderer {
   }
 
   updateMagneticPreview(clientX, clientY, fallbackPoint, event) {
-    var MAGNET_ZONE = 40;  // px — connection preview zone
+    var MAGNET_ZONE = 40;  
 
-    // Find nearest node (different from source)
     var nodeEls = document.querySelectorAll('.node');
     var nearest = null;
     var minDist = Infinity;
@@ -421,21 +418,19 @@ export class DomRenderer {
       }
     }
 
-    // Clear previous magnetic node visual (also if nearest is now too far)
     if (this.magneticNode && (this.magneticNode !== nearest || minDist >= MAGNET_ZONE)) {
       this.magneticNode.classList.remove('node-magnetic-glow');
       this.magneticNode.classList.remove('node-magnetic-snap');
       this.magneticNode = null;
     }
 
-    // Reset line to free dashed, remove arrow
     this.tempLine.setAttribute("x2", fallbackPoint.x);
     this.tempLine.setAttribute("y2", fallbackPoint.y);
     this.tempLine.setAttribute("stroke-dasharray", "6,4");
     this._removeTempArrow();
 
     if (nearest && minDist < MAGNET_ZONE) {
-      // Check data type compatibility only (not edge capability)
+      
       var dataCompatible = false;
       if (this.graph && this.graph.map) {
         try {
@@ -446,22 +441,20 @@ export class DomRenderer {
             var tgtDT = window.typeSystem.getNodeType(tgtNode);
             var srcDef = window.typeSystem.getTypeDefinition(srcDT);
             var tgtDef = window.typeSystem.getTypeDefinition(tgtDT);
-            // Compatible if both types registered and target allows this source type
+            
             dataCompatible = srcDef && tgtDef && (tgtDef.allowedInputTypes.length === 0 || tgtDef.allowedInputTypes.includes(srcDT));
           }
         } catch(e) { console.warn('[Magnetic] type check error:', e); }
       }
 
       if (dataCompatible) {
-        // Compatible — preview: node glows, line solid with arrow to node border
+        
         nearest.classList.add('node-magnetic-snap');
 
-        // Get source port canvas position (recalculated for scaling)
         this._updateTempLineSource();
         var srcX = parseFloat(this.tempLine.getAttribute('x1'));
         var srcY = parseFloat(this.tempLine.getAttribute('y1'));
 
-        // Convert target rect to canvas coords
         var vr = this.viewportElement.getBoundingClientRect();
         var offset = this.viewport ? this.viewport.getOffset() : { x: 0, y: 0 };
         var zoom = window.currentZoom || 1;
@@ -471,20 +464,16 @@ export class DomRenderer {
         var tCanvasW = nearestRect.width / zoom;
         var tCanvasH = nearestRect.height / zoom;
 
-        // Target center in canvas coords
         var tCenterX = tCanvasX + tCanvasW / 2;
         var tCenterY = tCanvasY + tCanvasH / 2;
 
-        // Calculate border intersection: line from src to target center, crossing target rect border
         var borderPoint = this._lineToRectBorder(srcX, srcY, tCenterX, tCenterY, tCanvasX, tCanvasY, tCanvasW, tCanvasH);
 
-        // Update line to border point
         this.tempLine.setAttribute("stroke-dasharray", "none");
         this.tempLine.setAttribute("stroke-width", "3");
         this.tempLine.setAttribute("x2", borderPoint.x);
         this.tempLine.setAttribute("y2", borderPoint.y);
 
-        // Arrow at midpoint between source and border
         this._addTempArrow(
           { x: srcX, y: srcY },
           { x: borderPoint.x, y: borderPoint.y }
@@ -492,7 +481,7 @@ export class DomRenderer {
 
         this.magneticNode = nearest;
       } else {
-        // Incompatible — just glow the node, line stays dashed
+        
         nearest.classList.add('node-magnetic-glow');
         this.magneticNode = nearest;
       }
@@ -500,8 +489,7 @@ export class DomRenderer {
   }
 
   _lineToRectBorder(x1, y1, x2, y2, rx, ry, rw, rh) {
-    // Line from (x1,y1) to (x2,y2), find intersection with rect (rx,ry,rw,rh)
-    // If line starts inside rect, return the start point
+
     if (x1 >= rx && x1 <= rx + rw && y1 >= ry && y1 <= ry + rh) {
       return { x: x1, y: y1 };
     }
@@ -510,29 +498,27 @@ export class DomRenderer {
     var dy = y2 - y1;
     var t = Infinity;
 
-    // Check intersection with each rect edge
-    // Left edge
     if (dx !== 0) {
       var tLeft = (rx - x1) / dx;
       if (tLeft > 0 && tLeft < t) {
         var y = y1 + dy * tLeft;
         if (y >= ry && y <= ry + rh) t = tLeft;
       }
-      // Right edge
+      
       var tRight = (rx + rw - x1) / dx;
       if (tRight > 0 && tRight < t) {
         var y = y1 + dy * tRight;
         if (y >= ry && y <= ry + rh) t = tRight;
       }
     }
-    // Top edge
+    
     if (dy !== 0) {
       var tTop = (ry - y1) / dy;
       if (tTop > 0 && tTop < t) {
         var x = x1 + dx * tTop;
         if (x >= rx && x <= rx + rw) t = tTop;
       }
-      // Bottom edge
+      
       var tBottom = (ry + rh - y1) / dy;
       if (tBottom > 0 && tBottom < t) {
         var x = x1 + dx * tBottom;
@@ -585,7 +571,7 @@ export class DomRenderer {
     var targetId = null;
 
     if (this.magneticNode) {
-      // Use magnetic target node
+      
       targetId = parseInt(this.magneticNode.getAttribute('data-id'));
       this.magneticNode.classList.remove('node-magnetic-glow');
       this.magneticNode.classList.remove('node-magnetic-snap');
@@ -614,7 +600,7 @@ export class DomRenderer {
         this.save();
         if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
       } else if (targetId) {
-        // Connection failed — flash both nodes red briefly using inline box-shadow
+        
         var _srcEl = document.querySelector('.node[data-id="' + this.edgeSourceId + '"]');
         var _tgtEl = document.querySelector('.node[data-id="' + targetId + '"]');
         [ _srcEl, _tgtEl ].forEach(function(el) {
@@ -666,7 +652,6 @@ export class DomRenderer {
     var offset = this.viewport ? this.viewport.getOffset() : { x: 0, y: 0 };
     var zoom = window.currentZoom || 1;
 
-    // Use stored handle position to compute correct port location
     var srcX, srcY;
     var handlePos = this._edgeHandlePos || 'handle-right';
     var cx = rect.left + rect.width / 2;
@@ -682,7 +667,7 @@ export class DomRenderer {
       srcX = rect.left - 7;
       srcY = cy;
     } else {
-      // handle-right (default) or unmapped blue port
+      
       srcX = rect.right + 7;
       srcY = this.edgeSourcePort === 'unmapped' ? cy + 20 : cy;
     }
@@ -693,7 +678,6 @@ export class DomRenderer {
     this.tempLine.setAttribute("x1", srcX);
     this.tempLine.setAttribute("y1", srcY);
   }
-
 
   attachDragEvents() {
     document.querySelectorAll('.node').forEach(element => {
@@ -736,7 +720,7 @@ export class DomRenderer {
       nodeElement.classList.add('node-dragging');
       nodeElement.style.setProperty('transition', 'transform 0.15s ease, box-shadow 0.15s ease', 'important');
       nodeElement.style.setProperty('transform', 'scale(1.03)', 'important');
-      // Visible glow during drag: accent border + colored glow + white edge
+      
       nodeElement.style.setProperty('box-shadow', '0 0 0 2px var(--accent), 0 0 20px rgba(var(--accent-rgb), 0.5), 0 0 40px rgba(var(--accent-rgb), 0.3), 0 0 0 1px rgba(255,255,255,0.2)', 'important');
       document.body.classList.add('dragging');
     }
@@ -760,11 +744,10 @@ export class DomRenderer {
       const deltaX = (cx - this.dragStartX) / (window.currentZoom || 1);
       const deltaY = (cy - this.dragStartY) / (window.currentZoom || 1);
 
-      // Touch drag threshold: wait until finger moves > 5px
       if (!this._touchDragConfirmed && event.type === 'touchmove') {
         const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
         if (dist < 5) {
-          // Track small movements so inertia has data even on short touch drags
+          
           this._dragHistory.push({ x: this.dragNodeStartX + deltaX, y: this.dragNodeStartY + deltaY, t: Date.now() });
           while (this._dragHistory.length > 5) this._dragHistory.shift();
           return;
@@ -807,7 +790,6 @@ export class DomRenderer {
         });
       }
 
-      // Track velocity for inertia
       this._dragHistory.push({ x: newX, y: newY, t: Date.now() });
 
       if (this._particleSpawnActive && this.dragNode) {
@@ -820,7 +802,7 @@ export class DomRenderer {
   }
   onGlobalUp(event) {
     if (this.dragNode) {
-      // Touch drag was never confirmed — treat as tap, keep touch-active (removed by timeout)
+      
       if (this._touchDragConfirmed === false && event && event.type === 'touchend') {
         this._dragHistory = [];
         this.dragNode = null;
@@ -834,19 +816,18 @@ export class DomRenderer {
         dragEl.classList.remove('node-dragging');
         dragEl.style.removeProperty('box-shadow');
         if (!this.inertiaEnabled()) {
-          // No inertia: smooth handoff from drag scale to normal/hover
+          
           dragEl.style.setProperty('transition', 'transform 0.2s ease, box-shadow 0.2s ease', 'important');
           dragEl.style.removeProperty('transform');
           setTimeout(function() {
             if (dragEl) dragEl.style.removeProperty('transition');
           }, 200);
         } else {
-          // Inertia: keep scale during overshoot, clear transform on spring-back
+          
           dragEl.classList.add('node-inertia');
         }
       }
 
-      // Inertia overshoot for premium
       if (this._inertiaAnimId) { cancelAnimationFrame(this._inertiaAnimId); this._inertiaAnimId = null; }
       var _inertiaEnabled = this.inertiaEnabled();
       var _histLen = this._dragHistory.length;
@@ -868,7 +849,7 @@ export class DomRenderer {
           console.log('[Inertia] OVERSHOOT x=' + overshootX.toFixed(1) + ' y=' + overshootY.toFixed(1));
           var finalX = this.dragNode.x;
           var finalY = this.dragNode.y;
-          // Apply overshoot
+          
           this.dragNode.x = finalX + overshootX;
           this.dragNode.y = finalY + overshootY;
           if (dragEl) {
@@ -878,7 +859,7 @@ export class DomRenderer {
           }
           this.updateEdgePositions();
           document.body.classList.add('inertia-active');
-          // Spring back after a tiny delay (clear scale here)
+          
           var self = this;
           var savedDragNode = this.dragNode;
           requestAnimationFrame(function() {
@@ -891,7 +872,7 @@ export class DomRenderer {
             dragEl.style.left = finalX + 'px';
             dragEl.style.top = finalY + 'px';
             self.updateEdgePositions();
-            // Clear inline transform so scale returns to normal during spring-back
+            
             dragEl.style.removeProperty('transform');
             self._inertiaAnimId = setTimeout(function() {
               console.log('[Inertia] ANIMATION DONE — cleanup');
@@ -906,7 +887,7 @@ export class DomRenderer {
             }, 500);
           });
         } else {
-          // Speed too low — still do smooth handoff
+          
           if (dragEl) {
             dragEl.style.setProperty('transition', 'transform 0.2s ease, box-shadow 0.2s ease', 'important');
             dragEl.style.removeProperty('transform');
@@ -1058,7 +1039,6 @@ export class DomRenderer {
       this._particleAnimId = null;
     }
   }
-
 
   closeMenu() {
     if (this.contextMenu) {

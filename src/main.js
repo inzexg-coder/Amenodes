@@ -20,9 +20,6 @@ window.alert = (msg) => { modal.alert(msg); };
 window.confirm = (msg) => modal.confirm(msg);
 window.prompt = (msg, def) => modal.prompt(msg, def);
 
-
-
-// Premium color helper - uses direct hex values, not CSS variables
 var PREMIUM_ACCENT = '#a78bfa';
 var PREMIUM_ACCENT_DARK = '#6d28d9';
 var PREMIUM_ACCENT_RGB = '167, 139, 250';
@@ -38,7 +35,6 @@ function premiumColor(orangeVal, purpleVal) {
     return isPremiumTheme() ? purpleVal : orangeVal;
 }
 
-
 window.__premiumAccent = function() {
     return localStorage.getItem('premium_purple_accent') === 'true' ? '#a78bfa' : '#ffb347';
 };
@@ -46,28 +42,26 @@ window.__premiumAccentRGB = function() {
     return localStorage.getItem('premium_purple_accent') === 'true' ? '167, 139, 250' : '255, 179, 71';
 };
 
-// Force-update premium theme on all elements
 function refreshPremiumTheme() {
     var isPurple = localStorage.getItem('premium_purple_accent') === 'true';
     document.body.classList.toggle('premium-purple', isPurple);
-    // Premium hover effect — active when purple theme is on
+    
     document.body.classList.toggle('premium-hover', isPurple);
-    // Edge wave — separate toggle
+    
     var edgeWave = localStorage.getItem('premium_edge_wave') === 'true';
     document.body.classList.toggle('premium-edge-wave', edgeWave);
     console.log('[Premium] Theme purple:', isPurple, 'hover:', isPurple, 'edgeWave:', edgeWave);
-    // Force repaint
+    
     document.body.style.transform = 'translateZ(0)';
     requestAnimationFrame(function() {
         document.body.style.transform = '';
     });
 }
 
-// Restore premium theme from localStorage immediately
 (function() {
     if (localStorage.getItem('premium_purple_accent') === 'true') {
         document.body.classList.add('premium-purple');
-        // Force-applied style injection for elements that might miss CSS variable cascade
+        
         var s = document.createElement('style');
         s.textContent = '.premium-force{--accent:#a78bfa;--accent-dark:#6d28d9;--accent-rgb:167,139,250;--accent-gradient:linear-gradient(135deg,#a78bfa,#7c3aed)}';
         document.head.appendChild(s);
@@ -243,14 +237,11 @@ class Application {
     if (animSpeedInput) animSpeedInput.value = currentSpeed;
     if (animSpeedValue) animSpeedValue.textContent = currentSpeed;
 
-    // Premium tab visibility
     const premiumTab = document.querySelector('.premium-tab');
     const premiumContent = document.querySelector('.premium-tab-content');
     const isPremium = localStorage.getItem('amenodes_premium') === 'true';
     if (premiumTab) premiumTab.style.display = isPremium ? 'block' : 'none';
 
-    // Apply saved premium visual settings
-    // Auto-enable purple accent for premium users if never set
     if (isPremium && localStorage.getItem('premium_purple_accent') === null) {
       localStorage.setItem('premium_purple_accent', 'true');
     }

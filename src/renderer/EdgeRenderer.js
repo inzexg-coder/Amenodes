@@ -48,7 +48,7 @@ export class EdgeRenderer {
 
       group.addEventListener('click', (ev) => {
         ev.stopPropagation();
-        // Wave animation on click, no highlight toggle
+        
         group.classList.add('edge-wave');
         setTimeout(function() { group.classList.remove('edge-wave'); }, 700);
         this.clearHighlight();
@@ -56,7 +56,7 @@ export class EdgeRenderer {
 
       group.addEventListener('touchstart', (ev) => {
         ev.stopPropagation();
-        // Wave on touch
+        
         group.classList.add('edge-wave');
         setTimeout(function() { group.classList.remove('edge-wave'); }, 700);
         this.longPressTimer = setTimeout(() => {
@@ -102,7 +102,6 @@ export class EdgeRenderer {
     }
   }
 
-  // Update hitbox positions when edges move (called from updatePositions)
   updateHitbox(lineGroup, p1, p2) {
     const hitbox = lineGroup ? lineGroup.querySelector('.edge-hitbox') : null;
     const line = lineGroup ? lineGroup.querySelector('.edge-line') : null;
@@ -183,7 +182,7 @@ export class EdgeRenderer {
   }
 
   createLine(p1, p2, color, edgeId) {
-    // Hitbox line (wider, transparent) for easier clicking
+    
     const hitbox = document.createElementNS("http://www.w3.org/2000/svg", "line");
     hitbox.setAttribute("x1", p1.x);
     hitbox.setAttribute("y1", p1.y);
@@ -194,8 +193,7 @@ export class EdgeRenderer {
     hitbox.setAttribute("stroke-linecap", "round");
     hitbox.style.pointerEvents = "visibleStroke";
     hitbox.classList.add("edge-hitbox");
-    
-    // Visible line
+
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
     line.setAttribute("x1", p1.x);
     line.setAttribute("y1", p1.y);
