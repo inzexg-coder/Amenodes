@@ -759,8 +759,10 @@ export class DomRenderer {
         if (el) {
           el.classList.remove('node-touch-active');
           el.classList.add('node-dragging');
+          console.log('[Drag] touch .node-dragging ADDED, box-shadow:', getComputedStyle(el).boxShadow);
           el.style.setProperty('transition', 'transform 0.15s ease, box-shadow 0.15s ease', 'important');
           el.style.setProperty('transform', 'scale(1.03)', 'important');
+          el.style.setProperty('boxShadow', '0 0 0 4px #ff0000, 0 0 40px rgba(255,0,0,0.8)', 'important');
           document.body.classList.add('dragging');
         }
       }
@@ -810,6 +812,7 @@ export class DomRenderer {
       document.body.classList.remove('dragging');
       if (dragEl) {
         dragEl.classList.remove('node-dragging');
+        dragEl.style.removeProperty('boxShadow');
         if (!this.inertiaEnabled()) {
           // No inertia: smooth handoff from drag scale to normal/hover
           dragEl.style.setProperty('transition', 'transform 0.2s ease, box-shadow 0.2s ease', 'important');
