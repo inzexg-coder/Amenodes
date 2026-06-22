@@ -840,8 +840,8 @@ export class DomRenderer {
         console.log('[Inertia] prev.x=' + prev.x.toFixed(1) + ' last.x=' + last.x.toFixed(1) + ' prev.y=' + prev.y.toFixed(1) + ' last.y=' + last.y.toFixed(1) + ' dragNode.x=' + this.dragNode.x.toFixed(1) + ' y=' + this.dragNode.y.toFixed(1));
         console.log('[Inertia] FULL history:', hist.map(function(h){return h.x.toFixed(0)+','+h.y.toFixed(0)+'t='+h.t;}).join(' | '));
         if (speed > 2) {
-          var overshootX = Math.max(-60, Math.min(60, vx * 2.0));
-          var overshootY = Math.max(-60, Math.min(60, vy * 2.0));
+          var overshootX = Math.max(-30, Math.min(30, vx * 1.0));
+          var overshootY = Math.max(-30, Math.min(30, vy * 1.0));
           console.log('[Inertia] OVERSHOOT x=' + overshootX.toFixed(1) + ' y=' + overshootY.toFixed(1));
           var finalX = this.dragNode.x;
           var finalY = this.dragNode.y;
@@ -859,7 +859,7 @@ export class DomRenderer {
           var savedDragNode = this.dragNode;
           requestAnimationFrame(function() {
             if (!savedDragNode) return;
-            var _transVal = 'left 0.45s cubic-bezier(0.18, 2.5, 0.3, 1), top 0.45s cubic-bezier(0.18, 2.5, 0.3, 1), transform 0.45s cubic-bezier(0.18, 2.5, 0.3, 1)';
+            var _transVal = 'left 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94), top 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
             dragEl.style.setProperty('transition', _transVal, 'important');
             console.log('[Inertia] SPRING-BACK transition set, computed=', getComputedStyle(dragEl).transition, 'final=' + finalX.toFixed(0) + ',' + finalY.toFixed(0));
             savedDragNode.x = finalX;
