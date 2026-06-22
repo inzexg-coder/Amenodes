@@ -314,7 +314,7 @@ closeMenu(): void
 
 Закрывает контекстное меню.
 
-## Перетаскивание связей (edge dragging)
+## Перетаскивание связей
 
 
 Создаёт временную SVG-линию (`tempLine`) от порта-источника. Координаты старта (`x1`, `y1`) передаются в Canvas-координатах, конвертированных из клиентских через `getCanvasCoords()`. 
@@ -324,7 +324,7 @@ closeMenu(): void
 
 Вызывается из глобальных обработчиков `mousemove`/`touchmove`. Обновляет `x2`/`y2` временной линии. Если включена премиум-функция `magneticNodesEnabled`, вызывает `updateMagneticPreview()` вместо обычного обновления.
 
-## Ошибка соединения (connect error flash)
+## Ошибка соединения
 
 Когда `this.graph.addEdge()` возвращает `null` (неудачное соединение), `onGlobalUpEdge()` находит оба узла через `document.querySelector('.node[data-id="..."]')` и применяет inline-стиль:
 
@@ -348,29 +348,7 @@ el.style.setProperty('box-shadow', '0 0 0 4px #ff4444, 0 0 35px rgba(255,68,68,0
 | `edgeSourceId` | `number|null` | ID узла-источника при перетаскивании |
 | `edgeSourcePort` | `string` | Тип порта ('main' или 'unmapped') |
 
-# ПРИМЕРЫ ИСПОЛЬЗОВАНИЯ
-
-## Создание и настройка рендерера
-
-```javascript
-const renderer = new DomRenderer(graph, nodesLayer, viewportEl, eventBus);
-renderer.setViewport(viewport);
-renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
-renderer.render();
-```
-
-## Защита от ошибок при отрисовке
-
-```javascript
-// Рендерер автоматически обрабатывает узлы без метода createDOM
-// Вместо падения приложения показывается красная заглушка с сообщением об ошибке
-renderer.renderAll();
-```
-
-
-## Расширенные методы
-
-## Магнитные узлы (magnetic nodes)
+# Расширенные методы
 
 ## updateMagneticPreview(clientX, clientY, fallbackPoint)
 
@@ -390,8 +368,7 @@ renderer.renderAll();
 
 Удаляет стрелку из временной SVG и обнуляет ссылку `_tempArrow`. Вызывается при очистке линии или при уходе из магнитной зоны.
 
-
-## Инерция узлов (overshoot bounce)
+## Инерция узлов
 
 Гейтинг: `_isPremium() && localStorage('premium_overshoot_bounce') === 'true'`. В `onGlobalUp()` при отпускании узла после перетаскивания:
 
@@ -401,7 +378,7 @@ renderer.renderAll();
 
 Контролируется через `this.inertiaEnabled` (функция, возвращающая boolean).
 
-## Particle Trail (частицы при драге)
+## Particle Trail
 
 Гейтинг: `_isPremium() && localStorage.getItem('premium_particle_trail') === 'true'`. При перетаскивании узла спавнятся частицы:
 
@@ -434,6 +411,25 @@ body.inertia-active .node {
 
 Это предотвращает мигание hover-эффектов на других узлах, когда инертный узел пролетает над ними.
 
+
+# ПРИМЕРЫ ИСПОЛЬЗОВАНИЯ
+
+## Создание и настройка рендерера
+
+```javascript
+const renderer = new DomRenderer(graph, nodesLayer, viewportEl, eventBus);
+renderer.setViewport(viewport);
+renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
+renderer.render();
+```
+
+## Защита от ошибок при отрисовке
+
+```javascript
+// Рендерер автоматически обрабатывает узлы без метода createDOM
+// Вместо падения приложения показывается красная заглушка с сообщением об ошибке
+renderer.renderAll();
+```
 
 ## ЗАМЕЧАНИЯ
 
