@@ -691,13 +691,6 @@ body {
   transition: var(--transition);
 }
 
-.node-dragging {
-  z-index: 1000 !important;
-  transform: scale(1.03);
-  box-shadow: 0 0 0 2px var(--accent), 0 0 25px rgba(var(--accent-rgb), 0.35), 0 20px 40px rgba(0,0,0,0.5) !important;
-  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-}
-
 @media (hover: hover) {
   .node:hover {
     transform: scale(1.02);
@@ -720,8 +713,16 @@ body {
 /* Make neighboring nodes dim slightly when a node is hovered with premium */
 .premium-hover .node:hover ~ .node {
   opacity: 0.85;
-  transition: opacity 0.3s ease;
 }
+
+.node-dragging {
+  z-index: 1000 !important;
+  transform: scale(1.03) !important;
+  box-shadow: 0 0 0 2px var(--accent), 0 0 25px rgba(var(--accent-rgb), 0.35), 0 20px 40px rgba(0,0,0,0.5) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+
 
 .node-touch-active {
   transform: scale(1.02);
