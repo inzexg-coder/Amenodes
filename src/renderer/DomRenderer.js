@@ -29,6 +29,7 @@ export class DomRenderer {
     this.magneticNodesEnabled = function() { return false; };
     this._dragHistory = [];
     this._inertiaAnimId = null;
+    this._touchDragConfirmed = false;
     this.getSnapEnabled = null;
     this.getGridSize = null;
     this.opts = {
@@ -642,12 +643,14 @@ export class DomRenderer {
       const header = element.querySelector('.node-header, .output-header, .calc-header, .map-header, .group-header');
       if (header) {
         header.addEventListener("mousedown", this.onNodeDown.bind(this));
+        header.addEventListener("touchstart", this.onNodeDown.bind(this), { passive: false });
       }
     });
   }
 
   onNodeDown(event) {
-    if (event.button !== 0 && event.button !== undefined) return;
+    const isTouch = event.type === 'touchstart';
+    if (!isTouch && event.button !== 0 && event.button !== undefined) return;
     if (event.target.closest('.node-handle') ||
         event.target.closest('.node-actions') ||
         event.target.closest('input') ||
@@ -668,8 +671,13 @@ export class DomRenderer {
     this.dragStartY = this.getClientY(event);
     this.dragNodeStartX = node.x;
     this.dragNodeStartY = node.y;
-    nodeElement.style.transition = "none";
-    nodeElement.classList.add('node-dragging');
+
+    if (isTouch) {
+      this._touchDragConfirmed = false;
+      nodeElement.classList.add('node-touch-active');
+    } else {
+      nodeElement.classList.add('node-dragging');
+    }
 
     document.body.style.cursor = 'grabbing';
     event.preventDefault();
@@ -681,6 +689,18 @@ export class DomRenderer {
       const cy = this.getClientY(event);
       const deltaX = (cx - this.dragStartX) / (window.currentZoom || 1);
       const deltaY = (cy - this.dragStartY) / (window.currentZoom || 1);
+
+      // Touch drag threshold: wait until finger moves > 5px
+      if (!this._touchDragConfirmed && event.type === 'touchmove') {
+        const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        if (dist < 5) return;
+        this._touchDragConfirmed = true;
+        const el = this.elementCache.get(this.dragNode.id);
+        if (el) {
+          el.classList.remove('node-touch-active');
+          el.classList.add('node-dragging');
+        }
+      }
 
       let newX = this.dragNodeStartX + deltaX;
       let newY = this.dragNodeStartY + deltaY;
@@ -714,8 +734,15 @@ export class DomRenderer {
       if (this.graph && this.graph.setDirty) this.graph.setDirty(true);
     }
   }
-  onGlobalUp() {
+  onGlobalUp(event) {
     if (this.dragNode) {
+      // Touch drag was never confirmed — treat as tap, keep touch-active (removed by timeout)
+      if (this._touchDragConfirmed === false && event && event.type === 'touchend') {
+        this._dragHistory = [];
+        this.dragNode = null;
+        return;
+      }
+
       const dragEl = this.elementCache.get(this.dragNode.id);
       if (dragEl) {
         dragEl.style.transition = "";
