@@ -277,6 +277,7 @@ export class DomRenderer {
 
     const sourceId = parseInt(handle.getAttribute('data-source-id'));
     const port = handle.getAttribute('data-port') || 'main';
+    this._edgeHandlePos = Array.from(handle.classList).find(c => c.startsWith('handle-')) || 'handle-right';
     const startX = event.clientX || (event.touches && event.touches[0].clientX) || 0;
     const startY = event.clientY || (event.touches && event.touches[0].clientY) || 0;
     let moved = false;
@@ -659,17 +660,29 @@ export class DomRenderer {
     var offset = this.viewport ? this.viewport.getOffset() : { x: 0, y: 0 };
     var zoom = window.currentZoom || 1;
 
-    // For the right-side blue handle (unmapped port)
+    // Use stored handle position to compute correct port location
     var srcX, srcY;
-    if (this.edgeSourcePort === 'unmapped') {
-      srcX = (rect.right - 7 - vr.left - offset.x) / zoom;
-      srcY = (rect.top + rect.height / 2 - vr.top - offset.y) / zoom;
+    var handlePos = this._edgeHandlePos || 'handle-right';
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height / 2;
+
+    if (handlePos === 'handle-top') {
+      srcX = cx;
+      srcY = rect.top - 7;
+    } else if (handlePos === 'handle-bottom') {
+      srcX = cx;
+      srcY = rect.bottom + 7;
+    } else if (handlePos === 'handle-left') {
+      srcX = rect.left - 7;
+      srcY = cy;
     } else {
-      // For other handles: use top-left as fallback (handles positioned via CSS)
-      // The port position is on the left side (input)
-      srcX = (rect.left + 7 - vr.left - offset.x) / zoom;
-      srcY = (rect.top + rect.height / 2 - vr.top - offset.y) / zoom;
+      // handle-right (default) or unmapped blue port
+      srcX = rect.right + 7;
+      srcY = this.edgeSourcePort === 'unmapped' ? cy + 20 : cy;
     }
+
+    srcX = (srcX - vr.left - offset.x) / zoom;
+    srcY = (srcY - vr.top - offset.y) / zoom;
 
     this.tempLine.setAttribute("x1", srcX);
     this.tempLine.setAttribute("y1", srcY);
@@ -843,7 +856,7 @@ export class DomRenderer {
           var savedDragNode = this.dragNode;
           requestAnimationFrame(function() {
             if (!savedDragNode) return;
-            dragEl.style.transition = 'left 0.45s cubic-bezier(0.18, 2.5, 0.3, 1), top 0.45s cubic-bezier(0.18, 2.5, 0.3, 1)';
+            dragEl.style.transition = 'left 0.45s cubic-bezier(0.18, 2.5, 0.3, 1), top 0.45s cubic-bezier(0.18, 2.5, 0.3, 1), transform 0.45s cubic-bezier(0.18, 2.5, 0.3, 1)';
             savedDragNode.x = finalX;
             savedDragNode.y = finalY;
             dragEl.style.left = finalX + 'px';

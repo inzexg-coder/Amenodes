@@ -3840,6 +3840,11 @@ input[type=number] {
   background: #a78bfa !important;
   --handle-color: #a78bfa !important;
 }
+/* Blue handle stays blue even in purple theme (normal state) */
+.premium-purple .node-handle-blue {
+  background: #2288ff !important;
+  --handle-color: #2288ff !important;
+}
 
 /* ── SVG edges ── */
 .premium-purple .temp-edge-line {
