@@ -22,6 +22,7 @@
   - **Node Inertia** — nodes overshoot with spring-back when dragged
   - **Edge Wave** — running wave animation on edge hover
   - **Magnetic Nodes** — connection preview with arrow on compatible node hover
+  - **Particle Trail** — glowing particles trail behind nodes when dragged
 - **Performance Optimizations** - Built-in benchmarking and optimization panel with toggle switches and real-time FPS gain display.
 - **Undo/Redo** - Full history with auto-save to localStorage.
 - **Import/Export** - Save your graphs to `.amnk` files and load them back.

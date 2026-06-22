@@ -354,6 +354,41 @@ closeMenu(): void
 
 Контролируется через `this.inertiaEnabled` (функция, возвращающая boolean).
 
+### Particle Trail (частицы при драге)
+
+Премиум-функция, управляемая `localStorage('premium_particle_trail')`. При перетаскивании узла за ним тянется шлейф светящихся частиц:
+
+1. Canvas-оверлей (`#particleTrailCanvas`) поверх вьюпорта (`z-index: 10000`, `pointer-events: none`)
+2. 2 частицы за фрейм, случайное направление (0.3–1.5 px/фрейм), размер 2–6px
+3. Частицы затухают (`life -= decay`), замедляются (`vx *= 0.98`, `vy *= 0.98`)
+4. Цвет — динамический `var(--accent)` темы (жёлтый/сиреневый)
+5. Лимит: макс 200 частиц
+6. При отпускании драга частицы перестают спавниться, оставшиеся доживают и затухают
+
+Гейтинг: `_isPremium() && localStorage.getItem('premium_particle_trail') === 'true'`
+
+**Добавленные поля:**
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `_particles` | `Array<object>` | Массив частиц (`worldX, worldY, vx, vy, life, decay, size`) |
+| `_particleSpawnActive` | `boolean` | Флаг активности спавна частиц |
+| `_particleAnimId` | `number\|null` | ID rAF для анимации частиц |
+| `_particleCanvas` | `HTMLCanvasElement\|null` | Canvas-оверлей для рендера частиц |
+| `_particleCtx` | `CanvasRenderingContext2D\|null` | 2D-контекст канваса |
+
+### Блокировка ховеров при инерции
+
+При активации инерции на `document.body` добавляется класс `inertia-active`, а в CSS — правило:
+
+```css
+body.inertia-active .node {
+  pointer-events: none !important;
+}
+```
+
+Это предотвращает мигание hover-эффектов на других узлах, когда инертный узел пролетает над ними.
+
 ## Ошибка соединения (connect error flash)
 
 Когда `this.graph.addEdge()` возвращает `null` (неудачное соединение), `onGlobalUpEdge()` находит оба узла через `document.querySelector('.node[data-id="..."]')` и применяет inline-стиль:
