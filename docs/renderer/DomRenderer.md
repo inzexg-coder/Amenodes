@@ -372,7 +372,7 @@ renderer.renderAll();
 
 ## Премиум-функции
 
-### Магнитные узлы (magnetic nodes)
+### Магнитные узлы
 
 #### updateMagneticPreview(clientX, clientY, fallbackPoint)
 
@@ -393,7 +393,7 @@ renderer.renderAll();
 Удаляет стрелку из временной SVG и обнуляет ссылку `_tempArrow`. Вызывается при очистке линии или при уходе из магнитной зоны.
 
 
-### Инерция узлов (overshoot bounce)
+### Инерция узлов
 
 Гейтинг: `_isPremium() && localStorage('premium_overshoot_bounce') === 'true'`. В `onGlobalUp()` при отпускании узла после перетаскивания:
 
@@ -403,7 +403,7 @@ renderer.renderAll();
 
 Контролируется через `this.inertiaEnabled` (функция, возвращающая boolean).
 
-### Particle Trail (частицы при драге)
+### Particle Trail
 
 Гейтинг: `_isPremium() && localStorage.getItem('premium_particle_trail') === 'true'`. При перетаскивании узла спавнятся частицы:
 
