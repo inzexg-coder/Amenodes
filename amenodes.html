@@ -749,6 +749,7 @@ function initLanguageSettings() {
             document.getElementById('lang-en-check').style.display = currentLang === 'en' ? 'inline' : 'none';
             document.getElementById('lang-ru-check').style.display = currentLang === 'ru' ? 'inline' : 'none';
             modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
         }
     };
     const langOptions = document.querySelectorAll('#canvasLanguageSelector .language-option');

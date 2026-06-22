@@ -399,6 +399,7 @@ class Application {
   closeCanvasSettings() {
     const modalEl = document.getElementById('canvasSettingsModal');
     if (modalEl) modalEl.classList.add('hidden');
+    document.body.style.overflow = '';
   }
 
   fixToggleSwitches() {

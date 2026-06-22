@@ -35,6 +35,11 @@
   display: none;
 }
 
+/* Mobile menu always hidden by default */
+.mobile-menu-overlay {
+  display: none;
+}
+
 /* ==============================================
    BREAKPOINT: ≤ 768px (планшеты и телефоны)
    ============================================== */
