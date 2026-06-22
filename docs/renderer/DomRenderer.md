@@ -326,69 +326,6 @@ closeMenu(): void
 
 Вызывается из глобальных обработчиков `mousemove`/`touchmove`. Обновляет `x2`/`y2` временной линии. Если включена премиум-функция `magneticNodesEnabled`, вызывает `updateMagneticPreview()` вместо обычного обновления.
 
-### updateMagneticPreview(clientX, clientY, fallbackPoint)
-
-Премиум-функция. При перетаскивании связи проверяет ближайший узел (40px зона):
-
-- **Совместимый тип данных** — линия становится сплошной + рисуется стрелка-треугольник (`_addTempArrow`) в середине + узел подсвечивается сиреневым (класс `node-magnetic-snap`)
-- **Несовместимый тип** — линия остаётся пунктирной, узел подсвечивается красноватым (класс `node-magnetic-glow`)
-- **Нет узла рядом** — обычное поведение
-
-Проверка совместимости выполнена через `window.typeSystem` по дататипу (игнорируя флаги `canHaveIncomingEdges`/`canHaveOutgoingEdges`): если `allowedInputTypes` цели пуст — любой тип совместим, иначе проверяется вхождение source-типа в список.
-
-### _addTempArrow(fromPoint, toPoint)
-
-Создаёт SVG-`polygon` (стрелку) на временной SVG-прослойке (`tempSvg`). Стрелка позиционируется на середине линии, цвет — `window.__premiumAccent()` (оранжевый или сиреневый). Обновляется при каждом движении мыши через `_updateTempArrow`.
-
-### _removeTempArrow()
-
-Удаляет стрелку из временной SVG и обнуляет ссылку `_tempArrow`. Вызывается при очистке линии или при уходе из магнитной зоны.
-
-## Инерция узлов (overshoot bounce)
-
-Премиум-функция, управляемая `localStorage('premium_overshoot_bounce')`. В `onGlobalUp()` при отпускании узла после перетаскивания:
-
-1. Рассчитывается velocity на основе истории последних 5 позиций (`_dragHistory`)
-2. Если скорость превышает порог (5px), узел продолжает движение по инерции с затуханием (коэффициент 0.95) до 60px максимум
-3. Пружинит обратно с `cubic-bezier(0.22, 2.2, 0.4, 1)` за 450ms
-
-Контролируется через `this.inertiaEnabled` (функция, возвращающая boolean).
-
-### Particle Trail (частицы при драге)
-
-Премиум-функция, управляемая `localStorage('premium_particle_trail')`. При перетаскивании узла за ним тянется шлейф светящихся частиц:
-
-1. Canvas-оверлей (`#particleTrailCanvas`) поверх вьюпорта (`z-index: 10000`, `pointer-events: none`)
-2. 2 частицы за фрейм, случайное направление (0.3–1.5 px/фрейм), размер 2–6px
-3. Частицы затухают (`life -= decay`), замедляются (`vx *= 0.98`, `vy *= 0.98`)
-4. Цвет — динамический `var(--accent)` темы (жёлтый/сиреневый)
-5. Лимит: макс 200 частиц
-6. При отпускании драга частицы перестают спавниться, оставшиеся доживают и затухают
-
-Гейтинг: `_isPremium() && localStorage.getItem('premium_particle_trail') === 'true'`
-
-**Добавленные поля:**
-
-| Поле | Тип | Описание |
-|---|---|---|
-| `_particles` | `Array<object>` | Массив частиц (`worldX, worldY, vx, vy, life, decay, size`) |
-| `_particleSpawnActive` | `boolean` | Флаг активности спавна частиц |
-| `_particleAnimId` | `number\|null` | ID rAF для анимации частиц |
-| `_particleCanvas` | `HTMLCanvasElement\|null` | Canvas-оверлей для рендера частиц |
-| `_particleCtx` | `CanvasRenderingContext2D\|null` | 2D-контекст канваса |
-
-### Блокировка ховеров при инерции
-
-При активации инерции на `document.body` добавляется класс `inertia-active`, а в CSS — правило:
-
-```css
-body.inertia-active .node {
-  pointer-events: none !important;
-}
-```
-
-Это предотвращает мигание hover-эффектов на других узлах, когда инертный узел пролетает над ними.
-
 ## Ошибка соединения (connect error flash)
 
 Когда `this.graph.addEdge()` возвращает `null` (неудачное соединение), `onGlobalUpEdge()` находит оба узла через `document.querySelector('.node[data-id="..."]')` и применяет inline-стиль:
@@ -431,6 +368,74 @@ renderer.render();
 // Вместо падения приложения показывается красная заглушка с сообщением об ошибке
 renderer.renderAll();
 ```
+
+
+## Премиум-функции
+
+### Магнитные узлы (magnetic nodes)
+
+#### updateMagneticPreview(clientX, clientY, fallbackPoint)
+
+Доступно при `_isPremium()`. При перетаскивании связи проверяет ближайший узел в радиусе 40px:
+
+- **Совместимый тип данных** — линия становится сплошной + рисуется стрелка-треугольник (`_addTempArrow`) в середине + узел подсвечивается сиреневым (класс `node-magnetic-snap`)
+- **Несовместимый тип** — линия остаётся пунктирной, узел подсвечивается красноватым (класс `node-magnetic-glow`)
+- **Нет узла рядом** — обычное поведение
+
+Проверка совместимости выполнена через `window.typeSystem` по дататипу (игнорируя флаги `canHaveIncomingEdges`/`canHaveOutgoingEdges`): если `allowedInputTypes` цели пуст — любой тип совместим, иначе проверяется вхождение source-типа в список.
+
+#### _addTempArrow(fromPoint, toPoint)
+
+Создаёт SVG-`polygon` (стрелку) на временной SVG-прослойке (`tempSvg`). Стрелка позиционируется на середине линии, цвет — `window.__premiumAccent()` (оранжевый или сиреневый). Обновляется при каждом движении мыши через `_updateTempArrow`.
+
+#### _removeTempArrow()
+
+Удаляет стрелку из временной SVG и обнуляет ссылку `_tempArrow`. Вызывается при очистке линии или при уходе из магнитной зоны.
+
+
+### Инерция узлов (overshoot bounce)
+
+Гейтинг: `_isPremium() && localStorage('premium_overshoot_bounce') === 'true'`. В `onGlobalUp()` при отпускании узла после перетаскивания:
+
+1. Рассчитывается velocity на основе истории последних 5 позиций (`_dragHistory`)
+2. Если скорость превышает порог (5px), узел продолжает движение по инерции с затуханием (коэффициент 0.95) до 60px максимум
+3. Пружинит обратно с `cubic-bezier(0.22, 2.2, 0.4, 1)` за 450ms
+
+Контролируется через `this.inertiaEnabled` (функция, возвращающая boolean).
+
+### Particle Trail (частицы при драге)
+
+Гейтинг: `_isPremium() && localStorage.getItem('premium_particle_trail') === 'true'`. При перетаскивании узла спавнятся частицы:
+
+1. Canvas-оверлей (`#particleTrailCanvas`) поверх вьюпорта (`z-index: 10000`, `pointer-events: none`)
+2. 2 частицы за фрейм, случайное направление (0.3–1.5 px/фрейм), размер 2–6px
+3. Частицы затухают (`life -= decay`), замедляются (`vx *= 0.98`, `vy *= 0.98`)
+4. Цвет — `var(--accent)` темы
+5. Лимит: 200 частиц
+6. При отпускании драга спавн прекращается, оставшиеся частицы доживают и удаляются
+
+**Добавленные поля:**
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `_particles` | `Array<object>` | Массив частиц (`worldX, worldY, vx, vy, life, decay, size`) |
+| `_particleSpawnActive` | `boolean` | Флаг активности спавна частиц |
+| `_particleAnimId` | `number\|null` | ID rAF для анимации частиц |
+| `_particleCanvas` | `HTMLCanvasElement\|null` | Canvas-оверлей для рендера частиц |
+| `_particleCtx` | `CanvasRenderingContext2D\|null` | 2D-контекст канваса |
+
+### Блокировка ховеров при инерции
+
+При активации инерции на `document.body` добавляется класс `inertia-active`, а в CSS — правило:
+
+```css
+body.inertia-active .node {
+  pointer-events: none !important;
+}
+```
+
+Это предотвращает мигание hover-эффектов на других узлах, когда инертный узел пролетает над ними.
+
 
 ## ЗАМЕЧАНИЯ
 

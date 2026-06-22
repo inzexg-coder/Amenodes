@@ -274,9 +274,12 @@ function renderEdges() {
 renderer.setOnEdgeRemoved(() => console.log('Edge was deleted'));
 ```
 
-## Edge Wave (премиум-анимация на рёбрах)
 
-Управляется классом `premium-edge-wave` на `document.body` и `localStorage('premium_edge_wave')`.
+## Премиум-функции
+
+### Edge Wave (анимация на рёбрах)
+
+Гейтинг: класс `premium-edge-wave` на `document.body` при `localStorage('premium_edge_wave') === 'true'` и `_isPremium()`.
 
 ### Hover-эффект
 
@@ -289,7 +292,7 @@ renderer.setOnEdgeRemoved(() => console.log('Edge was deleted'));
 }
 ```
 
-При наведении на ребро у премиум-пользователей линия становится пунктирной с бегущей анимацией `stroke-dashoffset`.
+При наведении на ребро линия становится пунктирной с анимацией `stroke-dashoffset`.
 
 ### Touch-эффект
 
@@ -315,9 +318,11 @@ CSS для touch:
 
 Аналогично touch, но на `click`. Стрелка и линия получают свечение `drop-shadow`.
 
-## Магнитные узлы и стрелка предпросмотра
 
-В премиум-версии при перетаскивании связи рядом с совместимым узлом отрисовывается временная стрелка (см. `DomRenderer._addTempArrow`). Она создаётся непосредственно в `DomRenderer`, а не через `EdgeRenderer`, так как отображается только во время drag.
+### Магнитные узлы и стрелка предпросмотра
+
+Гейтинг: `_isPremium() && localStorage('premium_magnetic_nodes') === 'true'`. При перетаскивании связи рядом с совместимым узлом отрисовывается временная стрелка (см. `DomRenderer._addTempArrow`). Создаётся в `DomRenderer`, так как отображается только во время drag.
+
 
 # ЗАМЕЧАНИЯ
 
