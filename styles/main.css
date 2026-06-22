@@ -3574,6 +3574,11 @@ input[type=number] {
   --handle-color: #2288ff !important;
   background: #2288ff !important;
 }
+.premium-purple .node-handle-blue:hover {
+  background: #2288ff !important;
+  filter: brightness(1.5) drop-shadow(0 0 6px #2288ff) !important;
+  box-shadow: 0 0 12px rgba(34, 136, 255, 0.6) !important;
+}
 .premium-purple .design-quality-extreme .node-handle {
   background: #a78bfa !important;
 }

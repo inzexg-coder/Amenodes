@@ -773,10 +773,10 @@ export class DomRenderer {
       if (this.inertiaEnabled() && this._dragHistory.length >= 2) {
         var hist = this._dragHistory;
         var last = hist[hist.length - 1];
-        var first = hist[0];
-        var dt = (last.t - first.t) || 1;
-        var vx = (last.x - first.x) / dt * 40;
-        var vy = (last.y - first.y) / dt * 40;
+        var prev = hist.length >= 2 ? hist[hist.length - 2] : hist[0];
+        var dt = (last.t - prev.t) || 1;
+        var vx = (last.x - prev.x) / dt * 40;
+        var vy = (last.y - prev.y) / dt * 40;
         var speed = Math.sqrt(vx * vx + vy * vy);
         if (speed > 2) {
           var overshootX = Math.max(-60, Math.min(60, vx * 2.0));
