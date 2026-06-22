@@ -374,6 +374,9 @@ export class DomRenderer {
     var cy = this.getClientY(event);
     var point = this.getCanvasCoords(cx, cy);
 
+    // Update source point to follow handle position (accounting for node scale on hover)
+    this._updateTempLineSource();
+
     // Magnetic node preview (premium)
     if (this.magneticNodesEnabled()) {
       this.updateMagneticPreview(cx, cy, point, event);
@@ -411,8 +414,8 @@ export class DomRenderer {
       }
     }
 
-    // Clear previous magnetic node visual
-    if (this.magneticNode && this.magneticNode !== nearest) {
+    // Clear previous magnetic node visual (also if nearest is now too far)
+    if (this.magneticNode && (this.magneticNode !== nearest || minDist >= MAGNET_ZONE)) {
       this.magneticNode.classList.remove('node-magnetic-glow');
       this.magneticNode.classList.remove('node-magnetic-snap');
       this.magneticNode = null;
@@ -446,7 +449,8 @@ export class DomRenderer {
         // Compatible — preview: node glows, line solid with arrow to node border
         nearest.classList.add('node-magnetic-snap');
 
-        // Get source port canvas position
+        // Get source port canvas position (recalculated for scaling)
+        this._updateTempLineSource();
         var srcX = parseFloat(this.tempLine.getAttribute('x1'));
         var srcY = parseFloat(this.tempLine.getAttribute('y1'));
 
@@ -646,6 +650,31 @@ export class DomRenderer {
     const worldY = (clientY - rect.top - offset.y) / zoom;
     return { x: worldX, y: worldY };
   }
+  _updateTempLineSource() {
+    if (!this.edgeSourceId || !this.tempLine) return;
+    var srcEl = document.querySelector('.node[data-id="' + this.edgeSourceId + '"]');
+    if (!srcEl) return;
+    var rect = srcEl.getBoundingClientRect();
+    var vr = this.viewportElement.getBoundingClientRect();
+    var offset = this.viewport ? this.viewport.getOffset() : { x: 0, y: 0 };
+    var zoom = window.currentZoom || 1;
+
+    // For the right-side blue handle (unmapped port)
+    var srcX, srcY;
+    if (this.edgeSourcePort === 'unmapped') {
+      srcX = (rect.right - 7 - vr.left - offset.x) / zoom;
+      srcY = (rect.top + rect.height / 2 - vr.top - offset.y) / zoom;
+    } else {
+      // For other handles: use top-left as fallback (handles positioned via CSS)
+      // The port position is on the left side (input)
+      srcX = (rect.left + 7 - vr.left - offset.x) / zoom;
+      srcY = (rect.top + rect.height / 2 - vr.top - offset.y) / zoom;
+    }
+
+    this.tempLine.setAttribute("x1", srcX);
+    this.tempLine.setAttribute("y1", srcY);
+  }
+
 
   attachDragEvents() {
     document.querySelectorAll('.node').forEach(element => {
@@ -782,7 +811,10 @@ export class DomRenderer {
 
       // Inertia overshoot for premium
       if (this._inertiaAnimId) { cancelAnimationFrame(this._inertiaAnimId); this._inertiaAnimId = null; }
-      if (this.inertiaEnabled() && this._dragHistory.length >= 2) {
+      var _inertiaEnabled = this.inertiaEnabled();
+      var _histLen = this._dragHistory.length;
+      if (_inertiaEnabled) console.log('[Inertia] enabled=' + _inertiaEnabled + ' history=' + _histLen + ' dragNode=' + (this.dragNode ? this.dragNode.id : 'null') + ' dragEl=' + (dragEl ? 'found' : 'null'));
+      if (_inertiaEnabled && _histLen >= 2) {
         var hist = this._dragHistory;
         var last = hist[hist.length - 1];
         var prev = hist.length >= 2 ? hist[hist.length - 2] : hist[0];
@@ -790,9 +822,11 @@ export class DomRenderer {
         var vx = (last.x - prev.x) / dt * 40;
         var vy = (last.y - prev.y) / dt * 40;
         var speed = Math.sqrt(vx * vx + vy * vy);
+        console.log('[Inertia] speed=' + speed.toFixed(2) + ' vx=' + vx.toFixed(2) + ' vy=' + vy.toFixed(2) + ' dt=' + dt);
         if (speed > 2) {
           var overshootX = Math.max(-60, Math.min(60, vx * 2.0));
           var overshootY = Math.max(-60, Math.min(60, vy * 2.0));
+          console.log('[Inertia] OVERSHOOT x=' + overshootX.toFixed(1) + ' y=' + overshootY.toFixed(1));
           var finalX = this.dragNode.x;
           var finalY = this.dragNode.y;
           // Apply overshoot
