@@ -290,12 +290,10 @@ class Application {
     this._updateDragCursor();
 
     // Live cursor preview on settings change
-    const cursorStyleEl = document.getElementById('cursorStyle');
-    const cursorSizeEl = document.getElementById('cursorSize');
-    const cursorSizeLabel = document.getElementById('cursorSizeLabel');
-    const cursorEffectEl = document.getElementById('cursorEffect');
     function onCursorSettingChange() {
-      if (cursorSizeEl && cursorSizeLabel) cursorSizeLabel.textContent = cursorSizeEl.value;
+      const sz = document.getElementById('cursorSize');
+      const lbl = document.getElementById('cursorSizeLabel');
+      if (sz && lbl) lbl.textContent = sz.value;
       if (window.app && window.app._updateDragCursor) window.app._updateDragCursor();
     }
     if (cursorStyleEl) cursorStyleEl.addEventListener('change', onCursorSettingChange);
