@@ -725,6 +725,18 @@ body.is-drawing-edge * {
   cursor: crosshair !important;
 }
 
+/* Edge laser — shimmering beam to nearest compatible node */
+.edge-laser-line {
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px currentColor) drop-shadow(0 0 12px currentColor);
+  animation: edgeLaserShimmer 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes edgeLaserShimmer {
+  0%   { opacity: 0.5; stroke-dashoffset: 0; }
+  100% { opacity: 1;   stroke-dashoffset: -20; }
+}
+
 .node-dragging {
   z-index: 1000 !important;
   transform: scale(1.03) !important;

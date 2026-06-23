@@ -350,6 +350,8 @@ export const en = {
     edgeWaveDesc: 'Running wave animation on edge hover',
     magneticNodes: 'Magnetic Nodes',
     magneticNodesDesc: 'Nodes attract connections when dragged nearby',
+    edgeLaser: 'Edge Laser',
+    edgeLaserDesc: 'Laser beam from cursor to nearest compatible node',
     particleTrail: 'Particle Trail',
     particleTrailDesc: 'Glowing particles trail behind nodes when dragged',
 
