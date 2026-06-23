@@ -19,7 +19,11 @@ export class DomRenderer {
     this.edgeSourceId = null;
     this.edgeSourcePort = null;
     this.tempLine = null;
-    this.laserLine = null;
+    if (this.laserCanvas) {
+      this.laserCanvas.remove();
+    }
+    this.laserCanvas = null;
+    this.laserCtx = null;
     this.tempSvg = null;
     this._tempArrow = null;
     this.magneticNode = null;
@@ -345,12 +349,6 @@ export class DomRenderer {
     svg.style.pointerEvents = 'none';
     svg.style.zIndex = '100';
     svg.style.overflow = 'visible';
-    // Set viewBox to match canvas coordinate space
-    var canvasEl = document.getElementById('canvasContainer');
-    var cw = canvasEl ? canvasEl.offsetWidth : 10000;
-    var ch = canvasEl ? canvasEl.offsetHeight : 10000;
-    svg.setAttribute('viewBox', '0 0 ' + cw + ' ' + ch);
-    svg.setAttribute('preserveAspectRatio', 'none');
     this.layer.appendChild(svg);
     this.tempSvg = svg;
 
@@ -366,21 +364,21 @@ export class DomRenderer {
     this.tempLine.setAttribute("y2", canvasCoords.y);
     svg.appendChild(this.tempLine);
 
-    // Premium edge laser beam
-    this.laserLine = null;
+    // Premium edge laser beam (canvas overlay)
+    this.laserCanvas = null;
+    this.laserCtx = null;
     if (this._edgeLaserEnabled()) {
-      this.laserLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      this.laserLine.setAttribute("class", "edge-laser-line");
-      var accent = window.__premiumAccent ? window.__premiumAccent() : '#ffaa55';
-      this.laserLine.style.setProperty('stroke', accent, 'important');
-      this.laserLine.setAttribute("stroke-width", "2");
-      this.laserLine.setAttribute("stroke-dasharray", "4,8");
-      this.laserLine.setAttribute("opacity", "0");
-      this.laserLine.setAttribute("x1", canvasCoords.x);
-      this.laserLine.setAttribute("y1", canvasCoords.y);
-      this.laserLine.setAttribute("x2", canvasCoords.x);
-      this.laserLine.setAttribute("y2", canvasCoords.y);
-      svg.appendChild(this.laserLine);
+      var lCanvas = document.createElement('canvas');
+      lCanvas.id = 'edgeLaserCanvas';
+      lCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;';
+      var container = this.viewportElement;
+      if (container) {
+        container.appendChild(lCanvas);
+        this.laserCanvas = lCanvas;
+        this.laserCtx = lCanvas.getContext('2d');
+        lCanvas.width = container.clientWidth;
+        lCanvas.height = container.clientHeight;
+      }
     }
 
     document.body.classList.add('is-drawing-edge');
@@ -592,7 +590,7 @@ export class DomRenderer {
   }
 
   _updateEdgeLaser(clientX, clientY) {
-    if (!this._edgeLaserEnabled() || !this.laserLine) return;
+    if (!this._edgeLaserEnabled() || !this.laserCanvas || !this.laserCtx) return;
 
     var LASER_ZONE = 500;
     var nodeEls = document.querySelectorAll('.node');
@@ -615,10 +613,10 @@ export class DomRenderer {
       }
     }
 
-    if (candidates.length === 0) {
-      this.laserLine.setAttribute("opacity", "0");
-      return;
-    }
+    // Clear canvas
+    this.laserCtx.clearRect(0, 0, this.laserCanvas.width, this.laserCanvas.height);
+
+    if (candidates.length === 0) return;
 
     // Sort by distance, nearest first
     candidates.sort(function(a, b) { return a.dist - b.dist; });
@@ -644,50 +642,104 @@ export class DomRenderer {
     var distFactor = Math.max(0, 1 - nearest.dist / LASER_ZONE);
     distFactor = distFactor * distFactor; // quadratic easing
 
-    // Laser color: green if compatible, red/orange if not
+    // Laser color + alpha
     var accent = compatible
       ? (window.__premiumAccent ? window.__premiumAccent() : '#ffaa55')
       : '#ff4444';
-    this.laserLine.style.setProperty('stroke', accent, 'important');
-
-    // Convert target center to canvas coords
-    var vr = this.viewportElement.getBoundingClientRect();
-    var offset = this.viewport ? this.viewport.getOffset() : { x: 0, y: 0 };
-    var zoom = window.currentZoom || 1;
-
-    // Node rect in canvas coords
-    var nCanvasX = (nearest.rLeft - vr.left - offset.x) / zoom;
-    var nCanvasY = (nearest.rTop - vr.top - offset.y) / zoom;
-    var nCanvasW = nearest.rWidth / zoom;
-    var nCanvasH = nearest.rHeight / zoom;
-
-    // Cursor position in canvas coords
-    var cursorCanvas = this.getCanvasCoords(clientX, clientY);
-
-    // Target node center in canvas coords
-    var tCanvasX = nCanvasX + nCanvasW / 2;
-    var tCanvasY = nCanvasY + nCanvasH / 2;
-
-    // Hit the node's border, not center
-    var borderPoint = this._lineToRectBorder(
-      cursorCanvas.x, cursorCanvas.y,
-      tCanvasX, tCanvasY,
-      nCanvasX, nCanvasY, nCanvasW, nCanvasH
-    );
-
-    // Laser intensity: opacity + dash length based on distance
     var opacity = 0.15 + distFactor * 0.85;
+
+    // Parse accent color to RGB
+    var tmpEl = document.createElement('div');
+    tmpEl.style.color = accent;
+    document.body.appendChild(tmpEl);
+    var computedColor = getComputedStyle(tmpEl).color;
+    document.body.removeChild(tmpEl);
+    var rgbMatch = computedColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    var r = 255, g = 170, b = 85;
+    if (rgbMatch) {
+      r = parseInt(rgbMatch[1]);
+      g = parseInt(rgbMatch[2]);
+      b = parseInt(rgbMatch[3]);
+    }
+
+    // Target point in screen coords (clientX, clientY = line end on node)
+    // nearest.cx/cy is the node center in client coords
+    // Find intersection of line (cursor -> node center) with node rect
+    var tx = nearest.cx;
+    var ty = nearest.cy;
+
+    // Simple border hit: find where line crosses the node rect edge
+    var rl = nearest.rLeft;
+    var rt = nearest.rTop;
+    var rr = rl + nearest.rWidth;
+    var rb = rt + nearest.rHeight;
+
+    // Check rect intersection in client coords
+    var ex = clientX, ey = clientY;  // start (cursor)
+    var endX = tx, endY = ty;  // end (node center)
+    var bestX = endX, bestY = endY;
+    var bestT = Infinity;
+
+    // Clip line to node rect edges
+    var dx = endX - ex;
+    var dy = endY - ey;
+
+    if (dx !== 0) {
+      var tLeft = (rl - ex) / dx;
+      if (tLeft > 0 && tLeft < bestT) {
+        var y = ey + dy * tLeft;
+        if (y >= rt && y <= rb) { bestT = tLeft; bestX = rl; bestY = y; }
+      }
+      var tRight = (rr - ex) / dx;
+      if (tRight > 0 && tRight < bestT) {
+        var y = ey + dy * tRight;
+        if (y >= rt && y <= rb) { bestT = tRight; bestX = rr; bestY = y; }
+      }
+    }
+    if (dy !== 0) {
+      var tTop = (rt - ey) / dy;
+      if (tTop > 0 && tTop < bestT) {
+        var x = ex + dx * tTop;
+        if (x >= rl && x <= rr) { bestT = tTop; bestX = x; bestY = rt; }
+      }
+      var tBottom = (rb - ey) / dy;
+      if (tBottom > 0 && tBottom < bestT) {
+        var x = ex + dx * tBottom;
+        if (x >= rl && x <= rr) { bestT = tBottom; bestX = x; bestY = rb; }
+      }
+    }
+
     var dashLen = 4 + distFactor * 12;
     var gapLen = 12 - distFactor * 8;
-    this.laserLine.setAttribute('opacity', String(opacity));
-    this.laserLine.setAttribute('stroke-dasharray', String(dashLen) + ',' + String(gapLen));
-    this.laserLine.setAttribute('stroke-width', String(1.5 + distFactor * 2));
+    var lineWidth = 1.5 + distFactor * 2;
 
-    // Draw line from cursor to node border
-    this.laserLine.setAttribute("x1", cursorCanvas.x);
-    this.laserLine.setAttribute("y1", cursorCanvas.y);
-    this.laserLine.setAttribute("x2", borderPoint.x);
-    this.laserLine.setAttribute("y2", borderPoint.y);
+    // Draw on canvas in CLIENT coordinates
+    var ctx = this.laserCtx;
+    ctx.save();
+    ctx.globalAlpha = opacity;
+    ctx.setLineDash([dashLen, gapLen]);
+    ctx.lineDashOffset = -performance.now() / 40; // shimmer
+    ctx.strokeStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + opacity + ')';
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'round';
+
+    // Glow layers
+    ctx.shadowColor = 'rgba(' + r + ',' + g + ',' + b + ',0.6)';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.moveTo(clientX, clientY);
+    ctx.lineTo(bestX, bestY);
+    ctx.stroke();
+
+    ctx.shadowBlur = 6;
+    ctx.globalAlpha = opacity * 0.4;
+    ctx.lineWidth = lineWidth + 4;
+    ctx.beginPath();
+    ctx.moveTo(clientX, clientY);
+    ctx.lineTo(bestX, bestY);
+    ctx.stroke();
+
+    ctx.restore();
   }
 
 
@@ -715,7 +767,11 @@ export class DomRenderer {
       this.tempSvg.remove();
     }
     this.tempLine = null;
-    this.laserLine = null;
+    if (this.laserCanvas) {
+      this.laserCanvas.remove();
+    }
+    this.laserCanvas = null;
+    this.laserCtx = null;
     this.tempSvg = null;
 
     if (targetId && targetId !== this.edgeSourceId) {
