@@ -19,6 +19,7 @@ export class DomRenderer {
     this.edgeSourceId = null;
     this.edgeSourcePort = null;
     this.tempLine = null;
+    this.laserLine = null;
     this.tempSvg = null;
     this._tempArrow = null;
     this.magneticNode = null;
@@ -359,6 +360,23 @@ export class DomRenderer {
     this.tempLine.setAttribute("y2", canvasCoords.y);
     svg.appendChild(this.tempLine);
 
+    // Premium edge laser beam
+    this.laserLine = null;
+    if (this._edgeLaserEnabled()) {
+      this.laserLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      this.laserLine.setAttribute("class", "edge-laser-line");
+      var laserClr = port === 'unmapped' ? '#44aaff' : (window.__premiumAccent ? window.__premiumAccent() : '#ffaa55');
+      this.laserLine.style.setProperty('stroke', laserClr, 'important');
+      this.laserLine.setAttribute("stroke-width", "2");
+      this.laserLine.setAttribute("stroke-dasharray", "6,8");
+      this.laserLine.setAttribute("opacity", "0");
+      this.laserLine.setAttribute("x1", canvasCoords.x);
+      this.laserLine.setAttribute("y1", canvasCoords.y);
+      this.laserLine.setAttribute("x2", canvasCoords.x);
+      this.laserLine.setAttribute("y2", canvasCoords.y);
+      svg.appendChild(this.laserLine);
+    }
+
     document.body.classList.add('is-drawing-edge');
   }
 
@@ -382,6 +400,8 @@ export class DomRenderer {
     var point = this.getCanvasCoords(cx, cy);
 
     this._updateTempLineSource();
+
+    this._updateEdgeLaser(cx, cy);
 
     if (this.magneticNodesEnabled()) {
       this.updateMagneticPreview(cx, cy, point, event);
@@ -452,6 +472,7 @@ export class DomRenderer {
         nearest.classList.add('node-magnetic-snap');
 
         this._updateTempLineSource();
+
         var srcX = parseFloat(this.tempLine.getAttribute('x1'));
         var srcY = parseFloat(this.tempLine.getAttribute('y1'));
 
@@ -565,6 +586,97 @@ export class DomRenderer {
     }
   }
 
+  _updateEdgeLaser(clientX, clientY) {
+    if (!this._edgeLaserEnabled() || !this.laserLine) return;
+
+    var LASER_ZONE = 500;
+    var nodeEls = document.querySelectorAll('.node');
+    var nearId = null;
+    var nearDist = Infinity;
+    var nearEl = null;
+    var nearRect = null;
+
+    for (var i = 0; i < nodeEls.length; i++) {
+      var nodeEl = nodeEls[i];
+      var nodeId = parseInt(nodeEl.getAttribute('data-id'));
+      if (nodeId === this.edgeSourceId) continue;
+
+      var r = nodeEl.getBoundingClientRect();
+      var dx = Math.max(r.left - clientX, 0, clientX - r.right);
+      var dy = Math.max(r.top - clientY, 0, clientY - r.bottom);
+      var dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < nearDist) {
+        nearDist = dist;
+        nearId = nodeId;
+        nearEl = nodeEl;
+        nearRect = r;
+      }
+    }
+
+    if (!nearEl || nearDist >= LASER_ZONE) {
+      this.laserLine.setAttribute("opacity", "0");
+      return;
+    }
+
+    // Check type compatibility
+    var compatible = false;
+    if (this.graph && this.graph.map) {
+      try {
+        var srcNode = this.graph.map.get(this.edgeSourceId);
+        var tgtNode = this.graph.map.get(nearId);
+        if (srcNode && tgtNode && window.typeSystem) {
+          var srcDT = window.typeSystem.getNodeType(srcNode);
+          var tgtDT = window.typeSystem.getNodeType(tgtNode);
+          var srcDef = window.typeSystem.getTypeDefinition(srcDT);
+          var tgtDef = window.typeSystem.getTypeDefinition(tgtDT);
+          compatible = srcDef && tgtDef && (tgtDef.allowedInputTypes.length === 0 || tgtDef.allowedInputTypes.includes(srcDT));
+        }
+      } catch(e) { console.warn('[Laser] type check error:', e); }
+    }
+
+    // Distance factor
+    var distFactor = Math.max(0, 1 - nearDist / LASER_ZONE);
+    distFactor = distFactor * distFactor;
+
+    // Color
+    var accent = compatible
+      ? (window.__premiumAccent ? window.__premiumAccent() : '#ffaa55')
+      : '#ff4444';
+    this.laserLine.style.setProperty('stroke', accent, 'important');
+
+    // Convert node rect to canvas coords
+    var vr = this.viewportElement.getBoundingClientRect();
+    var offset = this.viewport ? this.viewport.getOffset() : { x: 0, y: 0 };
+    var zoom = window.currentZoom || 1;
+
+    var nCX = (nearRect.left - vr.left - offset.x) / zoom;
+    var nCY = (nearRect.top - vr.top - offset.y) / zoom;
+    var nW = nearRect.width / zoom;
+    var nH = nearRect.height / zoom;
+    var centerX = nCX + nW / 2;
+    var centerY = nCY + nH / 2;
+
+    var cursorCanvas = this.getCanvasCoords(clientX, clientY);
+
+    // Hit node border
+    var borderPoint = this._lineToRectBorder(
+      cursorCanvas.x, cursorCanvas.y,
+      centerX, centerY, nCX, nCY, nW, nH
+    );
+
+    var opacity = 0.15 + distFactor * 0.85;
+    var dashLen = 4 + distFactor * 12;
+    var gapLen = 12 - distFactor * 8;
+    this.laserLine.setAttribute("opacity", String(opacity));
+    this.laserLine.setAttribute("stroke-dasharray", String(dashLen) + "," + String(gapLen));
+    this.laserLine.setAttribute("stroke-width", String(1.5 + distFactor * 2));
+    this.laserLine.setAttribute("x1", String(cursorCanvas.x));
+    this.laserLine.setAttribute("y1", String(cursorCanvas.y));
+    this.laserLine.setAttribute("x2", String(borderPoint.x));
+    this.laserLine.setAttribute("y2", String(borderPoint.y));
+  }
+
   onGlobalUpEdge(event) {
     if (!this.isDraggingEdge) return;
 
@@ -589,6 +701,7 @@ export class DomRenderer {
       this.tempSvg.remove();
     }
     this.tempLine = null;
+    this.laserLine = null;
     this.tempSvg = null;
 
     if (targetId && targetId !== this.edgeSourceId) {
@@ -948,6 +1061,10 @@ export class DomRenderer {
 
   _particleTrailEnabled() {
     return this._isPremium() && localStorage.getItem('premium_particle_trail') === 'true';
+  }
+
+  _edgeLaserEnabled() {
+    return this._isPremium() && localStorage.getItem('premium_edge_laser') === 'true';
   }
 
   _initParticleCanvas() {
