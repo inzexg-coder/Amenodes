@@ -725,6 +725,21 @@ body.is-drawing-edge * {
   cursor: var(--drag-cursor, crosshair) !important;
 }
 
+/* Premium cursor style selects */
+.cursor-style-select {
+  background: #1e1f2c;
+  color: #ddd;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 14px;
+  width: 100%;
+  outline: none;
+}
+.cursor-style-select:focus {
+  border-color: var(--accent);
+}
+
 .node-dragging {
   z-index: 1000 !important;
   transform: scale(1.03) !important;

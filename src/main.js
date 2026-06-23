@@ -872,9 +872,9 @@ class Application {
     const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#ffb347';
 
     const svg = this._generateCursorSVG(style, size, effect, accent);
-    const encoded = encodeURIComponent(svg);
     const hotspot = Math.floor(size / 2);
-    const dataUri = "url('data:image/svg+xml," + encoded + "') " + hotspot + " " + hotspot + ", crosshair";
+    const base64 = btoa(svg);
+    const dataUri = "url('data:image/svg+xml;base64," + base64 + "') " + hotspot + " " + hotspot + ", auto";
     document.documentElement.style.setProperty('--drag-cursor', dataUri);
   }
 
