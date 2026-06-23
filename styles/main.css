@@ -4047,3 +4047,175 @@ body.premium .node-touch-active {
 .node-connect-error {
   animation: connect-error-flash 0.6s ease !important;
 }
+/* ═══════════════════ Settings panel — card redesign ═══════════════════ */
+
+.sett-section {
+  margin-bottom: 24px;
+}
+.sett-section:last-child { margin-bottom: 0; }
+
+.sett-section-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px; padding-bottom: 8px;
+  border-bottom: 1px solid #1a1c2a;
+}
+
+.sett-section-icon {
+  width: 28px; height: 28px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  background: #12141e; border: 1px solid #1e1f2c;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.sett-section-header span {
+  font-size: 14px; color: #ddd; font-weight: 500; letter-spacing: 0.5px;
+}
+
+.sett-section-count {
+  margin-left: auto; font-size: 10px; color: #555; text-transform: uppercase;
+  letter-spacing: 1px; background: #12141e; padding: 2px 8px; border-radius: 4px;
+}
+
+.sett-cards {
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.sett-card {
+  display: flex; align-items: center; gap: 14px;
+  background: #12141e; border: 1px solid #1a1c2a; border-radius: 10px;
+  padding: 12px 16px; transition: 0.2s;
+}
+.sett-card:hover { border-color: #262838; background: #161827; }
+
+.sett-card-preview {
+  width: 44px; height: 44px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: #0a0c14; border: 1px solid #1a1c2a;
+  position: relative; overflow: hidden; font-size: 16px;
+}
+.sett-card-preview .fa-solid,
+.sett-card-preview .fa-regular { color: var(--accent); }
+
+.sett-card-info { flex: 1; min-width: 0; }
+.sett-card-name { font-size: 14px; font-weight: 500; color: #eee; display: flex; align-items: center; gap: 8px; }
+.sett-card-desc { font-size: 12px; color: #5a5a6a; margin-top: 2px; }
+
+.sett-tag {
+  font-size: 10px; color: var(--accent); background: rgba(255,179,71,0.1);
+  padding: 1px 6px; border-radius: 4px; font-weight: 400;
+}
+
+.sett-card-ctrl { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+
+/* ── Toggle ── */
+.sett-toggle {
+  width: 42px; height: 22px; background: #22223a; border-radius: 11px;
+  position: relative; cursor: pointer; flex-shrink: 0; transition: 0.3s;
+}
+.sett-toggle::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px; background: #5a5a6a; border-radius: 50%;
+  transition: 0.3s;
+}
+.sett-toggle.on { background: var(--accent); }
+.sett-toggle.on::after { left: 22px; background: #fff; box-shadow: 0 1px 6px rgba(255,179,71,0.3); }
+
+.sett-cb:checked + .sett-toggle { background: var(--accent); }
+.sett-cb:checked + .sett-toggle::after { left: 22px; background: #fff; box-shadow: 0 1px 6px rgba(255,179,71,0.3); }
+
+/* ── Select ── */
+.sett-select {
+  background: #0a0c14; color: #ddd; border: 1px solid #1a1c2a;
+  border-radius: 8px; padding: 5px 24px 5px 10px; font-size: 12px;
+  outline: none; cursor: pointer; flex-shrink: 0;
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23ffb347'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+  min-width: 95px;
+}
+.sett-select:focus { border-color: #333; }
+
+/* ── Range ── */
+.sett-range-wrap { display: flex; align-items: center; gap: 8px; }
+.sett-range {
+  -webkit-appearance: none; appearance: none;
+  height: 4px; background: #1a1c2a; border-radius: 2px;
+  outline: none; width: 80px;
+}
+.sett-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px; background: var(--accent);
+  border-radius: 50%; cursor: pointer;
+  box-shadow: 0 0 6px rgba(255,179,71,0.3);
+}
+.sett-range-val {
+  font-size: 13px; color: var(--accent); font-weight: 600;
+  min-width: 28px; text-align: right; font-variant-numeric: tabular-nums;
+}
+
+/* ── Preview animations ── */
+@keyframes settInertia {
+  0% { transform: translateX(0); }
+  30% { transform: translateX(14px); }
+  50% { transform: translateX(8px); }
+  70% { transform: translateX(12px); }
+  100% { transform: translateX(10px); }
+}
+@keyframes settParticle {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-22px) translateX(12px); opacity: 0; }
+}
+@keyframes settWave {
+  0% { transform: translateX(0); opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { transform: translateX(24px); opacity: 0.2; }
+}
+@keyframes settMagnetPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+@keyframes settRingPulse {
+  0% { transform: scale(0.9); opacity: 0.4; }
+  100% { transform: scale(1.15); opacity: 0.9; }
+}
+
+.sett-pv-inertia { position: relative; width: 30px; height: 30px; display: flex; align-items: center; }
+.sett-pv-inertia .sett-box { width: 14px; height: 14px; background: var(--accent); border-radius: 3px; animation: settInertia 1.2s ease-out infinite; }
+
+.sett-pv-particles { position: relative; width: 44px; height: 44px; }
+.sett-pv-particles .sett-dot {
+  position: absolute; width: 3px; height: 3px; border-radius: 50%;
+  background: var(--accent); animation: settParticle 1.4s ease-out infinite;
+}
+.sett-pv-particles .sett-dot:nth-child(1) { left: 16px; bottom: 10px; animation-delay: 0s; }
+.sett-pv-particles .sett-dot:nth-child(2) { left: 22px; bottom: 8px; animation-delay: 0.35s; }
+.sett-pv-particles .sett-dot:nth-child(3) { left: 20px; bottom: 12px; animation-delay: 0.7s; }
+
+.sett-pv-wave { position: relative; width: 44px; height: 44px; }
+.sett-pv-wave .sett-w {
+  position: absolute; height: 2px; background: var(--accent); border-radius: 1px;
+  left: 4px; animation: settWave 0.9s ease-in-out infinite;
+}
+.sett-pv-wave .sett-w:nth-child(1) { width: 22px; top: 14px; animation-delay: 0s; }
+.sett-pv-wave .sett-w:nth-child(2) { width: 16px; top: 20px; animation-delay: 0.25s; opacity: 0.6; }
+.sett-pv-wave .sett-w:nth-child(3) { width: 10px; top: 26px; animation-delay: 0.5s; opacity: 0.4; }
+
+.sett-pv-magnet { position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
+.sett-pv-magnet i { font-size: 18px; color: var(--accent); animation: settMagnetPulse 1s ease-in-out infinite; }
+
+.sett-pv-purple { font-size: 20px; color: #a78bfa; }
+
+.sett-pv-cursor { position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
+.sett-pv-cursor .sett-ring { width: 22px; height: 22px; border: 2px solid var(--accent); border-radius: 50%; animation: settRingPulse 1.5s ease-in-out infinite alternate; }
+.sett-pv-cursor .sett-cross { position: absolute; width: 20px; height: 20px; }
+.sett-pv-cursor .sett-cross::before,
+.sett-pv-cursor .sett-cross::after { content: ''; position: absolute; background: var(--accent); }
+.sett-pv-cursor .sett-cross::before { width: 16px; height: 1px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+.sett-pv-cursor .sett-cross::after { width: 1px; height: 16px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+.sett-pv-cursor .sett-dot-cursor { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; position: absolute; }
+
+/* Hide old premium section labels inside settings modal */
+.premium-tab-content .premium-section-label { display: none; }

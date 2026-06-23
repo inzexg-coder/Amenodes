@@ -289,6 +289,25 @@ class Application {
     }
     this._updateDragCursor();
 
+    // Initialize premium toggles from localStorage
+    document.querySelectorAll('.sett-toggle').forEach(function(tog) {
+      var cb = tog.querySelector('.sett-cb');
+      if (cb) {
+        var saved = localStorage.getItem(cb.id);
+        cb.checked = saved === 'true';
+        if (cb.checked) tog.classList.add('on');
+      }
+    });
+    // Click handler for sett-toggle
+    document.querySelectorAll('.sett-toggle').forEach(function(tog) {
+      tog.addEventListener('click', function(e) {
+        var cb = this.querySelector('.sett-cb');
+        if (!cb) return;
+        cb.checked = !cb.checked;
+        this.classList.toggle('on', cb.checked);
+      });
+    });
+
     // Live cursor preview on settings change
     function onCursorSettingChange() {
       const sz = document.getElementById('cursorSize');
