@@ -345,12 +345,6 @@ export class DomRenderer {
     svg.style.pointerEvents = 'none';
     svg.style.zIndex = '100';
     svg.style.overflow = 'visible';
-    // Set viewBox to match canvas coordinate space
-    var canvasEl = document.getElementById('canvasContainer');
-    var cw = canvasEl ? canvasEl.offsetWidth : 10000;
-    var ch = canvasEl ? canvasEl.offsetHeight : 10000;
-    svg.setAttribute('viewBox', '0 0 ' + cw + ' ' + ch);
-    svg.setAttribute('preserveAspectRatio', 'none');
     this.layer.appendChild(svg);
     this.tempSvg = svg;
 
@@ -594,7 +588,7 @@ export class DomRenderer {
   _updateEdgeLaser(clientX, clientY) {
     if (!this._edgeLaserEnabled() || !this.laserLine) return;
 
-    var LASER_ZONE = 500;
+    var LASER_ZONE = 300;
     var nodeEls = document.querySelectorAll('.node');
     var candidates = [];
 
@@ -611,7 +605,7 @@ export class DomRenderer {
       var dist = Math.sqrt(dx * dx + dy * dy);
 
       if (dist < LASER_ZONE) {
-        candidates.push({ el: nodeEl, id: nodeId, dist: dist, cx: cxNode, cy: cyNode, rLeft: r.left, rTop: r.top, rWidth: r.width, rHeight: r.height });
+        candidates.push({ el: nodeEl, id: nodeId, dist: dist, cx: cxNode, cy: cyNode });
       }
     }
 
@@ -654,26 +648,11 @@ export class DomRenderer {
     var vr = this.viewportElement.getBoundingClientRect();
     var offset = this.viewport ? this.viewport.getOffset() : { x: 0, y: 0 };
     var zoom = window.currentZoom || 1;
-
-    // Node rect in canvas coords
-    var nCanvasX = (nearest.rLeft - vr.left - offset.x) / zoom;
-    var nCanvasY = (nearest.rTop - vr.top - offset.y) / zoom;
-    var nCanvasW = nearest.rWidth / zoom;
-    var nCanvasH = nearest.rHeight / zoom;
+    var tCanvasX = (nearest.cx - vr.left - offset.x) / zoom;
+    var tCanvasY = (nearest.cy - vr.top - offset.y) / zoom;
 
     // Cursor position in canvas coords
     var cursorCanvas = this.getCanvasCoords(clientX, clientY);
-
-    // Target node center in canvas coords
-    var tCanvasX = nCanvasX + nCanvasW / 2;
-    var tCanvasY = nCanvasY + nCanvasH / 2;
-
-    // Hit the node's border, not center
-    var borderPoint = this._lineToRectBorder(
-      cursorCanvas.x, cursorCanvas.y,
-      tCanvasX, tCanvasY,
-      nCanvasX, nCanvasY, nCanvasW, nCanvasH
-    );
 
     // Laser intensity: opacity + dash length based on distance
     var opacity = 0.15 + distFactor * 0.85;
@@ -683,11 +662,11 @@ export class DomRenderer {
     this.laserLine.setAttribute('stroke-dasharray', String(dashLen) + ',' + String(gapLen));
     this.laserLine.setAttribute('stroke-width', String(1.5 + distFactor * 2));
 
-    // Draw line from cursor to node border
+    // Draw line from cursor to node center
     this.laserLine.setAttribute("x1", cursorCanvas.x);
     this.laserLine.setAttribute("y1", cursorCanvas.y);
-    this.laserLine.setAttribute("x2", borderPoint.x);
-    this.laserLine.setAttribute("y2", borderPoint.y);
+    this.laserLine.setAttribute("x2", tCanvasX);
+    this.laserLine.setAttribute("y2", tCanvasY);
   }
 
 
