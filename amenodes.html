@@ -22,8 +22,8 @@ window.__premiumAccent = window.__premiumAccent || function() {
 <title data-i18n="editor.title">@Amenodes</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a2742'/%3E%3Cpath d='M50 25 Q40 20 35 30 Q30 40 40 45 Q35 55 45 60 Q55 65 60 50 Q65 35 55 30 Q50 25 50 25Z' fill='%233a5ba0'/%3E%3Cpath d='M50 35 Q45 32 42 40 Q39 48 48 50 Q52 52 55 45 Q58 38 52 35 Q50 35 50 35Z' fill='%236d8ae0'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<link rel="stylesheet" href="styles/main.css?v=129">
-    <link rel="stylesheet" href="styles/mobile.css?v=129">
+<link rel="stylesheet" href="styles/main.css?v=130">
+    <link rel="stylesheet" href="styles/mobile.css?v=130">
 <script>
 (function(){var c;function init(){if(c)return;c=document.createElement('div');
 c.id='errConsole';c.style.cssText='position:fixed;bottom:0;left:0;right:0;background:rgba(10,0,0,0.92);color:#ff6b6b;font-family:monospace;font-size:13px;z-index:99999;padding:12px 16px;max-height:40vh;overflow-y:auto;border-top:2px solid #ff3333;display:none';
@@ -251,50 +251,125 @@ document.head.appendChild(s);
         </div>
       </div>
 
-      <div class="settings-tab-content premium-tab-content" data-tab="premium">
-        <div class="premium-section-label"><i class="fas fa-running"></i> Animation</div>
-        <div class="setting-group">
-          <label><i class="fas fa-crown" style="color:var(--accent);font-size:12px;"></i> <span data-i18n="editor.overshootBounce">Overshoot Bounce</span></label>
-          <div class="toggle-switch">
-            <input type="checkbox" id="premiumOvershoot">
-            <span class="toggle-slider"></span>
-            <span class="toggle-label"><span data-i18n="editor.overshootBounceDesc">Nodes overshoot with inertia when dragged and spring back</span></span>
-          </div>
-        </div>
-        <div class="setting-group">
-          <label><i class="fas fa-crown" style="color:var(--accent);font-size:12px;"></i> <span data-i18n="editor.particleTrail">Particle Trail</span></label>
-          <div class="toggle-switch">
-            <input type="checkbox" id="premiumParticleTrail">
-            <span class="toggle-slider"></span>
-            <span class="toggle-label"><span data-i18n="editor.particleTrailDesc">Glowing particles trail behind nodes when dragged</span></span>
-          </div>
-        </div>
-        <div class="premium-section-label"><i class="fas fa-palette"></i> Visual</div>
-        <div class="setting-group">
-          <label><i class="fas fa-crown" style="color:var(--accent);font-size:12px;"></i> <span data-i18n="editor.purpleAccent">Purple Accent</span></label>
-          <div class="toggle-switch">
-            <input type="checkbox" id="premiumPurple">
-            <span class="toggle-slider"></span>
-            <span class="toggle-label"><span data-i18n="editor.purpleAccentDesc">Replace orange accents with purple gradient (crown, buttons, highlights)</span></span>
-          </div>
-        </div>
-        <div class="setting-group">
-          <label><i class="fas fa-crown" style="color:var(--accent);font-size:12px;"></i> <span data-i18n="editor.edgeWave">Edge Wave</span></label>
-          <div class="toggle-switch">
-            <input type="checkbox" id="premiumEdgeWave">
-            <span class="toggle-slider"></span>
-            <span class="toggle-label"><span data-i18n="editor.edgeWaveDesc">Running wave animation on edge hover</span></span>
-          </div>
-        </div>
-        <div class="premium-section-label"><i class="fas fa-hand-pointer"></i> Interaction</div>
-        <div class="setting-group">
-          <label><i class="fas fa-crown" style="color:var(--accent);font-size:12px;"></i> <span data-i18n="editor.magneticNodes">Magnetic Nodes</span></label>
-          <div class="toggle-switch">
-            <input type="checkbox" id="premiumMagneticNodes">
-            <span class="toggle-slider"></span>
-            <span class="toggle-label"><span data-i18n="editor.magneticNodesDesc">Nodes attract connections when dragged nearby</span></span>
-          </div>
-        </div>
+            <div class="settings-tab-content premium-tab-content" data-tab="premium">
+              <div class="sett-section">
+                <div class="sett-section-header">
+                  <div class="sett-section-icon"><i class="fas fa-running"></i></div>
+                  <span>Animation</span>
+                  <span class="sett-section-count">2</span>
+                </div>
+                <div class="sett-cards">
+                  <div class="sett-card">
+                    <div class="sett-card-preview"><div class="sett-pv-inertia"><div class="sett-box"></div></div></div>
+                    <div class="sett-card-info">
+                      <div class="sett-card-name" data-i18n="editor.overshootBounce">Инерция узлов</div>
+                      <div class="sett-card-desc" data-i18n="editor.overshootBounceDesc">Узел пролетает по инерции и пружинит обратно</div>
+                    </div>
+                    <div class="sett-card-ctrl"><div class="sett-toggle" id="settToggle_overshoot"><input type="checkbox" id="premiumOvershoot" class="sett-cb" hidden></div></div>
+                  </div>
+                  <div class="sett-card">
+                    <div class="sett-card-preview"><div class="sett-pv-particles"><div class="sett-dot"></div><div class="sett-dot"></div><div class="sett-dot"></div></div></div>
+                    <div class="sett-card-info">
+                      <div class="sett-card-name">Шлейф частиц <span class="sett-tag" data-i18n="editor.premium">premium</span></div>
+                      <div class="sett-card-desc" data-i18n="editor.particleTrailDesc">Светящиеся частицы тянутся за узлом при перетаскивании</div>
+                    </div>
+                    <div class="sett-card-ctrl"><div class="sett-toggle" id="settToggle_particle"><input type="checkbox" id="premiumParticleTrail" class="sett-cb" hidden></div></div>
+                  </div>
+                </div>
+              </div>
+              <div class="sett-section">
+                <div class="sett-section-header">
+                  <div class="sett-section-icon"><i class="fas fa-palette"></i></div>
+                  <span data-i18n="editor.visualLabel">Visual</span>
+                  <span class="sett-section-count">2</span>
+                </div>
+                <div class="sett-cards">
+                  <div class="sett-card">
+                    <div class="sett-card-preview"><i class="fas fa-palette sett-pv-purple"></i></div>
+                    <div class="sett-card-info">
+                      <div class="sett-card-name" data-i18n="editor.purpleAccent">Фиолетовая тема <span class="sett-tag">premium</span></div>
+                      <div class="sett-card-desc" data-i18n="editor.purpleAccentDesc">Заменить оранжевые тона на сиреневый градиент</div>
+                    </div>
+                    <div class="sett-card-ctrl"><div class="sett-toggle" id="settToggle_purple"><input type="checkbox" id="premiumPurple" class="sett-cb" hidden></div></div>
+                  </div>
+                  <div class="sett-card">
+                    <div class="sett-card-preview"><div class="sett-pv-wave"><div class="sett-w"></div><div class="sett-w"></div><div class="sett-w"></div></div></div>
+                    <div class="sett-card-info">
+                      <div class="sett-card-name" data-i18n="editor.edgeWave">Волна на рёбрах <span class="sett-tag">premium</span></div>
+                      <div class="sett-card-desc" data-i18n="editor.edgeWaveDesc">Бегущая волна при наведении на связь</div>
+                    </div>
+                    <div class="sett-card-ctrl"><div class="sett-toggle" id="settToggle_edgeWave"><input type="checkbox" id="premiumEdgeWave" class="sett-cb" hidden></div></div>
+                  </div>
+                </div>
+              </div>
+              <div class="sett-section">
+                <div class="sett-section-header">
+                  <div class="sett-section-icon"><i class="fas fa-hand-pointer"></i></div>
+                  <span data-i18n="editor.interactionLabel">Interaction</span>
+                  <span class="sett-section-count">1</span>
+                </div>
+                <div class="sett-cards">
+                  <div class="sett-card">
+                    <div class="sett-card-preview"><div class="sett-pv-magnet"><i class="fas fa-magnet"></i></div></div>
+                    <div class="sett-card-info">
+                      <div class="sett-card-name" data-i18n="editor.magneticNodes">Магнитные узлы <span class="sett-tag">premium</span></div>
+                      <div class="sett-card-desc" data-i18n="editor.magneticNodesDesc">Узлы притягивают соединение при перетаскивании рядом</div>
+                    </div>
+                    <div class="sett-card-ctrl"><div class="sett-toggle" id="settToggle_magnetic"><input type="checkbox" id="premiumMagneticNodes" class="sett-cb" hidden></div></div>
+                  </div>
+                </div>
+              </div>
+              <div class="sett-section">
+                <div class="sett-section-header">
+                  <div class="sett-section-icon"><i class="fas fa-mouse-pointer"></i></div>
+                  <span data-i18n="editor.cursorSection">Connection Cursor</span>
+                  <span class="sett-section-count">3</span>
+                </div>
+                <div class="sett-cards">
+                  <div class="sett-card">
+                    <div class="sett-card-preview"><div class="sett-pv-cursor"><div class="sett-ring" id="settCursorPreview"></div></div></div>
+                    <div class="sett-card-info">
+                      <div class="sett-card-name" data-i18n="editor.cursorStyle">Стиль курсора</div>
+                      <div class="sett-card-desc" data-i18n="editor.cursorStyleDesc">Форма курсора при перетаскивании связи</div>
+                    </div>
+                    <div class="sett-card-ctrl">
+                      <select class="sett-select" id="cursorStyle">
+                        <option value="crosshair">Crosshair</option>
+                        <option value="dot">Dot</option>
+                        <option value="ring" selected>Ring</option>
+                        <option value="sniper">Sniper</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="sett-card">
+                    <div class="sett-card-preview"><i class="fas fa-expand" id="settSizeIcon" style="color:var(--accent);font-size:16px;"></i></div>
+                    <div class="sett-card-info">
+                      <div class="sett-card-name" data-i18n="editor.cursorSize">Размер курсора</div>
+                      <div class="sett-card-desc" data-i18n="editor.cursorSizeDesc">Диаметр курсора в пикселях</div>
+                    </div>
+                    <div class="sett-card-ctrl">
+                      <div class="sett-range-wrap">
+                        <input type="range" class="sett-range" id="cursorSize" min="16" max="32" value="24" step="4">
+                        <span class="sett-range-val" id="cursorSizeLabel">24</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="sett-card">
+                    <div class="sett-card-preview"><i class="fas fa-circle" id="settEffectIcon" style="color:var(--accent);font-size:18px;"></i></div>
+                    <div class="sett-card-info">
+                      <div class="sett-card-name" data-i18n="editor.cursorEffect">Эффект курсора</div>
+                      <div class="sett-card-desc" data-i18n="editor.cursorEffectDesc">Свечение вокруг кастомного курсора</div>
+                    </div>
+                    <div class="sett-card-ctrl">
+                      <select class="sett-select" id="cursorEffect">
+                        <option value="none" data-i18n="editor.cursorEffectNone">Нет</option>
+                        <option value="glow" data-i18n="editor.cursorEffectGlow">Свечение</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
     </div>
     <div class="modal-footer">
       <button class="modal-btn secondary" id="cancelSettings"><span data-i18n="editor.cancel">Cancel</span></button>
@@ -309,11 +384,11 @@ document.head.appendChild(s);
 <script type="importmap">
 {
   "imports": {
-    "./src/main.js": "./src/main.js?v=129"
+    "./src/main.js": "./src/main.js?v=130"
   }
 }
 </script>
-<script type="module" src="./src/main.js?v=129"></script>
+<script type="module" src="./src/main.js?v=130"></script>
 
 <script>
 const API_BASE = 'https://amenoke.ru/amenodes/api';

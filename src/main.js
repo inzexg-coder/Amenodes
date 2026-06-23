@@ -272,6 +272,54 @@ class Application {
       const saved = localStorage.getItem('premium_particle_trail');
       particleTrailCheck.checked = saved === 'true';
     }
+    // Read cursor settings
+    const cursorStyleEl = document.getElementById('cursorStyle');
+    if (cursorStyleEl) {
+      cursorStyleEl.value = localStorage.getItem('cursor_style') || 'crosshair';
+    }
+    const cursorSizeEl = document.getElementById('cursorSize');
+    const cursorSizeLabel = document.getElementById('cursorSizeLabel');
+    if (cursorSizeEl) {
+      cursorSizeEl.value = localStorage.getItem('cursor_size') || '24';
+      if (cursorSizeLabel) cursorSizeLabel.textContent = cursorSizeEl.value;
+    }
+    const cursorEffectEl = document.getElementById('cursorEffect');
+    if (cursorEffectEl) {
+      cursorEffectEl.value = localStorage.getItem('cursor_effect') || 'none';
+    }
+    this._updateDragCursor();
+
+    // Initialize premium toggles from localStorage
+    document.querySelectorAll('.sett-toggle').forEach(function(tog) {
+      var cb = tog.querySelector('.sett-cb');
+      if (cb) {
+        var saved = localStorage.getItem(cb.id);
+        cb.checked = saved === 'true';
+        if (cb.checked) tog.classList.add('on');
+      }
+    });
+    // Click handler for sett-toggle
+    document.querySelectorAll('.sett-toggle').forEach(function(tog) {
+      tog.addEventListener('click', function(e) {
+        var cb = this.querySelector('.sett-cb');
+        if (!cb) return;
+        e.preventDefault();
+        cb.checked = !cb.checked;
+        this.classList.toggle('on', cb.checked);
+        localStorage.setItem(cb.id, cb.checked);
+      });
+    });
+
+    // Live cursor preview on settings change
+    function onCursorSettingChange() {
+      const sz = document.getElementById('cursorSize');
+      const lbl = document.getElementById('cursorSizeLabel');
+      if (sz && lbl) lbl.textContent = sz.value;
+      if (window.app && window.app._updateDragCursor) window.app._updateDragCursor();
+    }
+    if (cursorStyleEl) cursorStyleEl.addEventListener('change', onCursorSettingChange);
+    if (cursorSizeEl) cursorSizeEl.addEventListener('input', onCursorSettingChange);
+    if (cursorEffectEl) cursorEffectEl.addEventListener('change', onCursorSettingChange);
 
     const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
 
@@ -525,6 +573,19 @@ class Application {
         if (particleTrailCheck) {
           localStorage.setItem('premium_particle_trail', particleTrailCheck.checked.toString());
         }
+        const cursorStyleEl = document.getElementById('cursorStyle');
+        if (cursorStyleEl) {
+          localStorage.setItem('cursor_style', cursorStyleEl.value);
+        }
+        const cursorSizeEl = document.getElementById('cursorSize');
+        if (cursorSizeEl) {
+          localStorage.setItem('cursor_size', cursorSizeEl.value);
+        }
+        const cursorEffectEl = document.getElementById('cursorEffect');
+        if (cursorEffectEl) {
+          localStorage.setItem('cursor_effect', cursorEffectEl.value);
+        }
+        this._updateDragCursor();
 
         if (this.renderer) {
           this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
@@ -816,6 +877,55 @@ class Application {
         appContainer.classList.remove('hidden');
       }
     }
+  }
+
+  _updateDragCursor() {
+    const style = localStorage.getItem('cursor_style') || 'crosshair';
+    const size = parseInt(localStorage.getItem('cursor_size') || '24');
+    const effect = localStorage.getItem('cursor_effect') || 'none';
+
+    if (style === 'crosshair') {
+      document.documentElement.style.removeProperty('--drag-cursor');
+      return;
+    }
+
+    // Get accent color from CSS variable
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#ffb347';
+
+    const svg = this._generateCursorSVG(style, size, effect, accent);
+    const hotspot = Math.floor(size / 2);
+    const base64 = btoa(svg);
+    const dataUri = "url('data:image/svg+xml;base64," + base64 + "') " + hotspot + " " + hotspot + ", auto";
+    document.documentElement.style.setProperty('--drag-cursor', dataUri);
+  }
+
+  _generateCursorSVG(style, size, effect, color) {
+    var r = size / 2;
+    var inner = Math.max(3, size / 4);
+    var strokeW = Math.max(1, size / 12);
+    var filterStr = '';
+    var filterId = 'g';
+
+    if (effect === 'glow') {
+      filterStr = '<defs><filter id="' + filterId + '"><feGaussianBlur stdDeviation="' + (size / 16) + '" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
+    }
+
+    var filterAttr = effect === 'glow' ? ' filter="url(#' + filterId + ')"' : '';
+
+    var innerSvg = '';
+    if (style === 'dot') {
+      innerSvg = '<circle cx="' + r + '" cy="' + r + '" r="' + inner + '" fill="' + color + '"' + filterAttr + '/>';
+    } else if (style === 'ring') {
+      innerSvg = '<circle cx="' + r + '" cy="' + r + '" r="' + (inner + 2) + '" fill="none" stroke="' + color + '" stroke-width="' + strokeW + '"' + filterAttr + '/>';
+    } else if (style === 'sniper') {
+      innerSvg = ''
+        + '<circle cx="' + r + '" cy="' + r + '" r="' + inner + '" fill="none" stroke="' + color + '" stroke-width="' + strokeW + '"' + filterAttr + '/>'
+        + '<line x1="' + r + '" y1="2" x2="' + r + '" y2="' + (size - 2) + '" stroke="' + color + '" stroke-width="' + (strokeW * 0.6) + '"' + filterAttr + '/>'
+        + '<line x1="2" y1="' + r + '" x2="' + (size - 2) + '" y2="' + r + '" stroke="' + color + '" stroke-width="' + (strokeW * 0.6) + '"' + filterAttr + '/>'
+        + '<circle cx="' + r + '" cy="' + r + '" r="1.5" fill="' + color + '"/>';
+    }
+
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">' + filterStr + innerSvg + '</svg>';
   }
 
   initDirtyIndicator() {
