@@ -359,7 +359,7 @@ export class DomRenderer {
     this.tempLine.setAttribute("y2", canvasCoords.y);
     svg.appendChild(this.tempLine);
 
-    document.body.classList.add('is-drawing-edge');
+    document.body.style.cursor = 'crosshair';
   }
 
   getClientX(event) {
@@ -625,7 +625,7 @@ export class DomRenderer {
     this.edgeSourcePort = null;
     this.magneticNode = null;
     this._removeTempArrow();
-    document.body.classList.remove('is-drawing-edge');
+    document.body.style.cursor = '';
   }
 
   showMenu(x, y, sourceId) {
