@@ -719,6 +719,12 @@ body {
   opacity: 1 !important;
 }
 
+/* Force crosshair cursor on everything while dragging a connection */
+body.is-drawing-edge,
+body.is-drawing-edge * {
+  cursor: crosshair !important;
+}
+
 .node-dragging {
   z-index: 1000 !important;
   transform: scale(1.03) !important;
