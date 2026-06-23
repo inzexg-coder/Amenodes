@@ -303,8 +303,10 @@ class Application {
       tog.addEventListener('click', function(e) {
         var cb = this.querySelector('.sett-cb');
         if (!cb) return;
+        e.preventDefault();
         cb.checked = !cb.checked;
         this.classList.toggle('on', cb.checked);
+        localStorage.setItem(cb.id, cb.checked);
       });
     });
 

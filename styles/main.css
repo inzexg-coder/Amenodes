@@ -2003,67 +2003,101 @@ body.inertia-active .node {
 }
 
 .modal-content {
-  background: linear-gradient(135deg, #1a1f30, #0f1222);
-  border-radius: 20px;
-  border: 1px solid rgba(var(--accent-rgb), 0.3);
-  width: 520px;
-  max-width: 92%;
+  background: linear-gradient(135deg, #191e30, #0d0f1a);
+  border-radius: 24px;
+  border: 1px solid rgba(var(--accent-rgb), 0.25);
+  width: 920px;
+  max-width: 96%;
   overflow: hidden;
-  animation: modalSlideIn 0.2s ease;
+  animation: modalSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  box-shadow: 0 0 60px rgba(var(--accent-rgb), 0.08),
+              0 20px 60px rgba(0,0,0,0.5);
+}
+.modal-content::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.3), transparent 40%, rgba(var(--accent-rgb), 0.1) 70%, transparent);
+  z-index: -1;
+  animation: modalBorderGlow 4s ease-in-out infinite alternate;
+}
+@keyframes modalBorderGlow {
+  0% { opacity: 0.6; }
+  100% { opacity: 1; }
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  background: #2a3a5e;
-  border-bottom: 1px solid rgba(var(--accent-rgb), 0.3);
+  padding: 20px 28px;
+  background: linear-gradient(135deg, rgba(42,58,94,0.6), rgba(20,30,60,0.8));
+  border-bottom: 1px solid rgba(var(--accent-rgb), 0.15);
+  backdrop-filter: blur(10px);
 }
 
 .modal-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 20px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  background: linear-gradient(135deg, #eee, #aab4d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .modal-close {
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: 28px;
   cursor: pointer;
-  color: #aab4d4;
+  color: #6a7a9e;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px;
+  transition: all 0.2s;
 }
 
 .modal-close:hover {
   color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.08);
 }
 
 .modal-body {
-  padding: 20px;
+  padding: 28px 28px 24px;
 .settings-tabs {
   display: flex;
-  gap: 4px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid rgba(var(--accent-rgb), 0.2);
+  gap: 6px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(var(--accent-rgb), 0.12);
   padding-bottom: 0;
+  background: rgba(255,255,255,0.02);
+  border-radius: 12px 12px 0 0;
+  padding: 4px 4px 0;
 }
 
 .settings-tab {
   flex: 1;
-  padding: 10px 12px;
+  padding: 12px 16px;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
-  color: #8899bb;
-  font-size: 13px;
+  color: #667799;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: color 0.2s, border-color 0.2s;
+  transition: color 0.25s, border-color 0.25s, background 0.25s;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
+  border-radius: 8px 8px 0 0;
+}
+.settings-tab:hover {
+  color: #ccd4ee;
+  background: rgba(255,255,255,0.03);
 }
 
 .settings-tab:hover {
@@ -2073,6 +2107,7 @@ body.inertia-active .node {
 .settings-tab.active {
   color: var(--accent);
   border-bottom-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.05);
 }
 
 .settings-tab-content {
@@ -2269,13 +2304,27 @@ body.inertia-active .node {
 
 .premium-tab-content.active {
   display: block;
-  max-height: 420px;
+  max-height: 720px;
   overflow-y: auto;
-  padding-right: 6px;
+  padding-right: 8px;
+}
+.premium-tab-content.active::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(var(--accent-rgb), 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+  z-index: 0;
+}
+/* Ensure the premium tab content is positioned so the ::before is contained */
+.premium-tab-content.active {
+  position: relative;
+  z-index: 1;
 }
 
 .premium-tab-content.active::-webkit-scrollbar {
-  width: 4px;
+  width: 5px;
 }
 
 .premium-tab-content.active::-webkit-scrollbar-track {
@@ -2283,12 +2332,13 @@ body.inertia-active .node {
 }
 
 .premium-tab-content.active::-webkit-scrollbar-thumb {
-  background: rgba(var(--accent-rgb), 0.3);
-  border-radius: 4px;
+  background: rgba(var(--accent-rgb), 0.2);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.03);
 }
 
 .premium-tab-content.active::-webkit-scrollbar-thumb:hover {
-  background: rgba(var(--accent-rgb), 0.5);
+  background: rgba(var(--accent-rgb), 0.4);
 }
 
 .premium-section-label {
@@ -4048,6 +4098,21 @@ body.premium .node-touch-active {
   animation: connect-error-flash 0.6s ease !important;
 }
 /* ═══════════════════ Settings panel — card redesign ═══════════════════ */
+/* ── Card entrance stagger ── */
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.sett-card {
+  animation: cardFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.sett-card:nth-child(1) { animation-delay: 0.02s; }
+.sett-card:nth-child(2) { animation-delay: 0.06s; }
+.sett-card:nth-child(3) { animation-delay: 0.10s; }
+.sett-card:nth-child(4) { animation-delay: 0.14s; }
+.sett-card:nth-child(5) { animation-delay: 0.18s; }
+.sett-card:nth-child(6) { animation-delay: 0.22s; }
+
 
 .sett-section {
   margin-bottom: 24px;
@@ -4055,104 +4120,162 @@ body.premium .node-touch-active {
 .sett-section:last-child { margin-bottom: 0; }
 
 .sett-section-header {
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 12px; padding-bottom: 8px;
-  border-bottom: 1px solid #1a1c2a;
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 16px; padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  position: relative;
+}
+.sett-section-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  border-radius: 2px;
 }
 
 .sett-section-icon {
-  width: 28px; height: 28px; border-radius: 8px;
+  width: 34px; height: 34px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 13px;
-  background: #12141e; border: 1px solid #1e1f2c;
+  font-size: 15px;
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.12), rgba(var(--accent-rgb), 0.04));
+  border: 1px solid rgba(var(--accent-rgb), 0.15);
   flex-shrink: 0;
   color: var(--accent);
+  box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.05);
 }
 
 .sett-section-header span {
-  font-size: 14px; color: #ddd; font-weight: 500; letter-spacing: 0.5px;
+  font-size: 17px; color: #e4e6f0; font-weight: 600; letter-spacing: 0.3px;
 }
 
 .sett-section-count {
-  margin-left: auto; font-size: 10px; color: #555; text-transform: uppercase;
-  letter-spacing: 1px; background: #12141e; padding: 2px 8px; border-radius: 4px;
+  margin-left: auto; font-size: 11px; color: #555; text-transform: uppercase;
+  letter-spacing: 1.2px; background: rgba(255,255,255,0.03); padding: 4px 14px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.04);
 }
 
 .sett-cards {
-  display: flex; flex-direction: column; gap: 8px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.sett-section:has(.sett-card:only-child) .sett-cards {
+  grid-template-columns: 1fr;
 }
 
 .sett-card {
-  display: flex; align-items: center; gap: 14px;
-  background: #12141e; border: 1px solid #1a1c2a; border-radius: 10px;
-  padding: 12px 16px; transition: 0.2s;
+  display: flex; align-items: center; gap: 16px;
+  background: rgba(18,20,30,0.7); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px; padding: 16px 18px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  backdrop-filter: blur(4px);
+  overflow: hidden;
 }
-.sett-card:hover { border-color: #262838; background: #161827; }
+.sett-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.06), transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.sett-card:hover {
+  border-color: rgba(var(--accent-rgb), 0.2);
+  background: rgba(22,24,36,0.85);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3),
+              0 0 30px rgba(var(--accent-rgb), 0.04);
+}
+.sett-card:hover::before { opacity: 1; }
+.sett-card:active { transform: translateY(0) scale(0.99); }
 
 .sett-card-preview {
-  width: 44px; height: 44px; border-radius: 8px; flex-shrink: 0;
+  width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  background: #0a0c14; border: 1px solid #1a1c2a;
-  position: relative; overflow: hidden; font-size: 16px;
+  background: rgba(0,0,0,0.3); border: 1px solid rgba(var(--accent-rgb), 0.1);
+  position: relative; overflow: hidden; font-size: 18px;
+  box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.03);
+  transition: box-shadow 0.3s;
+}
+.sett-card:hover .sett-card-preview {
+  box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.08);
+  border-color: rgba(var(--accent-rgb), 0.15);
 }
 .sett-card-preview .fa-solid,
-.sett-card-preview .fa-regular { color: var(--accent); }
+.sett-card-preview .fa-regular { color: var(--accent); font-size: 22px; }
 
 .sett-card-info { flex: 1; min-width: 0; }
-.sett-card-name { font-size: 14px; font-weight: 500; color: #eee; display: flex; align-items: center; gap: 8px; }
-.sett-card-desc { font-size: 12px; color: #5a5a6a; margin-top: 2px; }
+.sett-card-name { font-size: 16px; font-weight: 600; color: #f0f2f8; display: flex; align-items: center; gap: 8px; }
+.sett-card-desc { font-size: 13px; color: #6a6a7e; margin-top: 3px; line-height: 1.4; }
 
 .sett-tag {
-  font-size: 10px; color: var(--accent); background: rgba(255,179,71,0.1);
-  padding: 1px 6px; border-radius: 4px; font-weight: 400;
+  font-size: 11px; color: var(--accent); background: rgba(var(--accent-rgb), 0.1);
+  padding: 2px 10px; border-radius: 20px; font-weight: 500;
+  border: 1px solid rgba(var(--accent-rgb), 0.1);
+  letter-spacing: 0.3px;
 }
 
 .sett-card-ctrl { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
 
 /* ── Toggle ── */
 .sett-toggle {
-  width: 42px; height: 22px; background: #22223a; border-radius: 11px;
-  position: relative; cursor: pointer; flex-shrink: 0; transition: 0.3s;
+  width: 54px; height: 28px; background: #22223a; border-radius: 14px;
+  position: relative; cursor: pointer; flex-shrink: 0;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
 }
 .sett-toggle::after {
-  content: ''; position: absolute; top: 2px; left: 2px;
-  width: 18px; height: 18px; background: #5a5a6a; border-radius: 50%;
-  transition: 0.3s;
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 22px; height: 22px; background: #5a5a6a; border-radius: 50%;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
-.sett-toggle.on { background: var(--accent); }
-.sett-toggle.on::after { left: 22px; background: #fff; box-shadow: 0 1px 6px rgba(255,179,71,0.3); }
+.sett-toggle.on { background: var(--accent); box-shadow: inset 0 1px 3px rgba(0,0,0,0.2), 0 0 12px rgba(var(--accent-rgb), 0.2); }
+.sett-toggle.on::after { left: 29px; background: #fff; box-shadow: 0 1px 6px rgba(255,179,71,0.3), 0 0 8px rgba(var(--accent-rgb), 0.15); }
 
-.sett-cb:checked + .sett-toggle { background: var(--accent); }
-.sett-cb:checked + .sett-toggle::after { left: 22px; background: #fff; box-shadow: 0 1px 6px rgba(255,179,71,0.3); }
+/* .sett-cb:checked + .sett-toggle — не работает (input внутри toggle) */
+/* .sett-cb:checked + .sett-toggle::after — не работает (input внутри toggle) */
 
 /* ── Select ── */
 .sett-select {
-  background: #0a0c14; color: #ddd; border: 1px solid #1a1c2a;
-  border-radius: 8px; padding: 5px 24px 5px 10px; font-size: 12px;
+  background: rgba(0,0,0,0.3); color: #ddd; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; padding: 9px 34px 9px 14px; font-size: 14px;
   outline: none; cursor: pointer; flex-shrink: 0;
   appearance: none; -webkit-appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23ffb347'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right 8px center;
-  min-width: 95px;
+  background-repeat: no-repeat; background-position: right 10px center;
+  min-width: 110px;
+  transition: border-color 0.2s;
 }
-.sett-select:focus { border-color: #333; }
+.sett-select:hover { border-color: rgba(var(--accent-rgb), 0.15); }
+.sett-select:focus { border-color: rgba(var(--accent-rgb), 0.3); }
 
 /* ── Range ── */
-.sett-range-wrap { display: flex; align-items: center; gap: 8px; }
+.sett-range-wrap { display: flex; align-items: center; gap: 10px; }
 .sett-range {
   -webkit-appearance: none; appearance: none;
-  height: 4px; background: #1a1c2a; border-radius: 2px;
-  outline: none; width: 80px;
+  height: 6px; background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.3), rgba(var(--accent-rgb), 0.1)); border-radius: 3px;
+  outline: none; width: 120px;
+  transition: background 0.2s;
 }
 .sett-range::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
-  width: 14px; height: 14px; background: var(--accent);
+  width: 22px; height: 22px; background: radial-gradient(circle at 35% 35%, #fff, var(--accent));
   border-radius: 50%; cursor: pointer;
-  box-shadow: 0 0 6px rgba(255,179,71,0.3);
+  box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.sett-range::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 24px rgba(var(--accent-rgb), 0.4);
 }
 .sett-range-val {
-  font-size: 13px; color: var(--accent); font-weight: 600;
-  min-width: 28px; text-align: right; font-variant-numeric: tabular-nums;
+  font-size: 16px; color: var(--accent); font-weight: 600;
+  min-width: 35px; text-align: right; font-variant-numeric: tabular-nums;
 }
 
 /* ── Preview animations ── */
