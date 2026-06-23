@@ -272,11 +272,6 @@ class Application {
       const saved = localStorage.getItem('premium_particle_trail');
       particleTrailCheck.checked = saved === 'true';
     }
-    const edgeLaserCheck = document.getElementById('premiumEdgeLaser');
-    if (edgeLaserCheck) {
-      const saved = localStorage.getItem('premium_edge_laser');
-      edgeLaserCheck.checked = saved === 'true';
-    }
 
     const gridPreviewCanvas = document.getElementById('gridPreviewCanvas');
 
@@ -534,11 +529,6 @@ class Application {
         if (this.renderer) {
           this.renderer.setSnapToGrid(() => this.snapToGrid, () => this.gridSize);
         }
-        const edgeLaserCheck = document.getElementById('premiumEdgeLaser');
-        if (edgeLaserCheck) {
-          localStorage.setItem('premium_edge_laser', edgeLaserCheck.checked.toString());
-        }
-
 
         this.applyCanvasSettings();
         if (this.renderer) this.renderer.render();
