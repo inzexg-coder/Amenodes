@@ -722,7 +722,7 @@ body {
 /* Force crosshair cursor on everything while dragging a connection */
 body.is-drawing-edge,
 body.is-drawing-edge * {
-  cursor: crosshair !important;
+  cursor: var(--drag-cursor, crosshair) !important;
 }
 
 .node-dragging {

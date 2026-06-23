@@ -258,7 +258,33 @@ document.head.appendChild(s);
           <div class="toggle-switch">
             <input type="checkbox" id="premiumOvershoot">
             <span class="toggle-slider"></span>
-            <span class="toggle-label"><span data-i18n="editor.overshootBounceDesc">Nodes overshoot with inertia when dragged and spring back</span></span>
+            <span class="toggle-label"><span data-i18n="editor.overshootBounceDesc">Nodes overshoot with inertia when dragged and spring back</span>          </div>
+        </div>
+        <div class="premium-section-label"><i class="fas fa-mouse-pointer"></i> Connection Cursor</div>
+        <div class="setting-group">
+          <label><span data-i18n="editor.cursorStyle">Cursor Style</span></label>
+          <select id="cursorStyle" style="background:#1e1f2c;color:#ddd;border:1px solid #333;border-radius:6px;padding:4px 8px;font-size:13px;width:100%;">
+            <option value="crosshair">Crosshair</option>
+            <option value="dot">Dot</option>
+            <option value="ring">Ring</option>
+            <option value="sniper">Sniper</option>
+          </select>
+          <span class="toggle-label"><span data-i18n="editor.cursorStyleDesc">Custom cursor while dragging a connection</span></span>
+        </div>
+        <div class="setting-group">
+          <label><span data-i18n="editor.cursorSize">Cursor Size</span></label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="range" id="cursorSize" min="16" max="32" value="24" step="4" style="flex:1;">
+            <span id="cursorSizeLabel" style="min-width:28px;text-align:right;font-size:13px;color:var(--accent);">24</span>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label><span data-i18n="editor.cursorEffect">Cursor Effect</span></label>
+          <select id="cursorEffect" style="background:#1e1f2c;color:#ddd;border:1px solid #333;border-radius:6px;padding:4px 8px;font-size:13px;width:100%;">
+            <option value="none" data-i18n="editor.cursorEffectNone">None</option>
+            <option value="glow" data-i18n="editor.cursorEffectGlow">Glow</option>
+          </select>
+        </div></span>
           </div>
         </div>
         <div class="setting-group">
