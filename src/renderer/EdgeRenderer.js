@@ -49,7 +49,7 @@ export class EdgeRenderer {
       group.addEventListener('click', (ev) => {
         ev.stopPropagation();
         
-        group.classList.add('edge-wave');
+        if(localStorage.getItem('amenodes_premium')==='true'&&localStorage.getItem('premium_edge_wave')==='true')if(localStorage.getItem('amenodes_premium')==='true'&&localStorage.getItem('premium_edge_wave')==='true')group.classList.add('edge-wave');
         setTimeout(function() { group.classList.remove('edge-wave'); }, 700);
         this.clearHighlight();
       });
@@ -57,7 +57,7 @@ export class EdgeRenderer {
       group.addEventListener('touchstart', (ev) => {
         ev.stopPropagation();
         
-        group.classList.add('edge-wave');
+        if(localStorage.getItem('amenodes_premium')==='true'&&localStorage.getItem('premium_edge_wave')==='true')group.classList.add('edge-wave');
         setTimeout(function() { group.classList.remove('edge-wave'); }, 700);
         this.longPressTimer = setTimeout(() => {
           this.ignoreNextClick = true;
