@@ -59,4 +59,13 @@ jobs:
             https://api.github.com/repos/inzexg-coder/amenodes-ci/dispatches \
             --data @payload.json
 
+      - name: Install sshpass
+        if: github.ref == 'refs/heads/main'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq sshpass
+
+      - name: Fix permissions
+        if: github.ref == 'refs/heads/main'
+        run: |
+          sshpass -p "${{ secrets.SFTP_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }} "chmod 644 /var/www/html/index.html 2>/dev/null; chmod -R 755 /var/www/html/amenodes/api/ 2>/dev/null; echo 'Permissions fixed'" 
+
 
