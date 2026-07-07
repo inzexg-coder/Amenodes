@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Amenodes</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:#f5f3f7;color:#2a1a3a;min-height:100vh;-webkit-user-select:none;user-select:none}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(139,92,246,0.3);border-radius:4px}
+
+/* topbar */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:rgba(255,255,255,0.9);backdrop-filter:blur(12px);border-bottom:1px solid rgba(139,92,246,0.08)}
+.brand{font-size:14px;font-weight:700;color:#7c3aed;letter-spacing:.5px;cursor:default}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.tbar-token{font-size:11px;font-family:monospace;color:#7c3aed;padding:4px 10px;border-radius:6px;border:1px solid rgba(139,92,246,0.15);background:rgba(139,92,246,0.04)}
+.btn{padding:7px 16px;border-radius:8px;border:1px solid rgba(139,92,246,0.2);background:transparent;color:#7c3aed;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;text-decoration:none;white-space:nowrap}
+.btn:hover{background:rgba(139,92,246,0.06);border-color:#7c3aed}
+.btn-primary{background:#7c3aed;color:#fff;border-color:transparent}
+.btn-primary:hover{opacity:.85;background:#7c3aed}
+.btn-sm{padding:5px 12px;font-size:11px}
+.auth-user{font-size:12px;color:#7c3aed;font-weight:500}
+.back-btn{font-size:11px;color:#7c3aed;cursor:pointer;border:none;background:none;font-family:inherit;display:flex;align-items:center;gap:4px;padding:4px 8px;border-radius:6px;transition:all .15s}
+.back-btn:hover{background:rgba(139,92,246,0.06)}
+
+/* views */
+.view{display:none}
+.view.active{display:block}
+
+/* layout */
+.main{max-width:640px;margin:0 auto;padding:80px 20px 40px}
+.section{margin-bottom:28px}
+.section-title{font-size:10px;font-weight:600;color:#7c3aed;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding:0 2px}
+
+/* cards */
+.card{background:#fff;border:1px solid rgba(139,92,246,0.08);border-radius:12px;padding:16px;margin-bottom:6px}
+.card-row{display:flex;align-items:center;gap:12px}
+.card-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;background:rgba(139,92,246,0.08);color:#7c3aed}
+.card-body{flex:1;min-width:0}
+.card-body h3{font-size:14px;font-weight:600;color:#2a1a3a;margin-bottom:2px}
+.card-body p{font-size:12px;color:#6b5a7a;line-height:1.5}
+.card-body .val{font-size:15px;font-weight:700;color:#7c3aed;font-family:monospace}
+.card-chevron{color:#b0a0c0;font-size:11px;flex-shrink:0}
+.card-click{cursor:pointer;transition:border-color .15s}
+.card-click:hover{border-color:rgba(139,92,246,0.2)}
+
+/* hero */
+.hero{text-align:center;padding:48px 20px 32px}
+.hero .logo{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#a78bfa);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:700;margin:0 auto 14px}
+.hero h1{font-size:26px;font-weight:700;color:#2a1a3a;margin-bottom:6px}
+.hero p{font-size:13px;color:#6b5a7a;max-width:380px;margin:0 auto 20px;line-height:1.6}
+.hero-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+
+/* features */
+.features{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:28px}
+.feature{padding:14px;border-radius:8px;border:1px solid rgba(139,92,246,0.06);background:rgba(255,255,255,0.5)}
+.feature h4{font-size:12px;font-weight:600;color:#2a1a3a;margin-bottom:2px}
+.feature p{font-size:11px;color:#7a6a8a;line-height:1.4}
+
+/* landing links */
+.landing-links{margin-top:32px;text-align:center}
+.landing-links a{font-size:11px;color:#7a6a8a;margin:0 8px;text-decoration:none;transition:color .15s}
+.landing-links a:hover{color:#7c3aed}
+
+/* chat */
+.chat-view{position:fixed;top:52px;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:#f5f3f7}
+.chat-hdr{padding:8px 16px;border-bottom:1px solid rgba(139,92,246,0.08);display:flex;align-items:center;gap:8px;flex-shrink:0;background:#fff}
+.chat-hdr span{font-size:12px;font-weight:600;color:#7c3aed}
+.msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:12px 16px}
+.msgs .m{max-width:80%;padding:8px 12px;border-radius:8px;font-size:13px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word}
+.msgs .m.u{background:#7c3aed;color:#fff;align-self:flex-end;border-bottom-right-radius:2px}
+.msgs .m.b{background:#fff;border:1px solid rgba(139,92,246,0.08);align-self:flex-start}
+.msgs .m .t{font-size:10px;color:#b0a0c0;margin-top:4px;text-align:right}
+.msgs .m.b code{padding:2px 5px;background:rgba(139,92,246,0.08);border-radius:4px;font-size:12px;font-family:monospace}
+.msgs .m.b pre{margin:6px 0;padding:8px 12px;background:rgba(139,92,246,0.04);border-radius:6px;overflow-x:auto}
+.msgs .m.b pre code{background:none;padding:0}
+.msgs .m.b ul,.msgs .m.b ol{margin:4px 0;padding-left:20px}
+.msgs .m.b li{margin:2px 0}
+.msgs .m.b strong{font-weight:600}
+.msgs .m.b em{font-style:italic}
+.msgs .m.b h1,.msgs .m.b h2,.msgs .m.b h3,.msgs .m.b h4{font-size:inherit;font-weight:600;margin:6px 0 2px}
+.msgs .m.b p{margin:4px 0}
+/* mode toggle */
+.mode-toggle{display:flex;align-items:center;gap:8px;padding:6px 16px;border-bottom:1px solid rgba(139,92,246,0.08);flex-shrink:0;background:#fff}
+.mode-toggle label{font-size:11px;font-weight:500;color:#7a6a8a;cursor:pointer;user-select:none;padding:3px 10px;border-radius:6px;transition:all .15s;border:1px solid transparent}
+.mode-toggle label.active{color:#7c3aed;background:rgba(139,92,246,0.08);border-color:rgba(139,92,246,0.15)}
+.mode-toggle label:hover{color:#7c3aed}
+.mode-toggle .mode-hint{font-size:10px;color:#b0a0c0;margin-left:auto}
+.msgs .m.b pre{margin:6px 0;padding:8px 12px;background:rgba(139,92,246,0.04);border-radius:6px;overflow-x:auto}
+.msgs .m.b pre code{background:none;padding:0}
+.msgs .m.b ul,.msgs .m.b ol{margin:4px 0;padding-left:20px}
+.msgs .m.b li{margin:2px 0}
+.msgs .m.b strong{font-weight:600}
+.msgs .m.b em{font-style:italic}
+.msgs .m.b h1,.msgs .m.b h2,.msgs .m.b h3,.msgs .m.b h4{font-size:inherit;font-weight:600;margin:6px 0 2px}
+.msgs .m.b p{margin:4px 0}
+.msgs .m.u .t{color:rgba(255,255,255,0.5)}
+.inp{display:flex;gap:6px;padding:10px 16px;border-top:1px solid rgba(139,92,246,0.08);flex-shrink:0;background:#fff}
+.inp input{flex:1;padding:10px 14px;border:1px solid rgba(139,92,246,0.12);border-radius:10px;font-size:14px;font-family:inherit;outline:none;color:#2a1a3a;background:#f5f3f7;transition:border-color .2s}
+.inp input:focus{border-color:#7c3aed}
+.inp button{padding:10px 18px;border-radius:10px;border:none;background:#7c3aed;color:#fff;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity .15s;flex-shrink:0}
+.inp button:hover{opacity:.85}
+.inp button:disabled{opacity:.4;cursor:default}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-box{background:#fff;border:1px solid rgba(139,92,246,0.1);border-radius:16px;padding:28px;width:360px;max-width:90vw;box-shadow:0 8px 40px rgba(0,0,0,0.08)}
+.modal-box h3{font-size:16px;font-weight:600;color:#2a1a3a;margin-bottom:16px}
+.modal-box input{width:100%;padding:11px 14px;border:1px solid rgba(139,92,246,0.12);border-radius:10px;font-size:14px;font-family:inherit;outline:none;color:#2a1a3a;background:#f5f3f7;transition:border-color .2s}
+.modal-box input:focus{border-color:#7c3aed}
+.modal-close{position:absolute;top:12px;right:16px;background:none;border:none;color:#7a6a8a;font-size:20px;cursor:pointer;font-family:inherit}
+.modal-close:hover{color:#7c3aed}
+.modal-tabs{display:flex;margin-bottom:16px;background:#f0ecf4;border-radius:10px;padding:3px}
+.modal-tab{flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:#7a6a8a;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s}
+.modal-tab.active{background:#fff;color:#7c3aed;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.auth-form{display:flex;flex-direction:column;gap:10px}
+.auth-form.hidden{display:none}
+.auth-error{color:#e53e3e;font-size:12px;min-height:16px}
+.modal-btn{width:100%;padding:11px;border-radius:10px;border:none;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity .15s}
+.modal-btn.primary{background:#7c3aed;color:#fff}
+.modal-btn.primary:hover{opacity:.85}
+.modal-btn.primary:disabled{opacity:.4;cursor:default}
+
+/* mode toggle */
+.mode-toggle{display:flex;align-items:center;gap:8px;padding:6px 16px;border-bottom:1px solid rgba(139,92,246,0.08);flex-shrink:0;background:#fff}
+.mode-toggle label{font-size:11px;font-weight:500;color:#7a6a8a;cursor:pointer;user-select:none;padding:3px 10px;border-radius:6px;transition:all .15s;border:1px solid transparent}
+.mode-toggle label.active{color:#7c3aed;background:rgba(139,92,246,0.08);border-color:rgba(139,92,246,0.15)}
+.mode-toggle label:hover{color:#7c3aed}
+.mode-toggle .mode-hint{font-size:10px;color:#b0a0c0;margin-left:auto}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left"><span class="brand">amenodes</span></div>
+  <div class="topbar-right" id="topbarRight">
+    <span class="tbar-token" id="tokenDisplay" style="display:none">0</span>
+    <div id="authWidget">
+      <button class="btn btn-sm btn-primary" onclick="showAuthModal()">Sign in</button>
+    </div>
+  </div>
+</div>
+
+<div id="app"></div>
+
+<script>
+(function(){
+  var app = document.getElementById('app');
+  var tokenDisplay = document.getElementById('tokenDisplay');
+  var authWidget = document.getElementById('authWidget');
+
+  function esc(s){
+    var d = document.createElement('div');
+    d.textContent = s || '';
+    return d.innerHTML;
+  }
+
+  function getToken(){
+    return localStorage.getItem('amenoke_token') || localStorage.getItem('auth_token') || '';
+  }
+
+  function getUser(){
+    try {
+      var u = localStorage.getItem('amenoke_user') || localStorage.getItem('auth_user');
+      return u ? JSON.parse(u) : null;
+    } catch(e) { return null; }
+  }
+
+  function render(){
+    var user = getUser();
+    var tok = getToken();
+    app.innerHTML = '';
+    if (user && tok){
+      renderLoggedIn(user);
+    } else {
+      renderLoggedOut();
+    }
+  }
+
+  function renderLoggedOut(){
+    tokenDisplay.style.display = 'none';
+    authWidget.innerHTML = '<button class="btn btn-sm" onclick="showAuthModal()">Sign in</button>';
+    app.innerHTML =
+      '<div class="main" style="text-align:center">' +
+        '<div class="logo" style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#a78bfa);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:700;margin:20px auto 14px">A</div>' +
+        '<h1 style="font-size:28px;font-weight:700;color:#2a1a3a;margin-bottom:4px;line-height:1.2">Nodes,<br><span style="color:#7c3aed">visualised.</span></h1>' +
+        '<p style="font-size:13px;color:#6b5a7a;max-width:340px;margin:0 auto 24px;line-height:1.6">Amenodes — visual node editor. Connect nodes, compute, visualize. No code.</p>' +
+        '<a class="btn btn-primary" href="/amenodes/" style="display:inline-block;padding:11px 32px;font-size:14px">Start</a>' +
+      '</div>' +
+      '<div class="main" style="padding-top:0">' +
+        '<div class="section">' +
+          '<div class="section-title">About Agent</div>' +
+          '<div class="card" style="padding:18px">' +
+            '<div class="card-row">' +
+              '<div class="card-icon"><i class="fas fa-robot"></i></div>' +
+              '<div class="card-body"><h3>Amenodes Agent</h3><p>Answers questions about the platform, helps with nodes, and explains features. Sign in to chat.</p></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="section">' +
+          '<div class="section-title">Premium</div>' +
+          '<div class="card" style="padding:18px">' +
+            '<div class="card-row">' +
+              '<div class="card-icon"><i class="fas fa-crown"></i></div>' +
+              '<div class="card-body"><h3>Premium Tokens</h3><p>Buy tokens to unlock premium features: inertia physics, particle trails, purple theme, edge wave effects.</p></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="landing-links" style="margin-top:24px;text-align:center">' +
+          '<a href="/amenodes/">Editor</a>' +
+          '<a href="#" onclick="showAuthModal();return false">Sign in</a>' +
+        '</div>' +
+      '</div>';
+  }function renderLoggedIn(user){
+    tokenDisplay.style.display = 'inline';
+    authWidget.innerHTML = '<span class="auth-user">' + esc(user.username) + '</span>' +
+      '<button class="btn btn-sm" onclick="handleLogout()">Exit</button>';
+    
+    // Skeleton while loading
+    app.innerHTML =
+      '<div class="main" style="text-align:center;padding-top:100px">' +
+        '<div style="color:#b0a0c0;font-size:13px">Loading...</div>' +
+      '</div>';
+    
+    // Fetch all data in parallel
+    var token = getToken();
+    var userId = user.id;
+    
+    var p1 = fetch('/amenodes/api/me.php', {
+      method: 'GET', headers: {'Authorization': 'Bearer ' + token}
+    }).then(function(r){ return r.json(); }).then(function(d){
+      return d.success && d.user ? d.user : null;
+    }).catch(function(){ return null; });
+    
+    var p2 = userId ? fetch('/amenodes/api/user_templates.php?user_id=' + userId, {
+      method: 'GET', headers: {'Authorization': 'Bearer ' + token}
+    }).then(function(r){ return r.json(); }).then(function(d){
+      return d.success && d.templates ? d.templates : [];
+    }).catch(function(){ return []; }) : Promise.resolve([]);
+    
+    var p3 = fetch('/agent/api.php', {
+      method: 'GET', headers: {'Authorization': 'Bearer ' + token}
+    }).then(function(r){ return r.json(); }).then(function(d){
+      return d.success && d.user_balance !== undefined ? d.user_balance : null;
+    }).catch(function(){ return null; });
+    
+    Promise.all([p1, p2, p3]).then(function(results){
+      var profile = results[0] || user;
+      var projects = results[1] || [];
+      var balance = results[2];
+      
+      if (balance !== null) {
+        tokenDisplay.textContent = balance.toLocaleString();
+      }
+      
+      var isPremium = profile.role === 'premium' || profile.role === 'admin' || 
+        profile.premium || profile.is_premium ||
+        (profile.premium_until && new Date(profile.premium_until) > new Date());
+      
+      var points = profile.creator_points || 0;
+      
+      var projectsHtml = '';
+      if (projects.length > 0) {
+        for (var i = 0; i < Math.min(projects.length, 5); i++) {
+          var p = projects[i];
+          var date = p.created_at ? p.created_at.substring(0, 10) : '';
+          var status = p.status === 'public' ? '' : ' (' + (p.status || 'draft') + ')';
+          projectsHtml +=
+            '<div class="card card-click" data-href="/amenodes/?template=' + p.id + '">' +
+              '<div class="card-row">' +
+                '<div class="card-icon"><i class="fas fa-file"></i></div>' +
+                '<div class="card-body">' +
+                  '<h3>' + esc(p.title || 'Untitled') + '</h3>' +
+                  '<p>' + date + status + '</p>' +
+                '</div>' +
+                '<span class="card-chevron"><i class="fas fa-arrow-right"></i></span>' +
+              '</div>' +
+            '</div>';
+        }
+      } else {
+        projectsHtml =
+          '<div class="card" style="padding:18px;text-align:center">' +
+            '<p style="font-size:12px;color:#7a6a8a">No projects yet.</p>' +
+          '</div>';
+      }
+      
+      app.innerHTML =
+        '<div class="main">' +
+          '<div style="margin-bottom:20px">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between">' +
+              '<div>' +
+                '<h2 style="font-size:20px;font-weight:700;color:#2a1a3a;margin-bottom:2px">' + esc(profile.username || user.username) + '</h2>' +
+                '<p style="font-size:12px;color:#7a6a8a">' +
+                  (isPremium ? '<span style="color:#7c3aed;font-weight:600">Premium</span>' : '<span>Free</span>') +
+                  (points > 0 ? ' &middot; ' + points.toLocaleString() + ' CP' : '') +
+                '</p>' +
+              '</div>' +
+              '<div>' +
+                '<span class="btn btn-sm" onclick="window.location.href=\'/amenodes/profile.html\'">Edit Profile</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="section">' +
+            '<div class="section-title">Projects</div>' +
+            projectsHtml +
+            '<div class="card card-click" onclick="showNewProjectModal()" style="border-style:dashed;border-color:rgba(139,92,246,0.15)">' +
+              '<div class="card-row">' +
+                '<div class="card-icon"><i class="fas fa-plus"></i></div>' +
+                '<div class="card-body"><h3>New Project</h3></div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="section">' +
+            '<div class="section-title">Tokens</div>' +
+            '<div class="card card-click" onclick="showTokenModal()">' +
+              '<div class="card-row">' +
+                '<div class="card-icon"><i class="fas fa-coins"></i></div>' +
+                '<div class="card-body">' +
+                  '<h3>' + (balance !== null ? balance.toLocaleString() : '...') + ' tokens</h3>' +
+                  '<p>Click to top up</p>' +
+                '</div>' +
+                '<span class="card-chevron"><i class="fas fa-chevron-right"></i></span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="section">' +
+            '<div class="section-title">Quick Access</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">' +
+              '<div class="card card-click" data-href="/amenodes/" style="text-align:center;padding:16px">' +
+                '<div class="card-icon" style="margin:0 auto 6px"><i class="fas fa-cubes"></i></div>' +
+                '<h3 style="font-size:12px;font-weight:600;color:#2a1a3a">Editor</h3>' +
+              '</div>' +
+              '<div class="card card-click" onclick="showChat()" style="text-align:center;padding:16px">' +
+                '<div class="card-icon" style="margin:0 auto 6px"><i class="fas fa-comment"></i></div>' +
+                '<h3 style="font-size:12px;font-weight:600;color:#2a1a3a">Agent</h3>' +
+              '</div>' +
+              '<div class="card card-click" data-href="/amenodes/profile.html" style="text-align:center;padding:16px">' +
+                '<div class="card-icon" style="margin:0 auto 6px"><i class="fas fa-cog"></i></div>' +
+                '<h3 style="font-size:12px;font-weight:600;color:#2a1a3a">Settings</h3>' +
+              '</div>' +
+              '<div class="card card-click" data-href="/amenodes/templates.html" style="text-align:center;padding:16px">' +
+                '<div class="card-icon" style="margin:0 auto 6px"><i class="fas fa-globe"></i></div>' +
+                '<h3 style="font-size:12px;font-weight:600;color:#2a1a3a">Community</h3>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    });
+  }function fetchBalance(){
+    var tok = getToken();
+    if (!tok) return;
+    fetch('/agent/api.php', {
+      method: 'GET',
+      headers: {'Authorization': 'Bearer ' + tok}
+    }).then(function(r){ return r.json(); }).then(function(d){
+      if (d.success && d.user_balance !== undefined){
+        var bal = d.user_balance.toLocaleString();
+        tokenDisplay.textContent = bal;
+        var db = document.getElementById('dashBal');
+        if (db) db.textContent = bal;
+      }
+    }).catch(function(){});
+  }
+
+  // ── Chat ──
+  var chatOpen = false;
+
+  
+
+  window.showNewProjectModal = function(){
+    var existing = document.getElementById("newProjectOverlay");
+    if (existing) existing.remove();
+    var overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.id = "newProjectOverlay";
+    overlay.innerHTML =
+      '<div class="modal-box" style="position:relative">' +
+        '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
+        '<h3>New Project</h3>' +
+        '<div class="auth-form">' +
+          '<input type="text" id="projectNameInput" placeholder="Project name" required>' +
+          '<textarea id="projectDescInput" placeholder="Description (optional)" style="width:100%;padding:11px 14px;border:1px solid rgba(139,92,246,0.12);border-radius:10px;font-size:14px;font-family:inherit;outline:none;color:#2a1a3a;background:#f5f3f7;resize:none;min-height:60px"></textarea>' +
+          '<p class="auth-error" id="projectError"></p>' +
+          '<button type="submit" class="modal-btn primary" id="createProjectBtn" onclick="createProject()">Create and Open</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+    document.getElementById("projectNameInput").focus();
+  };
+
+  window.createProject = function(){
+    var name = document.getElementById("projectNameInput").value.trim();
+    var desc = document.getElementById("projectDescInput").value.trim();
+    var err = document.getElementById("projectError");
+    var btn = document.getElementById("createProjectBtn");
+    if (!name) { err.textContent = "Project name is required"; return; }
+    err.textContent = "";
+    btn.disabled = true;
+    btn.textContent = "Creating...";
+    var tok = getToken();
+    fetch("/amenodes/api/create_template.php", {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "Authorization": "Bearer " + tok},
+      body: JSON.stringify({
+        title: name,
+        description: desc,
+        graph_data: {
+          nodes: [],
+          edges: [],
+          nextId: 1,
+          nextEdgeId: 1,
+          designQuality: 100,
+          viewportZoom: 1,
+          viewportOffsetX: 0,
+          viewportOffsetY: 0
+        }
+      })
+    }).then(function(r){ return r.json(); }).then(function(d){
+      if (d.success && d.template) {
+        var m = document.getElementById("newProjectOverlay");
+        if (m) m.remove();
+        window.location.href = "/amenodes/?template=" + d.template.id;
+      } else {
+        err.textContent = d.error || "Failed to create project";
+        btn.disabled = false;
+        btn.textContent = "Create and Open";
+      }
+    }).catch(function(){
+      err.textContent = "Connection error";
+      btn.disabled = false;
+      btn.textContent = "Create and Open";
+    });
+  };
+
+window.showChat = function(){
+    if (chatOpen) return;
+    chatOpen = true;
+    var user = getUser();
+    if (!user) { showAuthModal(); return; }
+    window.chatMode = 'user';
+
+    var view = document.createElement('div');
+    view.className = 'chat-view';
+    view.id = 'chatView';
+    view.innerHTML =
+      '<div class="chat-hdr">' +
+        '<button class="back-btn" onclick="hideChat()"><i class="fas fa-arrow-left"></i> Back</button>' +
+        '<span>Agent</span>' +
+      '</div>' +
+      '<div class="mode-toggle">' +
+        '<label class="active" data-mode="user">User</label>' +
+        '<label data-mode="dev">Developer</label>' +
+        '<span class="mode-hint" id="modeHint">Using Amenodes</span>' +
+      '</div>' +
+      '<div class="msgs" id="chatMsgs">' +
+      '</div>' +
+      '<div class="inp">' +
+        '<input id="chatInput" placeholder="Message..." onkeydown="if(event.key===13)sendChat()">' +
+        '<button id="chatBtn" onclick="sendChat()">Send</button>' +
+      '</div>';
+    document.body.appendChild(view);
+    document.querySelectorAll('.mode-toggle label').forEach(function(l){
+      l.addEventListener('click', function(){
+        setChatMode(this.dataset.mode);
+      });
+    });
+    setTimeout(function(){
+      var inp = document.getElementById('chatInput');
+      if (inp) inp.focus();
+    }, 200);
+  };
+
+
+  window.hideChat = function(){
+    var v = document.getElementById('chatView');
+    if (v) v.remove();
+    chatOpen = false;
+  };
+
+  window.sendChat = function(){
+    var inp = document.getElementById('chatInput');
+    var msg = inp ? inp.value.trim() : '';
+    if (!msg) return;
+    inp.value = '';
+    var btn = document.getElementById('chatBtn');
+    if (btn) btn.disabled = true;
+
+    addMsg(msg, 'u');
+    var loading = addMsg('...', 'b', 'chatLoading');
+
+    var mode = window.chatMode || 'user';
+    var tok = getToken();
+    fetch('/agent/api.php', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok},
+      body: JSON.stringify({action: 'chat', message: msg, mode: mode})
+    }).then(function(r){ return r.json(); }).then(function(d){
+      if (btn) btn.disabled = false;
+      var ld = document.getElementById('chatLoading');
+      if (ld) ld.remove();
+      if (d.user_balance !== undefined){
+        tokenDisplay.textContent = d.user_balance.toLocaleString();
+      }
+      addMsg(d.reply || d.error || 'Error', 'b');
+    }).catch(function(){
+      if (btn) btn.disabled = false;
+      var ld = document.getElementById('chatLoading');
+      if (ld) ld.remove();
+      addMsg('Connection error', 'b');
+    });
+  };
+
+  window.setChatMode = function(mode){
+    window.chatMode = mode;
+    document.querySelectorAll('.mode-toggle label').forEach(function(l){
+      l.classList.toggle('active', l.dataset.mode === mode);
+    });
+    var hint = document.getElementById('modeHint');
+    if (hint) hint.textContent = mode === 'dev' ? 'Building Amenodes' : 'Using Amenodes';
+  };
+
+  function addMsg(text, type, id){
+    var msgs = document.getElementById('chatMsgs');
+    if (!msgs) return null;
+    var d = document.createElement('div');
+    d.className = 'm ' + type;
+    if (id) d.id = id;
+    if (type === 'b'){
+      var html = '<span style="font-size:11px;font-weight:600;color:#7c3aed;display:block;margin-bottom:4px">Agent</span>';
+      if (typeof marked !== 'undefined') {
+        html += marked.parse(esc(text));
+      } else {
+        html += esc(text);
+      }
+      d.innerHTML = html;
+    } else {
+      d.textContent = text;
+    }
+    var t = document.createElement('div');
+    t.className = 't';
+    t.textContent = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    d.appendChild(t);
+    msgs.appendChild(d);
+    msgs.scrollTop = msgs.scrollHeight;
+    return d;
+  }
+
+  // ── Auth modal ──
+  window.showAuthModal = function(){
+    var existing = document.getElementById('authModalOverlay');
+    if (existing) existing.remove();
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'authModalOverlay';
+    overlay.innerHTML = '<div class="modal-box" style="position:relative">' +
+      '<button class="modal-close" onclick="closeAuthModal()">&times;</button>' +
+      '<h3>Sign In</h3>' +
+      '<div class="modal-tabs"><button class="modal-tab active" data-tab="login" onclick="switchAuthTab(\'login\')">Sign In</button><button class="modal-tab" data-tab="register" onclick="switchAuthTab(\'register\')">Register</button></div>' +
+      '<form class="auth-form" id="loginForm" onsubmit="return false">' +
+      '<input type="text" id="loginInput" placeholder="Username or Email" required>' +
+      '<input type="password" id="passwordInput" placeholder="Password" required>' +
+      '<p class="auth-error" id="authError"></p>' +
+      '<button type="submit" class="modal-btn primary" id="authSubmitBtn">Sign In</button></form>' +
+      '<form class="auth-form hidden" id="registerForm" onsubmit="return false">' +
+      '<input type="text" id="regUserInput" placeholder="Username" required>' +
+      '<input type="email" id="regEmailInput" placeholder="Email" required>' +
+      '<input type="password" id="regPassInput" placeholder="Password" required>' +
+      '<p class="auth-error" id="regError"></p>' +
+      '<button type="submit" class="modal-btn primary" id="regSubmitBtn">Register</button></form></div>';
+    document.body.appendChild(overlay);
+    document.getElementById('loginInput').focus();
+    document.getElementById('loginForm').addEventListener('submit', function(e){ e.preventDefault(); submitLogin(); });
+    document.getElementById('registerForm').addEventListener('submit', function(e){ e.preventDefault(); submitRegister(); });
+  };
+
+  window.closeAuthModal = function(){
+    var m = document.getElementById('authModalOverlay');
+    if (m) m.remove();
+  };
+
+  window.switchAuthTab = function(tab){
+    document.querySelectorAll('.modal-tab').forEach(function(t){ t.classList.toggle('active', t.dataset.tab === tab); });
+    document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+    document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+  };
+
+  function submitLogin(){
+    var login = document.getElementById('loginInput').value.trim();
+    var pass = document.getElementById('passwordInput').value;
+    var err = document.getElementById('authError');
+    var btn = document.getElementById('authSubmitBtn');
+    if (!login || !pass) { err.textContent = 'Fill in all fields'; return; }
+    err.textContent = ''; btn.disabled = true; btn.textContent = 'Signing in...';
+    fetch('/amenodes/api/login.php', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({login: login, password: pass})
+    }).then(function(r){ return r.json(); }).then(function(data){
+      btn.disabled = false; btn.textContent = 'Sign In';
+      if (data.token){
+        localStorage.setItem('amenoke_token', data.token);
+        localStorage.setItem('auth_token', data.token);
+        if (data.user) localStorage.setItem('amenoke_user', JSON.stringify(data.user));
+        closeAuthModal();
+        render();
+      } else {
+        err.textContent = data.error || 'Login failed';
+      }
+    }).catch(function(){ btn.disabled = false; btn.textContent = 'Sign In'; err.textContent = 'Connection error'; });
+  }
+
+  function submitRegister(){
+    var user = document.getElementById('regUserInput').value.trim();
+    var email = document.getElementById('regEmailInput').value.trim();
+    var pass = document.getElementById('regPassInput').value;
+    var err = document.getElementById('regError');
+    var btn = document.getElementById('regSubmitBtn');
+    if (!user || !email || !pass) { err.textContent = 'Fill in all fields'; return; }
+    err.textContent = ''; btn.disabled = true; btn.textContent = 'Registering...';
+    fetch('/amenodes/api/register.php', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username: user, email: email, password: pass})
+    }).then(function(r){ return r.json(); }).then(function(data){
+      btn.disabled = false; btn.textContent = 'Register';
+      if (data.token){
+        localStorage.setItem('amenoke_token', data.token);
+        localStorage.setItem('auth_token', data.token);
+        if (data.user) localStorage.setItem('amenoke_user', JSON.stringify(data.user));
+        closeAuthModal();
+        render();
+      } else {
+        err.textContent = data.error || 'Registration failed';
+      }
+    }).catch(function(){ btn.disabled = false; btn.textContent = 'Register'; err.textContent = 'Connection error'; });
+  }
+
+  // ── Token modal ──
+  window.showTokenModal = function(){
+    var existing = document.getElementById('tokenModalOverlay');
+    if (existing) existing.remove();
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'tokenModalOverlay';
+    var balance = tokenDisplay.textContent || '0';
+    var pkgs = [
+      {label:'Classic', rub:'100', tokens:'87k'},
+      {label:'Pro', rub:'300', tokens:'261k'},
+      {label:'Premium', rub:'500', tokens:'435k'},
+      {label:'Premium+', rub:'1000', tokens:'870k'},
+      {label:'Max', rub:'2000', tokens:'1.74M'}
+    ];
+    var plans = '';
+    for(var i=0;i<pkgs.length;i++){
+      var p=pkgs[i];
+      plans += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f5f3f7;border:1px solid rgba(139,92,246,0.08);border-radius:10px;"><span style="font-size:13px;font-weight:500;color:#2a1a3a;">' + p.label + ' <span style="font-size:11px;color:#7a6a8a;font-weight:400;">' + p.tokens + '</span></span><span style="font-size:15px;font-weight:600;color:#7c3aed;">' + p.rub + '<span style="font-size:11px;color:#7a6a8a;font-weight:400;"> RUB</span></span></div>';
+    }
+    overlay.innerHTML = '<div class="modal-box" style="position:relative">' +
+      '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
+      '<h3>Tokens</h3>' +
+      '<p style="font-size:12px;color:#7a6a8a;margin-bottom:8px;">1 000 tokens = 1.15 RUB</p>' +
+      '<p style="margin-bottom:14px;display:flex;align-items:center;gap:8px;font-size:14px;color:#2a1a3a;font-weight:500;">Balance: <span style="font-family:monospace;color:#7c3aed;">' + balance + '</span></p>' +
+      '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">' + plans + '</div>' +
+      '<a href="https://www.donationalerts.com/r/amenokemsu" target="_blank" class="modal-btn primary" style="display:flex;align-items:center;justify-content:center;text-decoration:none;margin-bottom:8px;">Donate via DonationAlerts</a>' +
+      '<p style="font-size:11px;color:#7a6a8a;text-align:center;line-height:1.5;">Or donate any amount from <strong style="color:#7c3aed;">100 RUB</strong>.<br>Include your <strong style="color:#2a1a3a;">site username</strong> in the comment.<br>Tokens arrive automatically.</p></div>';
+    document.body.appendChild(overlay);
+  };
+
+  // ── Logout ──
+  window.handleLogout = function(){
+    hideChat();
+    localStorage.removeItem('amenoke_token');
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('amenoke_user');
+    localStorage.removeItem('auth_user');
+    render();
+  };
+
+  render();
+
+  // Handle clicks on data-href cards
+  document.addEventListener('click', function(e){
+    var target = e.target.closest('[data-href]');
+    if (target) {
+      var href = target.getAttribute('data-href');
+      if (href) {
+        e.preventDefault();
+        window.location.href = href;
+      }
+    }
+  });
+
+  setInterval(function(){
+    if (getToken()) {
+      var user = getUser();
+      if (user) renderLoggedIn(user);
+    }
+  }, 30000);
+})();
+</script>
+</body>
+</html>
