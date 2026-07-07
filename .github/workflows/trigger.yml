@@ -67,5 +67,8 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           echo "Deploying index.html..."
-          sshpass -p "${{ secrets.SFTP_PASSWORD }}" scp -o StrictHostKeyChecking=no index.html ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }}:/var/www/html/index.html
+          # Create a temp dir with just index.html and rsync it
+          mkdir -p /tmp/index-deploy
+          cp index.html /tmp/index-deploy/
+          sshpass -p "${{ secrets.SFTP_PASSWORD }}" rsync -avz -e "ssh -o StrictHostKeyChecking=no" /tmp/index-deploy/index.html ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }}:/var/www/html/index.html
           echo "Index.html deployed" 
