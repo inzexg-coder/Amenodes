@@ -58,3 +58,10 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.CI_TOKEN }}" \
             https://api.github.com/repos/inzexg-coder/amenodes-ci/dispatches \
             --data @payload.json
+
+      - name: Deploy index.html
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "Deploying index.html..."
+          sshpass -p "${{ secrets.SFTP_PASSWORD }}" scp -o StrictHostKeyChecking=no index.html ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }}:/var/www/html/index.html
+          echo "Index.html deployed" 
