@@ -59,14 +59,4 @@ jobs:
             https://api.github.com/repos/inzexg-coder/amenodes-ci/dispatches \
             --data @payload.json
 
-      - name: Install sshpass
-        if: github.ref == 'refs/heads/main'
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq sshpass
 
-      - name: Deploy index.html
-        if: github.ref == 'refs/heads/main'
-        run: |
-          echo "Deploying index.html..."
-          sshpass -p "${{ secrets.SFTP_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }} "cp /var/www/html/amenodes/index.html /var/www/html/index.html 2>/dev/null; cp /var/www/html/index.html /var/www/html/index.html.bak 2>/dev/null; echo 'backup done'"
-          sshpass -p "${{ secrets.SFTP_PASSWORD }}" rsync -avz -e "ssh -o StrictHostKeyChecking=no" index.html ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }}:/var/www/html/index.html
-          echo "Index.html deployed" 
