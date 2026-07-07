@@ -490,8 +490,6 @@ class Application {
     const applySettings = document.getElementById('applySettings');
     const newCanvasBtn = document.getElementById('newCanvasBtn');
     const loadCanvasBtn = document.getElementById('loadCanvasBtn');
-    const splashSettingsBtn = document.getElementById('splashSettingsBtn');
-    const splashOverlay = document.getElementById('splashOverlay');
     const appContainer = document.getElementById('appContainer');
 
     if (undoBtn) undoBtn.onclick = () => this.undo();
@@ -627,12 +625,8 @@ class Application {
           this.graph.clearDirty();
         }
 
-        if (splashOverlay && appContainer) {
-          splashOverlay.style.opacity = '0';
-          setTimeout(() => {
-            splashOverlay.style.display = 'none';
-            appContainer.classList.remove('hidden');
-          }, 300);
+        if (appContainer) {
+          appContainer.classList.remove('hidden');
         }
       };
     }
@@ -654,12 +648,8 @@ class Application {
                 this.updateEdgeCount();
                 this.graph.clearDirty();
 
-                if (splashOverlay && appContainer) {
-                  splashOverlay.style.opacity = '0';
-                  setTimeout(() => {
-                    splashOverlay.style.display = 'none';
-                    appContainer.classList.remove('hidden');
-                  }, 300);
+                if (appContainer) {
+                  appContainer.classList.remove('hidden');
                 }
               }
             }
@@ -670,13 +660,9 @@ class Application {
       };
     }
 
-    if (splashSettingsBtn) {
-      splashSettingsBtn.onclick = () => this.openCanvasSettings();
-    }
+    // Splash removed - settings via toolbar
 
-    if (splashOverlay && appContainer && this.graph && this.graph.nodes.length === 0) {
-    } else if (splashOverlay && appContainer) {
-      splashOverlay.style.display = 'none';
+    if (appContainer) {
       appContainer.classList.remove('hidden');
     }
   }
@@ -858,23 +844,80 @@ class Application {
   }
 
   loadInitialState() {
+    const appContainer = document.getElementById('appContainer');
+    if (appContainer) {
+      appContainer.classList.remove('hidden');
+    }
+
+    // Check for template ID in URL
+    const params = new URLSearchParams(window.location.search);
+    const templateId = params.get('template');
+    
+    if (templateId) {
+      this.loadTemplate(templateId);
+      return;
+    }
+
     const loaded = this.persistenceService.loadFromStorage();
     this.updateNodeCount();
     this.updateEdgeCount();
 
-    if (!loaded && this.graph.nodes.length === 0) {
-      const splashOverlay = document.getElementById('splashOverlay');
-      if (splashOverlay && splashOverlay.style.display !== 'none') {
-      } else if (splashOverlay) {
-        splashOverlay.style.display = 'flex';
-        splashOverlay.style.opacity = '1';
+    if (!loaded && this.graph && this.graph.nodes.length === 0) {
+      if (this.viewport) {
+        this.viewport.setOffset(0, 0);
+        window.setZoom(1);
       }
-    } else {
-      const splashOverlay = document.getElementById('splashOverlay');
-      const appContainer = document.getElementById('appContainer');
-      if (splashOverlay && appContainer) {
-        splashOverlay.style.display = 'none';
-        appContainer.classList.remove('hidden');
+    }
+  }
+
+  async loadTemplate(templateId) {
+    try {
+      const token = localStorage.getItem('amenoke_token') || localStorage.getItem('auth_token') || '';
+      const resp = await fetch('/amenodes/api/get_template.php?id=' + templateId, {
+        headers: {'Authorization': 'Bearer ' + token}
+      });
+      const data = await resp.json();
+      
+      if (data.success && data.template) {
+        const tpl = data.template;
+        document.title = tpl.title || 'Amenodes';
+        
+        if (tpl.graph_data && typeof tpl.graph_data === 'object') {
+          const gd = tpl.graph_data;
+          if (gd.nodes || gd.edges) {
+            this.graph.loadFrom(gd);
+          }
+          if (gd.designQuality !== undefined && window.applyDesignQuality) {
+            window.applyDesignQuality(gd.designQuality);
+          }
+          if (gd.viewportOffsetX !== undefined && window._viewport) {
+            window._viewport.setOffset(gd.viewportOffsetX, gd.viewportOffsetY);
+          }
+          if (gd.viewportZoom !== undefined && window.setZoom) {
+            window.setZoom(gd.viewportZoom);
+          }
+        }
+        
+        this.renderer.render();
+        if (this.history) this.history.save();
+        this.updateNodeCount();
+        this.updateEdgeCount();
+        if (this.graph) this.graph.clearDirty();
+        
+        if (window._viewport) {
+          this.persistenceService.saveToStorage(window._viewport, window.currentZoom || 1, window.currentQualityValue || 100);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load template:', e);
+      const loaded = this.persistenceService.loadFromStorage();
+      this.updateNodeCount();
+      this.updateEdgeCount();
+      if (!loaded && this.graph && this.graph.nodes.length === 0) {
+        if (this.viewport) {
+          this.viewport.setOffset(0, 0);
+          window.setZoom(1);
+        }
       }
     }
   }
