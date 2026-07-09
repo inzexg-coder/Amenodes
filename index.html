@@ -7,222 +7,96 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',system-ui,sans-serif;background:#ffffff;color:#1a202c;min-height:100vh;overflow:hidden}
-::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-track{background:#f7fafc}
-::-webkit-scrollbar-thumb{background:#cbd5e0;border-radius:3px}
+body{font-family:'Inter',system-ui,sans-serif;background:#fff;color:#1a202c;height:100vh;overflow:hidden}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:3px}
 
-/* Header */
-.header{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:1px solid #e2e8f0}
-.brand{font-size:16px;font-weight:700;color:#5a67d8;letter-spacing:1px;cursor:pointer}
-.brand span{color:#805ad5}
-.header-right{display:flex;align-items:center;gap:10px}
-.graph-btn{padding:6px 14px;border-radius:8px;border:1px solid #e2e8f0;background:transparent;color:#718096;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s}
-.graph-btn:hover{border-color:#5a67d8;color:#5a67d8}
-.graph-btn.active{background:#5a67d8;color:#fff;border-color:#transparent}
-
-/* Chat container */
-.chat{position:fixed;top:49px;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:#fff}
-.chat.hidden{display:none}
-
-/* Messages */
-.msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:24px;max-width:800px;margin:0 auto;width:100%}
-.msg{max-width:80%;padding:14px 18px;border-radius:16px;font-size:14px;line-height:1.6;word-wrap:break-word;animation:fadeIn .3s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* Chat */
+.chat{display:flex;flex-direction:column;height:100vh}
+.msgs{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px;max-width:768px;margin:0 auto;width:100%}
+.msg{max-width:80%;padding:12px 16px;border-radius:12px;font-size:14px;line-height:1.6;word-wrap:break-word}
 .msg.user{background:#5a67d8;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
-.msg.bot{background:#f7fafc;border:1px solid #e2e8f0;align-self:flex-start}
-.msg .time{font-size:10px;color:#a0aec0;margin-top:6px;text-align:right}
+.msg.bot{background:#f3f4f6;align-self:flex-start}
+.msg .avatar{width:28px;height:28px;border-radius:50%;background:#5a67d8;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;margin-bottom:6px}
+.msg .content{display:flex;gap:10px}
+.msg .text{flex:1}
+.msg .time{font-size:10px;color:#9ca3af;margin-top:4px;text-align:right}
 .msg.user .time{color:rgba(255,255,255,0.6)}
-.msg.bot code{padding:2px 6px;background:#edf2f7;border-radius:4px;font-size:12px;font-family:monospace}
-.msg.bot pre{margin:8px 0;padding:12px;background:#f7fafc;border-radius:8px;overflow-x:auto;border:1px solid #e2e8f0}
+.msg.bot h1,.msg.bot h2,.msg.bot h3{font-size:inherit;font-weight:600;margin:8px 0 4px}
+.msg.bot code{padding:2px 5px;background:#e5e7eb;border-radius:3px;font-size:12px;font-family:monospace}
+.msg.bot pre{margin:8px 0;padding:10px;background:#f9fafb;border-radius:6px;overflow-x:auto;border:1px solid #e5e7eb}
 .msg.bot pre code{background:none;padding:0}
-.msg.bot ul,.msg.bot ol{margin:6px 0;padding-left:20px}
-.msg.bot li{margin:3px 0}
-.msg.bot strong{font-weight:600;color:#2d3748}
-
-/* Welcome */
-.welcome{text-align:center;padding:80px 24px;max-width:600px;margin:0 auto}
-.welcome h1{font-size:28px;font-weight:700;color:#1a202c;margin-bottom:12px}
-.welcome p{font-size:14px;color:#718096;line-height:1.6;margin-bottom:24px}
-.welcome-cmds{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-.cmd-chip{padding:8px 16px;border-radius:20px;border:1px solid #e2e8f0;background:#f7fafc;color:#4a5568;font-size:12px;cursor:pointer;transition:all .2s}
-.cmd-chip:hover{border-color:#5a67d8;color:#5a67d8;background:#ebf4ff}
+.msg.bot ul,.msg.bot ol{margin:4px 0;padding-left:18px}
+.msg.bot li{margin:2px 0}
+.msg.bot p{margin:4px 0}
+.msg.bot strong{font-weight:600;color:#111827}
 
 /* Input */
-.input-area{padding:12px 20px 16px;background:#fff;border-top:1px solid #e2e8f0}
-.input-wrap{display:flex;gap:8px;max-width:800px;margin:0 auto}
-.input-wrap input{flex:1;padding:12px 16px;border-radius:24px;border:1px solid #e2e8f0;background:#f7fafc;color:#2d3748;font-size:14px;outline:none;transition:all .2s;font-family:inherit}
-.input-wrap input:focus{border-color:#5a67d8;background:#fff;box-shadow:0 0 0 3px rgba(90,103,216,0.08)}
-.input-wrap input::placeholder{color:#a0aec0}
-.input-wrap button{width:44px;height:44px;border-radius:50%;background:#5a67d8;color:#fff;border:none;font-size:15px;cursor:pointer;transition:all .2s;flex-shrink:0}
+.input-area{padding:12px 16px 16px;border-top:1px solid #e5e7eb;background:#fff}
+.input-wrap{display:flex;gap:8px;max-width:768px;margin:0 auto}
+.input-wrap input{flex:1;padding:11px 16px;border-radius:24px;border:1px solid #d1d5db;background:#f9fafb;color:#111827;font-size:14px;outline:none;font-family:inherit}
+.input-wrap input:focus{border-color:#5a67d8;background:#fff}
+.input-wrap input::placeholder{color:#9ca3af}
+.input-wrap button{width:42px;height:42px;border-radius:50%;background:#5a67d8;color:#fff;border:none;font-size:14px;cursor:pointer;flex-shrink:0}
 .input-wrap button:hover{background:#4c51bf}
 
-/* Graph panel */
-.graph{position:fixed;top:49px;left:0;right:0;bottom:0;background:#f7fafc;display:none;z-index:50}
-.graph.active{display:block}
-.graph iframe{width:100%;height:100%;border:none}
-
-/* Loading dots */
-.typing{display:flex;gap:4px;padding:8px 0}
-.typing span{width:6px;height:6px;border-radius:50%;background:#a0aec0;animation:bounce .6s infinite alternate}
-.typing span:nth-child(2){animation-delay:.2s}
-.typing span:nth-child(3){animation-delay:.4s}
-@keyframes bounce{to{opacity:.3;transform:translateY(-4px)}}
+/* Welcome */
+.welcome{text-align:center;padding:100px 24px 40px}
+.welcome h1{font-size:24px;font-weight:600;margin-bottom:8px}
+.welcome p{font-size:13px;color:#6b7280}
 </style>
 </head>
 <body>
-
-<div class="header">
-  <div class="brand" onclick="showChat()">AMENO<span>DES</span></div>
-  <div class="header-right">
-    <button class="graph-btn active" id="chat-tab" onclick="showChat()"><i class="fas fa-comment"></i> Чат</button>
-    <button class="graph-btn" id="graph-tab" onclick="showGraph()"><i class="fas fa-project-diagram"></i> Граф</button>
-    <a href="templates.html" class="graph-btn"><i class="fas fa-layer-group"></i></a>
-  </div>
-</div>
-
-<div class="chat" id="chat-view">
+<div class="chat">
   <div class="msgs" id="msgs">
     <div class="welcome" id="welcome">
       <h1>Чем могу помочь?</h1>
-      <p>Я — AI-агент Amenodes. Загружу данные, посчитаю погрешности, построю график, сгенерирую отчёт.</p>
-      <div class="welcome-cmds">
-        <div class="cmd-chip" onclick="sendCmd('/calculate')">/calculate</div>
-        <div class="cmd-chip" onclick="sendCmd('/plot')">/plot</div>
-        <div class="cmd-chip" onclick="sendCmd('/report')">/report</div>
-        <div class="cmd-chip" onclick="sendCmd('/find')">/find</div>
-      </div>
+      <p>Загрузите данные, рассчитайте погрешности, постройте график.</p>
     </div>
   </div>
   <div class="input-area">
     <div class="input-wrap">
-      <input type="text" id="chat-input" placeholder="Спроси о расчётах..." onkeypress="if(event.key==='Enter')sendMsg()">
-      <button onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
+      <input type="text" id="input" placeholder="Спроси о расчётах..." onkeypress="if(event.key==='Enter')send()">
+      <button onclick="send()"><i class="fas fa-arrow-up"></i></button>
     </div>
   </div>
 </div>
-
-<div class="graph" id="graph-view">
-  <iframe src="amenodes.html"></iframe>
-</div>
-
 <script>
-var msgs = document.getElementById('msgs');
-var input = document.getElementById('chat-input');
-var history = JSON.parse(localStorage.getItem('amenodes_chat') || '[]');
-
-// Init
-if(history.length > 0){
-  document.getElementById('welcome').style.display = 'none';
-  history.forEach(function(m){
-    appendMsg(m.role, m.text, m.time, false);
-  });
-  msgs.scrollTop = msgs.scrollHeight;
+var el=document.getElementById('msgs');
+var input=document.getElementById('input');
+var hist=JSON.parse(localStorage.getItem('amenodes_chat')||'[]');
+if(hist.length){document.getElementById('welcome').style.display='none';hist.forEach(function(m){add(m.role,m.text,false)});el.scrollTop=el.scrollHeight}
+function add(role,text,scroll){
+  var d=document.createElement('div');
+  d.className='msg '+role;
+  if(role==='bot'){
+    d.innerHTML='<div class="content"><div class="avatar"><i class="fas fa-atom"></i></div><div><div class="text">'+render(text)+'</div><div class="time">'+time()+'</div></div></div>';
+  }else{
+    d.innerHTML='<div class="text">'+text+'</div><div class="time">'+time()+'</div>';
+  }
+  el.appendChild(d);
+  if(scroll!==false)el.scrollTop=el.scrollHeight;
+  hist.push({role:role,text:text,time:time()});
+  localStorage.setItem('amenodes_chat',JSON.stringify(hist));
 }
-
-function appendMsg(role, text, time, animate){
-  var div = document.createElement('div');
-  div.className = 'msg ' + role;
-  if(animate) div.style.animation = 'fadeIn .3s ease';
-  div.innerHTML = '<div>' + text + '</div><div class="time">' + time + '</div>';
-  msgs.appendChild(div);
-  return div;
+function render(t){
+  try{return marked.parse(t)}catch(e){return t}
 }
-
-function addBot(text){
-  document.getElementById('welcome').style.display = 'none';
-  var time = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  appendMsg('bot', text, time, true);
-  msgs.scrollTop = msgs.scrollHeight;
-  history.push({role:'bot',text:text,time:time});
-  localStorage.setItem('amenodes_chat', JSON.stringify(history));
-}
-
-function addUser(text){
-  document.getElementById('welcome').style.display = 'none';
-  var time = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  appendMsg('user', text, time, true);
-  msgs.scrollTop = msgs.scrollHeight;
-  history.push({role:'user',text:text,time:time});
-  localStorage.setItem('amenodes_chat', JSON.stringify(history));
-}
-
-function showTyping(){
-  var div = document.createElement('div');
-  div.className = 'msg bot';
-  div.id = 'typing';
-  div.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
-  msgs.appendChild(div);
-  msgs.scrollTop = msgs.scrollHeight;
-}
-
-function hideTyping(){
-  var t = document.getElementById('typing');
-  if(t) t.remove();
-}
-
-function sendMsg(){
-  var text = input.value.trim();
-  if(!text) return;
-  addUser(text);
-  input.value = '';
-  processMsg(text);
-}
-
-function sendCmd(cmd){
-  addUser(cmd);
-  processMsg(cmd);
-}
-
-function processMsg(text){
-  showTyping();
-  var lower = text.toLowerCase();
-  
-  setTimeout(function(){
-    hideTyping();
-    
-    if(lower.startsWith('/calculate') || lower.includes('посчитай') || lower.includes('рассчитай')){
-      addBot('Для расчёта открой графовый редактор и загрузи данные. Я помогу с формулами, погрешностями и МНК.\n\nИли введи данные прямо здесь: `значение1, значение2, ...`');
-    }
-    else if(lower.startsWith('/plot') || lower.includes('график')){
-      addBot('Для построения графика:\n1. Открой вкладку «Граф»\n2. Создай DataNode с данными\n3. Подключи к PlotNode\n\nПоддерживаю: scatter, line, histogram с планками погрешностей.');
-    }
-    else if(lower.startsWith('/report')){
-      addBot('Для генерации отчёта:\n1. Собери данные в графе\n2. Подключи ReportNode\n3. Экспорт в PDF/LaTeX\n\nИли напиши «сформируй отчёт» с описанием задачи.');
-    }
-    else if(lower.startsWith('/find')){
-      addBot('Ищу в графе...\n\nПодсказка: используй команды:\n- `/find node:CalcNode` — найти все калькуляторы\n- `/find value:5.23` — найти значение\n- `/find type:data` — найти ноды данных');
-    }
-    else if(lower.includes('привет') || lower.includes('здравствуй')){
-      addBot('Привет! Я Amenodes — AI-агент для научных данных. Помогу с расчётами, графиками и отчётами.\n\nПопробуй: `/calculate`, `/plot`, `/report` или просто опиши задачу.');
-    }
-    else if(lower.includes('помощь') || lower === 'help'){
-      addBot('Доступные команды:\n\n`/calculate` — расчёт данных\n`/plot` — построение графика\n`/report` — генерация отчёта\n`/find` — поиск в графе\n\nИли просто опиши задачу на естественном языке.');
-    }
-    else {
-      addBot('Понял! Работаю над задачей...\n\nДля полноценной работы с данными открой вкладку «Граф» — там ты сможешь загрузить данные, построить граф вычислений и получить результат.');
-    }
-  }, 600);
-}
-
-// Graph panel
-function showChat(){
-  document.getElementById('chat-view').classList.remove('hidden');
-  document.getElementById('graph-view').classList.remove('active');
-  document.getElementById('chat-tab').classList.add('active');
-  document.getElementById('graph-tab').classList.remove('active');
-}
-
-function showGraph(){
-  document.getElementById('chat-view').classList.add('hidden');
-  document.getElementById('graph-view').classList.add('active');
-  document.getElementById('chat-tab').classList.remove('active');
-  document.getElementById('graph-tab').classList.add('active');
+function time(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}
+function send(){
+  var t=input.value.trim();
+  if(!t)return;
+  document.getElementById('welcome').style.display='none';
+  add('user',t);
+  input.value='';
+  var l=t.toLowerCase();
+  if(l.includes('привет'))add('bot','Привет! Я AI-агент Amenodes. Помогу с расчётами, графиками и отчётами. Опишите задачу или загрузите данные.');
+  else add('bot','Понял! Работаю над задачей...\n\nДля расчётов опишите данные или используйте команды:\n- `/calculate` — расчёт\n- `/plot` — график\n- `/report` — отчёт');
 }
 </script>
 </body>
