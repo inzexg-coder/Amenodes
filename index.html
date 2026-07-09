@@ -15,9 +15,15 @@ body{font-family:'Inter',system-ui,sans-serif;background:#fff;color:#1a202c;heig
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:2px}
 
-.chat{display:flex;flex-direction:column;height:100dvh}
-.msgs{flex:1;overflow-y:auto;padding:20px 16px;display:flex;flex-direction:column;gap:14px;max-width:720px;margin:0 auto;width:100%}
-.msg{max-width:82%;padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.5;word-wrap:break-word}
+.header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #e5e7eb;flex-shrink:0}
+.header .brand{font-size:15px;font-weight:700;color:#5a67d8;letter-spacing:.5px}
+.header .brand span{color:#805ad5}
+.header .clear{background:none;border:none;color:#9ca3af;font-size:13px;cursor:pointer;padding:4px 8px;border-radius:6px}
+.header .clear:hover{background:#f3f4f6;color:#6b7280}
+
+.chat{display:flex;flex-direction:column;height:calc(100dvh - 41px)}
+.msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;max-width:720px;margin:0 auto;width:100%}
+.msg{max-width:85%;padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.5;word-wrap:break-word}
 .msg.user{background:#5a67d8;color:#fff;align-self:flex-end;border-bottom-right-radius:3px}
 .msg.bot{background:#f3f4f6;align-self:flex-start;border-bottom-left-radius:3px;display:flex;gap:8px;padding:10px}
 .msg .ava{width:28px;height:28px;min-width:28px;border-radius:50%;background:#5a67d8;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;margin-top:2px}
@@ -28,11 +34,15 @@ body{font-family:'Inter',system-ui,sans-serif;background:#fff;color:#1a202c;heig
 .msg.bot code{padding:1px 4px;background:#e5e7eb;border-radius:3px;font-size:12px;font-family:monospace}
 .msg.bot pre{margin:6px 0;padding:10px;background:#f9fafb;border-radius:6px;overflow-x:auto;border:1px solid #e5e7eb}
 .msg.bot pre code{background:none;padding:0}
+.msg.bot table{border-collapse:collapse;margin:6px 0;font-size:13px;width:100%}
+.msg.bot table th,.msg.bot table td{padding:6px 10px;border:1px solid #d1d5db;text-align:left}
+.msg.bot table th{background:#e5e7eb;font-weight:600}
 .msg.bot ul,.msg.bot ol{margin:4px 0;padding-left:18px}
 .msg.bot li{margin:2px 0}
 .msg.bot p{margin:3px 0}
+.msg.bot strong{font-weight:600;color:#111827}
 
-.input-area{padding:10px 12px 14px;border-top:1px solid #e5e7eb;background:#fff}
+.input-area{padding:8px 12px 12px;border-top:1px solid #e5e7eb;background:#fff}
 .input-wrap{display:flex;gap:8px;max-width:720px;margin:0 auto}
 .input-wrap input{flex:1;padding:10px 16px;border-radius:20px;border:1px solid #d1d5db;background:#f9fafb;color:#111827;font-size:15px;outline:none;font-family:inherit;-webkit-appearance:none}
 .input-wrap input:focus{border-color:#5a67d8;background:#fff}
@@ -46,6 +56,12 @@ body{font-family:'Inter',system-ui,sans-serif;background:#fff;color:#1a202c;heig
 </style>
 </head>
 <body>
+
+<div class="header">
+  <div class="brand">AMENO<span>DES</span></div>
+  <button class="clear" onclick="clearChat()" title="Новый диалог"><i class="fas fa-plus"></i> Новый</button>
+</div>
+
 <div class="chat">
   <div class="msgs" id="msgs">
     <div class="welcome" id="welcome">
@@ -60,65 +76,124 @@ body{font-family:'Inter',system-ui,sans-serif;background:#fff;color:#1a202c;heig
     </div>
   </div>
 </div>
+
 <script>
 var msgs=document.getElementById('msgs');
 var input=document.getElementById('input');
 var welcome=document.getElementById('welcome');
-var hist=JSON.parse(localStorage.getItem('amenodes_chat')||'[]');
 
-function renderMsg(role,text,time){
+function load(){
+  var raw=localStorage.getItem('amenodes_chat');
+  if(!raw)return;
+  try{
+    var h=JSON.parse(raw);
+    if(!h.length)return;
+    welcome.style.display='none';
+    h.forEach(function(m){msgs.appendChild(build(m.role,m.text,m.time))});
+    msgs.scrollTop=msgs.scrollHeight;
+  }catch(e){}
+}
+
+function save(role,text,time){
+  var raw=localStorage.getItem('amenodes_chat');
+  var h=raw?JSON.parse(raw):[];
+  h.push({role:role,text:text,time:time});
+  localStorage.setItem('amenodes_chat',JSON.stringify(h));
+}
+
+function build(role,text,time){
   var d=document.createElement('div');
   d.className='msg '+role;
   if(role==='bot'){
-    d.innerHTML='<div class="ava"><i class="fas fa-atom"></i></div><div class="bd"><div>'+mark(text)+'</div><div class="time">'+time+'</div></div>';
+    var rendered=render(text);
+    d.innerHTML='<div class="ava"><i class="fas fa-atom"></i></div><div class="bd">'+rendered+'<div class="time">'+time+'</div></div>';
   }else{
     d.innerHTML='<div class="bd"><div>'+text+'</div><div class="time">'+time+'</div></div>';
   }
   return d;
 }
 
-function mark(t){
-  try{return marked.parse(t)}catch(e){return t}
+function render(t){
+  // Markdown
+  var html=t;
+  try{html=marked.parse(t)}catch(e){}
+  // KaTeX inline $...$
+  html=html.replace(/\$([^\$]+)\$/g,function(match,formula){
+    try{
+      return katex.renderToString(formula,{throwOnError:false,displayMode:false});
+    }catch(e){
+      return '<span style="color:#e53e3e">$'+formula+'$</span>';
+    }
+  });
+  // KaTeX display $$...$$
+  html=html.replace(/\$\$([^\$]+)\$\$/g,function(match,formula){
+    try{
+      return katex.renderToString(formula,{throwOnError:false,displayMode:true});
+    }catch(e){
+      return '<span style="color:#e53e3e">$$'+formula+'$$</span>';
+    }
+  });
+  return html;
 }
 
-function timeNow(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}
-
-// Load history (render only, no save)
-if(hist.length){
+function add(role,text){
   welcome.style.display='none';
-  hist.forEach(function(m){msgs.appendChild(renderMsg(m.role,m.text,m.time))});
+  var t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  msgs.appendChild(build(role,text,t));
   msgs.scrollTop=msgs.scrollHeight;
-}
-
-function addAndSave(role,text){
-  welcome.style.display='none';
-  var t=timeNow();
-  msgs.appendChild(renderMsg(role,text,t));
-  msgs.scrollTop=msgs.scrollHeight;
-  hist.push({role:role,text:text,time:t});
-  localStorage.setItem('amenodes_chat',JSON.stringify(hist));
+  save(role,text,t);
 }
 
 function send(){
   var t=input.value.trim();
   if(!t)return;
-  addAndSave('user',t);
+  add('user',t);
   input.value='';
   var l=t.toLowerCase();
-  if(l.includes('привет')){
-    addAndSave('bot','Привет! Я AI-агент **Amenodes**. Помогу с расчётами, графиками и отчётами.\n\nОпишите задачу или загрузите данные — я запущу расчёты в графовом редакторе.');
-  } else if(l.includes('/calculate')||l.includes('посчитай')){
-    addAndSave('bot','Для расчёта:\n1. Откройте **вкладку Граф**\n2. Создайте ноду с данными\n3. Подключите вычисления\n\nИли введите значения прямо здесь — построю формулу.');
-  } else if(l.includes('/plot')||l.includes('график')){
-    addAndSave('bot','Построю график: scatter, line, histogram с планками погрешностей.\n\nЗагрузите данные через **DataNode** в графе или напишите значения в чат.');
-  } else if(l.includes('/report')){
-    addAndSave('bot','Сгенерирую отчёт в PDF/LaTeX по вашему графу.\n\nОткройте **ReportNode** в редакторе, настройте шаблон — получите готовый документ.');
-  } else if(l.includes('помощь')||l==='help'){
-    addAndSave('bot','**Команды Amenodes:**\n\n- `/calculate` — расчёт данных\n- `/plot` — построение графика\n- `/report` — генерация отчёта\n\nИли просто опишите задачу своими словами.');
-  } else {
-    addAndSave('bot','Понял! Работаю над: **«'+t+'»**\n\nДля полноценной работы с данными откройте **графовый редактор** — там можно загрузить данные, построить вычислительный пайплайн и получить результат.');
+
+  if(l.includes('привет')||l=='здравствуй'||l=='hello'){
+    add('bot','Привет! Я AI-агент **Amenodes**.\n\nПомогу с расчётами, графиками и отчётами. Опишите задачу — я запущу вычисления в графовом редакторе.');
+  }
+  else if(l.includes('/calc')||l.includes('посчитай')||l.includes('рассчитай')){
+    add('bot','Для расчёта откройте **вкладку Граф** → создайте **DataNode** с данными → подключите **CalcNode**.\n\nИли введите значения прямо сейчас — построю формулу с погрешностями.');
+  }
+  else if(l.includes('/plot')||l.includes('график')||l.includes('построй')){
+    add('bot','Построю **scatter**, **line**, **histogram** с планками погрешностей.\n\nЗагрузите данные через **DataNode** в графе или напишите: `x: 1,2,3 | y: 4,5,6`');
+  }
+  else if(l.includes('/report')||l.includes('отчёт')){
+    add('bot','Сгенерирую отчёт в **PDF** / **LaTeX** по вашему графу.\n\nНастройте **ReportNode** в редакторе → выберите шаблон → получите готовый документ.');
+  }
+  else if(l.includes('/find')||l.includes('найди')){
+    add('bot','Поиск в графе:\n- `/find node:CalcNode` — найти ноды\n- `/find value:5.23` — найти значение\n- `/find type:data` — найти источники данных');
+  }
+  else if(l=='help'||l.includes('помощь')||l.includes('команды')){
+    add('bot','**Команды Amenodes:**\n\n| Команда | Что делает |\n|---------|-----------|\n| `/calculate` | Расчёт данных |\n| `/plot` | Построить график |\n| `/report` | Сгенерировать отчёт |\n| `/find` | Поиск в графе |\n\nИли просто опишите задачу своими словами.');
+  }
+  else if(l.includes('меня зовут')){
+    var name=t.replace(/меня зовут /i,'').trim();
+    add('bot','Приятно познакомиться, **'+name+'**! 👋\n\nЧем могу помочь с данными?');
+  }
+  else if(l.includes('спасибо')||l.includes('благодарю')){
+    add('bot','Всегда пожалуйста! Если понадобится помощь — обращайтесь.');
+  }
+  else if(l.includes('формул')||l.includes('погрешн')){
+    add('bot','Поддерживаю формулы: $\\rho = \\frac{m}{V}$, $\\sigma = \\sqrt{\\sum \\Delta_i^2}$\n\nДля отображения используй **$...$** (inline) или **$$...$$** (блок).');
+  }
+  else{
+    add('bot','Понял! Работаю над: **«'+t+'»**\n\nДля полноценной работы с данными откройте **графовый редактор** — там можно загрузить данные, построить вычислительный пайплайн и получить результат.');
   }
 }
+
+function clearChat(){
+  if(msgs.querySelectorAll('.msg').length===0)return;
+  if(!confirm('Начать новый диалог? История будет очищена.'))return;
+  localStorage.removeItem('amenodes_chat');
+  msgs.querySelectorAll('.msg').forEach(function(m){m.remove()});
+  welcome.style.display='';
+  input.focus();
+}
+
+load();
 </script>
 </body>
 </html>
