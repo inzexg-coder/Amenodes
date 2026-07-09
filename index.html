@@ -3,109 +3,130 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Amenodes Strategy</title>
+<title>Amenodes</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',system-ui,sans-serif;background:#0f0f1a;color:#e0e0e0;min-height:100vh}
+body{font-family:'Inter',system-ui,sans-serif;background:#ffffff;color:#1a202c;min-height:100vh}
 ::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-track{background:#1a1a2e}
-::-webkit-scrollbar-thumb{background:#7c3aed;border-radius:3px}
+::-webkit-scrollbar-track{background:#f7fafc}
+::-webkit-scrollbar-thumb{background:#cbd5e0;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#a0aec0}
 
 /* Topbar */
-.topbar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:rgba(15,15,26,0.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(124,58,237,0.2)}
-.brand{font-size:18px;font-weight:700;color:#7c3aed;letter-spacing:1px}
-.brand span{color:#a78bfa}
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:1px solid #e2e8f0}
+.brand{font-size:18px;font-weight:700;color:#5a67d8;letter-spacing:1px}
+.brand span{color:#805ad5}
 .topbar-right{display:flex;align-items:center;gap:12px}
-.nav-btn{padding:8px 16px;border-radius:8px;border:1px solid rgba(124,58,237,0.3);background:transparent;color:#a78bfa;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s}
-.nav-btn:hover,.nav-btn.active{background:rgba(124,58,237,0.2);border-color:#7c3aed;color:#fff}
+.nav-btn{padding:8px 16px;border-radius:8px;border:1px solid #e2e8f0;background:transparent;color:#718096;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s}
+.nav-btn:hover,.nav-btn.active{background:#5a67d8;border-color:#5a67d8;color:#fff}
 
 /* Main container */
-.main{max-width:1200px;margin:0 auto;padding:80px 24px 40px}
+.main{max-width:900px;margin:0 auto;padding:80px 24px 40px}
 
-/* Dashboard grid */
+/* Dashboard */
 .dashboard{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
-.stat-card{background:linear-gradient(135deg,#1a1a2e,#25253e);border:1px solid rgba(124,58,237,0.15);border-radius:16px;padding:24px;text-align:center}
-.stat-card h3{font-size:36px;font-weight:700;color:#7c3aed;margin-bottom:4px}
-.stat-card p{font-size:12px;color:#a78bfa;text-transform:uppercase;letter-spacing:1px}
+.stat-card{background:#f7fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;text-align:center}
+.stat-card h3{font-size:32px;font-weight:700;color:#5a67d8;margin-bottom:4px}
+.stat-card p{font-size:11px;color:#718096;text-transform:uppercase;letter-spacing:1px}
 
-/* Task board */
-.task-board{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
-.task-column{background:#1a1a2e;border-radius:16px;padding:16px;border:1px solid rgba(124,58,237,0.1)}
-.task-column h4{font-size:14px;font-weight:600;color:#a78bfa;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.task-column h4 .count{background:rgba(124,58,237,0.2);padding:2px 8px;border-radius:12px;font-size:11px}
-.task-item{background:#25253e;border:1px solid rgba(124,58,237,0.1);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:all .2s}
-.task-item:hover{border-color:#7c3aed;transform:translateY(-2px)}
-.task-item.done{opacity:0.5;border-color:#22c55e}
-.task-item h5{font-size:13px;font-weight:600;color:#e0e0e0;margin-bottom:4px}
-.task-item p{font-size:11px;color:#a78bfa}
-.task-item .task-meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
-.task-item .priority{font-size:10px;padding:2px 8px;border-radius:12px;font-weight:600}
-.priority.high{background:rgba(239,68,68,0.2);color:#ef4444}
-.priority.medium{background:rgba(234,179,8,0.2);color:#eab308}
-.priority.low{background:rgba(34,197,94,0.2);color:#22c55e}
-.task-item .carry-btn{font-size:10px;padding:4px 8px;border-radius:6px;background:rgba(124,58,237,0.2);color:#a78bfa;border:none;cursor:pointer;transition:all .2s}
-.task-item .carry-btn:hover{background:rgba(124,58,237,0.4);color:#fff}
+/* Calendar */
+.calendar{background:#f7fafc;border-radius:12px;padding:20px;border:1px solid #e2e8f0;margin-bottom:24px}
+.calendar h4{font-size:14px;font-weight:600;color:#4a5568;margin-bottom:12px}
+.day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day-cell{background:#fff;border-radius:8px;padding:10px;text-align:center;border:1px solid #e2e8f0;cursor:pointer;transition:all .2s}
+.day-cell:hover{border-color:#5a67d8}
+.day-cell.today{background:#ebf4ff;border-color:#5a67d8}
+.day-cell .day-num{font-size:16px;font-weight:600;color:#2d3748;margin-bottom:2px}
+.day-cell .day-name{font-size:9px;color:#a0aec0;text-transform:uppercase}
+.day-cell .task-count{font-size:10px;color:#5a67d8;margin-top:4px}
 
-/* Calendar view */
-.calendar{background:#1a1a2e;border-radius:16px;padding:24px;border:1px solid rgba(124,58,237,0.1);margin-bottom:32px}
-.calendar h4{font-size:16px;font-weight:600;color:#a78bfa;margin-bottom:16px}
-.day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
-.day-cell{background:#25253e;border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(124,58,237,0.1);cursor:pointer;transition:all .2s}
-.day-cell:hover{border-color:#7c3aed}
-.day-cell.today{background:rgba(124,58,237,0.2);border-color:#7c3aed}
-.day-cell .day-num{font-size:18px;font-weight:700;color:#e0e0e0;margin-bottom:4px}
-.day-cell .day-name{font-size:10px;color:#a78bfa;text-transform:uppercase}
-.day-cell .task-count{font-size:11px;color:#7c3aed;margin-top:4px}
+/* Strategy */
+.strategy{background:#f7fafc;border-radius:12px;padding:20px;border:1px solid #e2e8f0;margin-bottom:24px}
+.strategy h4{font-size:14px;font-weight:600;color:#4a5568;margin-bottom:12px}
+.milestone{display:flex;align-items:center;gap:12px;padding:12px;background:#fff;border-radius:8px;margin-bottom:6px;border-left:3px solid #5a67d8}
+.milestone.completed{border-left-color:#48bb78;opacity:0.7}
+.milestone .phase{font-size:13px;font-weight:600;color:#2d3748;min-width:90px}
+.milestone .desc{font-size:11px;color:#718096;flex:1}
+.milestone .status{font-size:10px;padding:3px 10px;border-radius:10px;font-weight:600}
+.status.active{background:#ebf4ff;color:#5a67d8}
+.status.done{background:#f0fff4;color:#48bb78}
+.status.pending{background:#fffff0;color:#d69e2e}
 
-/* Chat */
-.chat-view{position:fixed;top:60px;left:0;right:0;bottom:0;display:none;flex-direction:column;background:#0f0f1a;z-index:50}
+/* Tasks */
+.task-board{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.task-column{background:#f7fafc;border-radius:12px;padding:16px;border:1px solid #e2e8f0}
+.task-column h4{font-size:13px;font-weight:600;color:#4a5568;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.task-column h4 .count{background:#e2e8f0;padding:2px 8px;border-radius:10px;font-size:10px}
+.task-item{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px;margin-bottom:6px;cursor:pointer;transition:all .2s}
+.task-item:hover{border-color:#5a67d8;transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+.task-item.done{opacity:0.5;border-color:#48bb78}
+.task-item h5{font-size:12px;font-weight:600;color:#2d3748;margin-bottom:2px}
+.task-item p{font-size:10px;color:#a0aec0}
+.task-item .task-meta{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.task-item .priority{font-size:9px;padding:2px 6px;border-radius:8px;font-weight:600}
+.priority.high{background:#fed7d7;color:#e53e3e}
+.priority.medium{background:#fefcbf;color:#d69e2e}
+.priority.low{background:#f0fff4;color:#48bb78}
+.task-item .carry-btn{font-size:9px;padding:3px 6px;border-radius:4px;background:#ebf4ff;color:#5a67d8;border:none;cursor:pointer;transition:all .2s}
+.task-item .carry-btn:hover{background:#5a67d8;color:#fff}
+
+/* Chat - Главный экран */
+.chat-view{position:fixed;top:52px;left:0;right:0;bottom:0;display:none;flex-direction:column;background:#fff;z-index:50}
 .chat-view.active{display:flex}
-.chat-hdr{padding:12px 24px;border-bottom:1px solid rgba(124,58,237,0.2);display:flex;align-items:center;gap:12px;background:#1a1a2e}
-.chat-hdr h3{font-size:14px;font-weight:600;color:#a78bfa}
-.msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:20px 24px}
-.msg{max-width:70%;padding:12px 16px;border-radius:12px;font-size:13px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word}
-.msg.user{background:#7c3aed;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
-.msg.bot{background:#1a1a2e;border:1px solid rgba(124,58,237,0.2);align-self:flex-start}
-.msg .time{font-size:10px;color:rgba(255,255,255,0.4);margin-top:6px;text-align:right}
-.input-area{padding:16px 24px;background:#1a1a2e;border-top:1px solid rgba(124,58,237,0.2);display:flex;gap:12px}
-.input-area input{flex:1;padding:12px 16px;border-radius:10px;border:1px solid rgba(124,58,237,0.2);background:#25253e;color:#e0e0e0;font-size:13px;outline:none;transition:border-color .2s}
-.input-area input:focus{border-color:#7c3aed}
-.input-area button{padding:12px 24px;border-radius:10px;background:#7c3aed;color:#fff;border:none;font-weight:600;cursor:pointer;transition:all .2s}
-.input-area button:hover{background:#6d28d9}
+.msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:24px;max-width:800px;margin:0 auto;width:100%}
+.msg{max-width:75%;padding:14px 18px;border-radius:16px;font-size:14px;line-height:1.6;word-wrap:break-word}
+.msg.user{background:#5a67d8;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.msg.bot{background:#f7fafc;border:1px solid #e2e8f0;align-self:flex-start}
+.msg .time{font-size:10px;color:#a0aec0;margin-top:6px;text-align:right}
+.msg.bot .time{color:#cbd5e0}
+.msg.user .time{color:rgba(255,255,255,0.7)}
+.msg.bot code{padding:2px 6px;background:#edf2f7;border-radius:4px;font-size:12px;font-family:monospace}
+.msg.bot pre{margin:8px 0;padding:12px;background:#f7fafc;border-radius:8px;overflow-x:auto;border:1px solid #e2e8f0}
+.msg.bot pre code{background:none;padding:0}
+.msg.bot ul,.msg.bot ol{margin:6px 0;padding-left:20px}
+.msg.bot li{margin:3px 0}
+.msg.bot strong{font-weight:600;color:#2d3748}
+.msg.bot h1,.msg.bot h2,.msg.bot h3{font-size:inherit;font-weight:600;margin:8px 0 4px;color:#2d3748}
+.msg.bot p{margin:4px 0}
 
-/* Add task modal */
-.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:200}
-.modal-box{background:#1a1a2e;border:1px solid rgba(124,58,237,0.2);border-radius:16px;padding:32px;width:90%;max-width:400px}
-.modal-box h3{font-size:18px;font-weight:600;color:#a78bfa;margin-bottom:20px}
-.modal-box input,.modal-box select,.modal-box textarea{width:100%;padding:12px;border-radius:8px;border:1px solid rgba(124,58,237,0.2);background:#25253e;color:#e0e0e0;font-size:13px;margin-bottom:12px;outline:none;font-family:inherit}
+/* Input area */
+.input-area{padding:16px 24px;background:#fff;border-top:1px solid #e2e8f0;display:flex;gap:12px;justify-content:center}
+.input-wrap{display:flex;gap:8px;max-width:800px;width:100%}
+.input-wrap input{flex:1;padding:14px 18px;border-radius:24px;border:1px solid #e2e8f0;background:#f7fafc;color:#2d3748;font-size:14px;outline:none;transition:all .2s;font-family:inherit}
+.input-wrap input:focus{border-color:#5a67d8;background:#fff;box-shadow:0 0 0 3px rgba(90,103,216,0.1)}
+.input-wrap input::placeholder{color:#a0aec0}
+.input-wrap button{width:48px;height:48px;border-radius:50%;background:#5a67d8;color:#fff;border:none;font-size:16px;cursor:pointer;transition:all .2s;flex-shrink:0}
+.input-wrap button:hover{background:#4c51bf;transform:scale(1.05)}
+
+/* Modal */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px)}
+.modal-box{background:#fff;border-radius:16px;padding:28px;width:90%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.15)}
+.modal-box h3{font-size:18px;font-weight:600;color:#2d3748;margin-bottom:16px}
+.modal-box input,.modal-box select,.modal-box textarea{width:100%;padding:12px;border-radius:8px;border:1px solid #e2e8f0;background:#f7fafc;color:#2d3748;font-size:13px;margin-bottom:10px;outline:none;font-family:inherit;transition:border-color .2s}
+.modal-box input:focus,.modal-box textarea:focus{border-color:#5a67d8}
 .modal-box textarea{height:80px;resize:none}
-.modal-box button{width:100%;padding:12px;border-radius:8px;background:#7c3aed;color:#fff;border:none;font-weight:600;cursor:pointer;transition:all .2s}
-.modal-box button:hover{background:#6d28d9}
-.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:#a78bfa;font-size:20px;cursor:pointer}
-
-/* Strategy section */
-.strategy{background:#1a1a2e;border-radius:16px;padding:24px;border:1px solid rgba(124,58,237,0.1);margin-bottom:32px}
-.strategy h4{font-size:16px;font-weight:600;color:#a78bfa;margin-bottom:16px}
-.milestone{display:flex;align-items:center;gap:16px;padding:16px;background:#25253e;border-radius:10px;margin-bottom:8px;border-left:4px solid #7c3aed}
-.milestone.completed{border-left-color:#22c55e;opacity:0.7}
-.milestone .phase{font-size:14px;font-weight:600;color:#e0e0e0;min-width:100px}
-.milestone .desc{font-size:12px;color:#a78bfa;flex:1}
-.milestone .status{font-size:11px;padding:4px 12px;border-radius:12px;font-weight:600}
-.status.active{background:rgba(124,58,237,0.2);color:#a78bfa}
-.status.done{background:rgba(34,197,94,0.2);color:#22c55e}
-.status.pending{background:rgba(234,179,8,0.2);color:#eab308}
+.modal-box button{width:100%;padding:12px;border-radius:8px;background:#5a67d8;color:#fff;border:none;font-weight:600;cursor:pointer;transition:all .2s}
+.modal-box button:hover{background:#4c51bf}
+.modal-close{position:absolute;top:12px;right:16px;background:none;border:none;color:#a0aec0;font-size:22px;cursor:pointer;line-height:1}
+.modal-close:hover{color:#4a5568}
 
 /* FAB */
-.fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:#7c3aed;color:#fff;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,0.4);transition:all .2s;z-index:100}
-.fab:hover{transform:scale(1.1);background:#6d28d9}
+.fab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:#5a67d8;color:#fff;border:none;font-size:20px;cursor:pointer;box-shadow:0 4px 16px rgba(90,103,216,0.3);transition:all .2s;z-index:100}
+.fab:hover{transform:scale(1.1);background:#4c51bf}
 
 @media(max-width:768px){
   .dashboard,.task-board{grid-template-columns:1fr}
-  .day-grid{grid-template-columns:repeat(7,1fr);gap:4px}
+  .day-grid{gap:4px}
   .day-cell{padding:8px}
   .day-cell .day-num{font-size:14px}
+  .msgs{padding:16px}
+  .msg{max-width:85%}
 }
 </style>
 </head>
@@ -114,89 +135,70 @@ body{font-family:'Inter',system-ui,sans-serif;background:#0f0f1a;color:#e0e0e0;m
 <div class="topbar">
   <div class="brand">AMENO<span>DES</span></div>
   <div class="topbar-right">
-    <button class="nav-btn active" onclick="showView('dashboard')"><i class="fas fa-th-large"></i> Dashboard</button>
-    <button class="nav-btn" onclick="showView('tasks')"><i class="fas fa-tasks"></i> Tasks</button>
-    <button class="nav-btn" onclick="showView('strategy')"><i class="fas fa-road"></i> Strategy</button>
-    <button class="nav-btn" onclick="showView('chat')"><i class="fas fa-comment"></i> Chat</button>
+    <button class="nav-btn active" onclick="showView('chat',this)"><i class="fas fa-comment"></i> Чат</button>
+    <button class="nav-btn" onclick="showView('dashboard',this)"><i class="fas fa-th-large"></i> Dashboard</button>
+    <button class="nav-btn" onclick="showView('tasks',this)"><i class="fas fa-tasks"></i> Задачи</button>
+    <button class="nav-btn" onclick="showView('strategy',this)"><i class="fas fa-road"></i> Стратегия</button>
   </div>
 </div>
 
-<div class="main">
-  <!-- Dashboard View -->
-  <div id="dashboard-view" class="view active">
-    <div class="dashboard">
-      <div class="stat-card">
-        <h3 id="total-tasks">0</h3>
-        <p>Total Tasks</p>
-      </div>
-      <div class="stat-card">
-        <h3 id="completed-tasks">0</h3>
-        <p>Completed</p>
-      </div>
-      <div class="stat-card">
-        <h3 id="carried-over">0</h3>
-        <p>Carried Over</p>
-      </div>
+<!-- Chat View (Главный экран) -->
+<div id="chat-view" class="chat-view active">
+  <div class="msgs" id="chat-msgs"></div>
+  <div class="input-area">
+    <div class="input-wrap">
+      <input type="text" id="chat-input" placeholder="Спроси о расчётах..." onkeypress="if(event.key==='Enter')sendMsg()">
+      <button onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
     </div>
+  </div>
+</div>
 
+<!-- Dashboard View -->
+<div class="main" id="main-area">
+  <div id="dashboard-view" class="view" style="display:none">
+    <div class="dashboard">
+      <div class="stat-card"><h3 id="total-tasks">0</h3><p>Всего задач</p></div>
+      <div class="stat-card"><h3 id="completed-tasks">0</h3><p>Выполнено</p></div>
+      <div class="stat-card"><h3 id="carried-over">0</h3><p>Перенесено</p></div>
+    </div>
     <div class="calendar">
-      <h4><i class="fas fa-calendar-alt"></i> Weekly Overview</h4>
+      <h4><i class="fas fa-calendar-alt"></i> Неделя</h4>
       <div class="day-grid" id="day-grid"></div>
     </div>
-
     <div class="strategy">
-      <h4><i class="fas fa-flag-checkered"></i> Strategy Milestones</h4>
+      <h4><i class="fas fa-flag-checkered"></i> Вехи стратегии</h4>
       <div id="milestones"></div>
     </div>
   </div>
 
   <!-- Tasks View -->
-  <div id="tasks-view" class="view">
+  <div id="tasks-view" class="view" style="display:none">
     <div class="task-board">
       <div class="task-column">
-        <h4><i class="fas fa-inbox"></i> To Do <span class="count" id="todo-count">0</span></h4>
+        <h4><i class="fas fa-inbox"></i> К выполнению <span class="count" id="todo-count">0</span></h4>
         <div id="todo-list"></div>
       </div>
       <div class="task-column">
-        <h4><i class="fas fa-spinner"></i> In Progress <span class="count" id="progress-count">0</span></h4>
+        <h4><i class="fas fa-spinner"></i> В работе <span class="count" id="progress-count">0</span></h4>
         <div id="progress-list"></div>
       </div>
       <div class="task-column">
-        <h4><i class="fas fa-check-circle"></i> Done <span class="count" id="done-count">0</span></h4>
+        <h4><i class="fas fa-check-circle"></i> Готово <span class="count" id="done-count">0</span></h4>
         <div id="done-list"></div>
       </div>
     </div>
   </div>
 
   <!-- Strategy View -->
-  <div id="strategy-view" class="view">
+  <div id="strategy-view" class="view" style="display:none">
     <div class="strategy">
-      <h4><i class="fas fa-bullseye"></i> Amenodes Strategy v5.1</h4>
-      <p style="color:#a78bfa;font-size:13px;margin-bottom:20px;line-height:1.6">
-        AI Agent Platform for Scientific Data. Target: $1B valuation.<br>
-        Budget M0: $10 (domain only, GigaChat free).<br>
-        <strong style="color:#7c3aed">Key principle:</strong> If task not completed today → automatically carry forward to next day.
+      <h4><i class="fas fa-bullseye"></i> Amenodes Strategy v5.2</h4>
+      <p style="color:#718096;font-size:13px;margin-bottom:16px;line-height:1.6">
+        AI Agent Platform for Scientific Data. Target: $1B.<br>
+        Budget M0: $10 (domain, GigaChat free).<br>
+        <strong style="color:#5a67d8">Key:</strong> Task not done today → auto carry forward.
       </p>
       <div id="strategy-milestones"></div>
-    </div>
-  </div>
-
-  <!-- Chat View -->
-  <div id="chat-view" class="chat-view">
-    <div class="chat-hdr">
-      <i class="fas fa-robot" style="color:#7c3aed"></i>
-      <h3>AI Agent</h3>
-      <span style="font-size:11px;color:#a78bfa;margin-left:auto">GigaChat</span>
-    </div>
-    <div class="msgs" id="chat-msgs">
-      <div class="msg bot">
-        <div>Привет! Я AI-агент Amenodes. Помогу с задачами стратегии. Что делаем сегодня?</div>
-        <div class="time">Now</div>
-      </div>
-    </div>
-    <div class="input-area">
-      <input type="text" id="chat-input" placeholder="Спроси о расчётах..." onkeypress="if(event.key==='Enter')sendMsg()">
-      <button onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
     </div>
   </div>
 </div>
@@ -206,71 +208,152 @@ body{font-family:'Inter',system-ui,sans-serif;background:#0f0f1a;color:#e0e0e0;m
 <script>
 // ── State ──
 var tasks = JSON.parse(localStorage.getItem('amenodes_tasks') || '[]');
+var chatHistory = JSON.parse(localStorage.getItem('amenodes_chat') || '[]');
 var today = new Date().toISOString().split('T')[0];
 
-// ── Strategy milestones ──
+// ── Milestones ──
 var milestones = [
-  {phase:'M0: MVP',duration:'6 months',desc:'Agent Hub + chat2graph + Tools',target:'100 DAU, 1 university pilot',budget:'$10'},
-  {phase:'M1: Launch',duration:'12 months',desc:'5 universities, 1000 students',target:'1000 DAU, $10K MRR',budget:'$10K (grants)'},
-  {phase:'M2: Growth',duration:'18 months',desc:'50 universities, 10K students',target:'$100K MRR, 100+ templates',budget:'$500K (Seed)'},
-  {phase:'M3: Scale',duration:'24 months',desc:'200+ universities, CIS/Asia',target:'$1M MRR',budget:'$5M (Series A)'},
-  {phase:'M4: Leader',duration:'36 months',desc:'Top-3 EdTech in Russia',target:'$10M MRR, $1B valuation',budget:'$50M (B/C)'}
+  {phase:'M0: MVP',desc:'Agent Hub + chat2graph + Tools',target:'100 DAU, 1 pilot',budget:'$10'},
+  {phase:'M1: Launch',desc:'5 universities, 1000 students',target:'1000 DAU, $10K MRR',budget:'$10K'},
+  {phase:'M2: Growth',desc:'50 universities, 10K students',target:'$100K MRR',budget:'$500K'},
+  {phase:'M3: Scale',desc:'200+ universities, CIS/Asia',target:'$1M MRR',budget:'$5M'},
+  {phase:'M4: Leader',desc:'Top-3 EdTech Russia',target:'$10M MRR, $1B',budget:'$50M'}
 ];
 
-// ── Render ──
-function render(){
-  renderDashboard();
-  renderTasks();
-  renderMilestones();
-  renderCalendar();
-  saveTasks();
+// ── Chat ──
+function initChat(){
+  var msgs = document.getElementById('chat-msgs');
+  if(chatHistory.length === 0){
+    addBotMsg('Привет! Я Amenodes — AI-платформа для научных данных. Помогу с расчётами, графиками и отчётами. Что делаем?');
+  } else {
+    chatHistory.forEach(function(m){
+      var div = document.createElement('div');
+      div.className = 'msg ' + m.role;
+      div.innerHTML = '<div>' + m.text + '</div><div class="time">' + m.time + '</div>';
+      msgs.appendChild(div);
+    });
+    msgs.scrollTop = msgs.scrollHeight;
+  }
 }
 
-function renderDashboard(){
-  var total = tasks.length;
-  var done = tasks.filter(function(t){return t.status==='done'}).length;
-  var carried = tasks.filter(function(t){return t.carried}).length;
-  document.getElementById('total-tasks').textContent = total;
-  document.getElementById('completed-tasks').textContent = done;
-  document.getElementById('carried-over').textContent = carried;
+function addBotMsg(text){
+  var msgs = document.getElementById('chat-msgs');
+  var time = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  var div = document.createElement('div');
+  div.className = 'msg bot';
+  div.innerHTML = '<div>' + text + '</div><div class="time">' + time + '</div>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  chatHistory.push({role:'bot',text:text,time:time});
+  localStorage.setItem('amenodes_chat', JSON.stringify(chatHistory));
 }
 
+function addUserMsg(text){
+  var msgs = document.getElementById('chat-msgs');
+  var time = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  var div = document.createElement('div');
+  div.className = 'msg user';
+  div.innerHTML = '<div>' + text + '</div><div class="time">' + time + '</div>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  chatHistory.push({role:'user',text:text,time:time});
+  localStorage.setItem('amenodes_chat', JSON.stringify(chatHistory));
+}
+
+function sendMsg(){
+  var input = document.getElementById('chat-input');
+  var msg = input.value.trim();
+  if(!msg) return;
+  addUserMsg(msg);
+  input.value = '';
+  
+  // Simple responses (will be replaced by GigaChat)
+  setTimeout(function(){
+    var lower = msg.toLowerCase();
+    if(lower.includes('привет') || lower.includes('здравствуй')){
+      addBotMsg('Привет! Чем могу помочь?');
+    } else if(lower.includes('задач') || lower.includes('план')){
+      var todoCount = tasks.filter(function(t){return t.status==='todo'}).length;
+      addBotMsg('Сейчас ' + todoCount + ' задач в очереди. Хочешь посмотреть список или добавить новую?');
+    } else if(lower.includes('рассчит') || lower.includes('посчитай')){
+      addBotMsg('Для расчётов загрузи данные в графовый редактор — я помогу с формулами, погрешностями и МНК.');
+    } else if(lower.includes('график') || lower.includes('визуал')){
+      addBotMsg('Могу построить scatter, line, histogram с планками погрешностей. Загрузи данные!');
+    } else {
+      addBotMsg('Понял! Работаю над: «' + msg + '»');
+    }
+  }, 400);
+}
+
+// ── Tasks ──
 function renderTasks(){
   var todo = tasks.filter(function(t){return t.status==='todo'});
   var progress = tasks.filter(function(t){return t.status==='progress'});
   var done = tasks.filter(function(t){return t.status==='done'});
-  
   document.getElementById('todo-count').textContent = todo.length;
   document.getElementById('progress-count').textContent = progress.length;
   document.getElementById('done-count').textContent = done.length;
-  
   document.getElementById('todo-list').innerHTML = todo.map(renderTaskItem).join('');
   document.getElementById('progress-list').innerHTML = progress.map(renderTaskItem).join('');
   document.getElementById('done-list').innerHTML = done.map(renderTaskItem).join('');
+  document.getElementById('total-tasks').textContent = tasks.length;
+  document.getElementById('completed-tasks').textContent = done.length;
+  document.getElementById('carried-over').textContent = tasks.filter(function(t){return t.carried}).length;
 }
 
 function renderTaskItem(task){
-  var priorityClass = task.priority || 'medium';
-  var carriedBadge = task.carried ? '<span style="font-size:10px;color:#eab308;margin-left:8px">↗ Carried</span>' : '';
+  var p = task.priority || 'medium';
+  var badge = task.carried ? '<span style="font-size:9px;color:#d69e2e;margin-left:6px">↗</span>' : '';
   return '<div class="task-item ' + (task.status==='done'?'done':'') + '" onclick="toggleTask(\'' + task.id + '\')">' +
-    '<h5>' + task.title + carriedBadge + '</h5>' +
+    '<h5>' + task.title + badge + '</h5>' +
     '<p>' + (task.desc||'') + '</p>' +
     '<div class="task-meta">' +
-      '<span class="priority ' + priorityClass + '">' + priorityClass + '</span>' +
-      '<button class="carry-btn" onclick="event.stopPropagation();carryTask(\'' + task.id + '\')"><i class="fas fa-arrow-right"></i> Carry</button>' +
-    '</div>' +
-  '</div>';
+      '<span class="priority ' + p + '">' + p + '</span>' +
+      '<button class="carry-btn" onclick="event.stopPropagation();carryTask(\'' + task.id + '\')">→</button>' +
+    '</div></div>';
+}
+
+function toggleTask(id){
+  var t = tasks.find(function(x){return x.id===id});
+  if(t){t.status = t.status==='done'?'todo':'done'; saveTasks(); renderAll();}
+}
+
+function carryTask(id){
+  var t = tasks.find(function(x){return x.id===id});
+  if(t){
+    var tm = new Date(); tm.setDate(tm.getDate()+1);
+    t.date = tm.toISOString().split('T')[0];
+    t.carried = true;
+    t.status = 'todo';
+    saveTasks(); renderAll();
+  }
+}
+
+function showAddTask(){
+  var o = document.createElement('div');
+  o.className = 'modal-overlay';
+  o.innerHTML = '<div class="modal-box" style="position:relative">' +
+    '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
+    '<h3>Новая задача</h3>' +
+    '<input id="new-title" placeholder="Название">' +
+    '<textarea id="new-desc" placeholder="Описание"></textarea>' +
+    '<select id="new-priority"><option value="high">Высокий</option><option value="medium" selected>Средний</option><option value="low">Низкий</option></select>' +
+    '<button onclick="addTask()">Добавить</button></div>';
+  document.body.appendChild(o);
+}
+
+function addTask(){
+  var title = document.getElementById('new-title').value;
+  if(!title) return;
+  tasks.push({id:Date.now().toString(),title:title,desc:document.getElementById('new-desc').value,priority:document.getElementById('new-priority').value,status:'todo',date:today,carried:false});
+  document.querySelector('.modal-overlay').remove();
+  saveTasks(); renderAll();
 }
 
 function renderMilestones(){
   var html = milestones.map(function(m,i){
-    var status = i===0?'active':(i<2?'pending':'pending');
-    var statusClass = status;
-    return '<div class="milestone">' +
-      '<div class="phase">' + m.phase + '</div>' +
-      '<div class="desc">' + m.desc + '<br><span style="font-size:11px;color:#7c3aed">Target: ' + m.target + ' | Budget: ' + m.budget + '</span></div>' +
-      '<span class="status ' + statusClass + '">' + status + '</span>' +
-    '</div>';
+    var s = i===0?'active':'pending';
+    return '<div class="milestone"><div class="phase">' + m.phase + '</div><div class="desc">' + m.desc + '<br><span style="font-size:10px;color:#5a67d8">' + m.target + ' | ' + m.budget + '</span></div><span class="status ' + s + '">' + s + '</span></div>';
   }).join('');
   document.getElementById('milestones').innerHTML = html;
   document.getElementById('strategy-milestones').innerHTML = html;
@@ -278,129 +361,44 @@ function renderMilestones(){
 
 function renderCalendar(){
   var now = new Date();
-  var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
   var html = '';
   for(var i=0;i<7;i++){
-    var d = new Date(now);
-    d.setDate(now.getDate() - now.getDay() + i);
-    var dateStr = d.toISOString().split('T')[0];
-    var isToday = dateStr === today;
-    var dayTasks = tasks.filter(function(t){return t.date===dateStr});
-    html += '<div class="day-cell ' + (isToday?'today':'') + '">' +
-      '<div class="day-num">' + d.getDate() + '</div>' +
-      '<div class="day-name">' + dayNames[d.getDay()] + '</div>' +
-      (dayTasks.length?'<div class="task-count">' + dayTasks.length + ' tasks</div>':'') +
-    '</div>';
+    var d = new Date(now); d.setDate(now.getDate()-now.getDay()+i);
+    var ds = d.toISOString().split('T')[0];
+    var cnt = tasks.filter(function(t){return t.date===ds}).length;
+    html += '<div class="day-cell ' + (ds===today?'today':'') + '"><div class="day-num">' + d.getDate() + '</div><div class="day-name">' + days[d.getDay()] + '</div>' + (cnt?'<div class="task-count">'+cnt+' задач</div>':'') + '</div>';
   }
   document.getElementById('day-grid').innerHTML = html;
 }
 
-// ── Actions ──
-function showView(view){
-  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active')});
+// ── Navigation ──
+function showView(view, btn){
+  document.querySelectorAll('.view').forEach(function(v){v.style.display='none'});
   document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active')});
-  
+  if(btn) btn.classList.add('active');
   if(view==='chat'){
-    document.getElementById('chat-view').classList.add('active');
+    document.getElementById('chat-view').style.display='flex';
+    document.getElementById('main-area').style.display='none';
   } else {
-    document.getElementById(view+'-view').classList.add('active');
-    event.target.classList.add('active');
+    document.getElementById('chat-view').style.display='none';
+    document.getElementById('main-area').style.display='block';
+    document.getElementById(view+'-view').style.display='block';
   }
 }
 
-function toggleTask(id){
-  var task = tasks.find(function(t){return t.id===id});
-  if(task){
-    task.status = task.status==='done'?'todo':'done';
-    render();
-  }
-}
-
-function carryTask(id){
-  var task = tasks.find(function(t){return t.id===id});
-  if(task){
-    var tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate()+1);
-    task.date = tomorrow.toISOString().split('T')[0];
-    task.carried = true;
-    task.status = 'todo';
-    render();
-  }
-}
-
-function showAddTask(){
-  var overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.innerHTML = '<div class="modal-box" style="position:relative">' +
-    '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button>' +
-    '<h3>Add Task</h3>' +
-    '<input type="text" id="new-title" placeholder="Task title">' +
-    '<textarea id="new-desc" placeholder="Description (optional)"></textarea>' +
-    '<select id="new-priority">' +
-      '<option value="high">High Priority</option>' +
-      '<option value="medium" selected>Medium Priority</option>' +
-      '<option value="low">Low Priority</option>' +
-    '</select>' +
-    '<button onclick="addTask()">Add Task</button>' +
-  '</div>';
-  document.body.appendChild(overlay);
-}
-
-function addTask(){
-  var title = document.getElementById('new-title').value;
-  var desc = document.getElementById('new-desc').value;
-  var priority = document.getElementById('new-priority').value;
-  if(!title) return;
-  
-  tasks.push({
-    id: Date.now().toString(),
-    title: title,
-    desc: desc,
-    priority: priority,
-    status: 'todo',
-    date: today,
-    carried: false
-  });
-  
-  document.querySelector('.modal-overlay').remove();
-  render();
-}
-
-function sendMsg(){
-  var input = document.getElementById('chat-input');
-  var msg = input.value.trim();
-  if(!msg) return;
-  
-  var msgs = document.getElementById('chat-msgs');
-  msgs.innerHTML += '<div class="msg user"><div>' + msg + '</div><div class="time">' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) + '</div></div>';
-  input.value = '';
-  
-  // Simple AI response
-  setTimeout(function(){
-    var response = 'Понял! Работаю над задачей: ' + msg;
-    msgs.innerHTML += '<div class="msg bot"><div>' + response + '</div><div class="time">' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) + '</div></div>';
-    msgs.scrollTop = msgs.scrollHeight;
-  }, 500);
-}
-
-function saveTasks(){
-  localStorage.setItem('amenodes_tasks', JSON.stringify(tasks));
-}
-
-// ── Auto carry-forward ──
+// ── Helpers ──
+function saveTasks(){localStorage.setItem('amenodes_tasks',JSON.stringify(tasks));}
 function autoCarryForward(){
-  tasks.forEach(function(task){
-    if(task.status!=='done' && task.date<today){
-      task.date = today;
-      task.carried = true;
-    }
-  });
+  tasks.forEach(function(t){if(t.status!=='done'&&t.date<today){t.date=today;t.carried=true;}});
   saveTasks();
 }
+function renderAll(){renderTasks();renderMilestones();renderCalendar();}
 
 // ── Init ──
 autoCarryForward();
-render();
+initChat();
+renderAll();
 </script>
 </body>
 </html>
