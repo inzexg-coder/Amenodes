@@ -472,7 +472,23 @@ function hideTyping() {
   if (t) t.remove();
 }
 
-// ===== #12. API-запрос + #18. Ошибки =====
+// ===== #12. API-запрос + #15. Стриминг + #18. Ошибки =====
+function createStreamMsg() {
+  var d = document.createElement('div');
+  d.className = 'msg bot';
+  d.id = 'streamMsg';
+  d.innerHTML = '<div class="ava">A</div><div class="bd"><div id="streamContent"></div></div>';
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+  return document.getElementById('streamContent');
+}
+
+function appendStream(el, token) {
+  el._raw = (el._raw || '') + token;
+  el.innerHTML = render(el._raw);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
 async function callAPI(userMessage) {
   conversationHistory.push({role: 'user', content: userMessage});
 
@@ -491,7 +507,7 @@ async function callAPI(userMessage) {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         messages: apiMessages,
-        stream: false,
+        stream: true,
         temperature: currentTemp,
         model: currentModel
       }),
@@ -504,32 +520,69 @@ async function callAPI(userMessage) {
       var err = await response.json().catch(function() { return {}; });
       var errMsg = 'Ошибка сервера (' + response.status + ')';
       if (err.error === 'API key not configured') {
-        errMsg = '⚠ API-ключ не настроен. Добавь client_secret в agent/api.php';
+        errMsg = 'API-ключ не настроен. Добавь client_secret в agent/api.php';
       } else if (err.error === 'Auth failed') {
-        errMsg = '⚠ Ошибка авторизации GigaChat. Проверь ключ.';
+        errMsg = 'Ошибка авторизации GigaChat. Проверь ключ.';
       } else if (err.error === 'GigaChat API error') {
-        errMsg = '⚠ Ошибка GigaChat API: ' + (err.detail || 'неизвестная');
+        errMsg = 'Ошибка GigaChat API: ' + (err.detail || 'неизвестная');
       }
       add('bot', errMsg);
       conversationHistory.pop();
       return;
     }
 
-    var data = await response.json();
-    var reply = data.choices && data.choices[0] && data.choices[0].message
-      ? data.choices[0].message.content
-      : 'Пустой ответ от API';
+    // ===== #15. SSE стриминг =====
+    var streamEl = createStreamMsg();
+    var reader = response.body.getReader();
+    var decoder = new TextDecoder();
+    var buffer = '';
+    var fullReply = '';
 
-    reply = parseTempFromResponse(reply);
-    add('bot', reply);
-    conversationHistory.push({role: 'assistant', content: reply});
+    while (true) {
+      var {done, value} = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, {stream: true});
+      var lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (!line || !line.startsWith('data:')) continue;
+        var payload = line.slice(5).trim();
+        if (payload === '[DONE]') continue;
+        try {
+          var chunk = JSON.parse(payload);
+          var delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta;
+          if (delta && delta.content) {
+            fullReply += delta.content;
+            appendStream(streamEl, delta.content);
+          }
+        } catch (e) {}
+      }
+    }
+
+    if (fullReply) {
+      fullReply = parseTempFromResponse(fullReply);
+      streamEl.innerHTML = render(fullReply);
+      streamEl.id = '';
+      conversationHistory.push({role: 'assistant', content: fullReply});
+      save('bot', fullReply, new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
+    } else {
+      var sm = document.getElementById('streamMsg');
+      if (sm) sm.remove();
+      add('bot', 'Пустой ответ от API');
+      conversationHistory.pop();
+    }
 
   } catch (e) {
     hideTyping();
+    var sm = document.getElementById('streamMsg');
+    if (sm) sm.remove();
     if (e.name === 'AbortError') {
       add('bot', '*Генерация остановлена.*');
     } else {
-      add('bot', '⚠ Нет соединения с сервером. Проверь интернет.');
+      add('bot', 'Нет соединения с сервером. Проверь интернет.');
     }
     conversationHistory.pop();
   } finally {
