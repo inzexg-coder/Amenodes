@@ -230,7 +230,9 @@ function toggleAdaptive(checked) {
 function updateTempBar(val) {
   var pct = (val / 2) * 100;
   var slider = document.getElementById('tempSlider');
-  slider.style.background = 'linear-gradient(90deg, #fb923c ' + pct + '%, #0ea5e9 ' + pct + '%)';
+  var gL = Math.max(0, pct - 12);
+  var gR = Math.min(100, pct + 12);
+  slider.style.background = 'linear-gradient(90deg, #fb923c 0%, #fb923c ' + gL + '%, #22c55e ' + gL + '%, #22c55e ' + gR + '%, #0ea5e9 ' + gR + '%, #0ea5e9 100%)';
 }
 
 function updateTemp(val) {
