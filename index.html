@@ -472,6 +472,38 @@ function hideTyping() {
   if (t) t.remove();
 }
 
+// ===== #19. Кэширование ответов =====
+var CACHE_KEY = 'amenodes_cache';
+var CACHE_LIMIT = 50;
+
+function hashStr(s) {
+  var h = 0;
+  for (var i = 0; i < s.length; i++) {
+    h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  }
+  return h.toString(36);
+}
+
+function getCache(key) {
+  try {
+    var c = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+    return c[key] || null;
+  } catch (e) { return null; }
+}
+
+function setCache(key, val) {
+  try {
+    var c = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+    c[key] = val;
+    var keys = Object.keys(c);
+    if (keys.length > CACHE_LIMIT) {
+      var excess = keys.slice(0, keys.length - CACHE_LIMIT);
+      for (var i = 0; i < excess.length; i++) delete c[excess[i]];
+    }
+    localStorage.setItem(CACHE_KEY, JSON.stringify(c));
+  } catch (e) {}
+}
+
 // ===== #12. API-запрос + #15. Стриминг + #18. Ошибки =====
 function createStreamMsg() {
   var d = document.createElement('div');
@@ -496,6 +528,15 @@ async function callAPI(userMessage) {
     {role: 'system', content: SYSTEM_PROMPT},
     ...conversationHistory.slice(-20)
   ];
+
+  // #19. Проверка кэша
+  var cacheKey = hashStr(JSON.stringify(apiMessages));
+  var cached = getCache(cacheKey);
+  if (cached) {
+    add('bot', cached);
+    conversationHistory.push({role: 'assistant', content: cached});
+    return;
+  }
 
   showTyping();
   isGenerating = true;
@@ -567,6 +608,7 @@ async function callAPI(userMessage) {
       streamEl.innerHTML = render(fullReply);
       streamEl.id = '';
       conversationHistory.push({role: 'assistant', content: fullReply});
+      setCache(cacheKey, fullReply);
       save('bot', fullReply, new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
     } else {
       var sm = document.getElementById('streamMsg');
