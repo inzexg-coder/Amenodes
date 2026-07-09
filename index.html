@@ -108,6 +108,47 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 .typing span:nth-child(2){animation-delay:.2s}
 .typing span:nth-child(3){animation-delay:.4s}
 @keyframes typing{to{opacity:.3;transform:translateY(-3px)}}
+
+/* #20 Тёмная тема */
+body[data-theme="dark"]{background:#111114;color:#e4e4e7}
+body[data-theme="dark"] .header{background:#111114;border-color:#27272a}
+body[data-theme="dark"] .brand{color:#e4e4e7}
+body[data-theme="dark"] .chat{background:#111114}
+body[data-theme="dark"] .msgs{background:#111114}
+body[data-theme="dark"] .input-area{background:#111114;border-color:#27272a}
+body[data-theme="dark"] .input-wrap textarea{background:#1e1e22;border-color:#27272a;color:#e4e4e7}
+body[data-theme="dark"] .input-wrap textarea::placeholder{color:#52525b}
+body[data-theme="dark"] .msg.user{background:#27272a;color:#e4e4e7}
+body[data-theme="dark"] .msg .ava{background:#6d28d9}
+body[data-theme="dark"] .model-btn{border-color:#27272a;color:#a1a1aa}
+body[data-theme="dark"] .model-dropdown{background:#1e1e22;border-color:#27272a}
+body[data-theme="dark"] .model-option{color:#e4e4e7}
+body[data-theme="dark"] .model-option:hover{background:#27272a}
+body[data-theme="dark"] .model-option.active{background:#2e1065;color:#a78bfa}
+body[data-theme="dark"] .temp-trigger{border-color:#27272a;color:#a1a1aa}
+body[data-theme="dark"] .temp-panel{background:linear-gradient(135deg,#1e1e22,#1e1e22);border-color:#27272a;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+body[data-theme="dark"] .temp-panel-header span{color:#e4e4e7}
+body[data-theme="dark"] .temp-bar-wrap{background:#27272a}
+body[data-theme="dark"] .temp-range::-webkit-slider-thumb{border-color:#6d28d9}
+body[data-theme="dark"] .temp-adaptive{background:rgba(30,30,34,.5);border-color:#27272a}
+body[data-theme="dark"] .temp-adaptive:hover{background:rgba(39,39,42,.8)}
+body[data-theme="dark"] .temp-adaptive .adaptive-content{color:#e4e4e7}
+body[data-theme="dark"] .welcome h1{color:#e4e4e7}
+body[data-theme="dark"] .msg.bot code{background:#27272a;color:#a78bfa}
+body[data-theme="dark"] .msg.bot pre{background:#1e1e22}
+body[data-theme="dark"] .msg.bot pre code{color:#d4d4d8}
+body[data-theme="dark"] .msg.bot th{background:#27272a;color:#e4e4e7}
+body[data-theme="dark"] .msg.bot td{border-color:#27272a;color:#d4d4d8}
+body[data-theme="dark"] .msg.bot th{border-color:#3f3f46}
+body[data-theme="dark"] .welcome .hint{background:#1e1e22;border-color:#27272a;color:#a1a1aa}
+body[data-theme="dark"] .welcome .hint:hover{border-color:#6d28d9;color:#a78bfa;background:#2e1065}
+body[data-theme="dark"] .msg.bot blockquote{color:#71717a}
+body[data-theme="dark"] .typing span{background:#52525b}
+body[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#3f3f46}
+.theme-toggle{background:none;border:1px solid #e8e5e0;color:#8a8a8a;cursor:pointer;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.theme-toggle:hover{border-color:#7c3aed;color:#7c3aed;background:#f5f3ff}
+body[data-theme="dark"] .theme-toggle{border-color:#27272a;color:#a1a1aa}
+body[data-theme="dark"] .theme-toggle:hover{border-color:#6d28d9;color:#a78bfa;background:#2e1065}
 </style>
 </head>
 <body>
@@ -116,7 +157,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
   <div class="brand">AMENO<span>DES</span></div>
   <div style="display:flex;align-items:center;gap:10px">
     <div style="position:relative">
-      <button class="temp-trigger" onclick="toggleTempPanel()" id="tempBtn" title="Настройки"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Тема"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button><button class="temp-trigger" onclick="toggleTempPanel()" id="tempBtn" title="Настройки"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
       <div class="temp-panel" id="tempPanel">
         <div class="temp-panel-header">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5a5a5a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2 2 0 0 0-4 0v11.26a4.5 4.5 0 1 0 4 0z"/></svg>
@@ -360,6 +401,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('adaptiveTemp').checked = true;
     toggleAdaptive(true);
   }
+  // #20. Init theme
+  var savedTheme = localStorage.getItem('amenodes_theme') || 'light';
+  document.body.setAttribute('data-theme', savedTheme);
+  updateThemeIcon();
 });
 
 
@@ -470,6 +515,23 @@ function showTyping() {
 function hideTyping() {
   var t = document.getElementById('typing');
   if (t) t.remove();
+}
+
+
+// ===== #20. Тёмная тема =====
+function toggleTheme() {
+  var b = document.body;
+  var isDark = b.getAttribute('data-theme') === 'dark';
+  b.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  localStorage.setItem('amenodes_theme', isDark ? 'light' : 'dark');
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  var isDark = document.body.getAttribute('data-theme') === 'dark';
+  document.getElementById('themeBtn').innerHTML = isDark
+    ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>'
+    : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
 }
 
 // ===== #19. Кэширование ответов =====
