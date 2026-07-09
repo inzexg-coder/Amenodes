@@ -51,13 +51,48 @@ jobs:
           echo "$DISPATCH_PAYLOAD" > payload.json
           cat payload.json
       
-      - name: Trigger CI repository
+      - name: Trigger deploy (amenodes.html)
         run: |
           curl -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.CI_TOKEN }}" \
             https://api.github.com/repos/inzexg-coder/amenodes-ci/dispatches \
             --data @payload.json
+
+      - name: Generate index payload
+        id: index_payload
+        run: |
+          CLIENT_DATA=$(jq -c --sort-keys -n \
+            --arg repo "${{ github.repository }}" \
+            --arg ref "${{ github.ref }}" \
+            --arg sha "${{ steps.pr.outputs.head_sha }}" \
+            --arg pr "${{ steps.pr.outputs.pr_number }}" \
+            --arg head "${{ steps.pr.outputs.head_ref }}" \
+            --arg actor "${{ github.actor }}" \
+            '{
+              source_repo: $repo,
+              source_ref: $ref,
+              source_sha: $sha,
+              pr_number: $pr,
+              head_ref: $head,
+              actor: $actor
+            }')
+          
+          INDEX_PAYLOAD=$(jq -n \
+            --arg event_type "deploy-index" \
+            --argjson client_payload "$CLIENT_DATA" \
+            '{event_type: $event_type, client_payload: $client_payload}')
+          
+          echo "$INDEX_PAYLOAD" > index_payload.json
+          cat index_payload.json
+      
+      - name: Trigger deploy-index (index.html)
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.CI_TOKEN }}" \
+            https://api.github.com/repos/inzexg-coder/amenodes-ci/dispatches \
+            --data @index_payload.json
 
       - name: Install sshpass
         if: github.ref == 'refs/heads/main'
@@ -67,5 +102,3 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           sshpass -p "${{ secrets.SFTP_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }} "chmod 644 /var/www/html/index.html 2>/dev/null; chmod -R 755 /var/www/html/amenodes/api/ 2>/dev/null; echo 'Permissions fixed'" 
-
-
