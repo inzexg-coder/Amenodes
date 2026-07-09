@@ -95,8 +95,8 @@ function load(){
 }
 
 function save(role,text,time){
-  var raw=localStorage.getItem('amenodes_chat');
-  var h=raw?JSON.parse(raw):[];
+  var r=localStorage.getItem('amenodes_chat');
+  var h=r?JSON.parse(r):[];
   h.push({role:role,text:text,time:time});
   localStorage.setItem('amenodes_chat',JSON.stringify(h));
 }
@@ -114,24 +114,15 @@ function build(role,text,time){
 }
 
 function render(t){
-  // Markdown
   var html=t;
   try{html=marked.parse(t)}catch(e){}
-  // KaTeX inline $...$
-  html=html.replace(/\$([^\$]+)\$/g,function(match,formula){
-    try{
-      return katex.renderToString(formula,{throwOnError:false,displayMode:false});
-    }catch(e){
-      return '<span style="color:#e53e3e">$'+formula+'$</span>';
-    }
+  html=html.replace(/\$([^\$]+)\$/g,function(match,f){
+    try{return katex.renderToString(f,{throwOnError:false,displayMode:false})}
+    catch(e){return '<span style="color:#e53e3e">$'+f+'$</span>'}
   });
-  // KaTeX display $$...$$
-  html=html.replace(/\$\$([^\$]+)\$\$/g,function(match,formula){
-    try{
-      return katex.renderToString(formula,{throwOnError:false,displayMode:true});
-    }catch(e){
-      return '<span style="color:#e53e3e">$$'+formula+'$$</span>';
-    }
+  html=html.replace(/\$\$([^\$]+)\$\$/g,function(match,f){
+    try{return katex.renderToString(f,{throwOnError:false,displayMode:true})}
+    catch(e){return '<span style="color:#e53e3e">$$'+f+'$$</span>'}
   });
   return html;
 }
@@ -154,20 +145,20 @@ function send(){
   if(l.includes('привет')||l=='здравствуй'||l=='hello'){
     add('bot','Привет! Я AI-агент **Amenodes**.\n\nПомогу с расчётами, графиками и отчётами. Опишите задачу — я запущу вычисления в графовом редакторе.');
   }
-  else if(l.includes('/calc')||l.includes('посчитай')||l.includes('рассчитай')){
-    add('bot','Для расчёта откройте **вкладку Граф** → создайте **DataNode** с данными → подключите **CalcNode**.\n\nИли введите значения прямо сейчас — построю формулу с погрешностями.');
+  else if(l.includes('посчитай')||l.includes('рассчитай')||l.includes('вычисли')){
+    add('bot','Для расчёта откройте **вкладку Граф** → создайте **DataNode** с данными → подключите **CalcNode**.\n\nИли введите значения прямо сейчас — построю формулу с погрешностями: $\\rho = \\frac{m}{V}$');
   }
-  else if(l.includes('/plot')||l.includes('график')||l.includes('построй')){
-    add('bot','Построю **scatter**, **line**, **histogram** с планками погрешностей.\n\nЗагрузите данные через **DataNode** в графе или напишите: `x: 1,2,3 | y: 4,5,6`');
+  else if(l.includes('график')||l.includes('построй')||l.includes('визуал')){
+    add('bot','Построю **scatter**, **line**, **histogram** с планками погрешностей.\n\nЗагрузите данные через **DataNode** в графе или напишите значения — построю график.');
   }
-  else if(l.includes('/report')||l.includes('отчёт')){
+  else if(l.includes('отчёт')||l.includes('документ')||l.includes('pdf')){
     add('bot','Сгенерирую отчёт в **PDF** / **LaTeX** по вашему графу.\n\nНастройте **ReportNode** в редакторе → выберите шаблон → получите готовый документ.');
   }
-  else if(l.includes('/find')||l.includes('найди')){
-    add('bot','Поиск в графе:\n- `/find node:CalcNode` — найти ноды\n- `/find value:5.23` — найти значение\n- `/find type:data` — найти источники данных');
+  else if(l.includes('найди')||l.includes('поиск')||l.includes('найти')){
+    add('bot','Поиск в графе — откройте редактор и используйте фильтры по типу ноды или значению.');
   }
-  else if(l=='help'||l.includes('помощь')||l.includes('команды')){
-    add('bot','**Команды Amenodes:**\n\n| Команда | Что делает |\n|---------|-----------|\n| `/calculate` | Расчёт данных |\n| `/plot` | Построить график |\n| `/report` | Сгенерировать отчёт |\n| `/find` | Поиск в графе |\n\nИли просто опишите задачу своими словами.');
+  else if(l.includes('помощь')||l.includes('что умеешь')||l.includes('что можешь')){
+    add('bot','Я умею:\n\n- **Рассчитывать** данные с погрешностями\n- **Строить графики** (scatter, line, histogram)\n- **Генерировать отчёты** в PDF/LaTeX\n- **Работать с формулами** $\\sigma = \\sqrt{\\sum \\Delta_i^2}$\n\nОпишите задачу — помогу!');
   }
   else if(l.includes('меня зовут')){
     var name=t.replace(/меня зовут /i,'').trim();
