@@ -3,149 +3,227 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Amenodes — Визуальное программирование для данных</title>
+<title>Amenodes</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',system-ui,sans-serif;background:#ffffff;color:#1a202c;min-height:100vh}
+body{font-family:'Inter',system-ui,sans-serif;background:#ffffff;color:#1a202c;min-height:100vh;overflow:hidden}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#f7fafc}
+::-webkit-scrollbar-thumb{background:#cbd5e0;border-radius:3px}
 
-/* Topbar */
-.topbar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 32px;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:1px solid #e2e8f0}
-.brand{font-size:18px;font-weight:700;color:#5a67d8;letter-spacing:1px}
+/* Header */
+.header{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:1px solid #e2e8f0}
+.brand{font-size:16px;font-weight:700;color:#5a67d8;letter-spacing:1px;cursor:pointer}
 .brand span{color:#805ad5}
-.topbar-right{display:flex;align-items:center;gap:12px}
-.btn{padding:8px 18px;border-radius:8px;border:1px solid #e2e8f0;background:transparent;color:#4a5568;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;text-decoration:none}
-.btn:hover{border-color:#5a67d8;color:#5a67d8}
-.btn-primary{background:#5a67d8;color:#fff;border-color:#transparent}
-.btn-primary:hover{background:#4c51bf}
+.header-right{display:flex;align-items:center;gap:10px}
+.graph-btn{padding:6px 14px;border-radius:8px;border:1px solid #e2e8f0;background:transparent;color:#718096;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s}
+.graph-btn:hover{border-color:#5a67d8;color:#5a67d8}
+.graph-btn.active{background:#5a67d8;color:#fff;border-color:#transparent}
 
-/* Hero */
-.hero{max-width:900px;margin:0 auto;padding:140px 24px 80px;text-align:center}
-.hero h1{font-size:48px;font-weight:700;color:#1a202c;margin-bottom:16px;line-height:1.2}
-.hero h1 span{color:#5a67d8}
-.hero p{font-size:18px;color:#718096;max-width:600px;margin:0 auto 32px;line-height:1.6}
-.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.hero-btns .btn{padding:14px 28px;font-size:15px;font-weight:600;border-radius:12px}
-.hero-btns .btn-primary{box-shadow:0 4px 16px rgba(90,103,216,0.3)}
+/* Chat container */
+.chat{position:fixed;top:49px;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:#fff}
+.chat.hidden{display:none}
 
-/* Features */
-.features{max-width:1000px;margin:0 auto;padding:60px 24px}
-.features h2{font-size:28px;font-weight:700;text-align:center;margin-bottom:48px;color:#1a202c}
-.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
-.feature{padding:28px;border-radius:16px;border:1px solid #e2e8f0;background:#f7fafc;transition:all .2s}
-.feature:hover{border-color:#5a67d8;transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,0.06)}
-.feature i{font-size:24px;color:#5a67d8;margin-bottom:16px}
-.feature h3{font-size:16px;font-weight:600;color:#2d3748;margin-bottom:8px}
-.feature p{font-size:13px;color:#718096;line-height:1.5}
+/* Messages */
+.msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:24px;max-width:800px;margin:0 auto;width:100%}
+.msg{max-width:80%;padding:14px 18px;border-radius:16px;font-size:14px;line-height:1.6;word-wrap:break-word;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{background:#5a67d8;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.msg.bot{background:#f7fafc;border:1px solid #e2e8f0;align-self:flex-start}
+.msg .time{font-size:10px;color:#a0aec0;margin-top:6px;text-align:right}
+.msg.user .time{color:rgba(255,255,255,0.6)}
+.msg.bot code{padding:2px 6px;background:#edf2f7;border-radius:4px;font-size:12px;font-family:monospace}
+.msg.bot pre{margin:8px 0;padding:12px;background:#f7fafc;border-radius:8px;overflow-x:auto;border:1px solid #e2e8f0}
+.msg.bot pre code{background:none;padding:0}
+.msg.bot ul,.msg.bot ol{margin:6px 0;padding-left:20px}
+.msg.bot li{margin:3px 0}
+.msg.bot strong{font-weight:600;color:#2d3748}
 
-/* Nodes preview */
-.nodes-section{background:#f7fafc;padding:80px 24px;text-align:center}
-.nodes-section h2{font-size:28px;font-weight:700;margin-bottom:16px;color:#1a202c}
-.nodes-section p{font-size:15px;color:#718096;margin-bottom:40px;max-width:500px;margin-left:auto;margin-right:auto}
-.nodes-grid{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;max-width:800px;margin:0 auto}
-.node-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;min-width:140px;text-align:center;transition:all .2s}
-.node-card:hover{border-color:#5a67d8;box-shadow:0 4px 16px rgba(0,0,0,0.05)}
-.node-card i{font-size:20px;color:#5a67d8;margin-bottom:8px}
-.node-card span{display:block;font-size:12px;font-weight:600;color:#4a5568}
+/* Welcome */
+.welcome{text-align:center;padding:80px 24px;max-width:600px;margin:0 auto}
+.welcome h1{font-size:28px;font-weight:700;color:#1a202c;margin-bottom:12px}
+.welcome p{font-size:14px;color:#718096;line-height:1.6;margin-bottom:24px}
+.welcome-cmds{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.cmd-chip{padding:8px 16px;border-radius:20px;border:1px solid #e2e8f0;background:#f7fafc;color:#4a5568;font-size:12px;cursor:pointer;transition:all .2s}
+.cmd-chip:hover{border-color:#5a67d8;color:#5a67d8;background:#ebf4ff}
 
-/* CTA */
-.cta{max-width:800px;margin:0 auto;padding:80px 24px;text-align:center}
-.cta h2{font-size:32px;font-weight:700;margin-bottom:16px;color:#1a202c}
-.cta p{font-size:16px;color:#718096;margin-bottom:32px}
+/* Input */
+.input-area{padding:12px 20px 16px;background:#fff;border-top:1px solid #e2e8f0}
+.input-wrap{display:flex;gap:8px;max-width:800px;margin:0 auto}
+.input-wrap input{flex:1;padding:12px 16px;border-radius:24px;border:1px solid #e2e8f0;background:#f7fafc;color:#2d3748;font-size:14px;outline:none;transition:all .2s;font-family:inherit}
+.input-wrap input:focus{border-color:#5a67d8;background:#fff;box-shadow:0 0 0 3px rgba(90,103,216,0.08)}
+.input-wrap input::placeholder{color:#a0aec0}
+.input-wrap button{width:44px;height:44px;border-radius:50%;background:#5a67d8;color:#fff;border:none;font-size:15px;cursor:pointer;transition:all .2s;flex-shrink:0}
+.input-wrap button:hover{background:#4c51bf}
 
-/* Footer */
-.footer{padding:40px 24px;text-align:center;border-top:1px solid #e2e8f0}
-.footer p{font-size:12px;color:#a0aec0}
-.footer a{color:#5a67d8;text-decoration:none}
+/* Graph panel */
+.graph{position:fixed;top:49px;left:0;right:0;bottom:0;background:#f7fafc;display:none;z-index:50}
+.graph.active{display:block}
+.graph iframe{width:100%;height:100%;border:none}
 
-@media(max-width:768px){
-  .hero h1{font-size:32px}
-  .feature-grid{grid-template-columns:1fr}
-  .nodes-grid{flex-direction:column;align-items:center}
-}
+/* Loading dots */
+.typing{display:flex;gap:4px;padding:8px 0}
+.typing span{width:6px;height:6px;border-radius:50%;background:#a0aec0;animation:bounce .6s infinite alternate}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{to{opacity:.3;transform:translateY(-4px)}}
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="brand">AMENO<span>DES</span></div>
-  <div class="topbar-right">
-    <a href="amenodes.html" class="btn">Редактор</a>
-    <a href="templates.html" class="btn">Шаблоны</a>
-    <a href="#" class="btn btn-primary">Войти</a>
+<div class="header">
+  <div class="brand" onclick="showChat()">AMENO<span>DES</span></div>
+  <div class="header-right">
+    <button class="graph-btn active" id="chat-tab" onclick="showChat()"><i class="fas fa-comment"></i> Чат</button>
+    <button class="graph-btn" id="graph-tab" onclick="showGraph()"><i class="fas fa-project-diagram"></i> Граф</button>
+    <a href="templates.html" class="graph-btn"><i class="fas fa-layer-group"></i></a>
   </div>
 </div>
 
-<div class="hero">
-  <h1>Визуальное программирование <span>для данных</span></h1>
-  <p>Замените Excel на гибкую визуальную среду. Создавайте вычислительные графы, работайте с погрешностями, автоматизируйте расчёты.</p>
-  <div class="hero-btns">
-    <a href="amenodes.html" class="btn btn-primary">Начать работу</a>
-    <a href="https://github.com/inzexg-coder/Amenodes" class="btn" target="_blank"><i class="fab fa-github"></i> GitHub</a>
+<div class="chat" id="chat-view">
+  <div class="msgs" id="msgs">
+    <div class="welcome" id="welcome">
+      <h1>Чем могу помочь?</h1>
+      <p>Я — AI-агент Amenodes. Загружу данные, посчитаю погрешности, построю график, сгенерирую отчёт.</p>
+      <div class="welcome-cmds">
+        <div class="cmd-chip" onclick="sendCmd('/calculate')">/calculate</div>
+        <div class="cmd-chip" onclick="sendCmd('/plot')">/plot</div>
+        <div class="cmd-chip" onclick="sendCmd('/report')">/report</div>
+        <div class="cmd-chip" onclick="sendCmd('/find')">/find</div>
+      </div>
+    </div>
   </div>
-</div>
-
-<div class="features">
-  <h2>Возможности</h2>
-  <div class="feature-grid">
-    <div class="feature">
-      <i class="fas fa-project-diagram"></i>
-      <h3>Визуальный граф</h3>
-      <p>Перетаскивайте ноды, соединяйте их — результат обновляется в реальном времени.</p>
-    </div>
-    <div class="feature">
-      <i class="fas fa-calculator"></i>
-      <h3>Погрешности</h3>
-      <p>Автоматическое распространение погрешностей, 7 режимов расчёта.</p>
-    </div>
-    <div class="feature">
-      <i class="fas fa-chart-line"></i>
-      <h3>Графики</h3>
-      <p>Scatter, line, histogram с планками погрешностей и аппроксимацией.</p>
-    </div>
-    <div class="feature">
-      <i class="fas fa-file-pdf"></i>
-      <h3>Отчёты</h3>
-      <p>Генерация PDF-отчётов с формулами и таблицами одним кликом.</p>
-    </div>
-    <div class="feature">
-      <i class="fas fa-undo"></i>
-      <h3>Undo/Redo</h3>
-      <p>Полная история изменений с авто-сохранением.</p>
-    </div>
-    <div class="feature">
-      <i class="fas fa-mobile-alt"></i>
-      <h3>Мобильный</h3>
-      <p>Работает на смартфонах и планшетах.</p>
+  <div class="input-area">
+    <div class="input-wrap">
+      <input type="text" id="chat-input" placeholder="Спроси о расчётах..." onkeypress="if(event.key==='Enter')sendMsg()">
+      <button onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
     </div>
   </div>
 </div>
 
-<div class="nodes-section">
-  <h2>Библиотека нод</h2>
-  <p>Готовые блоки для科学研究 и инженерных расчётов</p>
-  <div class="nodes-grid">
-    <div class="node-card"><i class="fas fa-hashtag"></i><span>Число</span></div>
-    <div class="node-card"><i class="fas fa-pi"></i><span>Константа</span></div>
-    <div class="node-card"><i class="fas fa-calculator"></i><span>Погрешности</span></div>
-    <div class="node-card"><i class="fas fa-object-group"></i><span>Группа</span></div>
-    <div class="node-card"><i class="fas fa-equals"></i><span>Среднее</span></div>
-    <div class="node-card"><i class="fas fa-chart-bar"></i><span>Вывод</span></div>
-    <div class="node-card"><i class="fas fa-exchange-alt"></i><span>Преобразование</span></div>
-    <div class="node-card"><i class="fas fa-code"></i><span>Формула</span></div>
-  </div>
+<div class="graph" id="graph-view">
+  <iframe src="amenodes.html"></iframe>
 </div>
 
-<div class="cta">
-  <h2>Готовы начать?</h2>
-  <p>Откройте редактор и создайте свой первый вычислительный граф.</p>
-  <a href="amenodes.html" class="btn btn-primary" style="padding:16px 40px;font-size:16px;border-radius:12px">Открыть Amenodes</a>
-</div>
+<script>
+var msgs = document.getElementById('msgs');
+var input = document.getElementById('chat-input');
+var history = JSON.parse(localStorage.getItem('amenodes_chat') || '[]');
 
-<div class="footer">
-  <p><a href="https://github.com/inzexg-coder/Amenodes" target="_blank">GitHub</a> · <a href="https://t.me/Amenoke" target="_blank">Telegram</a> · <a href="mailto:amenokeakira@gmail.com">Контакт</a></p>
-</div>
+// Init
+if(history.length > 0){
+  document.getElementById('welcome').style.display = 'none';
+  history.forEach(function(m){
+    appendMsg(m.role, m.text, m.time, false);
+  });
+  msgs.scrollTop = msgs.scrollHeight;
+}
 
+function appendMsg(role, text, time, animate){
+  var div = document.createElement('div');
+  div.className = 'msg ' + role;
+  if(animate) div.style.animation = 'fadeIn .3s ease';
+  div.innerHTML = '<div>' + text + '</div><div class="time">' + time + '</div>';
+  msgs.appendChild(div);
+  return div;
+}
+
+function addBot(text){
+  document.getElementById('welcome').style.display = 'none';
+  var time = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  appendMsg('bot', text, time, true);
+  msgs.scrollTop = msgs.scrollHeight;
+  history.push({role:'bot',text:text,time:time});
+  localStorage.setItem('amenodes_chat', JSON.stringify(history));
+}
+
+function addUser(text){
+  document.getElementById('welcome').style.display = 'none';
+  var time = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  appendMsg('user', text, time, true);
+  msgs.scrollTop = msgs.scrollHeight;
+  history.push({role:'user',text:text,time:time});
+  localStorage.setItem('amenodes_chat', JSON.stringify(history));
+}
+
+function showTyping(){
+  var div = document.createElement('div');
+  div.className = 'msg bot';
+  div.id = 'typing';
+  div.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function hideTyping(){
+  var t = document.getElementById('typing');
+  if(t) t.remove();
+}
+
+function sendMsg(){
+  var text = input.value.trim();
+  if(!text) return;
+  addUser(text);
+  input.value = '';
+  processMsg(text);
+}
+
+function sendCmd(cmd){
+  addUser(cmd);
+  processMsg(cmd);
+}
+
+function processMsg(text){
+  showTyping();
+  var lower = text.toLowerCase();
+  
+  setTimeout(function(){
+    hideTyping();
+    
+    if(lower.startsWith('/calculate') || lower.includes('посчитай') || lower.includes('рассчитай')){
+      addBot('Для расчёта открой графовый редактор и загрузи данные. Я помогу с формулами, погрешностями и МНК.\n\nИли введи данные прямо здесь: `значение1, значение2, ...`');
+    }
+    else if(lower.startsWith('/plot') || lower.includes('график')){
+      addBot('Для построения графика:\n1. Открой вкладку «Граф»\n2. Создай DataNode с данными\n3. Подключи к PlotNode\n\nПоддерживаю: scatter, line, histogram с планками погрешностей.');
+    }
+    else if(lower.startsWith('/report')){
+      addBot('Для генерации отчёта:\n1. Собери данные в графе\n2. Подключи ReportNode\n3. Экспорт в PDF/LaTeX\n\nИли напиши «сформируй отчёт» с описанием задачи.');
+    }
+    else if(lower.startsWith('/find')){
+      addBot('Ищу в графе...\n\nПодсказка: используй команды:\n- `/find node:CalcNode` — найти все калькуляторы\n- `/find value:5.23` — найти значение\n- `/find type:data` — найти ноды данных');
+    }
+    else if(lower.includes('привет') || lower.includes('здравствуй')){
+      addBot('Привет! Я Amenodes — AI-агент для научных данных. Помогу с расчётами, графиками и отчётами.\n\nПопробуй: `/calculate`, `/plot`, `/report` или просто опиши задачу.');
+    }
+    else if(lower.includes('помощь') || lower === 'help'){
+      addBot('Доступные команды:\n\n`/calculate` — расчёт данных\n`/plot` — построение графика\n`/report` — генерация отчёта\n`/find` — поиск в графе\n\nИли просто опиши задачу на естественном языке.');
+    }
+    else {
+      addBot('Понял! Работаю над задачей...\n\nДля полноценной работы с данными открой вкладку «Граф» — там ты сможешь загрузить данные, построить граф вычислений и получить результат.');
+    }
+  }, 600);
+}
+
+// Graph panel
+function showChat(){
+  document.getElementById('chat-view').classList.remove('hidden');
+  document.getElementById('graph-view').classList.remove('active');
+  document.getElementById('chat-tab').classList.add('active');
+  document.getElementById('graph-tab').classList.remove('active');
+}
+
+function showGraph(){
+  document.getElementById('chat-view').classList.add('hidden');
+  document.getElementById('graph-view').classList.add('active');
+  document.getElementById('chat-tab').classList.remove('active');
+  document.getElementById('graph-tab').classList.add('active');
+}
+</script>
 </body>
 </html>
