@@ -4,10 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>Amenodes</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css?v=2">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css?v=2">
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js?v=2"></script>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js?v=2"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css?v=3">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js?v=3"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js?v=3"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#faf9f7;color:#1a1a1a;height:100dvh;overflow:hidden}
@@ -27,12 +26,12 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 .msg.user{align-self:flex-end;background:#2d2d2d;color:#fff;padding:12px 18px;border-radius:18px 18px 4px 18px;max-width:85%}
 .msg.bot{align-self:flex-start;display:flex;gap:12px;padding:0;max-width:100%}
-.msg .ava{width:32px;height:32px;min-width:32px;border-radius:50%;background:#7c3aed;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;margin-top:2px}
+.msg .ava{width:32px;height:32px;border-radius:50%;background:#7c3aed;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;margin-top:2px;flex-shrink:0}
 .msg .bd{flex:1;min-width:0}
 .msg .bd>p:first-child{margin-top:0}
 .msg .bd>p:last-child{margin-bottom:0}
-.msg .time{display:none}
 .msg.user .time{display:block;font-size:10px;color:rgba(255,255,255,0.5);margin-top:6px;text-align:right}
+.msg.bot .time{display:none}
 
 .input-area{padding:16px 20px 20px;border-top:1px solid #e8e5e0;background:#faf9f7}
 .input-wrap{display:flex;gap:10px;max-width:768px;margin:0 auto;align-items:flex-end}
@@ -63,7 +62,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 .msg.bot table{border-collapse:collapse;margin:12px 0;font-size:14px;width:100%}
 .msg.bot th,.msg.bot td{padding:8px 12px;border:1px solid #e8e5e0;text-align:left}
 .msg.bot th{background:#f5f3ff;font-weight:600}
-.msg.bot blockquote{border-left:3px solid #7c3aed;padding-left:14px;margin:12px 0;color:#5a5a5a;font-style:italic}
+.msg.bot blockquote{border-left:3px solid #7c3aed;padding-left:14px;color:#6a6a6a;margin:8px 0}
 
 .typing{display:flex;gap:4px;padding:8px 0}
 .typing span{width:6px;height:6px;border-radius:50%;background:#c4c4c4;animation:typing .6s infinite alternate}
@@ -76,27 +75,26 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 
 <div class="header">
   <div class="brand">AMENO<span>DES</span></div>
-  <button class="clear" onclick="clearChat()" title="Новый диалог"><i class="fas fa-plus"></i> Новый</button>
+  <button class="clear" onclick="clearChat()" title="Новый диалог">＋ Новый</button>
 </div>
 
 <div class="chat">
   <div class="msgs" id="msgs">
     <div class="welcome" id="welcome">
-      <div class="logo"><i class="fas fa-atom"></i></div>
+      <div class="logo">⚛</div>
       <h1>Привет! Я Amenodes</h1>
-      <p>AI-агент для научных данных. Помогу с расчётами, графиками и отчётами.</p>
+      <p>AI-агент для научных данных.<br>Помогу с расчётами, графиками и отчётами.</p>
       <div class="hints">
         <div class="hint" onclick="hint(this)">Построить график</div>
         <div class="hint" onclick="hint(this)">Рассчитать погрешности</div>
-        <div class="hint" onclick="hint(this)">Импортировать CSV</div>
-        <div class="hint" onclick="hint(this)">Создать отчёт</div>
+        <div class="hint" onclick="hint(this)">Помочь с формулой</div>
       </div>
     </div>
   </div>
   <div class="input-area">
     <div class="input-wrap">
       <textarea id="input" rows="1" placeholder="Спроси о расчётах..." autofocus oninput="autoGrow(this);toggleBtn()" onkeydown="handleKey(event)"></textarea>
-      <button id="sendBtn" onclick="send()"><i class="fas fa-arrow-up"></i></button>
+      <button id="sendBtn" onclick="send()">↑</button>
     </div>
   </div>
 </div>
@@ -153,7 +151,7 @@ function build(role,text,time){
   var d=document.createElement('div');
   d.className='msg '+role;
   if(role==='bot'){
-    d.innerHTML='<div class="ava"><i class="fas fa-atom"></i></div><div class="bd"><div>'+render(text)+'</div><div class="time">'+time+'</div></div>';
+    d.innerHTML='<div class="ava">A</div><div class="bd"><div>'+render(text)+'</div><div class="time">'+time+'</div></div>';
   }else{
     d.innerHTML='<div class="bd"><div>'+text+'</div><div class="time">'+time+'</div></div>';
   }
@@ -186,7 +184,7 @@ function showTyping(){
   var d=document.createElement('div');
   d.className='msg bot';
   d.id='typing';
-  d.innerHTML='<div class="ava"><i class="fas fa-atom"></i></div><div class="bd"><div class="typing"><span></span><span></span><span></span></div></div>';
+  d.innerHTML='<div class="ava">A</div><div class="bd"><div class="typing"><span></span><span></span><span></span></div></div>';
   msgs.appendChild(d);
   msgs.scrollTop=msgs.scrollHeight;
 }
@@ -208,7 +206,7 @@ function send(){
   
   setTimeout(function(){
     hideTyping();
-    add('bot','Понял! Работаю над: **«'+t+'»**\n\nДля полноценной работы с данными откройте **графовый редактор** — там можно загрузить данные, построить вычислительный пайплайн и получить результат.');
+    add('bot','Понял! Работаю над: **«'+t+'»**\n\nСейчас я на стадии обучения. Скоро смогу помогать с расчётами и графиками.');
   },800+Math.random()*400);
 }
 
