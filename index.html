@@ -100,6 +100,324 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 </div>
 
 <script>
+// ===== #11. Системный промт =====
+var SYSTEM_PROMPT = 'Ты — AI-агент Amenodes. Платформа для работы с научными данными. ' +
+  'Пользователь общается с тобой свободным текстом. ' +
+  'Ты помогаешь с расчётами, формулами, графиками и отчётами. ' +
+  'Отвечай на русском языке. Используй Markdown для форматирования. ' +
+  'Используй $...$ для формул KaTeX (inline) и $$...$$ для display-формул. ' +
+  'Не предлагай функции, которые ещё не реализованы. ' +
+  'Не используй slash-команды (/help, /formula и т.д.). ' +
+  'Если не знаешь ответ — скажи прямо.';
+
+var API_URL = 'agent/api.php';
+
+var msgs = document.getElementById('msgs');
+var input = document.getElementById('input');
+var welcome = document.getElementById('welcome');
+var btn = document.getElementById('sendBtn');
+var conversationHistory = [];
+var isGenerating = false;
+var abortController = null;
+
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 200) + 'px';
+}
+
+function toggleBtn() {
+  btn.classList.toggle('active', input.value.trim().length > 0);
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    send();
+  }
+}
+
+function hint(el) {
+  input.value = el.textContent;
+  input.focus();
+  toggleBtn();
+  send();
+}
+
+// ===== #8. История (localStorage) =====
+function load() {
+  var raw = localStorage.getItem('amenodes_chat');
+  if (!raw) return;
+  try {
+    var h = JSON.parse(raw);
+    if (!h.length) return;
+    welcome.style.display = 'none';
+    h.forEach(function(m) {
+      msgs.appendChild(build(m.role, m.text, m.time));
+      if (m.role === 'user') {
+        conversationHistory.push({role: 'user', content: m.text});
+      } else if (m.role === 'bot') {
+        conversationHistory.push({role: 'assistant', content: m.text});
+      }
+    });
+    msgs.scrollTop = msgs.scrollHeight;
+  } catch (e) {}
+}
+
+function save(role, text, time) {
+  var r = localStorage.getItem('amenodes_chat');
+  var h = r ? JSON.parse(r) : [];
+  h.push({role: role, text: text, time: time});
+  localStorage.setItem('amenodes_chat', JSON.stringify(h));
+}
+
+function build(role, text, time) {
+  var d = document.createElement('div');
+  d.className = 'msg ' + role;
+  if (role === 'bot') {
+    d.innerHTML = '<div class="ava">A</div><div class="bd"><div>' + render(text) + '</div><div class="time">' + time + '</div></div>';
+  } else {
+    d.innerHTML = '<div class="bd"><div>' + text + '</div><div class="time">' + time + '</div></div>';
+  }
+  return d;
+}
+
+// ===== #3-4. Markdown + KaTeX =====
+function render(t) {
+  var html = t;
+  try { html = marked.parse(t); } catch (e) {}
+  html = html.replace(/\$([^\$]+)\$/g, function(match, f) {
+    try { return katex.renderToString(f, {throwOnError: false, displayMode: false}); }
+    catch (e) { return f; }
+  });
+  html = html.replace(/\$\$([^\$]+)\$\$/g, function(match, f) {
+    try { return katex.renderToString(f, {throwOnError: false, displayMode: true}); }
+    catch (e) { return f; }
+  });
+  return html;
+}
+
+function add(role, text) {
+  welcome.style.display = 'none';
+  var t = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+  msgs.appendChild(build(role, text, t));
+  msgs.scrollTop = msgs.scrollHeight;
+  save(role, text, t);
+}
+
+// ===== #17. Typing-индикатор =====
+function showTyping() {
+  var d = document.createElement('div');
+  d.className = 'msg bot';
+  d.id = 'typing';
+  d.innerHTML = '<div class="ava">A</div><div class="bd"><div class="typing"><span></span><span></span><span></span></div></div>';
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function hideTyping() {
+  var t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+// ===== #12. API-запрос + #18. Ошибки =====
+async function callAPI(userMessage) {
+  conversationHistory.push({role: 'user', content: userMessage});
+
+  var apiMessages = [
+    {role: 'system', content: SYSTEM_PROMPT},
+    ...conversationHistory.slice(-20)
+  ];
+
+  showTyping();
+  isGenerating = true;
+  abortController = new AbortController();
+
+  try {
+    var response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        messages: apiMessages,
+        stream: false,
+        temperature: 0.7
+      }),
+      signal: abortController.signal
+    });
+
+    hideTyping();
+
+    if (!response.ok) {
+      var err = await response.json().catch(function() { return {}; });
+      var errMsg = 'Ошибка сервера (' + response.status + ')';
+      if (err.error === 'API key not configured') {
+        errMsg = '⚠ API-ключ не настроен. Добавь client_secret в agent/api.php';
+      } else if (err.error === 'Auth failed') {
+        errMsg = '⚠ Ошибка авторизации GigaChat. Проверь ключ.';
+      } else if (err.error === 'GigaChat API error') {
+        errMsg = '⚠ Ошибка GigaChat API: ' + (err.detail || 'неизвестная');
+      }
+      add('bot', errMsg);
+      conversationHistory.pop();
+      return;
+    }
+
+    var data = await response.json();
+    var reply = data.choices && data.choices[0] && data.choices[0].message
+      ? data.choices[0].message.content
+      : 'Пустой ответ от API';
+
+    add('bot', reply);
+    conversationHistory.push({role: 'assistant', content: reply});
+
+  } catch (e) {
+    hideTyping();
+    if (e.name === 'AbortError') {
+      add('bot', '*Генерация остановлена.*');
+    } else {
+      add('bot', '⚠ Нет соединения с сервером. Проверь интернет.');
+    }
+    conversationHistory.pop();
+  } finally {
+    isGenerating = false;
+    abortController = null;
+    updateSendButton();
+  }
+}
+
+// ===== #16. Кнопка «Стоп» =====
+function updateSendButton() {
+  if (isGenerating) {
+    btn.innerHTML = '■';
+    btn.classList.add('active');
+    btn.onclick = stopGeneration;
+  } else {
+    btn.innerHTML = '↑';
+    btn.onclick = send;
+    toggleBtn();
+  }
+}
+
+function stopGeneration() {
+  if (abortController) abortController.abort();
+}
+
+// ===== Отправка =====
+function send() {
+  var t = input.value.trim();
+  if (!t || isGenerating) return;
+  add('user', t);
+  input.value = '';
+  input.style.height = 'auto';
+  toggleBtn();
+  callAPI(t);
+}
+
+function clearChat() {
+  if (msgs.querySelectorAll('.msg').length === 0) return;
+  if (!confirm('Начать новый диалог?')) return;
+  localStorage.removeItem('amenodes_chat');
+  conversationHistory = [];
+  msgs.querySelectorAll('.msg').forEach(function(m) { m.remove(); });
+  welcome.style.display = '';
+  input.focus();
+}
+
+load();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js?v=3"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#faf9f7;color:#1a1a1a;height:100dvh;overflow:hidden}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#c4c4c4;border-radius:2px}
+
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid #e8e5e0;flex-shrink:0;background:#faf9f7}
+.header .brand{font-size:16px;font-weight:600;color:#1a1a1a;letter-spacing:-.3px}
+.header .brand span{color:#7c3aed}
+.header .clear{background:none;border:none;color:#8a8a8a;font-size:13px;cursor:pointer;padding:6px 10px;border-radius:8px;transition:all .15s}
+.header .clear:hover{background:#ede9fe;color:#1a1a1a}
+
+.chat{display:flex;flex-direction:column;height:calc(100dvh - 49px);background:#faf9f7}
+.msgs{flex:1;overflow-y:auto;padding:24px 20px;display:flex;flex-direction:column;gap:24px;max-width:768px;margin:0 auto;width:100%}
+.msg{max-width:100%;font-size:15px;line-height:1.65;word-wrap:break-word;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{align-self:flex-end;background:#2d2d2d;color:#fff;padding:12px 18px;border-radius:18px 18px 4px 18px;max-width:85%}
+.msg.bot{align-self:flex-start;display:flex;gap:12px;padding:0;max-width:100%}
+.msg .ava{width:32px;height:32px;border-radius:50%;background:#7c3aed;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;margin-top:2px;flex-shrink:0}
+.msg .bd{flex:1;min-width:0}
+.msg .bd>p:first-child{margin-top:0}
+.msg .bd>p:last-child{margin-bottom:0}
+.msg.user .time{display:block;font-size:10px;color:rgba(255,255,255,0.5);margin-top:6px;text-align:right}
+.msg.bot .time{display:none}
+
+.input-area{padding:16px 20px 20px;border-top:1px solid #e8e5e0;background:#faf9f7}
+.input-wrap{display:flex;gap:10px;max-width:768px;margin:0 auto;align-items:flex-end}
+.input-wrap textarea{flex:1;padding:14px 18px;border-radius:24px;border:1px solid #d4d0ca;background:#fff;color:#1a1a1a;font-size:15px;line-height:1.5;outline:none;font-family:inherit;resize:none;min-height:52px;max-height:200px;-webkit-appearance:none;transition:border-color .15s}
+.input-wrap textarea:focus{border-color:#7c3aed}
+.input-wrap textarea::placeholder{color:#9a9590}
+.input-wrap button{width:44px;height:44px;border-radius:50%;background:#7c3aed;color:#fff;border:none;font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;opacity:.4}
+.input-wrap button.active{opacity:1}
+.input-wrap button:active{transform:scale(.95)}
+
+.welcome{text-align:center;padding:120px 24px 60px;animation:fadeIn .4s ease}
+.welcome .logo{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#7c3aed,#a78bfa);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;margin:0 auto 20px;box-shadow:0 4px 16px rgba(124,58,237,.25)}
+.welcome h1{font-size:26px;font-weight:600;margin-bottom:12px;color:#1a1a1a;letter-spacing:-.5px}
+.welcome p{font-size:15px;color:#8a8a8a;line-height:1.6}
+.welcome .hints{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:24px}
+.welcome .hint{padding:10px 16px;background:#fff;border:1px solid #e8e5e0;border-radius:20px;font-size:13px;color:#5a5a5a;cursor:pointer;transition:all .15s}
+.welcome .hint:hover{border-color:#7c3aed;color:#7c3aed;background:#f5f3ff}
+
+.msg.bot h1,.msg.bot h2,.msg.bot h3,.msg.bot h4{font-weight:600;margin:16px 0 8px;font-size:inherit;color:#1a1a1a}
+.msg.bot h1:first-child,.msg.bot h2:first-child,.msg.bot h3:first-child{margin-top:0}
+.msg.bot code{padding:2px 6px;background:#ede9fe;border-radius:4px;font-size:13px;font-family:'SF Mono',Monaco,Menlo,monospace;color:#7c3aed}
+.msg.bot pre{margin:12px 0;padding:14px;background:#1a1a1a;border-radius:10px;overflow-x:auto}
+.msg.bot pre code{background:none;color:#e8e5e0;padding:0;font-size:13px}
+.msg.bot ul,.msg.bot ol{margin:8px 0;padding-left:20px}
+.msg.bot li{margin:4px 0}
+.msg.bot p{margin:8px 0}
+.msg.bot strong{font-weight:600;color:#1a1a1a}
+.msg.bot table{border-collapse:collapse;margin:12px 0;font-size:14px;width:100%}
+.msg.bot th,.msg.bot td{padding:8px 12px;border:1px solid #e8e5e0;text-align:left}
+.msg.bot th{background:#f5f3ff;font-weight:600}
+.msg.bot blockquote{border-left:3px solid #7c3aed;padding-left:14px;color:#6a6a6a;margin:8px 0}
+
+.typing{display:flex;gap:4px;padding:8px 0}
+.typing span{width:6px;height:6px;border-radius:50%;background:#c4c4c4;animation:typing .6s infinite alternate}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes typing{to{opacity:.3;transform:translateY(-3px)}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">AMENO<span>DES</span></div>
+  <button class="clear" onclick="clearChat()" title="Новый диалог">＋ Новый</button>
+</div>
+
+<div class="chat">
+  <div class="msgs" id="msgs">
+    <div class="welcome" id="welcome">
+      <div class="logo">⚛</div>
+      <h1>Привет! Я Amenodes</h1>
+      <p>AI-агент для научных данных.<br>Помогу с расчётами, графиками и отчётами.</p>
+      <div class="hints">
+        <div class="hint" onclick="hint(this)">Построить график</div>
+        <div class="hint" onclick="hint(this)">Рассчитать погрешности</div>
+        <div class="hint" onclick="hint(this)">Помочь с формулой</div>
+      </div>
+    </div>
+  </div>
+  <div class="input-area">
+    <div class="input-wrap">
+      <textarea id="input" rows="1" placeholder="Спроси о расчётах..." autofocus oninput="autoGrow(this);toggleBtn()" onkeydown="handleKey(event)"></textarea>
+      <button id="sendBtn" onclick="send()">↑</button>
+    </div>
+  </div>
+</div>
+
+<script>
 var msgs=document.getElementById('msgs');
 var input=document.getElementById('input');
 var welcome=document.getElementById('welcome');
