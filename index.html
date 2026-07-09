@@ -44,7 +44,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 @keyframes iconPop{0%{transform:scale(1)}40%{transform:scale(1.5) rotate(-10deg)}70%{transform:scale(0.85) rotate(5deg)}100%{transform:scale(1) rotate(0deg)}}
 .temp-bar-wrap{position:relative;height:10px;border-radius:5px;background:#e8e5e0;overflow:visible}
 
-.temp-range{position:absolute;left:0;top:-4px;width:100%;height:18px;-webkit-appearance:none;background:linear-gradient(90deg,#fb923c 50%,#0ea5e9 50%);border-radius:5px;outline:none;cursor:pointer;margin:0}
+.temp-range{position:absolute;left:0;top:-4px;width:100%;height:18px;-webkit-appearance:none;background:#0ea5e9;border-radius:5px;outline:none;cursor:pointer;margin:0}
 .temp-range::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:2.5px solid #7c3aed;cursor:pointer;box-shadow:0 2px 10px rgba(124,58,237,.3);transition:transform .15s,box-shadow .15s}
 .temp-range::-webkit-slider-thumb:hover{transform:scale(1.15);box-shadow:0 2px 16px rgba(124,58,237,.4)}
 .temp-range::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:2.5px solid #7c3aed;cursor:pointer;box-shadow:0 2px 10px rgba(124,58,237,.3)}
@@ -228,11 +228,27 @@ function toggleAdaptive(checked) {
 }
 
 function updateTempBar(val) {
-  var pct = (val / 2) * 100;
   var slider = document.getElementById('tempSlider');
-  var gL = Math.max(0, pct - 12);
-  var gR = Math.min(100, pct + 12);
-  slider.style.background = 'linear-gradient(90deg, #fb923c 0%, #fb923c ' + gL + '%, #22c55e ' + gL + '%, #22c55e ' + gR + '%, #0ea5e9 ' + gR + '%, #0ea5e9 100%)';
+  // val 0=blue, 1=green, 2=orange
+  var r, g, b;
+  if (val <= 1) {
+    // blue #0ea5e9 → green #22c55e
+    var t = val;
+    r = Math.round(14 + (34 - 14) * t);
+    g = Math.round(165 + (197 - 165) * t);
+    b = Math.round(233 + (94 - 233) * t);
+  } else {
+    // green #22c55e → orange #fb923c
+    var t = val - 1;
+    r = Math.round(34 + (251 - 34) * t);
+    g = Math.round(197 + (146 - 197) * t);
+    b = Math.round(94 + (60 - 94) * t);
+  }
+  var c = 'rgb(' + r + ',' + g + ',' + b + ')';
+  slider.style.background = c;
+  // Update thumb border to match
+  var thumb = document.querySelector('.temp-range::-webkit-slider-thumb') || slider;
+  slider.style.setProperty('--thumb-color', c);
 }
 
 function updateTemp(val) {
