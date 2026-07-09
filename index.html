@@ -38,7 +38,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 .temp-bar-section{margin-bottom:14px}
 .temp-bar-labels{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .temp-bar-labels span{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#8a8a8a}
-.temp-bar-labels .temp-num{font-size:18px;font-weight:700;color:#7c3aed;letter-spacing:-.5px}
+.temp-icons{display:flex;align-items:center;gap:2px;height:28px;justify-content:center}
+.temp-icons span{font-size:22px;transition:opacity .35s ease,transform .35s ease;filter:grayscale(0)}
+.temp-icons .icon-active{animation:iconPop .4s ease}
+@keyframes iconPop{0%{transform:scale(1)}40%{transform:scale(1.5) rotate(-10deg)}70%{transform:scale(0.85) rotate(5deg)}100%{transform:scale(1) rotate(0deg)}}
 .temp-bar-wrap{position:relative;height:10px;border-radius:5px;background:#e8e5e0;overflow:visible}
 
 .temp-range{position:absolute;left:0;top:-4px;width:100%;height:18px;-webkit-appearance:none;background:linear-gradient(90deg,#fb923c 50%,#0ea5e9 50%);border-radius:5px;outline:none;cursor:pointer;margin:0}
@@ -122,7 +125,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
         <div class="temp-bar-section">
           <div class="temp-bar-labels">
             <span>Точность</span>
-            <span class="temp-num" id="tempValue">0.7</span>
+            <div class="temp-icons" id="tempIcons"><span id="iconSnow">❄</span><span id="iconLeaf">🌿</span><span id="iconFire">🔥</span></div>
             <span>Креатив</span>
           </div>
           <div class="temp-bar-wrap" id="tempBarWrap">
@@ -233,13 +236,47 @@ function updateTempBar(val) {
 function updateTemp(val) {
   currentTemp = parseFloat(val);
   localStorage.setItem('amenodes_temp', val);
-  document.getElementById('tempValue').textContent = val;
   updateTempBar(val);
+  updateTempIcons(val);
   var desc = document.getElementById('tempDesc');
   if (val <= 0.3) desc.textContent = 'Максимальная точность, без отклонений';
   else if (val <= 0.7) desc.textContent = 'Сбалансированный режим';
   else if (val <= 1.2) desc.textContent = 'Повышенная креативность';
   else desc.textContent = 'Максимальная креативность';
+}
+
+var lastTempZone = '';
+function updateTempIcons(val) {
+  var snow = document.getElementById('iconSnow');
+  var leaf = document.getElementById('iconLeaf');
+  var fire = document.getElementById('iconFire');
+  var zone = '';
+
+  // Snow: 0.0→1.0 at val=0, fades to 0 at val=0.8
+  var snowOp = val <= 0.8 ? 1 - (val / 0.8) : 0;
+  // Leaf: peaks at val=1.0, fades to 0 at edges 0.4 and 1.6
+  var leafOp = val < 0.4 ? 0 : val > 1.6 ? 0 : val <= 1.0 ? (val - 0.4) / 0.6 : (1.6 - val) / 0.6;
+  // Fire: 0 at val=1.2, fades to 1.0 at val=2.0
+  var fireOp = val >= 1.2 ? (val - 1.2) / 0.8 : 0;
+
+  snow.style.opacity = snowOp;
+  leaf.style.opacity = leafOp;
+  fire.style.opacity = fireOp;
+
+  // Determine dominant zone
+  if (snowOp > leafOp && snowOp > fireOp) zone = 'snow';
+  else if (fireOp > leafOp && fireOp > snowOp) zone = 'fire';
+  else zone = 'leaf';
+
+  // Trigger animation on zone change
+  if (zone !== lastTempZone) {
+    lastTempZone = zone;
+    var el = zone === 'snow' ? snow : zone === 'fire' ? fire : leaf;
+    // Reset animation
+    el.classList.remove('icon-active');
+    void el.offsetWidth;
+    el.classList.add('icon-active');
+  }
 }
 
 function parseTempFromResponse(text) {
@@ -249,9 +286,8 @@ function parseTempFromResponse(text) {
     if (t >= 0 && t <= 2) {
       currentTemp = t;
       document.getElementById('tempSlider').value = t;
-      document.getElementById('tempValue').textContent = t;
-      document.getElementById('tempBtn').textContent = 'Темп. ' + t;
       updateTempBar(t);
+      updateTempIcons(t);
       return text.replace(/\s*\[temp:[\d.]+\]\s*/, '');
     }
   }
@@ -300,8 +336,8 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   currentModel = saved;
   document.getElementById('tempSlider').value = currentTemp;
-  document.getElementById('tempValue').textContent = currentTemp;
   updateTempBar(currentTemp);
+  updateTempIcons(currentTemp);
   if (localStorage.getItem('amenodes_adaptive_temp') === '1') {
     document.getElementById('adaptiveTemp').checked = true;
     toggleAdaptive(true);
