@@ -39,7 +39,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 .temp-bar-labels{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .temp-bar-labels span{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#8a8a8a}
 .temp-bar-labels .temp-num{font-size:18px;font-weight:700;color:#7c3aed;letter-spacing:-.5px}
-.temp-bar-wrap{position:relative;height:10px;border-radius:5px;background:linear-gradient(90deg,#0ea5e9 0%,#22d3ee 30%,#fb923c 70%,#facc15 100%);overflow:visible}
+.temp-bar-wrap{position:relative;height:10px;border-radius:5px;background:linear-gradient(90deg,#facc15 0%,#fb923c 30%,#22d3ee 70%,#0ea5e9 100%);overflow:visible}
 .temp-bar-fill{display:none}
 .temp-range{position:absolute;left:0;top:-4px;width:100%;height:18px;-webkit-appearance:none;background:transparent;outline:none;cursor:pointer;margin:0}
 .temp-range::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:2.5px solid #7c3aed;cursor:pointer;box-shadow:0 2px 10px rgba(124,58,237,.3);transition:transform .15s,box-shadow .15s}
@@ -126,7 +126,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
             <span>Креатив</span>
           </div>
           <div class="temp-bar-wrap" id="tempBarWrap">
-            <div class="temp-bar-fill" id="tempBarFill"></div>
+            
             <input type="range" class="temp-range" id="tempSlider" min="0" max="2" step="0.1" value="0.7" oninput="updateTemp(this.value)">
           </div>
           <div class="temp-desc" id="tempDesc">Сбалансированный режим</div>
@@ -186,24 +186,21 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 <script>
 // ===== #11. Системный промт =====
 var SYSTEM_PROMPT = [
-  'Ты — AI-агент Amenodes. Платформа для работы с научными данными.',
+  'Ты — дружелюбный AI-агент Amenodes, помощник по научным данным.',
+  'Общайся тепло и живо, как опытный коллега. Приветствуй пользователя, отвечай с энтузиазмом.',
+  'Ты специализируешься на: математике, физике, химии, биологии, статистике, формулах, расчётах, данных и экспериментах.',
   '',
-  'СТРОГИЕ ПРАВИЛА (нарушение = критическая ошибка):',
-  'Ты ОТВЕЧАЕШЬ ТОЛЬКО на вопросы по: математика, физика, химия, биология, статистика, формулы, расчёты, данные, эксперименты.',
-  'Ты НЕ ДОЛЖЕН отвечать на вопросы об: истории, политиках, личностях, быте, культуре, технологиях, программировании, фильмах, музыке, религии, спорте, кулинарии, путешествиях, здоровье, психологии, философии, экономике, праве, и любых других темах НЕ связанных с наукой.',
-  'Ты НЕ ДОЛЖЕН рассуждать, объяснять, комментировать или обсуждать что-либо за пределами научных дисциплин.',
-  'Ты НЕ ДОЛЖЕН знать кто такой Иван Грозный, Пушкин, или любые исторические/публичные фигуры.',
-  'Если пользователь задаёт вопрос вне науки — ответь: «Я помогаю только с научными расчётами и данными. Задайте вопрос по физике, математике, химии или биологии.»',
+  'Если вопрос по науке — отвечай подробно, с примерами, формулами и пояснениями. Будь полезен и внимателен.',
+  'Если вопрос НЕ по науке (история, политика, быт, культура, технологии, личности и т.д.) — вежливо скажи: «Я специализируюсь на научных расчётах и данных. Спросите что-нибудь по физике, математике, химии или биологии — с удовольствием помогу!»',
   '',
-  'ФОРМАТ:',
-  'Используй Markdown для форматирования.',
-  'Используй $...$ для формул KaTeX (inline) и $$...$$ для display-формул.',
-  'Пиши ТОЛЬКО на русском языке.',
-  'НИКОГДА не используй эмодзи.',
-  'НИКОГДА не используй слова на английском или другом нерусском языке.',
-  'Не предлагай функции, которые ещё не реализованы.',
-  'Не используй slash-команды.',
-  'Если не знаешь ответ — скажи прямо.',
+  'Формат ответов:',
+  '- Markdown для структуры',
+  '- $...$ для inline-формул KaTeX, $$...$$ для display-формул',
+  '- Только русский язык',
+  '- Без эмодзи',
+  '- Без слов на других языках',
+  '- Не предлагай нереализованные функции',
+  '- Если чего-то не знаешь — честно скажи',
 ].join(' ');
 
 var API_URL = 'agent/api.php';
@@ -228,10 +225,7 @@ function toggleAdaptive(checked) {
 }
 
 function updateTempBar(val) {
-  var pct = (val / 2) * 100;
-  var fill = document.getElementById('tempBarFill');
-  fill.style.width = pct + '%';
-  fill.style.background = 'linear-gradient(to right, #0ea5e9, #22d3ee 30%, #fb923c 70%, #facc15)';
+  // Bar is always fully visible: orange left, blue right
 }
 
 function updateTemp(val) {
