@@ -30,17 +30,6 @@ body{font-family:'Inter',system-ui,sans-serif;background:#fff;color:#1a202c;heig
 .msg .bd{flex:1;min-width:0}
 .msg .time{font-size:10px;color:#9ca3af;margin-top:4px;text-align:right}
 .msg.user .time{color:rgba(255,255,255,0.6)}
-.msg.bot h1,.msg.bot h2,.msg.bot h3,.msg.bot h4{font-weight:600;margin:6px 0 2px;font-size:inherit}
-.msg.bot code{padding:1px 4px;background:#e5e7eb;border-radius:3px;font-size:12px;font-family:monospace}
-.msg.bot pre{margin:6px 0;padding:10px;background:#f9fafb;border-radius:6px;overflow-x:auto;border:1px solid #e5e7eb}
-.msg.bot pre code{background:none;padding:0}
-.msg.bot table{border-collapse:collapse;margin:6px 0;font-size:13px;width:100%}
-.msg.bot table th,.msg.bot table td{padding:6px 10px;border:1px solid #d1d5db;text-align:left}
-.msg.bot table th{background:#e5e7eb;font-weight:600}
-.msg.bot ul,.msg.bot ol{margin:4px 0;padding-left:18px}
-.msg.bot li{margin:2px 0}
-.msg.bot p{margin:3px 0}
-.msg.bot strong{font-weight:600;color:#111827}
 
 .input-area{padding:8px 12px 12px;border-top:1px solid #e5e7eb;background:#fff}
 .input-wrap{display:flex;gap:8px;max-width:720px;margin:0 auto}
@@ -105,8 +94,7 @@ function build(role,text,time){
   var d=document.createElement('div');
   d.className='msg '+role;
   if(role==='bot'){
-    var rendered=render(text);
-    d.innerHTML='<div class="ava"><i class="fas fa-atom"></i></div><div class="bd">'+rendered+'<div class="time">'+time+'</div></div>';
+    d.innerHTML='<div class="ava"><i class="fas fa-atom"></i></div><div class="bd"><div>'+render(text)+'</div><div class="time">'+time+'</div></div>';
   }else{
     d.innerHTML='<div class="bd"><div>'+text+'</div><div class="time">'+time+'</div></div>';
   }
@@ -118,11 +106,11 @@ function render(t){
   try{html=marked.parse(t)}catch(e){}
   html=html.replace(/\$([^\$]+)\$/g,function(match,f){
     try{return katex.renderToString(f,{throwOnError:false,displayMode:false})}
-    catch(e){return '<span style="color:#e53e3e">$'+f+'$</span>'}
+    catch(e){return f}
   });
   html=html.replace(/\$\$([^\$]+)\$\$/g,function(match,f){
     try{return katex.renderToString(f,{throwOnError:false,displayMode:true})}
-    catch(e){return '<span style="color:#e53e3e">$$'+f+'$$</span>'}
+    catch(e){return f}
   });
   return html;
 }
@@ -140,39 +128,7 @@ function send(){
   if(!t)return;
   add('user',t);
   input.value='';
-  var l=t.toLowerCase();
-
-  if(l.includes('привет')||l=='здравствуй'||l=='hello'){
-    add('bot','Привет! Я AI-агент **Amenodes**.\n\nПомогу с расчётами, графиками и отчётами. Опишите задачу — я запущу вычисления в графовом редакторе.');
-  }
-  else if(l.includes('посчитай')||l.includes('рассчитай')||l.includes('вычисли')){
-    add('bot','Для расчёта откройте **вкладку Граф** → создайте **DataNode** с данными → подключите **CalcNode**.\n\nИли введите значения прямо сейчас — построю формулу с погрешностями: $\\rho = \\frac{m}{V}$');
-  }
-  else if(l.includes('график')||l.includes('построй')||l.includes('визуал')){
-    add('bot','Построю **scatter**, **line**, **histogram** с планками погрешностей.\n\nЗагрузите данные через **DataNode** в графе или напишите значения — построю график.');
-  }
-  else if(l.includes('отчёт')||l.includes('документ')||l.includes('pdf')){
-    add('bot','Сгенерирую отчёт в **PDF** / **LaTeX** по вашему графу.\n\nНастройте **ReportNode** в редакторе → выберите шаблон → получите готовый документ.');
-  }
-  else if(l.includes('найди')||l.includes('поиск')||l.includes('найти')){
-    add('bot','Поиск в графе — откройте редактор и используйте фильтры по типу ноды или значению.');
-  }
-  else if(l.includes('помощь')||l.includes('что умеешь')||l.includes('что можешь')){
-    add('bot','Я умею:\n\n- **Рассчитывать** данные с погрешностями\n- **Строить графики** (scatter, line, histogram)\n- **Генерировать отчёты** в PDF/LaTeX\n- **Работать с формулами** $\\sigma = \\sqrt{\\sum \\Delta_i^2}$\n\nОпишите задачу — помогу!');
-  }
-  else if(l.includes('меня зовут')){
-    var name=t.replace(/меня зовут /i,'').trim();
-    add('bot','Приятно познакомиться, **'+name+'**! 👋\n\nЧем могу помочь с данными?');
-  }
-  else if(l.includes('спасибо')||l.includes('благодарю')){
-    add('bot','Всегда пожалуйста! Если понадобится помощь — обращайтесь.');
-  }
-  else if(l.includes('формул')||l.includes('погрешн')){
-    add('bot','Поддерживаю формулы: $\\rho = \\frac{m}{V}$, $\\sigma = \\sqrt{\\sum \\Delta_i^2}$\n\nДля отображения используй **$...$** (inline) или **$$...$$** (блок).');
-  }
-  else{
-    add('bot','Понял! Работаю над: **«'+t+'»**\n\nДля полноценной работы с данными откройте **графовый редактор** — там можно загрузить данные, построить вычислительный пайплайн и получить результат.');
-  }
+  add('bot','Понял! Работаю над: **«'+t+'»**\n\nДля полноценной работы с данными откройте **графовый редактор** — там можно загрузить данные, построить вычислительный пайплайн и получить результат.');
 }
 
 function clearChat(){
