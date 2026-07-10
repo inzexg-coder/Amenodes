@@ -349,27 +349,12 @@ body[data-theme="dark"] .graph-overlay-back:hover{border-color:#52525b;color:#e4
 <script>
 // ===== #11. Системный промт =====
 var SYSTEM_PROMPT = [
-  'Ты — AI-агент Amenodes, помощник по научным данным и расчётам.',
-  '',
-  'ГРАФОВЫЙ КОНТЕКСТ:',
-  'В системном сообщении ниже может быть секция «Текущий граф данных».',
-  'Если она есть — ты ОБЯЗАН использовать данные из графа для ответов.',
-  'Граф содержит ноды (узлы) с типами: number, calc, constant, mean, sem, output, group, map.',
-  'Каждая нода имеет id, тип, название и значение.',
-  'Если пользователь спрашивает о данных — смотри в граф.',
-  'Если граф пустой или секции нет — скажи: «Граф пуст. Откройте графовый редактор и добавьте ноды.»',
-  '',
-  'СПЕЦИАЛИЗАЦИЯ: математика, физика, химия, биология, статистика, формулы, расчёты, данные.',
-  'Отвечай подробно, с формулами KaTeX ($...$ inline, $$...$$ display).',
-  '',
-  'Если вопрос НЕ по науке и НЕ про граф — ответь: «Я работаю с научными данными и графом. Задайте вопрос по расчётам или данным.»',
-  '',
-  'ПРАВИЛА:',
-  '- Только русский язык',
-  '- Без эмодзи',
-  '- Без иностранных слов',
-  '- Не предлагай нереализованные функции',
-  '- Markdown для структуры ответов',
+  'Ты — AI-агент Amenodes для научных расчётов.',
+  'Если в сообщении есть данные GRAPH — используй их для ответа.',
+  'GRAPH содержит ноды: #id type title =value. EDGES содержит связи: #a->#b.',
+  'Отвечай кратко и по делу. Формулы: $...$ inline, $$...$$ display.',
+  'Только русский. Без эмодзи.',
+  'Вопросы вне науки: «Работаю с научными данными. Спросите по расчётам.»',
 ].join(' ');
 
 var API_URL = 'agent/api.php';
@@ -692,35 +677,17 @@ function getGraphState() {
     var data = JSON.parse(raw);
     if (!data.nodes || !data.nodes.length) return null;
 
-    var lines = [];
-    var nodeCount = data.nodes.length;
-    var edgeCount = (data.edges || []).length;
-    lines.push('ГРАФ (' + nodeCount + ' нод' + (nodeCount < 5 ? 'ы' : '') + ', ' + edgeCount + ' связей):');
-
+    var parts = [];
     for (var i = 0; i < data.nodes.length; i++) {
       var n = data.nodes[i];
-      var val = '';
-      if (n.val !== undefined) val = ' = ' + n.val;
-      else if (n.resultStr && n.resultStr !== '--') val = ' = ' + n.resultStr;
-      else if (n.result !== null && n.result !== undefined) val = ' = ' + n.result;
-      lines.push('- #' + n.id + ' ' + n.type + ' "' + (n.title || n.type) + '"' + val);
+      var v = n.val !== undefined ? '=' + n.val : (n.resultStr && n.resultStr !== '--' ? '=' + n.resultStr : '');
+      parts.push('#' + n.id + ' ' + n.type + ' ' + (n.title || '') + ' ' + v);
     }
+    var edges = (data.edges || []).map(function(e) { return '#' + e.sourceId + '->#' + e.targetId; });
 
-    if (data.edges && data.edges.length) {
-      var edgeLines = [];
-      for (var j = 0; j < data.edges.length; j++) {
-        var e = data.edges[j];
-        edgeLines.push('#' + e.sourceId + ' -> #' + e.targetId);
-      }
-      lines.push('Связи: ' + edgeLines.join(', '));
-    }
-
-    var context = lines.join('\n');
-    // Limit: ~4000 chars ≈ 1000 tokens (rough estimate for Russian)
-    if (context.length > 4000) {
-      context = context.substring(0, 4000) + '\n[...обрезано]';
-    }
-    return context;
+    var ctx = 'GRAPH: ' + parts.join(' | ');
+    if (edges.length) ctx += ' EDGES: ' + edges.join(' ');
+    return ctx;
   } catch (e) {
     return null;
   }
