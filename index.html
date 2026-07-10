@@ -38,18 +38,18 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 .model-option.active{background:#ede9fe;color:#7c3aed;font-weight:600}
 .temp-trigger{display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:none;border:1px solid transparent;color:#888;cursor:pointer;border-radius:8px;transition:all .15s;font-family:inherit}
 .temp-trigger:hover{color:#333;background:rgba(0,0,0,.04)}
-.temp-panel{display:none;position:absolute;right:0;top:100%;margin-top:6px;background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.04);z-index:100;padding:16px 14px;user-select:none;-webkit-user-select:none}
+.temp-panel{display:none;position:absolute;right:0;top:100%;margin-top:6px;background:#fff;border:1px solid #e5e5e5;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.06);z-index:100;padding:16px 20px 14px;min-width:240px;user-select:none;-webkit-user-select:none}
 .temp-panel.show{display:block}
-.temp-gauge{display:flex;align-items:stretch;gap:14px;height:140px}
-.temp-scale{position:relative;width:6px;border-radius:3px;background:linear-gradient(to top,#3b82f6,#22c55e 40%,#eab308 70%,#ef4444);cursor:pointer;flex-shrink:0}
-.temp-scale-track{position:absolute;inset:0;border-radius:3px;background:inherit}
-.temp-scale-indicator{position:absolute;left:50%;transform:translateX(-50%);width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid #333;box-shadow:0 1px 6px rgba(0,0,0,.2);cursor:grab;transition:bottom .2s cubic-bezier(.4,0,.2,1);z-index:2}
-.temp-scale-indicator:active{cursor:grabbing;transform:translateX(-50%) scale(1.15)}
-.temp-labels{display:flex;flex-direction:column;justify-content:space-between;position:relative}
-.temp-label{font-size:11px;color:#aaa;cursor:pointer;padding:2px 0;transition:color .15s;white-space:nowrap}
-.temp-label:hover{color:#666}
-.temp-label.active{color:#111;font-weight:600}
-.temp-label.active::before{content:'';position:absolute;left:-10px;top:50%;transform:translateY(-50%);width:3px;height:3px;border-radius:50%;background:#333}
+.temp-readout{font-family:'SF Mono',Monaco,Menlo,'Courier New',monospace;font-size:28px;font-weight:600;color:#111;letter-spacing:-1px;margin-bottom:12px;line-height:1}
+.temp-track-wrap{position:relative;height:24px;display:flex;align-items:center}
+.temp-track{width:100%;height:2px;background:#e5e5e5;border-radius:1px;position:relative;cursor:pointer}
+.temp-track-fill{position:absolute;left:0;top:0;height:100%;background:#111;border-radius:1px;transition:width .15s}
+.temp-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:#111;cursor:grab;transition:left .15s;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.temp-thumb:active{cursor:grabbing;transform:translate(-50%,-50%) scale(1.15)}
+.temp-stops{display:flex;justify-content:space-between;margin-top:8px}
+.temp-stop{font-size:9px;color:#bbb;font-family:'SF Mono',Monaco,Menlo,'Courier New',monospace;cursor:pointer;transition:color .15s;padding:2px 0}
+.temp-stop:hover{color:#666}
+.temp-stop.active{color:#111;font-weight:600}
 .msg.bot{border-left:none}
 
 
@@ -132,11 +132,13 @@ body[data-theme="dark"] .temp-trigger{color:#666}
 body[data-theme="dark"] .temp-trigger:hover{color:#aaa;background:rgba(255,255,255,.05)}
 body[data-theme="dark"] .temp-panel{background:#141416;border-color:#27272a;box-shadow:0 4px 24px rgba(0,0,0,.4)}
 body[data-theme="dark"] .temp-panel{background:#141416;border-color:#27272a}
-body[data-theme="dark"] .temp-label{color:#52525b}
-body[data-theme="dark"] .temp-label:hover{color:#a1a1aa}
-body[data-theme="dark"] .temp-label.active{color:#e4e4e7}
-body[data-theme="dark"] .temp-label.active::before{background:#e4e4e7}
-body[data-theme="dark"] .temp-scale-indicator{background:#27272a;border-color:#e4e4e7;box-shadow:0 1px 6px rgba(0,0,0,.4)}
+body[data-theme="dark"] .temp-readout{color:#e4e4e7}
+body[data-theme="dark"] .temp-track{background:#27272a}
+body[data-theme="dark"] .temp-track-fill{background:#e4e4e7}
+body[data-theme="dark"] .temp-thumb{background:#e4e4e7;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+body[data-theme="dark"] .temp-stop{color:#3f3f46}
+body[data-theme="dark"] .temp-stop:hover{color:#a1a1aa}
+body[data-theme="dark"] .temp-stop.active{color:#e4e4e7}
 body[data-theme="dark"] .welcome h1{color:#e4e4e7}
 body[data-theme="dark"] .welcome p{color:#a1a1aa}
 body[data-theme="dark"] .welcome .hint{background:#141416;border-color:#27272a;color:#a1a1aa}
@@ -173,16 +175,18 @@ body[data-theme="dark"] ::-webkit-scrollbar-track{background:transparent}
     <div style="position:relative">
       <button class="temp-trigger" onclick="toggleTempPanel()" id="tempBtn" title="Настройки"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
       <div class="temp-panel" id="tempPanel">
-        <div class="temp-gauge" id="tempGauge">
-          <div class="temp-scale" id="tempScale">
-            <div class="temp-scale-indicator" id="tempIndicator"></div>
+        <div class="temp-readout" id="tempReadout">0.70</div>
+        <div class="temp-track-wrap" id="tempTrackWrap">
+          <div class="temp-track" id="tempTrack">
+            <div class="temp-track-fill" id="tempTrackFill"></div>
+            <div class="temp-thumb" id="tempThumb"></div>
           </div>
-          <div class="temp-labels" id="tempLabels">
-            <div class="temp-label" data-temp="1.9" onclick="selectTemp(this)">Макс.</div>
-            <div class="temp-label" data-temp="1.3" onclick="selectTemp(this)">Креатив</div>
-            <div class="temp-label active" data-temp="0.7" onclick="selectTemp(this)">Базовый</div>
-            <div class="temp-label" data-temp="0.1" onclick="selectTemp(this)">Точный</div>
-          </div>
+        </div>
+        <div class="temp-stops">
+          <div class="temp-stop" data-temp="0.1" onclick="selectTemp(this)">0.1</div>
+          <div class="temp-stop" data-temp="0.7" onclick="selectTemp(this)">0.7</div>
+          <div class="temp-stop" data-temp="1.3" onclick="selectTemp(this)">1.3</div>
+          <div class="temp-stop" data-temp="1.9" onclick="selectTemp(this)">1.9</div>
         </div>
       </div>
     </div>
@@ -257,60 +261,60 @@ function toggleTempPanel() {
   document.getElementById('tempPanel').classList.toggle('show');
 }
 
-var gaugeDragging = false;
+var trackDragging = false;
 
 function selectTemp(el) {
   currentTemp = parseFloat(el.dataset.temp);
   localStorage.setItem('amenodes_temp', currentTemp);
-  document.querySelectorAll('.temp-label').forEach(function(l) { l.classList.remove('active'); });
-  el.classList.add('active');
-  moveIndicator(currentTemp);
+  updateTrackUI(currentTemp);
 }
 
-function moveIndicator(val) {
-  var indicator = document.getElementById('tempIndicator');
-  var scale = document.getElementById('tempScale');
-  if (!indicator || !scale) return;
+function updateTrackUI(val) {
   var pct = (val / 2) * 100;
-  indicator.style.bottom = 'calc(' + pct + '% - 7px)';
+  var fill = document.getElementById('tempTrackFill');
+  var thumb = document.getElementById('tempThumb');
+  var readout = document.getElementById('tempReadout');
+  if (fill) fill.style.width = pct + '%';
+  if (thumb) thumb.style.left = pct + '%';
+  if (readout) readout.textContent = val.toFixed(2);
+  document.querySelectorAll('.temp-stop').forEach(function(s) {
+    s.classList.toggle('active', parseFloat(s.dataset.temp) === val);
+  });
 }
 
-function initGauge() {
-  var scale = document.getElementById('tempScale');
-  if (!scale) return;
+function initTrack() {
+  var track = document.getElementById('tempTrack');
+  if (!track) return;
 
-  function setFromY(clientY) {
-    var rect = scale.getBoundingClientRect();
-    var y = rect.bottom - clientY;
-    var pct = Math.max(0, Math.min(1, y / rect.height));
+  function setFromX(clientX) {
+    var rect = track.getBoundingClientRect();
+    var x = clientX - rect.left;
+    var pct = Math.max(0, Math.min(1, x / rect.width));
     var val = Math.round(pct * 20) / 10;
     val = Math.max(0, Math.min(2, val));
     currentTemp = val;
     localStorage.setItem('amenodes_temp', val);
-    moveIndicator(val);
-    document.querySelectorAll('.temp-label').forEach(function(l) {
-      l.classList.toggle('active', parseFloat(l.dataset.temp) === val);
-    });
+    updateTrackUI(val);
   }
 
-  scale.addEventListener('mousedown', function(e) {
-    gaugeDragging = true;
-    setFromY(e.clientY);
+  track.addEventListener('mousedown', function(e) {
+    trackDragging = true;
+    setFromX(e.clientX);
     e.preventDefault();
   });
   document.addEventListener('mousemove', function(e) {
-    if (gaugeDragging) setFromY(e.clientY);
+    if (trackDragging) setFromX(e.clientX);
   });
-  document.addEventListener('mouseup', function() { gaugeDragging = false; });
+  document.addEventListener('mouseup', function() { trackDragging = false; });
 
-  scale.addEventListener('touchstart', function(e) {
-    gaugeDragging = true;
-    setFromY(e.touches[0].clientY);
+  track.addEventListener('touchstart', function(e) {
+    trackDragging = true;
+    setFromX(e.touches[0].clientX);
   }, {passive: true});
   document.addEventListener('touchmove', function(e) {
-    if (gaugeDragging) setFromY(e.touches[0].clientY);
+    if (trackDragging) setFromX(e.touches[0].clientX);
   }, {passive: true});
-  document.addEventListener('touchend', function() { gaugeDragging = false; });
+  document.addEventListener('touchend', function() { trackDragging = false; });
 }
 
 function parseTempFromResponse(text) {
@@ -319,10 +323,7 @@ function parseTempFromResponse(text) {
     var t = parseFloat(m[1]);
     if (t >= 0 && t <= 2) {
       currentTemp = t;
-      moveIndicator(t);
-      document.querySelectorAll('.temp-label').forEach(function(l) {
-        l.classList.toggle('active', parseFloat(l.dataset.temp) === t);
-      });
+      updateTrackUI(t);
       return text.replace(/\s*\[temp:[\d.]+\]\s*/, '');
     }
   }
@@ -370,10 +371,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   currentModel = saved;
-  document.querySelectorAll('.temp-label').forEach(function(l) {
-    l.classList.toggle('active', parseFloat(l.dataset.temp) === currentTemp);
-  });
-  setTimeout(function() { moveIndicator(currentTemp); initGauge(); }, 50);
+  setTimeout(function() { updateTrackUI(currentTemp); initTrack(); }, 50);
   if (localStorage.getItem('amenodes_adaptive_temp') === '1') {
     document.getElementById('adaptiveTemp').checked = true;
     toggleAdaptive(true);
