@@ -207,6 +207,21 @@ body[data-theme="dark"] .msg.bot del{color:#71717a}
 body[data-theme="dark"] .typing span{background:#52525b}
 body[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#27272a}
 body[data-theme="dark"] ::-webkit-scrollbar-track{background:transparent}
+
+/* === Graph overlay === */
+.graph-overlay{display:none;position:fixed;inset:0;z-index:999;background:#fff;flex-direction:column}
+.graph-overlay.open{display:flex}
+.graph-overlay-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#faf9f7;border-bottom:1px solid #e5e5e5;flex-shrink:0}
+.graph-overlay-bar .brand{font-size:13px;font-weight:600;color:#1a1a1a;display:flex;align-items:center;gap:8px}
+.graph-overlay-bar .brand span{color:#7c3aed}
+.graph-overlay-back{background:none;border:1px solid #e5e5e5;color:#555;font-size:12px;font-weight:500;cursor:pointer;padding:6px 14px;border-radius:8px;transition:all .15s;font-family:inherit;display:flex;align-items:center;gap:5px}
+.graph-overlay-back:hover{border-color:#111;color:#111}
+.graph-overlay-frame{flex:1;width:100%;border:none}
+body[data-theme="dark"] .graph-overlay{background:#0a0a0b}
+body[data-theme="dark"] .graph-overlay-bar{background:#0a0a0b;border-color:#1c1c1f}
+body[data-theme="dark"] .graph-overlay-bar .brand{color:#e4e4e7}
+body[data-theme="dark"] .graph-overlay-back{border-color:#27272a;color:#a1a1aa}
+body[data-theme="dark"] .graph-overlay-back:hover{border-color:#52525b;color:#e4e4e7}
 </style>
 </head>
 <body>
@@ -305,7 +320,8 @@ body[data-theme="dark"] ::-webkit-scrollbar-track{background:transparent}
         </div>
       </div>
     </div>
-    <button class="clear" onclick="clearChat()" title="Новый диалог"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Новый</button>
+    <button class="clear" onclick="openGraph()" title="Графовый редактор"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Граф</button>
+<button class="clear" onclick="clearChat()" title="Новый диалог"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Новый</button>
   </div>
 </div>
 
@@ -654,6 +670,20 @@ function updateThemeIcon() {
     : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
 }
 
+// === Graph overlay ===
+function openGraph() {
+  var overlay = document.getElementById('graphOverlay');
+  var frame = document.getElementById('graphFrame');
+  overlay.classList.add('open');
+  if (frame.src === 'about:blank' || !frame.src.includes('amenodes.html')) {
+    frame.src = '/amenodes/amenodes.html';
+  }
+}
+
+function closeGraph() {
+  document.getElementById('graphOverlay').classList.remove('open');
+}
+
 // ===== #21. Контекст графа =====
 function getGraphState() {
   try {
@@ -904,5 +934,15 @@ function clearChat() {
 
 load();
 </script>
+<div class="graph-overlay" id="graphOverlay">
+  <div class="graph-overlay-bar">
+    <div class="brand">AMENO<span>DES</span> <span style="color:#888;font-weight:400;font-size:12px">Graph</span></div>
+    <button class="graph-overlay-back" onclick="closeGraph()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Чат
+    </button>
+  </div>
+  <iframe class="graph-overlay-frame" id="graphFrame" src="about:blank"></iframe>
+</div>
 </body>
 </html>
