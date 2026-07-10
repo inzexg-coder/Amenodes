@@ -648,6 +648,48 @@ function updateThemeIcon() {
     : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
 }
 
+// ===== #21. Контекст графа =====
+function getGraphState() {
+  try {
+    var raw = localStorage.getItem('amenodes_autosave');
+    if (!raw) return null;
+    var data = JSON.parse(raw);
+    if (!data.nodes || !data.nodes.length) return null;
+
+    var lines = [];
+    var nodeCount = data.nodes.length;
+    var edgeCount = (data.edges || []).length;
+    lines.push('ГРАФ (' + nodeCount + ' нод' + (nodeCount < 5 ? 'ы' : '') + ', ' + edgeCount + ' связей):');
+
+    for (var i = 0; i < data.nodes.length; i++) {
+      var n = data.nodes[i];
+      var val = '';
+      if (n.val !== undefined) val = ' = ' + n.val;
+      else if (n.resultStr && n.resultStr !== '--') val = ' = ' + n.resultStr;
+      else if (n.result !== null && n.result !== undefined) val = ' = ' + n.result;
+      lines.push('- #' + n.id + ' ' + n.type + ' "' + (n.title || n.type) + '"' + val);
+    }
+
+    if (data.edges && data.edges.length) {
+      var edgeLines = [];
+      for (var j = 0; j < data.edges.length; j++) {
+        var e = data.edges[j];
+        edgeLines.push('#' + e.sourceId + ' -> #' + e.targetId);
+      }
+      lines.push('Связи: ' + edgeLines.join(', '));
+    }
+
+    var context = lines.join('\n');
+    // Limit: ~4000 chars ≈ 1000 tokens (rough estimate for Russian)
+    if (context.length > 4000) {
+      context = context.substring(0, 4000) + '\n[...обрезано]';
+    }
+    return context;
+  } catch (e) {
+    return null;
+  }
+}
+
 // ===== #19. Кэширование ответов =====
 var CACHE_KEY = 'amenodes_cache';
 var CACHE_LIMIT = 50;
@@ -700,8 +742,14 @@ function appendStream(el, token) {
 async function callAPI(userMessage) {
   conversationHistory.push({role: 'user', content: userMessage});
 
+  var systemMsg = SYSTEM_PROMPT;
+  var graphCtx = getGraphState();
+  if (graphCtx) {
+    systemMsg += '\n\nТекущий граф данных:\n' + graphCtx;
+  }
+
   var apiMessages = [
-    {role: 'system', content: SYSTEM_PROMPT},
+    {role: 'system', content: systemMsg},
     ...conversationHistory.slice(-20)
   ];
 
