@@ -40,7 +40,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 .temp-trigger:hover{color:#333;background:rgba(0,0,0,.04)}
 .temp-panel{display:none;position:absolute;right:0;top:100%;margin-top:6px;background:#fff;border:1px solid #e5e5e5;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.06);z-index:100;padding:16px 20px 14px;min-width:240px;user-select:none;-webkit-user-select:none}
 .temp-panel.show{display:block}
-.temp-readout{font-family:'SF Mono',Monaco,Menlo,'Courier New',monospace;font-size:28px;font-weight:600;color:#111;letter-spacing:-1px;margin-bottom:12px;line-height:1}
+.temp-readout{font-family:'SF Mono',Monaco,Menlo,'Courier New',monospace;font-size:28px;font-weight:600;color:#111;letter-spacing:-1px;margin-bottom:4px;line-height:1}
+.temp-readout-label{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
 .temp-track-wrap{position:relative;height:24px;display:flex;align-items:center}
 .temp-track{width:100%;height:2px;background:#e5e5e5;border-radius:1px;position:relative;cursor:pointer}
 .temp-track-fill{position:absolute;left:0;top:0;height:100%;background:#111;border-radius:1px;transition:width .15s}
@@ -50,6 +51,17 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 .temp-stop{font-size:9px;color:#bbb;font-family:'SF Mono',Monaco,Menlo,'Courier New',monospace;cursor:pointer;transition:color .15s;padding:2px 0}
 .temp-stop:hover{color:#666}
 .temp-stop.active{color:#111;font-weight:600}
+.temp-divider{height:1px;background:#f0f0f0;margin:12px -20px}
+.temp-adaptive-row{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:0}
+.temp-adaptive-label{font-size:12px;color:#555;font-weight:500}
+.temp-adaptive-desc{font-size:10px;color:#aaa;margin-top:2px}
+.temp-switch{position:relative;width:36px;height:20px;flex-shrink:0}
+.temp-switch input{opacity:0;width:0;height:0}
+.temp-switch-track{position:absolute;inset:0;background:#e5e5e5;border-radius:10px;transition:background .2s}
+.temp-switch input:checked+.temp-switch-track{background:#111}
+.temp-switch-thumb{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.15);transition:transform .2s}
+.temp-switch input:checked~.temp-switch-thumb{transform:translateX(16px)}
+.temp-track-disabled{opacity:.3;pointer-events:none}
 .msg.bot{border-left:none}
 
 
@@ -133,12 +145,19 @@ body[data-theme="dark"] .temp-trigger:hover{color:#aaa;background:rgba(255,255,2
 body[data-theme="dark"] .temp-panel{background:#141416;border-color:#27272a;box-shadow:0 4px 24px rgba(0,0,0,.4)}
 body[data-theme="dark"] .temp-panel{background:#141416;border-color:#27272a}
 body[data-theme="dark"] .temp-readout{color:#e4e4e7}
+body[data-theme="dark"] .temp-readout-label{color:#52525b}
 body[data-theme="dark"] .temp-track{background:#27272a}
 body[data-theme="dark"] .temp-track-fill{background:#e4e4e7}
 body[data-theme="dark"] .temp-thumb{background:#e4e4e7;box-shadow:0 1px 4px rgba(0,0,0,.3)}
 body[data-theme="dark"] .temp-stop{color:#3f3f46}
 body[data-theme="dark"] .temp-stop:hover{color:#a1a1aa}
 body[data-theme="dark"] .temp-stop.active{color:#e4e4e7}
+body[data-theme="dark"] .temp-divider{background:#27272a}
+body[data-theme="dark"] .temp-adaptive-label{color:#a1a1aa}
+body[data-theme="dark"] .temp-adaptive-desc{color:#52525b}
+body[data-theme="dark"] .temp-switch-track{background:#27272a}
+body[data-theme="dark"] .temp-switch input:checked+.temp-switch-track{background:#e4e4e7}
+body[data-theme="dark"] .temp-switch-thumb{background:#141416}
 body[data-theme="dark"] .welcome h1{color:#e4e4e7}
 body[data-theme="dark"] .welcome p{color:#a1a1aa}
 body[data-theme="dark"] .welcome .hint{background:#141416;border-color:#27272a;color:#a1a1aa}
@@ -176,6 +195,7 @@ body[data-theme="dark"] ::-webkit-scrollbar-track{background:transparent}
       <button class="temp-trigger" onclick="toggleTempPanel()" id="tempBtn" title="Настройки"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
       <div class="temp-panel" id="tempPanel">
         <div class="temp-readout" id="tempReadout">0.70</div>
+        <div class="temp-readout-label">Temperature</div>
         <div class="temp-track-wrap" id="tempTrackWrap">
           <div class="temp-track" id="tempTrack">
             <div class="temp-track-fill" id="tempTrackFill"></div>
@@ -188,6 +208,18 @@ body[data-theme="dark"] ::-webkit-scrollbar-track{background:transparent}
           <div class="temp-stop" data-temp="1.3" onclick="selectTemp(this)">1.3</div>
           <div class="temp-stop" data-temp="1.9" onclick="selectTemp(this)">1.9</div>
         </div>
+        <div class="temp-divider"></div>
+        <label class="temp-adaptive-row">
+          <div>
+            <div class="temp-adaptive-label">Адаптивная</div>
+            <div class="temp-adaptive-desc">Агент выбирает температуру автоматически</div>
+          </div>
+          <div class="temp-switch">
+            <input type="checkbox" id="adaptiveTemp" onchange="toggleAdaptive(this.checked)">
+            <div class="temp-switch-track"></div>
+            <div class="temp-switch-thumb"></div>
+          </div>
+        </label>
       </div>
     </div>
     <div class="model-selector">
@@ -262,6 +294,23 @@ function toggleTempPanel() {
 }
 
 var trackDragging = false;
+var adaptiveMode = localStorage.getItem('amenodes_adaptive_temp') === '1';
+
+function toggleAdaptive(checked) {
+  adaptiveMode = checked;
+  localStorage.setItem('amenodes_adaptive_temp', checked ? '1' : '0');
+  var wrap = document.getElementById('tempTrackWrap');
+  var stops = document.querySelector('.temp-stops');
+  if (checked) {
+    wrap.classList.add('temp-track-disabled');
+    stops.style.opacity = '0.3';
+    stops.style.pointerEvents = 'none';
+  } else {
+    wrap.classList.remove('temp-track-disabled');
+    stops.style.opacity = '1';
+    stops.style.pointerEvents = 'auto';
+  }
+}
 
 function selectTemp(el) {
   currentTemp = parseFloat(el.dataset.temp);
@@ -371,7 +420,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   currentModel = saved;
-  setTimeout(function() { updateTrackUI(currentTemp); initTrack(); }, 50);
+  setTimeout(function() {
+    updateTrackUI(currentTemp);
+    initTrack();
+    if (adaptiveMode) {
+      document.getElementById('adaptiveTemp').checked = true;
+      toggleAdaptive(true);
+    }
+  }, 50);
   if (localStorage.getItem('amenodes_adaptive_temp') === '1') {
     document.getElementById('adaptiveTemp').checked = true;
     toggleAdaptive(true);
